@@ -63,7 +63,7 @@ return [
     |
     */
 
-    'logo' => '<b>Admin</b>LTE',
+    'logo' => '<b>EYC Ingenieria</b>',
     'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
@@ -323,31 +323,31 @@ return [
                 [
                     'text' => 'Asignadas',
                     'url' => 'load',
-                    'icon' => 'far fa-fw fa-file',
+                    'icon' => 'fas fa-arrow-down',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Cerradas',
                     'url' => 'closed',
-                    'icon' => 'far fa-fw fa-file',
+                    'icon' => 'fas fa-times',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Call Center',
                     'url' => 'call_center',
-                    'icon' => 'far fa-fw fa-file',
+                    'icon' => 'fas fa-phone-alt',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Producción',
                     'url' => 'produccion',
-                    'icon' => 'far fa-fw fa-file',
+                    'icon' => 'fas fa-cogs',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Recepción',
                     'url' => 'recepcion',
-                    'icon' => 'far fa-fw fa-file',
+                    'icon' => 'fas fa-receipt',
                     'label_color' => 'success',
                 ],
             ],
