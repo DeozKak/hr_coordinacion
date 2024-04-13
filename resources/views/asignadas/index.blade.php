@@ -20,15 +20,35 @@
 
             <div class="button-container">
                 <button class="btn btn-primary" type="submit">Subir Archivo</button>
-
+            </div>
         </form>
-
     </div>
+</div>
     <br>
 
-    @if (isset($error))
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Fecha</th>
+                <th>Direccion</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach ($asignadas as $asignado) 
+            <tr>
+                                      
+                <td>{{$asignado->nombre_lugar}}</td>
+                <td>{{$asignado->fecha_asignacion}}</td>
+                <td>{{$asignado->direccion}}</td>
+             
+            </tr>
+        @endforeach
+        </tbody>
+
+    @if (session('error'))
     <div class="alert alert-danger">
-        {{ $error }}
+        {{ session('error')}}
     </div>
     @endif
 

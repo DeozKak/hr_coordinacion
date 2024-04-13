@@ -63,12 +63,13 @@ return [
     |
     */
 
-    'logo' => '<b>EYC Ingenieria</b>',
-    'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
+    'logo' => '<b>E&C Ingeniería</b><br>
+            <p class="text-sm">Seguimiento Operación Valle</p>',
+    'logo_img' => 'vendor/adminlte/dist/img/logo_EYC.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
-    'logo_img_alt' => 'Admin Logo',
+    'logo_img_alt' => 'EYC Logo',
 
     /*
     |--------------------------------------------------------------------------
@@ -297,7 +298,7 @@ return [
         // Navbar items:
         [
             'type' => 'navbar-search',
-            'text' => 'search',
+            'text' => 'buscar',
             'topnav_right' => true,
         ],
         [
@@ -308,91 +309,91 @@ return [
         // Sidebar items:
         [
             'type' => 'sidebar-menu-search',
-            'text' => 'search',
+            'text' => 'buscar',
         ],
         [
             'text' => 'blog',
             'url' => 'admin/blog',
             'can' => 'manage-blog',
         ],
-        ['header' => 'Seguimiento Operacion RP'],
+        ['header' => 'Resvisiones Periódicas','can' => 'ver coordinacion RP',],
         [
             'text' => 'Cargues',
             'icon' => 'fas fa-upload',
-            'role' => 'admin',
+            'can' => 'ver coordinacion RP',
             'submenu' => [
                 [
                     'text' => 'Asignadas',
                     'url' => 'load',
-                    'icon' => 'fas fa-arrow-down',
+                    'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Cerradas',
                     'url' => 'closed',
-                    'icon' => 'fas fa-times',
+                    'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Call Center',
                     'url' => 'call_center',
-                    'icon' => 'fas fa-phone-alt',
+                    'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Producción',
                     'url' => 'produccion',
-                    'icon' => 'fas fa-cogs',
+                    'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Recepción',
                     'url' => 'recepcion',
-                    'icon' => 'fas fa-receipt',
+                    'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
             ],
-            'role' => 'admin',
         ],
 
         [
             'text' => 'Gestión',
             'icon' => 'fas fa-tasks',
+            'can' => 'ver coordinacion RP',
             'submenu' => [
                 [
                     'text' => 'Coordinación',
                     'url' => 'coordinacion',
-                    'icon' => 'far fa-fw fa-file',
+                    'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Planilla',
                     'url' => 'planilla',
-                    'icon' => 'far fa-fw fa-file',
+                    'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Orden RP',
                     'url' => 'orden_rp',
-                    'icon' => 'far fa-fw fa-file',
+                    'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Listado impresión',
                     'url' => 'listado_impresion',
-                    'icon' => 'far fa-fw fa-file',
+                    'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Orden Cert',
                     'url' => 'orden_cert',
-                    'icon' => 'far fa-fw fa-file',
+                    'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Asignador',
                     'url' => 'asignador',
-                    'icon' => 'far fa-fw fa-file',
+                    'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
             ],
@@ -400,47 +401,48 @@ return [
         [
             'text' => 'Seguimiento',
             'icon' => 'fas fa-walking',
+            'can' => 'ver coordinacion RP',
             'submenu' => [
                 [
                     'text' => 'App',
                     'url' => 'app',
-                    'icon' => 'far fa-fw fa-file',
+                    'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Res. Pend',
                     'url' => 'res_pend',
-                    'icon' => 'far fa-fw fa-file',
+                    'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Res. Asig',
                     'url' => 'res_asig',
-                    'icon' => 'far fa-fw fa-file',
+                    'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Historico',
                     'url' => 'historico',
-                    'icon' => 'far fa-fw fa-file',
+                    'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Orca',
                     'url' => 'orca',
-                    'icon' => 'far fa-fw fa-file',
+                    'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Nómina',
                     'url' => 'nomina',
-                    'icon' => 'far fa-fw fa-file',
+                    'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Indicadores',
                     'url' => 'indicadores',
-                    'icon' => 'far fa-fw fa-file',
+                    'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
             ],

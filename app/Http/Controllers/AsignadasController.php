@@ -18,7 +18,9 @@ class AsignadasController extends Controller
 
     public function index()
     {
-        return view('asignadas.index');
+        $asignadas = Asignadas::all();
+
+        return view('asignadas.index', compact('asignadas'));
     }
 
     public function store(Request $request)
@@ -26,7 +28,7 @@ class AsignadasController extends Controller
         $response = AsignadasController::uploadFile($request);
 
         if (is_object($response)) {
-            return view('asignadas.index')->with('error', $response->errors()->first());
+            return redirect()->route('asignadas.load')->with('error', $response->errors()->first());
         }
 
         $spreadsheet = IOFactory::load($response);
