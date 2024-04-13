@@ -319,6 +319,7 @@ return [
         [
             'text' => 'Cargues',
             'icon' => 'fas fa-upload',
+            'role' => 'admin',
             'submenu' => [
                 [
                     'text' => 'Asignadas',
@@ -351,6 +352,7 @@ return [
                     'label_color' => 'success',
                 ],
             ],
+            'role' => 'admin',
         ],
 
         [

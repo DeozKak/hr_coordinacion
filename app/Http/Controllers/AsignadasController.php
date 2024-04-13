@@ -113,8 +113,8 @@ class AsignadasController extends Controller
 
         $sheet = $spreadsheet->getActiveSheet();
         $highestRow = $sheet->getHighestRow();
-
-        $highestColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString("X");
+        $highestColumn = $sheet->getHighestColumn();
+        $highestColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);
 
         for ($row = 1; $row <= $highestRow; ++$row) {
             $rowData = [];
