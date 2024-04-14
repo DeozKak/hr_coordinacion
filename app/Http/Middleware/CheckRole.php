@@ -17,11 +17,11 @@ class CheckRole
     public function handle(Request $request, Closure $next): Response
     {
         $user = Auth::user();
-         ;
-        if ($user->hasRole('admin') === false) {
-            return redirect('/home');
+
+        if ($user->hasRole('admin') === false || $user->hasPermissionTo('gestion_usuarios') === false){
+            return redirect('/home')->with('error', 'Acción no autorizada.');
         }
-    
+        
         return $next($request);
     }
 }
