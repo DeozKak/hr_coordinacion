@@ -13,9 +13,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Permission::create(['name' => 'gestion_usuarios']);
         $user = User::find(1);
         $user->givePermissionTo('gestion_usuarios','ver coordinacion RP','ver coordinacion RN');
-        $user2 = User::find(6);
+        $user2 = User::find(2);
         $user2->givePermissionTo('ver coordinacion RP');
     }
 

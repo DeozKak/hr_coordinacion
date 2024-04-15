@@ -15,8 +15,11 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
+            $table->string('type_id');
+            $table->string('identification')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->tinyInteger('state',1)->autoIncrement(false);
             $table->rememberToken();
             $table->timestamps();
         });

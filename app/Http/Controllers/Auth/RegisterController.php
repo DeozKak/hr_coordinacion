@@ -8,6 +8,9 @@ use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Spatie\Permission\Models\Role;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class RegisterController extends Controller
 {
@@ -49,9 +52,12 @@ class RegisterController extends Controller
      */
     protected function validator(array $data)
     {
+       
         return Validator::make($data, [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'type_id'=>['required','string','in:CC,CE'],
+            'identification'=>['required','string','max:13','unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
     }
@@ -64,10 +70,14 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
+       
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
+            'type_id' => $data['type_id'],
+            'identification' => $data['identification'],
             'password' => Hash::make($data['password']),
+            'state' => 0,
         ]);
 
         $role = Role::where('name', 'user')->first();
@@ -76,4 +86,9 @@ class RegisterController extends Controller
 
         return $user;
     }
+    protected function registered(Request $request, $user)
+{
+    Auth::logout();
+    return redirect()->route('login')->with('success', '¡Registro exitoso! Por favor Contacta con el administrador para activar cuenta.');
+}
 }

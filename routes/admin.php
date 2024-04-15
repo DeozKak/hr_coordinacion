@@ -13,5 +13,5 @@ Route::middleware(CheckRole::class)->group(function () {
     Route::get('/users', [UserController::class, 'index'])->name('index');
     Route::get('/users/{user}', [UserController::class, 'edit'])->name('edit');
     Route::put('/users/{user}', [UserController::class, 'update'])->name('update');
-    Route::get('/reset', [ResetPasswordController::class, 'showResetForm'])->name('password');
+    Route::post('/users/changeStatus/{user}', [UserController::class, 'changeStatus'])->name('changeStatus');
 });

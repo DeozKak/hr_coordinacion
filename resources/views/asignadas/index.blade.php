@@ -26,7 +26,7 @@
 </div>
     <br>
 
-    <table class="table table-striped table-bordered">
+    <table id="table" class="table table-striped table-bordered">
         <thead>
             <tr>
                 <th>Nombre</th>
@@ -66,5 +66,29 @@
         });
     </script>
     @endif
+@section('js')
+<script>
 
+$(document).ready(function() {
+
+$('#table').DataTable({
+    "language": {
+        "lengthMenu": "Mostrar _MENU_ registros por página",
+        "zeroRecords": "Nada encontrado - lo siento",
+        "info": "Mostrando la página _PAGE_ de _PAGES_",
+        "infoEmpty": "No hay registros disponibles",
+        "infoFiltered": "(Filtrado de _MAX_ registros totales)",
+        "search": "Buscar:",
+        "paginate": {
+            "first": "Primero",
+            "last": "Ultimo",
+            "next": "Siguiente",
+            "previous": "Anterior"
+        }
+    }
+
+});
+});
+    </script>
+@endsection
     @endsection

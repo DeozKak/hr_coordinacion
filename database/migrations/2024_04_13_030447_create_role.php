@@ -15,7 +15,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $rol1 = Role::create(['name' => 'admin']);
+/*         $rol1 = Role::create(['name' => 'admin']);
         $rol2 = Role::create(['name'=> 'Coordinador_RP']);
         $rol3 = Role::create(['name'=> 'Coordinador_RN']);
         $rol3 = Role::create(['name' => 'user']);
@@ -25,7 +25,7 @@ return new class extends Migration
         $user->assignRole('admin');
         $rol1->givePermissionTo($permision1,$permision2);
         $rol2->givePermissionTo($permision1);
-        $rol3->givePermissionTo($permision2);
+        $rol3->givePermissionTo($permision2); */
     }
 
     /**

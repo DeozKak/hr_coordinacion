@@ -19,4 +19,18 @@
     });
 </script>
 @endif
+@if (session('success'))
+<script>
+     document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                position: "top-end",
+                type: "success",
+                title: "{{ session('success') }}",
+                showConfirmButton: false,
+                toast: true,
+                timer: 4000
+            });
+        });
+</script>
+@endif
 @endsection
