@@ -1,7 +1,7 @@
 @extends('adminlte::auth.register')
 @section('auth_body')
 
-<form action="{{ route('register') }}" method="post">
+<form action="{{ route('register') }}" method="post" autocomplete="off">
     @csrf
     <link rel="stylesheet" href="{{asset('css/auth/register.css')}}">
     <div class="input-group mb-3">

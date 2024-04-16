@@ -13,10 +13,10 @@
             <div class="card">
                 <div class="card-body">   
                     @if($userlogin->hasRole('admin'))
-                    <form action="{{route('admin.update', $user)}}" method="POST">
+                    <form action="{{route('admin.update', $user)}}" method="POST" autocomplete="off">
                     @else
 
-                    <form action="{{ route('update', ['user' => $user->id]) }}" method="POST">
+                    <form action="{{ route('update', ['user' => $user->id]) }}" method="POST" autocomplete="off">
                     @endif
                         @csrf
                         @method('PUT')
