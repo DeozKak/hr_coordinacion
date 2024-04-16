@@ -3,7 +3,7 @@
 
 
 @section('auth_body')
-
+<link rel="stylesheet" href="{{asset('css/adminlte/adminlte.css')}}">
 
 
 

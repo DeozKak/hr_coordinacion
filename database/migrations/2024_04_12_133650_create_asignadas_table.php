@@ -14,12 +14,14 @@ return new class extends Migration
         Schema::create('asignadas', function (Blueprint $table) {
             $table->id();
             $table->primary('id');
-            $table->string('nombre_lugar',80);
+            $table->string('nombre_lugar',100);
             $table->string('direccion',100);
             $table->string('departamento',25);
             $table->string('localidad',50);
             $table->string('contrato',30);
             $table->string('telefono',20)->nullable(true);
+            $table->string('tipo_solicitud',50);
+            $table->string('consecutivo_ruta',50);
             $table->string('email',60)->nullable(true);
             $table->string('emailCc',60)->nullable(true);
             $table->double('latitud')->nullable(true);
@@ -33,6 +35,7 @@ return new class extends Migration
             $table->integer('orden_externa',11)->autoIncrement(false)->nullable(true);
             $table->integer('producto',11)->autoIncrement(false);
             $table->integer('numero_solicitud',11)->autoIncrement(false);
+            $table->longText('observacion_solicitud')->nullable(true);
             $table->string('tipo_trabajo',20);
             $table->string('sector_operativo',80);
             $table->string('unidad_operativa',10);

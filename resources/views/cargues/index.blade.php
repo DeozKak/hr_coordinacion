@@ -3,7 +3,7 @@
 @section('title', 'Asignadas')
 
 @section('content_header')
-<h1>Asignadas</h1>
+<h1>Asignadas y cerradas</h1>
 @endsection
 
 
@@ -12,7 +12,7 @@
 <div class="container mt-5">
     <div class="shadow-container">
 
-        <form action="{{route('asignadas.store')}}" method="POST" enctype="multipart/form-data">
+        <form action="{{route('cargues.store')}}" method="POST" enctype="multipart/form-data">
             @csrf
             <label for="archivo" class="form-label">Asignadas OSF</label>
 
@@ -25,26 +25,6 @@
     </div>
 </div>
     <br>
-
-    <table id="table" class="table table-striped table-bordered">
-        <thead>
-            <tr>
-                <th>Nombre</th>
-                <th>Fecha</th>
-                <th>Direccion</th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach ($asignadas as $asignado) 
-            <tr>
-                                      
-                <td>{{$asignado->nombre_lugar}}</td>
-                <td>{{$asignado->fecha_asignacion}}</td>
-                <td>{{$asignado->direccion}}</td>
-             
-            </tr>
-        @endforeach
-        </tbody>
 
     @if (session('error'))
     <div class="alert alert-danger">

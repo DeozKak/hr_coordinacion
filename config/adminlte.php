@@ -90,8 +90,8 @@ return [
             'path' => 'vendor/adminlte/dist/img/logo_EYC.png',
             'alt' => 'Auth Logo',
             'class' => '',
-            'width' => 70,
-            'height' => 70,
+            'width' => 60,
+            'height' => 60,
         ],
     ],
 
@@ -320,38 +320,15 @@ return [
         [
             'text' => 'Cargues',
             'icon' => 'fas fa-upload',
-            'can' => 'ver coordinacion RP',
+            'can' => 'cargue_tareas',
             'submenu' => [
                 [
-                    'text' => 'Asignadas',
+                    'text' => 'Asignadas y Cerradas',
                     'url' => 'load',
                     'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
-                [
-                    'text' => 'Cerradas',
-                    'url' => 'closed',
-                    'icon' => 'far fa-circle',
-                    'label_color' => 'success',
-                ],
-                [
-                    'text' => 'Call Center',
-                    'url' => 'call_center',
-                    'icon' => 'far fa-circle',
-                    'label_color' => 'success',
-                ],
-                [
-                    'text' => 'Producción',
-                    'url' => 'produccion',
-                    'icon' => 'far fa-circle',
-                    'label_color' => 'success',
-                ],
-                [
-                    'text' => 'Recepción',
-                    'url' => 'recepcion',
-                    'icon' => 'far fa-circle',
-                    'label_color' => 'success',
-                ],
+               
             ],
         ],
 
@@ -362,7 +339,7 @@ return [
             'submenu' => [
                 [
                     'text' => 'Coordinación',
-                    'url' => 'coordinacion',
+                    'url' => '/gestion/coordinacion',
                     'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
@@ -573,9 +550,14 @@ return [
                 ],
                 [
                     'type' => 'css',
-                    'asset' => false,
+                    'asset' => true,
                     'location' => '//cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css',
-                ]
+                ],
+              /*   [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => ''.asset('css/adminlte/adminlte.css').'',
+                ] */
             ],
         ],
         'Select2' => [

@@ -20,7 +20,7 @@ class AsignadasController extends Controller
     {
         $asignadas = Asignadas::all();
 
-        return view('asignadas.index', compact('asignadas'));
+        return view('cargues.index', compact('asignadas'));
     }
 
     public function store(Request $request)
@@ -28,16 +28,20 @@ class AsignadasController extends Controller
         $response = AsignadasController::uploadFile($request);
 
         if (is_object($response)) {
-            return redirect()->route('asignadas.load')->with('error', $response->errors()->first());
+            return redirect()->route('cargues.load')->with('error', $response->errors()->first());
         }
 
         $spreadsheet = IOFactory::load($response);
-
+        
         $array = AsignadasController::readExcel($spreadsheet);
+        
         $skipFirstRow = false;
-        $asignadas = [];
+        $chunkSize = 1000; // Tamaño del lote
 
-        foreach ($array as $item) {
+    $chunks = array_chunk($array, $chunkSize);
+    foreach ($chunks as $chunk) {
+        $asignadas = [];
+        foreach ($chunk as $item) {
             if ($skipFirstRow === false) {
                 $skipFirstRow = true;
                 continue; 
@@ -53,6 +57,8 @@ class AsignadasController extends Controller
                 'localidad' => $item[8],
                 'contrato' => $item[1],
                 'telefono' => $item[12],
+                'tipo_solicitud' => $item[4],
+                'consecutivo_ruta' => $item[11],
                 'email' => "",
                 'emailCc' => "",
                 'latitud' => null,
@@ -66,6 +72,7 @@ class AsignadasController extends Controller
                 'orden_externa' => null,
                 'producto' => $item[2],
                 'numero_solicitud' => $item[3],
+                'observacion_solicitud' => $item[18],
                 'tipo_trabajo' => $item[16],
                 'sector_operativo' => $item[9],
                 'unidad_operativa' => $item[15],
@@ -75,14 +82,16 @@ class AsignadasController extends Controller
                 'fecha_maximaEntrega' => $vence,
                 'NIT_CC' => $item[5],
                 'medidor' => $item[13],
+                'created_at' => now(),
             ];
            
             $asignadas[] = $asignada;
         }
-        
         Asignadas::insert($asignadas);
+    }
+        unset($array);  
         AsignadasController::eraseFile($response);
-        return redirect()->route('asignadas.load')->with('success', 'Datos cargados correctamente.');
+        return redirect()->route('cargues.load')->with('success', 'Datos cargados correctamente.');
     }
 
     public function uploadFile(Request $request)
