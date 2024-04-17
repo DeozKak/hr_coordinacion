@@ -74,11 +74,135 @@
 </div>
 @section('js')
 <script>
-    $(document).ready(function() {
+$(document).ready(function() {
+    $('#table').DataTable( {
+        serverSide: true,
+        ordering: false,
+        searching: false,
+        ajax:{
+            url: "{{ route('getdataCoordinacion') }}",
+            type: 'GET',
+            dataSrc: 'data'
+        },success: function ( data, callback, settings ) {
+            var out = [];
+                console.log(data);
+            for ( var i=data.start, ien=data.start+data.length ; i<ien ; i++ ) {
+                out.push( [ data[i].orden,
+                            data[i].contrato,
+                            data[i].producto,
+                            data[i].numero_solicitud,
+                            data[i].tipo_solicitud,
+                            data[i].NIT_CC,
+                            data[i].nombre_lugar,
+                            data[i].departamento,
+                            data[i].localidad,
+                            data[i].sector_operativo,
+                            data[i].direccion,
+                            data[i].consecutivo_ruta,
+                            data[i].telefono,
+                            data[i].medidor,
+                            data[i].categoria,
+                            data[i].unidad_operativa,
+                            data[i].tipo_trabajo,
+                            data[i].fecha_asignacion,
+                            data[i].observacion_solicitud ] );
+            }
+ 
+            setTimeout( function () {
+                callback( {
+                    draw: data.draw,
+                    data: out,
+                    recordsTotal: 5000000,
+                    recordsFiltered: 5000000
+                } );
+            }, 50 );
+        },
+        scrollY: 200,
+        scroller: {
+            loadingIndicator: true
+        },
+        stateSave: true
+    } );
+} );
+/* $(document).ready(function() {
+    var totalRecords = 0;
+    var loadedRecords = 0;
+    var dataChunkSize = 10; // Cantidad de datos a cargar en cada solicitud
+
+    $('#table').DataTable( {
+        serverSide: true,
+        ordering: false,
+        searching: false,
+        paging: false,
+        ajax: function ( data, callback, settings ) {
+            $.ajax({
+                url: "{{ route('getdataCoordinacion') }}",
+                type: 'GET',
+                data: {
+                    start: data.start,
+                    length: dataChunkSize
+                },
+                success: function(response) {
+                    totalRecords = response.recordsTotal;
+                    loadedRecords += dataChunkSize;
+
+                    var out = [];
+                    for (var i = 0; i < response.data.length; i++) {
+                        out.push([
+                            response.data[i].orden,
+                            response.data[i].contrato,
+                            response.data[i].producto,
+                            response.data[i].numero_solicitud,
+                            response.data[i].tipo_solicitud,
+                            response.data[i].NIT_CC,
+                            response.data[i].nombre_lugar,
+                            response.data[i].departamento,
+                            response.data[i].localidad,
+                            response.data[i].sector_operativo,
+                            response.data[i].direccion,
+                            response.data[i].consecutivo_ruta,
+                            response.data[i].telefono,
+                            response.data[i].medidor,
+                            response.data[i].categoria,
+                            response.data[i].unidad_operativa,
+                            response.data[i].tipo_trabajo,
+                            response.data[i].fecha_asignacion,
+                            response.data[i].observacion_solicitud
+                        ]);
+                    }
+
+                    callback({
+                        draw: data.draw,
+                        data: out,
+                        recordsTotal: totalRecords,
+                        recordsFiltered: totalRecords
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error al obtener los datos del servidor');
+                }
+            });
+        },
+        scrollY: 200,
+        scroller: {
+            loadingIndicator: true
+        },
+        stateSave: true
+    });
+}); */
+/*     $(document).ready(function() {
 
         $('#table').DataTable({
-            "processing": true, // Mostrar el indicador de procesamiento
-            "serverSide": true, // Habilitar el procesamiento del lado del servidor
+        
+            "scrollY": "400px",
+            "scrollCollapse": true,
+            "paging": false,
+
+            "searching": false,
+            "ordering": false,
+            "processing": true, 
+            "serverSide": true,
+            "responsive": true, 
             "language": {
                 "lengthMenu": "Mostrar _MENU_ registros por página",
                 "zeroRecords": "Nada encontrado - lo siento",
@@ -154,12 +278,10 @@
                 {
                     data: 'observacion_solicitud'
                 }
-            ],
-            scrollY: "400px",
-            scrollCollapse: true,
-            paging: false
+            ],                      
+            
         });
-    });
+    }); */
 </script>
 @endsection
 @endsection
