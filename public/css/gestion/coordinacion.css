@@ -1,0 +1,9 @@
+.table {
+    font-size: 11px;
+}
+
+.table th,
+.table td {
+    padding: 0px;
+
+}
