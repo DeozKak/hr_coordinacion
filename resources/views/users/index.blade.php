@@ -101,6 +101,7 @@
     $(document).ready(function() {
 
         $('#table_users').DataTable({
+            ordering: false,
             "language": {
                 "lengthMenu": "Mostrar _MENU_ registros por página",
                 "zeroRecords": "Nada encontrado - lo siento",

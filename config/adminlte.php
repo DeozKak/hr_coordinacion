@@ -538,26 +538,13 @@ return [
                     'asset' => true,
                     'location' => '//cdn.datatables.net/2.0.5/js/dataTables.js',
                 ],
+
                 [
                     'type' => 'js',
                     'asset' => true,
-                    'location' => '//cdn.datatables.net/scroller/2.4.1/js/dataTables.scroller.js',
+                    'location' => '//cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js',
                 ],
-                [
-                    'type' => 'js',
-                    'asset' => true,
-                    'location' => '//cdn.datatables.net/scroller/2.4.1/js/scroller.dataTables.js',
-                ],
-                [
-                    'type' => 'js',
-                    'asset' => true,
-                    'location' => '//cdn.datatables.net/fixedcolumns/5.0.0/js/dataTables.fixedColumns.js',
-                ],
-                [
-                    'type' => 'js',
-                    'asset' => true,
-                    'location' => '//cdn.datatables.net/fixedcolumns/5.0.0/js/fixedColumns.dataTables.js',
-                ],
+                
                 [
                     'type' => 'css',
                     'asset' => true,
@@ -568,19 +555,26 @@ return [
                     'asset' => true,
                     'location' => '//cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css',
                 ],
-                [
-                    'type' => 'css',
-                    'asset' => true,
-                    'location' => '//cdn.datatables.net/fixedcolumns/5.0.0/css/fixedColumns.dataTables.css',
-                ],
-
-                
-                
-              /*   [
+               /*  [
                     'type' => 'css',
                     'asset' => true,
                     'location' => ''.asset('css/adminlte/adminlte.css').'',
-                ] */
+                ]  */
+            ],
+        ],
+        'Handsontable' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => '//cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js',
+                ],
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => '//cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css',
+                ],
             ],
         ],
         'Select2' => [
