@@ -18,6 +18,7 @@
  
     </div>
 </div>
+ <a id="btn" class="btn btn-success" >crear filas</a>
 @section('js')
 <script>
     
@@ -26,14 +27,13 @@
     const hot = new Handsontable(container, {
 
         rowHeaders: true,
-        
+        fillHandle: false,
         height: '450px',
         allowRemoveColumn: false,
-        customBorders: true,
+        customBorders: false,
         dropdownMenu: true,
-        multiColumnSorting: true,
+        multiColumnSorting: false,
         filters: true,
-        manualRowMove: true,
         colHeaders: ['Orden', 'Contrato', 'Producto', 'Numero solicitud', 'Tipo solicitud', 'Cedula', 'Nombre', 'Departamento', 'Localidad', 'Barrio', 'Dirección', 'Consecutivo Ruta', 'Telefono',
             'Medidor', 'Categoria', 'Unidad', 'Tipo trabajo', 'Fecha asignación', 'Observación solicitud'
         ],
@@ -62,18 +62,17 @@
         licenseKey: 'non-commercial-and-evaluation', // for non-commercial use only
     });
     let pagina = 1;
-
-function cargarMasRegistros() {
+    let registro = 100;
+function cargaPrimeraVez() {
     const bottom = container.scrollTop + container.clientHeight >= container.scrollHeight;
-
     if (bottom) {
         $.ajax({
             url: "{{route('getdataCoordinacionRP')}}",
             data: { pagina: pagina},
             method: 'GET',
             success: function(response) {
-                console.log(response);
-                hot.alter('insert_row', hot.countRows(), data.length);
+                hot.loadData(response, null, 'json');
+                
                 hot.populateFromArray(hot.countRows() - response.length, 0, response);
                 pagina++;
             },
@@ -81,11 +80,48 @@ function cargarMasRegistros() {
                 console.log(err);
                 console.error('Error al cargar más registros');
             }
-        });
+        }); 
+    }
+}
+function cargarMasRegistros() {
+    const bottom = container.scrollTop + container.clientHeight >= container.scrollHeight;
+    if (bottom) {
+        $.ajax({
+            url: "{{route('getdataCoordinacionRP')}}",
+            data: { pagina: pagina},
+            method: 'GET',
+            success: function(response) {
+               
+                insertarDatosEnFilas(response,registro);
+                console.log(registro);
+                pagina++
+                registro += 100;
+            },
+            error: function(err) {
+                console.log(err);
+                console.error('Error al cargar más registros');
+            }
+        }); 
     }
 }
 
-container.addEventListener('scroll', cargarMasRegistros());
+function convertirJSONaArray2D(jsonData) {
+    const columnasDeseadas = ['orden', 'contrato', 'producto', 'numero_solicitud', 'tipo_solicitud', 'NIT_CC', 'nombre_lugar', 'departamento', 'localidad', 'sector_operativo', 'direccion', 'consecutivo_ruta', 'telefono', 'medidor', 'categoria', 'unidad_operativa', 'tipo_trabajo', 'fecha_asignacion', 'observacion_solicitud'];
+    
+    return Object.keys(jsonData).map(key => {
+        const fila = jsonData[key];
+        return columnasDeseadas.map(columna => fila[columna]);
+    });
+}
+function insertarDatosEnFilas(datos, filaInicial) {
+    const array2D = convertirJSONaArray2D(datos);
+
+    hot.populateFromArray(filaInicial, 0, array2D);
+}
+document.getElementById('btn').addEventListener('click', function() {
+    cargarMasRegistros();
+});
+container.addEventListener('scroll', cargaPrimeraVez());
 
 
 </script>
