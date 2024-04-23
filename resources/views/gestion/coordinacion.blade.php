@@ -15,27 +15,37 @@
 
         <div id="prueba" style=" width: '100px'"></div>
 
-
+        @csrf
     </div>
 </div>
 
 @section('js')
 <script>
+    var nestedHeaders = [
+        [{
+            label: 'ASIGNACION BASE OSF',
+            colspan: 19
+        }],
+        ['Orden', 'Contrato', 'Producto', 'Numero solicitud', 'Tipo solicitud', 'Cedula', 'Nombre', 'Departamento', 'Localidad', 'Barrio', 'Dirección', 'Consecutivo Ruta', 'Telefono',
+            'Medidor', 'Categoria', 'Unidad', 'Tipo trabajo', 'Fecha asignación', 'Observación solicitud'
+        ]
+    ];
     // selector del contenedor de la tabla
     const container = document.querySelector('#prueba');
     // configuración de la tabla y inicialización
     const hot = new Handsontable(container, {
+
+
         lenguaje: 'es-MX',
         rowHeaders: true,
         fillHandle: false,
         height: '450px',
         allowRemoveColumn: false,
         customBorders: false,
-        dropdownMenu: true,
         multiColumnSorting: false,
-        filters: true,
+        nestedHeaders: nestedHeaders,
         colHeaders: ['Orden', 'Contrato', 'Producto', 'Numero solicitud', 'Tipo solicitud', 'Cedula', 'Nombre', 'Departamento', 'Localidad', 'Barrio', 'Dirección', 'Consecutivo Ruta', 'Telefono',
-            'Medidor', 'Categoria', 'Unidad', 'Tipo trabajo', 'Fecha asignación', 'Observación solicitud'
+            'Medidor', 'Categoria', 'Unidad', 'Tipo trabajo', 'Fecha asignación', 'Observación solicitud', /* columnas 12161 */ , 'Orden externa', 'Tipo solicitud', 'Fecha Solicitud', 'Observacion Externa', 'Fecha reasignacion'
         ],
         columns: [{
                 data: 'orden'
@@ -96,14 +106,38 @@
             }
         ],
         data: [],
+        fixedColumnsStart: 3,
+        manualColumnResize: true,
         licenseKey: 'non-commercial-and-evaluation',
+        filters: true,
+        dropdownMenu: true,
+        filteringMode: 'remote',
+        beforeFilter: function(filters) {
+            $.ajax({
+                url: "{{route('filterData')}}",
+                data: {
+                    filters: filters
+                },
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                method: 'POST',
+                success: function(response) {
+                    hot.loadData(response, null, 'json');
+                },
+                error: function(xhr, status, error) {
+                    console.log(xhr.responseText);
+                }
+            });
+            return false;
+        }
     });
     // variables para la paginación
     let pagina = 1;
-    let registro = 100;
+    /* let registro = 100;
     let paginasCargadas = 1;
     const paginasParaEliminar = 5;
-    let scrollPosition = 0;
+    let scrollPosition = 0;  */
     // función para cargar los datos por primera vez
     function cargaPrimeraVez() {
 
@@ -119,86 +153,87 @@
             },
             error: function(err) {
                 console.log(err);
-                console.error('Error al cargar más registros');
+
             }
         });
 
     }
 
-     function eliminarRegistrosAnteriores() {
+    cargaPrimeraVez();
+    /*  function eliminarRegistrosAnteriores() {
 
-         
-         if (paginasCargadas % paginasParaEliminar === 0 && paginasCargadas > 0) {
-             isRemovingRows = true;
-             
-             const filasAEliminar = registro * (paginasCargadas - paginasParaEliminar);
-            
-             hot.alter('remove_row', 0, 100);
-             wtHolderElement.scrollTop = scrollPosition;
+        if (paginasCargadas % paginasParaEliminar === 0 && paginasCargadas > 0) {
+     
+        const firstVisibleRow = Math.floor(wtHolderElement.scrollTop / 23); // Ajusta el valor 23 según la altura de las filas en tu tabla
+        const lastVisibleRow = firstVisibleRow + Math.ceil(wtHolderElement.clientHeight / 23);
 
-         }
-     }
-   
-    // función para cargar más registros
-    function cargarMasRegistros() {
-        const bottom = wtHolderElement.scrollTop + wtHolderElement.clientHeight >= wtHolderElement.scrollHeight;
+        const filasAEliminar = lastVisibleRow - firstVisibleRow;
 
-        if (bottom) {
-            $.ajax({
-                url: "{{route('getdataCoordinacionRP')}}",
-                data: {
-                    pagina: pagina
-                },
-                method: 'GET',
-                success: function(response) {
-
-                    insertarDatosEnFilas(response, registro);
-                    eliminarRegistrosAnteriores();
-
-
-                    pagina++;
-                    registro += 100;
-                    paginasCargadas++;
-                },
-                error: function(err) {
-                    console.log(err);
-                    console.error('Error al cargar más registros');
-                }
-            });
-        }
+        hot.alter('remove_row', firstVisibleRow, filasAEliminar);
+        wtHolderElement.scrollTop = scrollPosition;
     }
+     } */
+
+    // función para cargar más registros
+    /*  function cargarMasRegistros() {
+         const bottom = wtHolderElement.scrollTop + wtHolderElement.clientHeight >= wtHolderElement.scrollHeight;
+
+         if (bottom) {
+             $.ajax({
+                 url: "{{route('getdataCoordinacionRP')}}",
+                 data: {
+                     pagina: pagina
+                 },
+                 method: 'GET',
+                 success: function(response) {
+                     eliminarRegistrosAnteriores();
+                     insertarDatosEnFilas(response, registro);
+                     
+
+
+                     pagina++;
+                     registro += 100;
+                     paginasCargadas++;
+                 },
+                 error: function(err) {
+                     console.log(err);
+                     console.error('Error al cargar más registros');
+                 }
+             });
+         }
+     } */
     // función para convertir la respuesta del servidor de JSON a un array 2D
     // para que pueda ser insertado en la tabla
-    function convertirJSONaArray2D(jsonData) {
-        const columnasDeseadas = ['orden', 'contrato', 'producto', 'numero_solicitud', 'tipo_solicitud', 'NIT_CC', 'nombre_lugar', 'departamento', 'localidad', 'sector_operativo', 'direccion', 'consecutivo_ruta', 'telefono', 'medidor', 'categoria', 'unidad_operativa', 'tipo_trabajo', 'fecha_asignacion', 'observacion_solicitud'];
+    /*  function convertirJSONaArray2D(jsonData) {
+         const columnasDeseadas = ['orden', 'contrato', 'producto', 'numero_solicitud', 'tipo_solicitud', 'NIT_CC', 'nombre_lugar', 'departamento', 'localidad', 'sector_operativo', 'direccion', 'consecutivo_ruta', 'telefono', 'medidor', 'categoria', 'unidad_operativa', 'tipo_trabajo', 'fecha_asignacion', 'observacion_solicitud'];
 
-        return Object.keys(jsonData).map(key => {
-            const fila = jsonData[key];
-            return columnasDeseadas.map(columna => fila[columna]);
-        });
-    }
+         return Object.keys(jsonData).map(key => {
+             const fila = jsonData[key];
+             return columnasDeseadas.map(columna => fila[columna]);
+         });
+     } */
 
     // función para insertar los datos en las filas de la tabla
-    function insertarDatosEnFilas(datos, filaInicial) {
+    /* function insertarDatosEnFilas(datos, filaInicial) {
         const array2D = convertirJSONaArray2D(datos);
 
         hot.populateFromArray(filaInicial, 0, array2D);
-    }
+    } */
     // elemento contenedor de la tabla que obtine el scroll
-    const wtHolderElement = document.querySelector('.wtHolder');
+    /*  const wtHolderElement = document.querySelector('.wtHolder'); */
 
     // cargar los datos por primera vez
-    cargaPrimeraVez();
+
 
     // evento para cargar más registros al hacer scroll
-    wtHolderElement.addEventListener('scroll', function() {
-        scrollPosition = wtHolderElement.scrollTop;
-        cargarMasRegistros();
-    });
+    /*   wtHolderElement.addEventListener('scroll', function() {
+          scrollPosition = wtHolderElement.scrollTop;
+          cargarMasRegistros();
+      });
 
-    hot.addHook('afterRender', function() {
-        wtHolderElement.scrollTop = scrollPosition;
-    });
+      hot.addHook('afterRender', function() {
+          wtHolderElement.scrollTop = scrollPosition;
+      }); */
 </script>
 
 @endsection

@@ -27,3 +27,4 @@ Route::post('/store', [AsignadasController::class, 'store'])->name('cargues.stor
 //Rutas Gestion-----------------------------------------------------------------------------------
 Route::get('/gestion/coordinacion', [CoordinacionController::class, 'coordinacion'])->name('coordinacion');
 Route::get('/gestion/getdataCoordinacionRP', [CoordinacionController::class, 'getdataCoordinacionRP'])->name('getdataCoordinacionRP');
+Route::post('/gestion/filterData', [CoordinacionController::class, 'filterData'])->name('filterData');
