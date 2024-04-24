@@ -40,7 +40,6 @@ class CoordinacionController extends Controller
     public function filterData(Request $request)
     {
         $filters = $request->input('filters');
-  
         $columnMapping = [
             '0' => 'orden',
             '1' => 'contrato',
@@ -65,22 +64,22 @@ class CoordinacionController extends Controller
         ];
         
         $query = asignadas::whereIn('tipo_trabajo', [10444, 12161]);
-        dd($filters);
+  
         if (!empty($filters)) {
-           
-                $index = $filters['column'];
+            foreach ($filters as $filter) {
+                $index = $filter['column'];
                 $column = $columnMapping[$index] ?? null;
                 if ($column) {
-                $operation = $filters['operation'];
-                $conditions = $filters['conditions'];
+                $operation = $filter['operation'];
+                $conditions = $filter['conditions'];
                 // Procesar los datos de los filtros y aplicar la lógica de filtrado en la consulta
               
-                    dd($conditions[1]['args'][0]);
-                    $value = $conditions[1]['args'][0][0]; // Obtener el valor del filtro
-                   
-                    $query->where($column, '=', $value);
+                 
+                    $values = $conditions[1]['args'][0]; // Obtener el valor del filtro
+                
+                    $query->whereIn($column, $values);
                 }
-               
+            }    
             
         }
 

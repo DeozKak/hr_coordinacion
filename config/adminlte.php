@@ -550,16 +550,11 @@ return [
                     'asset' => true,
                     'location' => '//cdn.datatables.net/2.0.5/css/dataTables.dataTables.css',
                 ],
-                [
+                /* [
                     'type' => 'css',
                     'asset' => true,
                     'location' => '//cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css',
-                ],
-               /*  [
-                    'type' => 'css',
-                    'asset' => true,
-                    'location' => ''.asset('css/adminlte/adminlte.css').'',
-                ]  */
+                ], */
             ],
         ],
         'Handsontable' => [
