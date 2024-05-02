@@ -39,7 +39,7 @@
         lenguaje: 'es-MX',
         rowHeaders: true,
         fillHandle: false,
-        height: '450px',
+        height: '550px',
         allowRemoveColumn: false,
         customBorders: false,
         multiColumnSorting: false,

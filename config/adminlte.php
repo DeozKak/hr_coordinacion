@@ -424,15 +424,56 @@ return [
                 ],
             ],
         ],
+
+        ['header' => 'Bitacoras','can' => 'ver_bitacoras',],
+
+         
+        [
+            'text' => 'Bitacoras',
+            'can' => 'gestion_usuarios',
+            'icon' => 'fas fa-file-alt',
+            'can' => 'ver_bitacoras',
+            'submenu' => [
+                [
+                    'text' => 'Generar',
+                    'url' => 'generar_bitacora',
+                    'icon' => 'far fa-circle',
+                    'can' => 'generar_bitacoras',
+                    'label_color' => 'success',
+                ],
+                [
+                    'text' => 'Ver',
+                    'url' => 'bitacora2',
+                    'icon' => 'far fa-circle',
+                    'can' => 'ver_bitacoras',
+                    'label_color' => 'success',
+                ],
+            ]
+        ],
        
-        ['header' => 'Gestión usuarios','can' => 'gestion_usuarios',],
+        ['header' => 'Gestión usuarios','can' => ['gestion_usuarios','gestion_inspectores'],],
 
          
         [
             'text' => 'Usuarios',
-            'url' => 'admin/users',
-            'can' => 'gestion_usuarios',
+            'can' => ['gestion_usuarios','gestion_inspectores'],
             'icon' => 'fas fa-users',
+            'submenu' => [
+                [
+                    'text' => 'Gestionar',
+                    'url' => 'admin/users',
+                    'icon' => 'far fa-circle',
+                    'can' => 'gestion_usuarios',
+                    'label_color' => 'success',
+                ],
+                [
+                    'text' => 'Inspectores',
+                    'url' => 'inspectores',
+                    'icon' => 'far fa-circle',
+                    'can' => 'gestion_inspectores',
+                    'label_color' => 'success',
+                ],
+            ]
         ],
        /*  [
             'text' => 'change_password',

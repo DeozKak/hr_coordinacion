@@ -77,7 +77,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         Swal.fire({
-            title: "!Listo!",
+            title: "¡Listo!",
             text: "{{session('success')}}",
             type: "success"
         });
