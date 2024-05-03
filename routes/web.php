@@ -34,5 +34,14 @@ Route::get('/gestion/getdataCoordinacionRP', [CoordinacionController::class, 'ge
 Route::post('/gestion/filterData', [CoordinacionController::class, 'filterData'])->name('filterData');
 
 //Rutas para bitacoras-----------------------------------------------------------------------------
-Route::get('/generar_bitacora', [BitacoraController::class, 'generar'])->name('bitacoras.generar');
-Route::get('/inspectores', [InspectorController::class, 'index'])->name('bitacoras.index');
+Route::get('/bitacora', [BitacoraController::class, 'ver'])->name('bitacora');
+Route::post('/generar_bitacora', [BitacoraController::class, 'generar_bitacora'])->name('bitacoras.generar');
+
+//Rutas para inspectores----------------------------------------------------------------------------
+Route::get('/inspectores', [InspectorController::class, 'index'])->name('inspectores.index');
+Route::get('/inspectores/create', [InspectorController::class, 'create'])->name('inspectores.create');
+Route::post('/inspectores/store', [InspectorController::class, 'store'])->name('inspectores.store');
+Route::get('/inspectores/edit/{inspector}', [InspectorController::class, 'edit'])->name('inspectores.edit');
+Route::put('/inspectores/update/{inspector}', [InspectorController::class, 'update'])->name('inspectores.update');
+Route::post('/inspectores/change_state/{inspector}', [InspectorController::class, 'change_state'])->name('inspectores.change_state');
+Route::get('/inspectores/show_disabled', [InspectorController::class, 'show_disabled'])->name('inspectores.show_disabled');

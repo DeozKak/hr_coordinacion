@@ -316,7 +316,7 @@ return [
             'url' => 'admin/blog',
             'can' => 'manage-blog',
         ],
-        ['header' => 'Resvisiones Periódicas','can' => 'ver coordinacion RP',],
+        ['header' => 'Resvisiones Periódicas','can' => 'ver_coordinacion_RP',],
         [
             'text' => 'Cargues',
             'icon' => 'fas fa-upload',
@@ -335,7 +335,7 @@ return [
         [
             'text' => 'Gestión',
             'icon' => 'fas fa-tasks',
-            'can' => 'ver coordinacion RP',
+            'can' => 'ver_coordinacion_RP',
             'submenu' => [
                 [
                     'text' => 'Coordinación',
@@ -378,7 +378,7 @@ return [
         [
             'text' => 'Seguimiento',
             'icon' => 'fas fa-walking',
-            'can' => 'ver coordinacion RP',
+            'can' => 'ver_coordinacion_RP',
             'submenu' => [
                 [
                     'text' => 'App',
@@ -430,13 +430,12 @@ return [
          
         [
             'text' => 'Bitacoras',
-            'can' => 'gestion_usuarios',
             'icon' => 'fas fa-file-alt',
             'can' => 'ver_bitacoras',
             'submenu' => [
                 [
                     'text' => 'Generar',
-                    'url' => 'generar_bitacora',
+                    'url' => 'bitacora',
                     'icon' => 'far fa-circle',
                     'can' => 'generar_bitacoras',
                     'label_color' => 'success',

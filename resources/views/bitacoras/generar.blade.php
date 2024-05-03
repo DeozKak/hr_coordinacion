@@ -16,19 +16,19 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <title>Subir Archivos</title>
 </head>
-
 <body class="body">
   
     <div class="container mt-5">
         <div class="shadow-container">
             <h2 class="text-center mb-4">Subir Archivos</h2>
            @role('Supervisor')
-            <form action="routes.php?accion=Generar_Bitacora" method="POST" enctype="multipart/form-data">
+            <form action="{{route('bitacoras.generar')}}" method="POST" enctype="multipart/form-data">
+                @csrf
                 <select class="form-select form-select-lg mb-3" name="supervisor" id="supervisor" required disabled>                                     
                 <option value="{{$supervisores->id}}"  selected>{{$supervisores->name}}</option>                
                 </select>
                 <label for="archivo" class="form-label">Seleccione Bitacora:</label>
-                @csrf
+                
                 <input class="form-control mb-3" type="file" name="archivo" id="archivo" required>
                 
                 <div class="button-container">
@@ -37,7 +37,7 @@
             </form>
             @endrole
             @unlessrole('Supervisor')
-            <form action="routes.php?accion=Generar_Bitacora" method="POST" enctype="multipart/form-data">
+            <form action="{{route('bitacoras.generar')}}" method="POST" enctype="multipart/form-data">
                 <select class="form-select form-select-lg mb-3" name="supervisor" id="supervisor" required>
                     <option value="">Seleccione Supervisor</option>
                     @foreach ($supervisores as $supervisor)

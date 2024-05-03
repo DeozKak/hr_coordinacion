@@ -31,7 +31,7 @@
     </div>
 
     <div class="input-group mb-3">
-        <select name="type_id" class="form-select @error('type_id') is-invalid @enderror">
+        <select name="type_id" class="form-control @error('type_id') is-invalid @enderror">
             <option value="" selected>Tipo de identificación</option>
             <option value="CC">CC</option>
             <option value="CE">CE</option>

@@ -30,7 +30,7 @@
                         </div>
                         <div class="form-group">
                             <label for="Tipo de identificacion">Tipo de identificación</label>
-                            <select name="Tipo de identificacion" id="Tipo de identificacion" class="form-select" disabled>
+                            <select name="Tipo de identificacion" id="Tipo de identificacion" class="form-control" disabled>
                                 <option value="{{$user->type_id}}">{{$user->type_id}}</option>
                             </select>
                         </div>
@@ -41,7 +41,7 @@
                       @if($userlogin->hasRole('admin'))
                         <div class="form-group">
                             <label for="roles">Rol</label>
-                            <select name="roles" id="roles" class="form-select">
+                            <select name="roles" id="roles" class="form-control">
                                 @foreach ($roles as $role)
                                 @if ($currentRole && $role->id === $currentRole->id)
                                 <option value="{{$role->name}}" selected>{{$role->name}}</option>
@@ -54,7 +54,7 @@
                         @else
                         <div class="form-group">
                             <label for="roles">Rol</label>
-                            <select name="roles" id="roles" class="form-select" disabled>
+                            <select name="roles" id="roles" class="form-control" disabled>
                                 @foreach ($roles as $role)
                                 @if ($currentRole && $role->id === $currentRole->id)
                                 <option value="{{$role->name}}" selected>{{$role->name}}</option>
@@ -71,7 +71,7 @@
                             <span style="margin-left: 150px;"></span>
                             <label for="permissions">Permisos asignados</label>
                             <div class="d-flex align-items-start">
-                                <select id="revokedPermissions" class="form-select" style="margin-right: 10px;" multiple>
+                                <select id="revokedPermissions" class="form-control" style="margin-right: 10px;" multiple>
                                     @foreach($availablePermissions as $permission)
                                     <option value="{{ $permission->name }}">{{ $permission->name }}</option>
                                     @endforeach
@@ -83,7 +83,7 @@
                                     <a type="button" class="btn btn-primary" id="removePermission">Quitar</a>
 
                                 </div>
-                                <select id="assignedPermissions" class="form-select" style="margin-left: 10px;" multiple>
+                                <select id="assignedPermissions" class="form-control" style="margin-left: 10px;" multiple>
                                     @foreach($userPermissions as $permission)
                                     <option value="{{ $permission->name }}">{{ $permission->name }}</option>
                                     @endforeach
