@@ -578,13 +578,6 @@ return [
                     'asset' => true,
                     'location' => '//cdn.datatables.net/2.0.5/js/dataTables.js',
                 ],
-
-                [
-                    'type' => 'js',
-                    'asset' => true,
-                    'location' => '//cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js',
-                ],
-                
                 [
                     'type' => 'css',
                     'asset' => true,

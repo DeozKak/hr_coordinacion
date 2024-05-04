@@ -31,9 +31,10 @@ class BitacoraController extends Controller
         $request->archivo->storeAs('uploads', $nombreArchivo);
 
         $rutaDestino = storage_path('app/uploads/') . $nombreArchivo;
-
+        
         $excelFilePath = $rutaDestino;
-        $this->procesarArchivoExcel($supervisor->name, $supervisor->id, $excelFilePath);
+
+       return $this->procesarArchivoExcel($supervisor->name, $supervisor->id, $excelFilePath);
     }
 
     public function procesarArchivoExcel($nom_super, $id_super, $excelFilePath)

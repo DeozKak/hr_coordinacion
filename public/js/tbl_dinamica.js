@@ -25,7 +25,8 @@ $(document).ready(function () {
 
     $('table[style*="display: none"]').parent().hide();
     $('div[class*="tab-content"]').show();
-
+   
+    /* $('.tab-pane.fade.show.active').hide(); */
     //inicializar contadores pagina 1
     $('.tbl_datos').each(function () {
 
@@ -38,19 +39,21 @@ $(document).ready(function () {
     });
 
     // Mostrar la tabla correspondiente cuando se hace clic en una pestaña
-    $('.nav-link').on('click', function () {
+    $('.btnav').on('click', function () {
         // Ocultar todas las tablas nuevamente
         $('table').hide();
-        $('.nav-link').removeClass('active');
-        $('table[style*="display: none"]').parent().hide();
+        $('.btnav').removeClass('active');
+       /*  $('table[style*="display: none"]').parent().hide(); */
+       $('div[class*="display: none"]').show();
         $('div[style*="display: table"]').hide();
-        $('div[class*="tab-content"]').show();
+        $('div[class*="tab-content"]').parent().show();
         $('div[class*="col-md-4"]').show();
+        
         //$('table[class*="no-datatable"]').hide();
         // Obtener el ID de la pestaña activa
         var tabId = $(this).attr('href');
         var divid = $('div[id*="' + tabId + '_wrapper"]').attr('id');
-
+        
         if (divid) {
             document.getElementById(divid).style.display = 'table';
         }
@@ -237,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelector('.scroll-left').addEventListener('click', scrollLeft);
     document.querySelector('.scroll-right').addEventListener('click', scrollRight);
 
-    var links = document.querySelectorAll('.nav-link');
+    var links = document.querySelectorAll('.btnav');
 
     links.forEach(function (link) {
         link.addEventListener('click', function (event) {
@@ -251,7 +254,7 @@ document.addEventListener('DOMContentLoaded', function () {
     comboBoxes.forEach(function (comboBox) {
         comboBox.addEventListener('change', function () {
 
-            var id_pestaña = $('.nav-link.active').attr('href');
+            var id_pestaña = $('.btnav.active').attr('href');
 
             contadores_dinamicos(id_pestaña);
             cambiarColor(comboBox);
