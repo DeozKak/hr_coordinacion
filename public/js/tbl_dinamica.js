@@ -22,11 +22,22 @@ $(document).ready(function () {
         "stripeClasses": ['bg-light', 'bg-secondary']
     });
 
-
+    // Ocultar todas las tablas y inicializar la tabla activa
     $('table[style*="display: none"]').parent().hide();
     $('div[class*="tab-content"]').show();
-   
-    /* $('.tab-pane.fade.show.active').hide(); */
+    $('div[class*="dt-container dt-empty-footer"]').hide();
+
+    var idElemento = $('.active').attr('href');
+    var divid = $('div[id*="' + idElemento + '_wrapper"]').attr('id');
+        
+        if (divid) {
+            var selectorid = document.getElementById(divid);
+            document.getElementById(divid).style.display = 'table';
+            var layoutCellDiv = selectorid.querySelector('.dt-layout-table');
+            var layoutCellDivStyle = layoutCellDiv.querySelector('.dt-layout-cell ');
+            layoutCellDivStyle.style.display = 'table';
+        }
+
     //inicializar contadores pagina 1
     $('.tbl_datos').each(function () {
 
@@ -55,7 +66,11 @@ $(document).ready(function () {
         var divid = $('div[id*="' + tabId + '_wrapper"]').attr('id');
         
         if (divid) {
+            var selectorid = document.getElementById(divid);
             document.getElementById(divid).style.display = 'table';
+            var layoutCellDiv = selectorid.querySelector('.dt-layout-table');
+            var layoutCellDivStyle = layoutCellDiv.querySelector('.dt-layout-cell ');
+            layoutCellDivStyle.style.display = 'table';
         }
 
         // habilitar vista tabla contadores
@@ -136,24 +151,27 @@ $(document).ready(function () {
 
             })
 
-            var csrfToken = $('#token').val();
-  
+            const csrfToken = $('#token').val();
+            const url_guardar = $('#url_guardar').val();
+            const url_borrar = $('#url_borrar').val();
+            
             // Realizar la petición AJAX
             $.ajax({
                 type: 'POST',
-                url: 'routes.php?accion=Guardar_Tabla',
+                url: url_guardar,
                 data: {
                     valoresSeleccionados: valoresSeleccionados,
                     codigoHTML: codigoHTML,
                     codigoHTML_tabla_indicadores: codigoHTML_tabla_indicadores,
-                    csrf_token: csrfToken
+                    _token: csrfToken
                 },
                 success: function (response) {
                     console.log(response)
                     if (!response.error) {
-                        var nombreArchivo = response.nombreArchivo;
+                        const nombreArchivo = response.nombreArchivo;
+                        const urlarchivo = response.ruta;
                         if (nombreArchivo !== undefined) {
-                            var urlDescarga = 'Controlador/Archivos/' + nombreArchivo;
+                            var urlDescarga = urlarchivo + nombreArchivo;
                             window.location.href = urlDescarga;
                             codigoHTML_tabla_indicadores = null;
                             valoresSeleccionados = null;
@@ -163,7 +181,7 @@ $(document).ready(function () {
                             $('#loader').hide();
                             $('#overlay').hide();
                             Swal.fire({
-                                icon: 'error',
+                                type: 'error',
                                 title: 'Error',
                                 text: "error al exportar archivo, intente de nuevo o contacte al administrador del sistema",
                             });
@@ -173,7 +191,7 @@ $(document).ready(function () {
                         $('#loader').hide();
                         $('#overlay').hide();
                         Swal.fire({
-                            icon: 'warning',
+                            type: 'warning',
                             title: 'Advertencia',
                             text: response.error,
                         });
@@ -181,9 +199,9 @@ $(document).ready(function () {
 
                     $.ajax({
                         type: 'POST',
-                        url: 'routes.php?accion=borrar_archivos',
+                        url: url_borrar,
                         data: {
-                            csrf_token: csrfToken
+                            _token: csrfToken
                         },
                         success: function (response) {
 
@@ -192,7 +210,7 @@ $(document).ready(function () {
                             $('#loader').hide();
                             $('#overlay').hide();
                             Swal.fire({
-                                icon: 'error',
+                                type: 'error',
                                 title: 'Error',
                                 text: error,
                             });
@@ -200,11 +218,11 @@ $(document).ready(function () {
                     });
                 },
                 error: function (xhr, status, error) {
-
+                    console.log(xhr.responseText);
                     $('#loader').hide();
                     $('#overlay').hide();
                     Swal.fire({
-                        icon: 'error',
+                        type: 'error',
                         title: 'Error',
                         text: error,
                     });

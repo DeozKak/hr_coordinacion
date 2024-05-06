@@ -3,7 +3,7 @@
 @section('title', 'Bitácoras')
 
 @section('content_header')
-    <h1>Bitácoras</h1>
+<h1>Bitácoras</h1>
 @endsection
 
 @section('content')
@@ -16,65 +16,76 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <title>Subir Archivos</title>
 </head>
+
 <body class="body">
-  
+
     <div class="container mt-5">
         <div class="shadow-container">
             <h2 class="text-center mb-4">Subir Archivos</h2>
-           @role('Supervisor')
+            @role('Supervisor')
             <form action="{{route('bitacoras.generar')}}" method="POST" enctype="multipart/form-data">
                 @csrf
-                <select class="form-select form-select-lg mb-3" name="supervisor" id="supervisor" required disabled>                                     
-                <option value="{{$supervisores->id}}"  selected>{{$supervisores->name}}</option>                
+                <select class="form-select form-select-lg mb-3" name="supervisor" id="supervisor" disabled>
+                    <option value="{{$supervisores->id}}" selected>{{$supervisores->name}}</option>
                 </select>
+                @error('supervisor')
+                <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
                 <label for="archivo" class="form-label">Seleccione Bitacora:</label>
-                
-                <input class="form-control mb-3" type="file" name="archivo" id="archivo" required>
-                
+
+                <input class="form-control mb-3" type="file" name="archivo" id="archivo">
+                @error('archivo')
+                <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
                 <div class="button-container">
                     <button class="btn btn-primary" type="submit">Subir Archivo</button>
-                
+
             </form>
             @endrole
             @unlessrole('Supervisor')
             <form action="{{route('bitacoras.generar')}}" method="POST" enctype="multipart/form-data">
-                <select class="form-select form-select-lg mb-3" name="supervisor" id="supervisor" required>
+                <select class="form-select form-select-lg mb-3" name="supervisor" id="supervisor">
                     <option value="">Seleccione Supervisor</option>
                     @foreach ($supervisores as $supervisor)
-                        
-                    <option value="{{$supervisor->id}}" >{{$supervisor->name}}</option>
+
+                    <option value="{{$supervisor->id}}">{{$supervisor->name}}</option>
                     @endforeach
                 </select>
+
+                @error('supervisor')
+                <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
                 <label for="archivo" class="form-label">Seleccione Bitacora:</label>
                 @csrf
-                <input class="form-control mb-3" type="file" name="archivo" id="archivo" required>
-                
+                <input class="form-control mb-3" type="file" name="archivo" id="archivo">
+                @error('archivo')
+                <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
                 <div class="button-container">
                     <button class="btn btn-primary" type="submit">Subir Archivo</button>
-                
+
             </form>
             @endunlessrole
             <form action="routes.php?accion=devoluciones" method="POST" enctype="multipart/form-data">
-                    <button class="btn btn-primary" type="submit">Ver contratos en Devolución</button>
-                </div>
-            </form>
+                <button class="btn btn-primary" type="submit">Ver contratos en Devolución</button>
         </div>
+        </form>
+    </div>
     </div>
 
+    @if (session('error'))
     <script>
-       document.addEventListener('DOMContentLoaded',(event) =>{
-            if(<?php echo isset($_SESSION['mostrarAlertaError']) ? 'true' : 'false'; ?>){
+        document.addEventListener('DOMContentLoaded', function() {
             Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: '<?php if(isset($_SESSION['mostrarAlertaError'])){echo  $_SESSION['mostrarAlertaError'];} ?>',
+                title: "Error",
+                text: "{{session('error')}}",
+                type: "error"
             });
-            <?php if(isset($_SESSION['mostrarAlertaError'])){unset($_SESSION['mostrarAlertaError']);} ?>
-        }
         });
     </script>
+    @endif
+
 </body>
 
-</html>
 
 @endsection

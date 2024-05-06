@@ -18,6 +18,9 @@
 <body class="body">
     <div id="loader" style="display: none;"></div>
     <div id="overlay" style="display: none;"></div>
+    <input type="hidden" id="token" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" id="url_guardar" name="route_guardar" value="{{ route('bitacoras.guardar_tabla',['super' => $id_super]) }}">
+    <input type="hidden" id="url_borrar" name="route_borrar" value="{{ route('bitacoras.borrar_archivos') }}">
     <div class="shadow-container">
         <div class="row justify-content-center mt-3">
             <div class="col-lg-12">

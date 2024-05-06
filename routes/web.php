@@ -36,6 +36,11 @@ Route::post('/gestion/filterData', [CoordinacionController::class, 'filterData']
 //Rutas para bitacoras-----------------------------------------------------------------------------
 Route::get('/bitacora', [BitacoraController::class, 'ver'])->name('bitacora');
 Route::post('/generar_bitacora', [BitacoraController::class, 'generar_bitacora'])->name('bitacoras.generar');
+Route::post('/guardar_tabla/{super}', [BitacoraController::class, 'guardar_tabla'])->name('bitacoras.guardar_tabla');
+Route::post('/borrar_archivos', [BitacoraController::class, 'borrar_archivos'])->name('bitacoras.borrar_archivos');
+Route::get('/storage/app/uploads/{file}', function($nombreArchivo){
+    return response()->download(storage_path('app/uploads/').$nombreArchivo);
+})->name('bitacoras.download');
 
 //Rutas para inspectores----------------------------------------------------------------------------
 Route::get('/inspectores', [InspectorController::class, 'index'])->name('inspectores.index');
