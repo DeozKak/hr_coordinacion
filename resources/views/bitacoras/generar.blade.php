@@ -25,7 +25,7 @@
             @role('Supervisor')
             <form action="{{route('bitacoras.generar')}}" method="POST" enctype="multipart/form-data">
                 @csrf
-                <select class="form-select form-select-lg mb-3" name="supervisor" id="supervisor" disabled>
+                <select class="form-control form-select-lg mb-3" name="supervisor" id="supervisor" disabled>
                     <option value="{{$supervisores->id}}" selected>{{$supervisores->name}}</option>
                 </select>
                 @error('supervisor')
@@ -66,10 +66,9 @@
 
             </form>
             @endunlessrole
-            <form action="routes.php?accion=devoluciones" method="POST" enctype="multipart/form-data">
-                <button class="btn btn-primary" type="submit">Ver contratos en Devolución</button>
+
         </div>
-        </form>
+      
     </div>
     </div>
 

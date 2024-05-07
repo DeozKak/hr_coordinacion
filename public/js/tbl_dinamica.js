@@ -166,12 +166,12 @@ $(document).ready(function () {
                     _token: csrfToken
                 },
                 success: function (response) {
-                    console.log(response)
+                   
                     if (!response.error) {
                         const nombreArchivo = response.nombreArchivo;
                         const urlarchivo = response.ruta;
                         if (nombreArchivo !== undefined) {
-                            var urlDescarga = urlarchivo + nombreArchivo;
+                            const urlDescarga = urlarchivo + nombreArchivo;
                             window.location.href = urlDescarga;
                             codigoHTML_tabla_indicadores = null;
                             valoresSeleccionados = null;
@@ -206,7 +206,8 @@ $(document).ready(function () {
                         success: function (response) {
 
                         },
-                        error: function (error) {
+                        error: function (xhr, status, error) {
+                            
                             $('#loader').hide();
                             $('#overlay').hide();
                             Swal.fire({
@@ -218,7 +219,7 @@ $(document).ready(function () {
                     });
                 },
                 error: function (xhr, status, error) {
-                    console.log(xhr.responseText);
+                   
                     $('#loader').hide();
                     $('#overlay').hide();
                     Swal.fire({

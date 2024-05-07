@@ -10,8 +10,8 @@ use DOMDocument;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Modelo\Tbl_dv_insp as ModeloTbl_dv_insp;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
@@ -267,7 +267,7 @@ class BitacoraController extends Controller
                                 'orden_externa' => $hoja->getCell([9, $indiceFila])->getValue(),
                                 'resultado' => $hoja->getCell([11, $indiceFila])->getValue(),
                                 'causal' => $contenidoCelda,
-                                'fecha_devolucion' => NULL,
+                                'fecha_devolucion' => date('Y-m-d'),
                                 'gestionado' => 0,
                                 'dias_sin_gestion' => 0
                             );
@@ -379,35 +379,47 @@ class BitacoraController extends Controller
 
             foreach ($datos_array_OK as $datos_ok) {
 
-                $validacion = new tbl_dv_insp();
-                $validacion->contrato = $datos_ok['contrato'];
-                $validacion->orden_trabajo = $datos_ok['orden_de_trabajo'];
-                $validacion->fecha_gestion = date('Y-m-d');
+
                 try {
+                    $resultado_ok = Tbl_dv_insp::where('contrato', $datos_ok['contrato'])
+                        ->where('orden_trabajo', $datos_ok['orden_de_trabajo'])
+                        ->get();
+                        
                     //  $resultado_ok = $validacion->getValidación_existentes();
                 } catch (\Exception $e) {
                     throw new \Exception("Error al consultar los datos en la base de datos");
                 }
+                
                 // BitacoraController::dd($resultado_ok[0]['FECHA_GESTION']);
-                if (!empty($resultado_ok) && empty($resultado_ok[0]['FECHA_GESTION'])) {
-                    $validacion->setActualizar_gestion();
+                if (!$resultado_ok->isEmpty()) {
+                    foreach ($resultado_ok as $resultado) {
+                       if($resultado->fecha_gestion == null){
+                        $resultado->gestionado = 1;
+                        $resultado->fecha_gestion = date('Y-m-d');
+                        $resultado->save();
+                       }
+                    }
+                    
                 }
             }
         }
-
+        
         if (!empty($datos_array)) {
-
+           
             foreach ($datos_array as $dato) {
-                $validacion = new Tbl_dv_insp();
-                $validacion->contrato = $dato['contrato'];
-                $validacion->orden_trabajo = $dato['orden_de_trabajo'];
                 try {
+                    
+                    $resultado = Tbl_dv_insp::where('contrato', $dato['contrato'])
+                        ->where('orden_trabajo', $dato['orden_de_trabajo'])
+                        ->get();
+                        
                     //  $resultado = $validacion->getValidación_existentes();
                 } catch (\Exception $e) {
                     throw new \Exception("Error al consultar los datos en la base de datos");
                 }
-
-                if (empty($resultado)) {
+               
+                if ($resultado->isEmpty()) {
+                    
                     $guardar_dv = new Tbl_dv_insp();
                     $guardar_dv->supervisor = $dato['supervisor'];
                     $guardar_dv->inspector = $dato['inspector'];
@@ -421,12 +433,9 @@ class BitacoraController extends Controller
                     $guardar_dv->fecha_dv = $dato['fecha_devolucion'];
                     $guardar_dv->gestionado = $dato['gestionado'];
                     $guardar_dv->dias_sin_gestion = $dato['dias_sin_gestion'];
-                    try {
-                        $guardar_dv->save;
-                    } catch (\Exception $e) {
-
-                        throw new \Exception("Error al guardar los datos en la base de datos");
-                    }
+                    $guardar_dv->activado = 1;
+                        
+                    $guardar_dv->save();
                 }
             }
         }
@@ -447,35 +456,6 @@ class BitacoraController extends Controller
         ]);
     }
 
-    public function borrar_archivos()
-    {
-        $directorio = '../Controlador/Archivos/';
-
-        $archivos = scandir($directorio);
-
-        if (count($archivos) > 4) {
-
-            usort($archivos, function ($a, $b) use ($directorio) {
-                return filemtime("$directorio/$a") - filemtime("$directorio/$b");
-            });
-
-            // Calcular cuántos archivos se deben eliminar
-            $numArchivosABorrar = count($archivos) - 4;
-
-
-            for ($i = 0; $i < $numArchivosABorrar; $i++) {
-                // Ruta completa del archivo a borrar
-                $archivoABorrar = "$directorio/{$archivos[$i]}";
-
-                // Borrar el archivo
-                unlink($archivoABorrar);
-            }
-            return "Archivos depurados";
-        } else {
-            return "No es necesario Depurar";
-        }
-    }
-
     public function getColorFromStyle($style)
     {
 
@@ -490,6 +470,38 @@ class BitacoraController extends Controller
             return 'FFFFFF'; // Color blanco predeterminado si no se encuentra ningún color
         }
     }
+
+    public function borrar_archivos()
+{
+    $directorio = storage_path('app/uploads/');
+
+    $archivos = array_diff(scandir($directorio), array('.', '..'));
+    
+    if (count($archivos) > 4) {
+
+        usort($archivos, function ($a, $b) use ($directorio) {
+            return filemtime("$directorio/$a") - filemtime("$directorio/$b");
+        });
+
+        // Calcular cuántos archivos se deben eliminar
+        $numArchivosABorrar = count($archivos) - 4;
+
+        for ($i = 0; $i < $numArchivosABorrar; $i++) {
+            // Ruta completa del archivo a borrar
+            $archivoABorrar = "$directorio/{$archivos[$i]}";
+
+            // Verificar si es un archivo antes de intentar eliminarlo
+            if (is_file($archivoABorrar)) {
+                // Borrar el archivo
+                unlink($archivoABorrar);
+            }
+        }
+        return "Archivos depurados";
+    } else {
+        return "No es necesario Depurar";
+    }
+}
+   
 
     public function conversion_fecha($fecha_sin_formato)
     {
@@ -539,4 +551,131 @@ class BitacoraController extends Controller
         $hoja_OK->setCellValue([18, 4], $contadorVacias);
         $hoja_OK->setCellValue([18, 5], $contador4Recintos);
     }
+
+    public function devoluciones()
+    {
+        $devoluciones = Tbl_dv_insp::where('ACTIVADO', 1)->get();
+        $gestionados = Tbl_dv_insp::where('ACTIVADO',0)->get();
+        return view('bitacoras.devoluciones',compact('devoluciones','gestionados'));
+    }
+
+    public  function exportar_tabla_devoluciones(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'codigoHTMLdev' => 'required',
+            'codigoHTMLges' => 'required'
+        ], [
+            'codigoHTMLdev.required' => 'Informacion de devoluciones requerida',
+            'codigoHTMLges.requided' => 'Informacion de gestionados requerida'
+        ]);
+        try{
+    
+        $codigoHTML = $request->codigoHTMLdev.$request->codigoHTMLges;
+
+        // Definir el patrón para encontrar las etiquetas <table> en el código HTML
+        $patron = '/<table.*?>(.*?)<\/table>/s';
+
+        preg_match_all($patron, $codigoHTML, $matches);
+           // dd($matches);
+        $spreadsheet = new Spreadsheet();
+        foreach ($matches[0] as $indice => $tablaHTML) {
+            $hoja = $spreadsheet->createSheet($indice);
+           if($indice == 0){
+            $hoja->setTitle('Devoluciones');
+        }else{
+            $hoja->setTitle('Historicos');
+        }
+            $dom = new DOMDocument();
+            $dom->loadHTML($tablaHTML);
+
+            $filas = $dom->getElementsByTagName('tr');
+
+            $indiceFila = 1;
+
+            foreach ($filas as $fila) {
+                // Obtener todas las celdas de la fila
+                $celdas = $fila->getElementsByTagName('td');
+
+                $encabezados = $fila->getElementsByTagName('th');
+
+                // Si hay celdas de encabezado, procesarlas
+                if ($encabezados->length > 0) {
+                    $indiceColumna = 1;
+                    foreach ($encabezados as $encabezado) {
+                        // Obtener el contenido del encabezado
+                        $contenidoEncabezado = $encabezado->nodeValue;
+
+                        // Pegar el contenido del encabezado en la hoja de cálculo
+                        $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoEncabezado);
+
+                        // Incrementar el índice de columna
+                        $indiceColumna++;
+                    }
+                    // Incrementar el índice de fila
+                    $indiceFila++;
+                }
+
+                // Si hay celdas de datos, procesarlas
+                if ($celdas->length > 0) {
+                    // Inicializar el índice de columna en 1
+                    $indiceColumna = 1;
+
+                    foreach ($celdas as $celda) {
+
+                        $estiloCelda = $celda->getAttribute('style');
+
+                        $contenidoCelda = $celda->nodeValue;
+
+                        $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoCelda);
+                        $celda = $hoja->getCell([$indiceColumna, $indiceFila]);
+
+                        if (!empty($estiloCelda)) {
+                            $celda->getStyle()->applyFromArray([
+                                'fill' => [
+                                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                                    'startColor' => ['rgb' => $this->getColorFromStyle($estiloCelda)],
+                                ],
+                            ]);
+                        }
+
+                        // Incrementar el índice de columna
+                        $indiceColumna++;
+                    }
+                    $indiceFila++;
+                }
+            }
+             // Aplicar bordes a la tabla
+             $hoja->getStyle('A1:' . $hoja->getHighestColumn() . $hoja->getHighestRow())
+             ->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+
+             // Ajustar automáticamente el ancho de las columnas al contenido
+             foreach (range('A', $hoja->getHighestDataColumn()) as $columnID) {
+                $hoja->getColumnDimension($columnID)->setAutoSize(true);
+            }
+
+            $hoja->getStyle('A1:M1')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('0096ff');
+        }
+
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');;
+
+        $fecha_actual = date('Y-m-d');
+
+        $writer->save(storage_path('app/uploads/'). "Devoluciones ".$fecha_actual. ".xlsx");
+
+        $nombreArchivo = "Devoluciones ".$fecha_actual. ".xlsx";
+
+        
+        header('Content-Type: application/json');
+        return response()->json([
+            'nombreArchivo' => $nombreArchivo,
+            'ruta' => '../storage/app/uploads/'
+        ]);
+        }catch(\Exception $e){
+            
+            http_response_code(500);
+          
+        }
+    }
+
+    
 }

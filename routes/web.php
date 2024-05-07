@@ -41,6 +41,8 @@ Route::post('/borrar_archivos', [BitacoraController::class, 'borrar_archivos'])-
 Route::get('/storage/app/uploads/{file}', function($nombreArchivo){
     return response()->download(storage_path('app/uploads/').$nombreArchivo);
 })->name('bitacoras.download');
+Route::get('/bitacora/devoluciones', [BitacoraController::class, 'devoluciones'])->name('bitacora.devoluciones');
+Route::post('/bitacora/exportar_devoluciones', [BitacoraController::class, 'exportar_tabla_devoluciones'])->name('bitacora.exportar_devoluciones');
 
 //Rutas para inspectores----------------------------------------------------------------------------
 Route::get('/inspectores', [InspectorController::class, 'index'])->name('inspectores.index');

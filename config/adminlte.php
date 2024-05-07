@@ -441,8 +441,8 @@ return [
                     'label_color' => 'success',
                 ],
                 [
-                    'text' => 'Ver',
-                    'url' => 'bitacora2',
+                    'text' => 'Devoluciones',
+                    'url' => 'bitacora/devoluciones',
                     'icon' => 'far fa-circle',
                     'can' => 'ver_bitacoras',
                     'label_color' => 'success',
