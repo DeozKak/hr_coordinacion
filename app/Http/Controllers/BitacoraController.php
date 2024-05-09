@@ -10,7 +10,7 @@ use DOMDocument;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Modelo\Tbl_dv_insp as ModeloTbl_dv_insp;
+use App\Models\tbl_localidades_municipio;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -62,10 +62,12 @@ class BitacoraController extends Controller
 
         session(['nom_archivo' => basename($excelFilePath)]);
         session(['super' => $nom_super]);
-
+        //consultas a la base de datos
         $inspectores = Tbl_insp_cali::where('SUPERVISOR', $id_super)
             ->where('state', 1)
             ->get();
+
+        $municipios = tbl_localidades_municipio::all();
 
         $nombres = array();
         $ids = array();
@@ -89,7 +91,7 @@ class BitacoraController extends Controller
 
         unlink($excelFilePath);
 
-        return view('bitacoras.tabla', compact('nombres', 'spreadsheet', 'id_super'));
+        return view('bitacoras.tabla', compact('nombres', 'spreadsheet', 'id_super', 'municipios'));
     }
 
     public function guardar_tabla(Request $request, User $super)
@@ -556,6 +558,19 @@ class BitacoraController extends Controller
     {
         $devoluciones = Tbl_dv_insp::where('ACTIVADO', 1)->get();
         $gestionados = Tbl_dv_insp::where('ACTIVADO',0)->get();
+
+        foreach ($devoluciones as $devolucion) {
+            if($devolucion->GESTIONADO == 1){
+                $devolucion->DIAS_SIN_GESTION = 0;
+                $devolucion->save();
+                continue;
+            }
+            $fecha_devolucion = new DateTime($devolucion->FECHA_DV);
+            $fecha_actual = new DateTime(date('Y-m-d'));
+            $diferencia = $fecha_devolucion->diff($fecha_actual);
+            $devolucion->DIAS_SIN_GESTION = $diferencia->days;
+            $devolucion->save();
+        }
         return view('bitacoras.devoluciones',compact('devoluciones','gestionados'));
     }
 

@@ -68,7 +68,7 @@
             @endunlessrole
 
         </div>
-      
+
     </div>
     </div>
 
@@ -82,8 +82,10 @@
             });
         });
     </script>
+    @php
+        session()->forget('error');
+    @endphp
     @endif
-
 </body>
 
 

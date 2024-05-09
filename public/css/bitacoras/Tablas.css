@@ -68,3 +68,20 @@
         border-radius: 10px;
         background-color: #f8f9fa;
     }
+
+    #btnPapel{
+       margin: 10px;      
+    }
+
+    .form-group {
+      display: flex;
+      align-items: center;
+  }
+
+  .form-group label {
+      margin-right: 10px;
+  }
+
+  .form-group input {
+      flex: 1;
+  }

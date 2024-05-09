@@ -3,18 +3,21 @@
 @section('title', 'Bitácoras')
 
 @section('content_header')
-    <h1>Bitácoras</h1>
+<h1>Bitácoras</h1>
 @endsection
 
 @section('content')
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="{{asset('css/bitacoras/Tablas.css')}}">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{{asset('js/tbl_dinamica.js')}}"></script>
+
 </head>
+
 <body class="body">
     <div id="loader" style="display: none;"></div>
     <div id="overlay" style="display: none;"></div>
@@ -23,7 +26,9 @@
     <input type="hidden" id="url_borrar" name="route_borrar" value="{{ route('bitacoras.borrar_archivos') }}">
     <div class="shadow-container">
         <div class="row justify-content-center mt-3">
+
             <div class="col-lg-12">
+                <button class="btn btn-primary" id="btnPapel">Agregar Inspeccion en Papel</button>
                 <div class="card text-center border-info w-100">
                     <div class="card-header" style="white-space: nowrap;">
                         <div class="nav-wrapper" style="overflow-x: hidden ; overflow-y: hidden; display: flex; flex-direction: column-reverse;">
@@ -212,6 +217,155 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Ventana emergente -->
+                <div class="modal fade" id="ventanaEmergente" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalLabel">Agregar Inspección en papel</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <div class="col-md-6">
+                                        <label for="nombre">Inspector:</label>
+                                        <select class="form-control" name="nombre" id="nombre">
+                                            <option value="">Seleccione Inspector</option>
+                                            @foreach ($nombres as $nombre)
+                                            <option value="{{$nombre}}">{{$nombre}}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <br>
+
+                                    <div class="col-md-6">
+                                        <label for="municipio">Municipio:</label>
+                                        <select class="form-control" name="municipio" id="municipio">
+                                            <option value="">Seleccione Municipio</option>
+                                            @foreach ($municipios as $municipio)
+                                            <option value="{{$municipio->id}}">{{$municipio->nombre}}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <br>
+                                <div class="form-group">
+                                    <div class="col-md-6">
+                                        <label for="fecha">Fecha:</label>
+                                        <input type="date" class="form-control" name="fecha" id="fecha" placeholder="dd-mm-yy">
+                                    </div>
+
+                                    <br>
+
+                                    <div class="col-md-6">
+                                        <label for="N°acta">N° ACTA</label>
+                                        <input type="text" class="form-control" name="N°acta" id="N°acta">
+                                    </div>
+                                </div>
+                                <br>
+                                <div class="form-group">
+                                    <div class="col-md-6">
+                                        <label for="tipo_trabajo">Tipo de Trabajo</label>
+                                        <select class="form-control" name="tipo_trabajo" id="tipo_trabajo">
+                                            <option value="">Seleccione Tipo de Trabajo</option>
+                                            <option value="RP 10444">RP 10444</option>
+                                            <option value="RP 12161">RP 12161</option>
+                                            <option value="RN 12162">RN 12162</option>
+                                            <option value="SA 12163">SA 12163</option>
+                                            <option value="SA 12164">SA 12164</option>
+                                        </select>
+                                    </div>
+
+                                    <br>
+
+                                    <div class="col-md-6">
+                                        <label for="contrato">Contrato</label>
+                                        <input type="text" class="form-control" name="contrato" id="contrato" value=":">
+                                    </div>
+                                </div>
+                                <br>
+                                <div class="form-group">
+                                    <div class="col-md-6">
+                                        <label for="orden_trabajo">Orden de trabajo</label>
+                                        <input type="text" class="form-control" name="orden_trabajo" id="orden_trabajo">
+                                    </div>
+
+                                    <br>
+
+                                    <div class="col-md-6">
+                                        <label for="categoria">Categoria</label>
+                                        <select class="form-control" name="categoria" id="categoria">
+                                            <option value="">Seleccione categoria</option>
+                                            <option value="RESIDENCIAL">RESIDENCIAL</option>
+                                            <option value="COMERCIAL">COMERCIAL</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <br>
+                                <div class="form-group">
+                                    <div class="col-md-6">
+                                        <label for="hora_inicio">Hora Inicio</label>
+                                        <input type="time" class="form-control" name="hora_inicio" id="hora_inicio" step="60" pattern="[0-9]{2}:[0-9]{2}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="hora_final" style="margin-left: 10px;">Hora Final</label>
+                                        <input type="time" class="form-control" name="hora_final" id="hora_final" step="60" pattern="[0-9]{2}:[0-9]{2}">
+                                    </div>
+                                </div>
+                                <br>
+                                <div class="form-group">
+                                    <div class="col-md-6">
+                                        <label for="recintos">4 recintos o más</label>
+                                        <select class="form-control" name="recintos" id="recintos">
+                                            <option value="NO" selected>NO</option>
+                                            <option value="SI">SI</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="devolucion">Estado</label>
+                                        <select class="form-control" name="devolucion" id="devolucion">
+                                            <option value="OK" selected>OK</option>
+                                            <option value="DV">DV</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <br>
+                                <div class="form-group">
+                                    <div class="col-md-6">
+                                        <label for="resultado_cierre">Resultado Cierre</label>
+                                        <select class="form-control" name="resultado_cierre" id="resultado_cierre">
+                                            <option value="">Seleccione categoria</option>
+                                            <option value=".CERTIFICADA">.CERTIFICADA</option>
+                                            <option value="CERTIFICADA CON NOVEDADES">CERTIFICADA CON NOVEDADES</option>
+                                            <option value=".INSPECCIONADA CON DEFECTO CRITICO VALLE">.INSPECCIONADA CON DEFECTO CRITICO VALLE</option>
+                                            <option value=".INSPECCIONADA CON DEFECTO NO CRITICO VALLE">.INSPECCIONADA CON DEFECTO NO CRITICO VALLE</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6" style="display: none;" id="causal_devolucion">
+                                        <label for="causal">Causal Devolución</label> 
+                                        <select class="form-control" name="causal" id="causal">
+                                            <option value="--SELECCIONE CAUSAL--" selected>--SELECCIONE CAUSAL--</option>
+                                            <option value="CONTRATO ERRADO">CONTRATO ERRADO</option>
+                                            <option value="NUMERO DE CUOTAS">NUMERO DE CUOTAS</option>
+                                            <option value="FALTA CARTA">FALTA CARTA</option>
+                                            <option value="FALTA INFORMACIÓN">FALTA INFORMACIÓN</option>
+                                            <option value="INFORMACION ERRADA">INFORMACION ERRADA</option>
+                                            <option value="ORDEN YA REGISTRADA">ORDEN YA REGISTRADA</option>
+                                        </select>                         
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button  class="btn btn-success" id="btn-agregar">Agregar</button>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="d-grid gap-2 d-md-flex justify-content-md">
                     <div class="card-footer" style="margin-top: 10px; margin-bottom: 10px;">
                         <div class="card-footer" style="margin-top: 10px; margin-bottom: 10px;">

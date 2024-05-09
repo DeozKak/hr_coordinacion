@@ -1,5 +1,7 @@
 var codigoHTML = "";
 $(document).ready(function () {
+
+
     // Recorrer cada tabla con la clase "tbl_datos"
     $('.tbl_datos').each(function () {
 
@@ -29,14 +31,14 @@ $(document).ready(function () {
 
     var idElemento = $('.active').attr('href');
     var divid = $('div[id*="' + idElemento + '_wrapper"]').attr('id');
-        
-        if (divid) {
-            var selectorid = document.getElementById(divid);
-            document.getElementById(divid).style.display = 'table';
-            var layoutCellDiv = selectorid.querySelector('.dt-layout-table');
-            var layoutCellDivStyle = layoutCellDiv.querySelector('.dt-layout-cell ');
-            layoutCellDivStyle.style.display = 'table';
-        }
+
+    if (divid) {
+        var selectorid = document.getElementById(divid);
+        document.getElementById(divid).style.display = 'table';
+        var layoutCellDiv = selectorid.querySelector('.dt-layout-table');
+        var layoutCellDivStyle = layoutCellDiv.querySelector('.dt-layout-cell ');
+        layoutCellDivStyle.style.display = 'table';
+    }
 
     //inicializar contadores pagina 1
     $('.tbl_datos').each(function () {
@@ -54,17 +56,17 @@ $(document).ready(function () {
         // Ocultar todas las tablas nuevamente
         $('table').hide();
         $('.btnav').removeClass('active');
-       /*  $('table[style*="display: none"]').parent().hide(); */
-       $('div[class*="display: none"]').show();
+        /*  $('table[style*="display: none"]').parent().hide(); */
+        $('div[class*="display: none"]').show();
         $('div[style*="display: table"]').hide();
         $('div[class*="tab-content"]').parent().show();
         $('div[class*="col-md-4"]').show();
-        
+
         //$('table[class*="no-datatable"]').hide();
         // Obtener el ID de la pestaña activa
         var tabId = $(this).attr('href');
         var divid = $('div[id*="' + tabId + '_wrapper"]').attr('id');
-        
+
         if (divid) {
             var selectorid = document.getElementById(divid);
             document.getElementById(divid).style.display = 'table';
@@ -154,7 +156,7 @@ $(document).ready(function () {
             const csrfToken = $('#token').val();
             const url_guardar = $('#url_guardar').val();
             const url_borrar = $('#url_borrar').val();
-            
+
             // Realizar la petición AJAX
             $.ajax({
                 type: 'POST',
@@ -166,7 +168,7 @@ $(document).ready(function () {
                     _token: csrfToken
                 },
                 success: function (response) {
-                   
+
                     if (!response.error) {
                         const nombreArchivo = response.nombreArchivo;
                         const urlarchivo = response.ruta;
@@ -207,7 +209,7 @@ $(document).ready(function () {
 
                         },
                         error: function (xhr, status, error) {
-                            
+
                             $('#loader').hide();
                             $('#overlay').hide();
                             Swal.fire({
@@ -219,7 +221,7 @@ $(document).ready(function () {
                     });
                 },
                 error: function (xhr, status, error) {
-                   
+
                     $('#loader').hide();
                     $('#overlay').hide();
                     Swal.fire({
@@ -380,5 +382,122 @@ function contadores_dinamicos(nombre) {
     $('.totalCount.' + apellido + '.' + P_nombre).text(totalCount);
 }
 
+document.addEventListener('DOMContentLoaded', function () {
 
+    // abrir modal agregar inspecciones en papel
+    document.getElementById('btnPapel').addEventListener('click', function () {
+        $('#ventanaEmergente').modal('show');
+    });
+    // limitar fechas en el campo fecha
+    const inputFecha = document.getElementById('fecha');
+
+    // Obtener la fecha actual
+    const fechaActual = new Date();
+
+    // Restar 7 días a la fecha actual
+    let fechaMinima = new Date(fechaActual);
+    fechaMinima.setDate(fechaActual.getDate() - 7);
+
+    // Formatear la fecha mínima para establecerla en el campo de fecha
+    const dia = ("0" + fechaMinima.getDate()).slice(-2);
+    const mes = ("0" + (fechaMinima.getMonth() + 1)).slice(-2);
+    const fechaFormateada = fechaMinima.getFullYear() + "-" + mes + "-" + dia;
+
+    // Establecer la fecha mínima en el campo de fecha
+    inputFecha.min = fechaFormateada;
+    inputFecha.setAttribute('placeholder', 'dd-mm-yy');
+    //--------------------------------------------------------------------------------
+    // campo numero de acta
+    const inputNumero = document.getElementById('N°acta');
+
+    // Permitir solo números
+    inputNumero.addEventListener('input', function () {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+
+    // Quitar los botones de aumento/decremento
+    inputNumero.addEventListener('mousewheel', function (event) {
+        event.preventDefault();
+    });
+    //--------------------------------------------------------------------------------
+    // campo contrato
+    const inputContrato = document.getElementById('contrato');
+
+    // Preenlazar el campo con ":" al inicio al enfocarse en él
+    inputContrato.addEventListener('focus', function () {
+        if (!this.value.startsWith(':')) {
+            this.value = ':' + this.value;
+        }
+    });
+
+    // Evitar la edición del ":" al inicio y permitir solo números después del ":"
+    inputContrato.addEventListener('input', function () {
+        if (this.value.startsWith(':')) {
+            // Permitir solo números después del ":"
+            this.value = ':' + this.value.replace(/[^0-9]/g, '');
+
+        } else {
+            // Si se elimina el ":", volver a agregarlo
+            this.value = ':' + this.value.replace(/[^0-9]/g, '');
+
+        }
+    });
+
+    // Evitar el evento de rueda del mouse
+    inputContrato.addEventListener('mousewheel', function (event) {
+        event.preventDefault();
+    });
+    //--------------------------------------------------------------------------------
+    // campo orden de trabajo
+    const inputOrden = document.getElementById('orden_trabajo');
+
+    // Permitir solo números
+    inputOrden.addEventListener('input', function () {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+
+    // Quitar los botones de aumento/decremento
+    inputOrden.addEventListener('mousewheel', function (event) {
+        event.preventDefault();
+    });
+    //-------------------------------------------------------------------------------- 
+    // control de devoluci´pn
+    const devolucionSelect = document.getElementById('devolucion');
+    const causalDevolucionGroup = document.getElementById('causal_devolucion');
+
+    devolucionSelect.addEventListener('change', function () {
+        if (this.value === 'DV') {
+            causalDevolucionGroup.style.display = 'block'; // Mostrar el campo "Causal Devolución"
+        } else {
+            causalDevolucionGroup.style.display = 'none'; // Ocultar el campo "Causal Devolución"
+        }
+    });
+
+    const btnAgregar = document.getElementById('btn-agregar');
+
+    btnAgregar.addEventListener('click', function () {
+        const campos = document.querySelectorAll('#ventanaEmergente input, #ventanaEmergente select');
+
+        let formularioValido = true;
+
+        campos.forEach(campo => {
+            if (campo.value.trim() === '' || campo.value === ':') {
+                formularioValido = false;
+                campo.style.border = '1px solid red'; // Establecer borde rojo para campos no completados
+            } else {
+                campo.style.border = ''; // Restablecer estilo de borde por defecto
+            }
+        });
+
+        if (formularioValido) {
+            // Aquí puedes enviar el formulario o realizar alguna acción adicional
+            campos.forEach(campo => {
+                campo.value = campo.getAttribute('value') || ''; 
+            });
+        } else {
+            alert('Por favor complete todos los campos antes de enviar el formulario.');
+        }
+    });
+
+});
 
