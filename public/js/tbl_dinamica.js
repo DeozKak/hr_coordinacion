@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    var comboBoxes = document.querySelectorAll('select');
+    var comboBoxes = document.querySelectorAll('select.form-select.nombre-columna');
 
     comboBoxes.forEach(function (comboBox) {
         comboBox.addEventListener('change', function () {
@@ -315,6 +315,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Verificar si el primer combobox tiene el valor "OK"
         if (valorSeleccionado === 'OK') {
             // Ocultar el segundo combobox
+
             segundoComboBox.value = '--SELECCIONE CAUSAL--';
             segundoComboBox.style.display = 'none';
         } else {
@@ -327,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function () {
 function contadores_dinamicos(nombre) {
     // Eliminar el símbolo "#"
     nombre_sin_simbolo = nombre.replace("#", "");
-
+    
     // Separar apellido y primer nombre
     var partesNombre = nombre_sin_simbolo.split(" ");
     var apellido = partesNombre[0];
@@ -346,14 +347,15 @@ function contadores_dinamicos(nombre) {
 
     $('' + nombre_convertido + ' .tbl_datos').DataTable().rows().every(function () {
 
-
+       
         var selectValueCombobox = $(this.node()).find('td:eq(15) select').val();
         var valor_cierre = $(this.node()).find('td:eq(10)').text();
-
+        console.log(selectValueCombobox);
         // Verificar si la fila cumple con los criterios necesarios para contar
         if (selectValueCombobox === 'OK') {
-
+            
             switch (valor_cierre) {
+                
                 case '.CERTIFICADA':
                     certificadaCount++;
                     totalCount++;
@@ -370,6 +372,7 @@ function contadores_dinamicos(nombre) {
                     inspeccionadaConDefectoNoCriticoCount++;
                     totalCount++;
                     break;
+                    
             }
         }
     });
@@ -412,7 +415,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Permitir solo números
     inputNumero.addEventListener('input', function () {
-        this.value = this.value.replace(/[^0-9]/g, '');
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 18);
     });
 
     // Quitar los botones de aumento/decremento
@@ -434,11 +437,11 @@ document.addEventListener('DOMContentLoaded', function () {
     inputContrato.addEventListener('input', function () {
         if (this.value.startsWith(':')) {
             // Permitir solo números después del ":"
-            this.value = ':' + this.value.replace(/[^0-9]/g, '');
+            this.value = ':' + this.value.replace(/[^0-9]/g, '').slice(0, 18);
 
         } else {
             // Si se elimina el ":", volver a agregarlo
-            this.value = ':' + this.value.replace(/[^0-9]/g, '');
+            this.value = ':' + this.value.replace(/[^0-9]/g, '').slice(0, 18);
 
         }
     });
@@ -453,7 +456,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Permitir solo números
     inputOrden.addEventListener('input', function () {
-        this.value = this.value.replace(/[^0-9]/g, '');
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 18);
     });
 
     // Quitar los botones de aumento/decremento
@@ -473,31 +476,183 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    const btnAgregar = document.getElementById('btn-agregar');
+    const btnAgregar = document.getElementById('agregar');
 
     btnAgregar.addEventListener('click', function () {
         const campos = document.querySelectorAll('#ventanaEmergente input, #ventanaEmergente select');
-
         let formularioValido = true;
 
         campos.forEach(campo => {
+            if (campo.value === 'DV') {
+                const selectCausal = document.getElementById('causal');
+
+                const valorSeleccionado = selectCausal.value;
+                if (valorSeleccionado === '--SELECCIONE CAUSAL--') {
+                    formularioValido = false;
+                    selectCausal.classList.add('campo-invalido'); // Establecer borde rojo para campos no completados
+                }
+            }
             if (campo.value.trim() === '' || campo.value === ':') {
                 formularioValido = false;
                 campo.style.border = '1px solid red'; // Establecer borde rojo para campos no completados
+
             } else {
                 campo.style.border = ''; // Restablecer estilo de borde por defecto
             }
         });
 
         if (formularioValido) {
-            // Aquí puedes enviar el formulario o realizar alguna acción adicional
+
+            agregar_datos();
+
             campos.forEach(campo => {
-                campo.value = campo.getAttribute('value') || ''; 
+                campo.value = campo.getAttribute('value') || '';
+                switch (campo.id) {
+                    case 'causal':
+                        campo.value = '--SELECCIONE CAUSAL--';
+                        campo.classList.remove('campo-invalido');
+                        break;
+                    case 'devolucion':
+                        campo.value = 'OK';
+                        break;
+                    case 'recintos':
+                        campo.value = 'NO';
+                        break;
+                }
+
+                causalDevolucionGroup.style.display = 'none'; // Ocultar el campo "Causal Devolución"
+
             });
         } else {
+            window.scrollTo({
+                top: 0,
+                left: 0,
+                behavior: 'smooth'
+            });
             alert('Por favor complete todos los campos antes de enviar el formulario.');
+
         }
     });
 
 });
+
+function agregar_datos() {
+
+    //obtener el select del inspector
+    const select_insp = document.getElementById('nombre');
+    const selectedoption = select_insp.options[select_insp.selectedIndex];
+    //obtener el valor de la cedula
+    const cedulaInsp = select_insp.value;
+
+    //obtener el nombre del inspector
+    const nombre_insp = selectedoption.getAttribute('data-nombres');
+
+    const municipio = document.getElementById('municipio').value;
+    const fecha = document.getElementById('fecha').value;
+    const acta = document.getElementById('N°acta').value;
+    const tipo_trabajo = document.getElementById('tipo_trabajo').value;
+    const contrato = document.getElementById('contrato').value;
+    const orden = document.getElementById('orden_trabajo').value;
+    const categoria = document.getElementById('categoria').value;
+    const hora_inicio = document.getElementById('hora_inicio').value;
+    const hora_final = document.getElementById('hora_final').value;
+    const recintos = document.getElementById('recintos').value;
+    const devolucion = document.getElementById('devolucion').value;
+    const resultado_cierre = document.getElementById('resultado_cierre').value;
+    const causal = document.getElementById('causal').value;
+
+
+
+    const tabla = $('table.tbl_datos[id^="#' + nombre_insp + '"]');
+    if (tabla) {
+        // Crear una nueva fila y celdas para agregar los valores
+
+        const datos = tabla.DataTable().row.add([
+            nombre_insp,
+            cedulaInsp,
+            municipio,
+            fecha,
+            acta,
+            tipo_trabajo,
+            contrato,
+            orden,
+            '',
+            categoria,
+            resultado_cierre,
+            hora_inicio,
+            hora_final,
+            '',
+            '<input type="checkbox" ' + (recintos === 'SI' ? 'checked' : '') + '>',
+            (devolucion === 'OK' ? '<select class="form-select nombre-columna" style="width: 80px;"><option value="OK">OK</option><option value="DV">DV</option></select>' : '<select class="form-select nombre-columna" style="width: 80px;"><option value="OK">OK</option><option value="DV">DV</option></select>'),
+            causal
+
+        ]).draw().data();
+
+        console.log(datos);
+        setTimeout(function() {
+            contadores(nombre_insp);
+        }, 500);
+       
+       /* console.log({data: tabla.DataTable().data()}); */
+        $('table.tbl_datos').on('change', 'select.form-select.nombre-columna', function () {
+            var id_pestaña = $('.btnav.active').attr('href');
+            contadores_dinamicos(id_pestaña);
+            cambiarColor(this);
+        });
+
+        
+
+    } else {
+        alert('No se encontró ninguna tabla con el ID y clase correspondientes.');
+    }
+
+}
+
+function contadores(nombre){
+    // Inicializar contadores
+    certificadaCount = 0;
+    certificadaConNovedadesCount = 0;
+    inspeccionadaConDefectoCriticoCount = 0;
+    inspeccionadaConDefectoNoCriticoCount = 0;
+    totalCount = 0;
+
+    $('table.tbl_datos[id^="#' + nombre + '"]').DataTable().rows().every(function () {
+
+       
+        var selectValueCombobox = $(this.node()).find('td:eq(15) select').val();
+        var valor_cierre = $(this.node()).find('td:eq(10)').text();
+        console.log(selectValueCombobox);
+        // Verificar si la fila cumple con los criterios necesarios para contar
+        if (selectValueCombobox === 'OK') {
+            
+            switch (valor_cierre) {
+                
+                case '.CERTIFICADA':
+                    certificadaCount++;
+                    totalCount++;
+                    break;
+                case 'CERTIFICADA CON NOVEDADES':
+                    certificadaConNovedadesCount++;
+                    totalCount++;
+                    break;
+                case '.INSPECCIONADA CON DEFECTO CRITICO VALLE':
+                    inspeccionadaConDefectoCriticoCount++;
+                    totalCount++;
+                    break;
+                case '.INSPECCIONADA CON DEFECTO NO CRITICO VALLE':
+                    inspeccionadaConDefectoNoCriticoCount++;
+                    totalCount++;
+                    break;
+                    
+            }
+        }
+    });
+
+    // Mostrar los resultados en las celdas correspondientes
+    $('.certificadaCount.' + apellido + '.' + P_nombre).text(certificadaCount);
+    $('.certificadaConNovedadesCount.' + apellido + '.' + P_nombre).text(certificadaConNovedadesCount);
+    $('.inspeccionadaConDefectoCriticoCount.' + apellido + '.' + P_nombre).text(inspeccionadaConDefectoCriticoCount);
+    $('.inspeccionadaConDefectoNoCriticoCount.' + apellido + '.' + P_nombre).text(inspeccionadaConDefectoNoCriticoCount);
+    $('.totalCount.' + apellido + '.' + P_nombre).text(totalCount);
+}
 

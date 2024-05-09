@@ -28,10 +28,10 @@
                         <ul class="nav nav-tabs card-header-tabs flex-nowrap">
 
                             <li class="nav-item" style="white-space: nowrap;">
-                                <a href="#Devoluciones" class="nav-link btnav active" data-bs-toggle="tab">Devoluciones</a>
+                                <a id="Devoluciones" class="nav-link btnav active" data-bs-toggle="tab">Devoluciones</a>
                             </li>
                             <li class="nav-item" style="white-space: nowrap;">
-                                <a href="#Gestionados" class="nav-link btnav" data-bs-toggle="tab">Historico</a>
+                                <a id="Gestionados" class="nav-link btnav" data-bs-toggle="tab">Historico</a>
                             </li>
                         </ul>
                     </div>

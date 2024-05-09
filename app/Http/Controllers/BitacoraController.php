@@ -91,7 +91,7 @@ class BitacoraController extends Controller
 
         unlink($excelFilePath);
 
-        return view('bitacoras.tabla', compact('nombres', 'spreadsheet', 'id_super', 'municipios'));
+        return view('bitacoras.tabla', compact('nombres', 'spreadsheet', 'id_super', 'municipios','inspectores'));
     }
 
     public function guardar_tabla(Request $request, User $super)

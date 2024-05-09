@@ -85,3 +85,7 @@
   .form-group input {
       flex: 1;
   }
+
+  .campo-invalido {
+    border: 1px solid red; /* Establecer borde rojo para campos no completados */
+}

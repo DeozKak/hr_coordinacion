@@ -61,21 +61,21 @@ $(document).ready(function () {
 
     $('.btnav').on('click', function () {
         
-        const btn = $(this).attr('href');
+        const btn = $(this).attr('id');
         console.log(btn);
-        if (btn === '#Devoluciones') {
-            const devoluciones = $('a[href="#Devoluciones"]');
+        if (btn === 'Devoluciones') {
+            const devoluciones = $('a[id="Devoluciones"]');
             devoluciones.addClass('active');
             $('div[id="devoluciones_wrapper"]').show();
             $('div[id="gestionados_wrapper"]').hide();
-            const gestionados = $('a[href="#Gestionados"]');
+            const gestionados = $('a[id="Gestionados"]');
             gestionados.removeClass('active');
         } else {
-            const devoluciones = $('a[href="#Devoluciones"]');
+            const devoluciones = $('a[id="Devoluciones"]');
             devoluciones.removeClass('active');
             $('div[id="devoluciones_wrapper"]').hide();
             $('div[id="gestionados_wrapper"]').show();
-            const gestionados = $('a[href="#Gestionados"]');
+            const gestionados = $('a[id="Gestionados"]');
             gestionados.addClass('active');
         }
     })
