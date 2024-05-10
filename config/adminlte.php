@@ -30,7 +30,7 @@ return [
     |
     */
 
-    'use_ico_only' => false,
+    'use_ico_only' => true,
     'use_full_favicon' => false,
 
     /*
@@ -111,14 +111,14 @@ return [
     */
 
     'preloader' => [
-        'enabled' => false,
-        'mode' => 'fullscreen',
+        'enabled' => true,
+        'mode' => 'cwrapper',
         'img' => [
-            'path' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
+            'path' => 'vendor/adminlte/dist/img/logo_EYC.png',
             'alt' => 'AdminLTE Preloader Image',
             'effect' => 'animation__shake',
-            'width' => 60,
-            'height' => 60,
+            'width' => 90,
+            'height' => 90,
         ],
     ],
 
@@ -576,13 +576,28 @@ return [
                 [
                     'type' => 'js',
                     'asset' => true,
-                    'location' => '//cdn.datatables.net/2.0.5/js/dataTables.js',
+                    'location' => '//cdn.datatables.net/2.0.7/js/dataTables.js',
                 ],
                 [
                     'type' => 'css',
                     'asset' => true,
-                    'location' => '//cdn.datatables.net/2.0.5/css/dataTables.dataTables.css',
+                    'location' => '//cdn.datatables.net/2.0.7/css/dataTables.dataTables.css',
                 ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => '//cdn.datatables.net/scroller/2.4.2/js/dataTables.scroller.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => '//cdn.datatables.net/scroller/2.4.2/js/scroller.dataTables.js',
+                ],
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => '//cdn.datatables.net/scroller/2.4.2/css/scroller.dataTables.css',
+                ]
                 
                 /* [
                     'type' => 'css',

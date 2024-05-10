@@ -13,9 +13,11 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <link rel="stylesheet" href="{{asset('css/bitacoras/Devoluciones.css')}}">
+
 <script src="{{asset('js/tbl_devoluciones.js')}}"></script>
 
 <body class="body">
+
     <input type="hidden" id="exportar_devoluciones" value="{{ route('bitacora.exportar_devoluciones') }}">
     <input type="hidden" id="token" value="{{ csrf_token() }}">
     <div id="contenedor">
