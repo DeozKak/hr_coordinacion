@@ -24,8 +24,6 @@ class BitacoraController extends Controller
             return view('bitacoras.generar', compact('supervisores'));
         }
         $supervisores = User::role('Supervisor')->get();
-
-
         return view('bitacoras.generar', compact('supervisores'));
     }
 
@@ -97,8 +95,9 @@ class BitacoraController extends Controller
     public function guardar_tabla(Request $request, User $super)
     {
 
+        $encabezados = $request->encabezado;
 
-        $codigoHTML = $request->codigoHTML;
+        $dataTable = $request->datos;
         $codigoHTML_tabla_indicadores = $request->codigoHTML_tabla_indicadores;
         $valoresSeleccionados = $request->valoresSeleccionados;
         // Definir el patrón para encontrar las etiquetas <table> en el código HTML
@@ -107,7 +106,7 @@ class BitacoraController extends Controller
         $datos_array = array();
 
         // Encontrar todas las coincidencias de las etiquetas <table> en el código HTML
-        preg_match_all($patron, $codigoHTML, $matches);
+        //preg_match_all($patron, $codigoHTML, $matches);
         preg_match_all($patron, $codigoHTML_tabla_indicadores, $datos);
 
 
@@ -115,21 +114,20 @@ class BitacoraController extends Controller
         $spreadsheet = new Spreadsheet();
         $hoja_OK = $spreadsheet->getSheetByName('Worksheet');
         $indiceFila_ok = 2;
-        foreach ($matches[0] as $indice => $tablaHTML) {
+        foreach ($dataTable as $indice => $tabla) {
 
             $idTabla = "$indice";
 
-            preg_match('/id=\"(.*?)\"/', $tablaHTML, $idMatches);
-            $nombre_tabla = $idMatches[1] ?? "Tabla$indice";
+
+            $nombre_tabla = $tabla[0][0] ?? "Tabla $indice";
 
             $nombre_tabla = strlen($nombre_tabla) > 31 ? substr($nombre_tabla, 0, 31) : $nombre_tabla;
+
             // Crear una nueva hoja de cálculo para esta tabla
             $hoja = $spreadsheet->createSheet($indice);
             $hoja->setTitle($nombre_tabla);
 
-            // Convertir el HTML de la tabla en un objeto DOMDocument para facilitar su manipulación
-            $dom = new DOMDocument();
-            $dom->loadHTML($tablaHTML);
+
             if (array_key_exists($indice, $datos[0])) {
                 $datosTabla = $datos[0][$indice];
             }
@@ -142,8 +140,10 @@ class BitacoraController extends Controller
             foreach ($filas_tbl_indicadores as $indicador) {
                 $indiceColumna_tbl_ind = 1;
                 $datos_indicadores = $indicador->getElementsByTagName('td');
+
                 foreach ($datos_indicadores as $dato) {
                     $contenidodato = $dato->nodeValue;
+
                     $hoja->setCellValue([$indiceColumna_tbl_ind, $indiceFila_tbl_ind], $contenidodato);
                     $indiceColumna_tbl_ind++;
                 }
@@ -151,49 +151,41 @@ class BitacoraController extends Controller
                 $indiceFila_tbl_ind++;
             }
 
-            // Obtener todas las filas de la tabla
-            $filas = $dom->getElementsByTagName('tr');
-
             // Inicializar el índice de fila en 1
 
-            $indiceFila = 7;
+            $indiceFila = 8;
             $indicador_checkbox = 0;
             $indicador_combobox1 = 1;
             $indicador_combobox2 = 2;
             // Iterar sobre cada fila de la tabla
-            foreach ($filas as $fila) {
-                // Obtener todas las celdas de la fila
-                $celdas = $fila->getElementsByTagName('td');
-
-                $encabezados = $fila->getElementsByTagName('th');
+            foreach ($tabla as $fila) {
 
                 // Si hay celdas de encabezado, procesarlas
-                if ($encabezados->length > 0) {
+                if (!empty($encabezados)) {
                     $indiceColumna = 1;
                     foreach ($encabezados as $encabezado) {
                         // Obtener el contenido del encabezado
-                        $contenidoEncabezado = $encabezado->nodeValue;
+                        $contenidoEncabezado = $encabezado;
 
                         // Pegar el contenido del encabezado en la hoja de cálculo
-                        $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoEncabezado);
+                        $hoja->setCellValue([$indiceColumna, 7], $contenidoEncabezado);
 
                         // Incrementar el índice de columna
                         $indiceColumna++;
                     }
-                    // Incrementar el índice de fila
-                    $indiceFila++;
                 }
 
                 // Si hay celdas de datos, procesarlas
-                if ($celdas->length > 0) {
+                if (!empty($fila)) {
                     // Inicializar el índice de columna en 1
                     $indiceColumna = 1;
 
-                    foreach ($celdas as $celda) {
+                    foreach ($fila as $celda) {
+                       
+                       
 
-                        $estiloCelda = $celda->getAttribute('style');
+                        $contenidoCelda = $celda;
 
-                        $contenidoCelda = $celda->nodeValue;
 
                         // Obtener el identificador único del combobox y checkbox
                         $idCheckbox = $indicador_checkbox;
@@ -242,6 +234,7 @@ class BitacoraController extends Controller
                                 $id_cedula = $ids_inspectores[$cedula_insp];
                                 $fecha = $hoja->getCell([4, $indiceFila])->getValue();
                                 $fecha_formateada = $this->conversion_fecha($fecha);
+                                
                                 $datos_array_OK[] = array(
                                     'inspector' => $id_cedula,
                                     'fecha_inspeccion' => $fecha_formateada,
@@ -253,7 +246,7 @@ class BitacoraController extends Controller
                                     'resultado' => $hoja->getCell([11, $indiceFila])->getValue(),
                                     'hora_inicio' => $hoja->getCell([12, $indiceFila])->getValue(),
                                     'hora_fin' => $hoja->getCell([13, $indiceFila])->getValue(),
-                                    'duracion' => $hoja->getCell([14, $indiceFila])->getValue(),          
+                                    'duracion' => $hoja->getCell([14, $indiceFila])->getValue(),
                                 );
                             } else {
 
@@ -268,6 +261,7 @@ class BitacoraController extends Controller
                             }
                             $contenidoCelda = $valoresSeleccionados[$clave2];
                             $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoCelda);
+
                             $cedula_insp = $hoja->getCell([2, $indiceFila])->getValue();
                             $ids_inspectores = session('ids_inspectores');
                             $id_cedula = $ids_inspectores[$cedula_insp];
@@ -290,31 +284,32 @@ class BitacoraController extends Controller
                             );
                         } elseif ($indiceColumna === 17) {
                             $hoja->setCellValue([$indiceColumna, $indiceFila], "");
+                        } elseif ($indiceColumna === 14) {
+                            if($contenidoCelda < '00:20'){
+                                $celda = $hoja->getCell([$indiceColumna, $indiceFila]);
+                                $celdaExcel_OK = $hoja_OK->getCell([$indiceColumna, $indiceFila_ok]);
+                                $celda->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('FF8000');
+                                $celdaExcel_OK->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('FF8000');
+                            }
                         } else {
                             $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoCelda);
+        
                             $celda = $hoja->getCell([$indiceColumna, $indiceFila]);
 
-
-
                             $celdaExcel_OK = $hoja_OK->getCell([$indiceColumna, $indiceFila_ok]);
-                            //Aplicar el estilo CSS a la celda en el archivo Excel
-                            if (!empty($celdaExcel_OK)) {
-                                $celdaExcel_OK->getStyle()->applyFromArray([
-                                    'fill' => [
-                                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                                        'startColor' => ['rgb' => $this->getColorFromStyle($estiloCelda)],
-                                    ],
-                                ]);
+                            switch($contenidoCelda){
+                                case 'COMERCIAL':
+                                    $celda->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('FF8000');
+                                    $celdaExcel_OK->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('FF8000');
+                                    break;
+                                case 'SI':
+                                    $celda->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('92D050');
+                                    $celdaExcel_OK->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('92D050');
+                                    break;
+                               
                             }
-
-                            if (!empty($estiloCelda)) {
-                                $celda->getStyle()->applyFromArray([
-                                    'fill' => [
-                                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                                        'startColor' => ['rgb' => $this->getColorFromStyle($estiloCelda)],
-                                    ],
-                                ]);
-                            }
+                           
+                          
                         }
 
                         // Incrementar el índice de columna
@@ -325,7 +320,9 @@ class BitacoraController extends Controller
                     if ($validacion === 1) {
                         $indiceFila_ok++;
                     }
+
                     $indiceFila++;
+
                     $indicador_checkbox = $indicador_checkbox + 3;
                     $indicador_combobox1 = $indicador_combobox1 + 3;
                     $indicador_combobox2 = $indicador_combobox2 + 3;
@@ -393,9 +390,8 @@ class BitacoraController extends Controller
             $hoja->getStyle('A7:O7')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('0096ff');
         }
         if (!empty($datos_array_OK)) {
-
+           
             foreach ($datos_array_OK as $datos_ok) {
-
 
                 try {
                     $resultado_ok = Tbl_dv_insp::where('contrato', $datos_ok['contrato'])
@@ -456,6 +452,9 @@ class BitacoraController extends Controller
             }
         }
         $hoja_OK->setTitle('OK');
+        $totalHojas = $spreadsheet->getSheetCount();
+        // Mover la hoja "OK" a la última posición
+        $spreadsheet->setIndexByName('OK', $totalHojas);
         // Crear un objeto Writer para guardar la hoja de cálculo como un archivo Excel
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
 

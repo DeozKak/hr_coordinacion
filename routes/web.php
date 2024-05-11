@@ -15,7 +15,7 @@ Route::get('/', function () {
 });
 
 Auth::routes();
-
+Route::middleware('auth')->group(function () {
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 
 // rutas para perfil y modificar datos -----------------------------------------------------------
@@ -53,3 +53,4 @@ Route::get('/inspectores/edit/{inspector}', [InspectorController::class, 'edit']
 Route::put('/inspectores/update/{inspector}', [InspectorController::class, 'update'])->name('inspectores.update');
 Route::post('/inspectores/change_state/{inspector}', [InspectorController::class, 'change_state'])->name('inspectores.change_state');
 Route::get('/inspectores/show_disabled', [InspectorController::class, 'show_disabled'])->name('inspectores.show_disabled');
+});

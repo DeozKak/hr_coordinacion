@@ -124,10 +124,11 @@
                                             ?>
                                             <?php foreach ($sheet->getRowIterator() as $row) : ?>
                                                 <?php
+                                                $contrato = $sheet->getCell('H' . $row->getRowIndex())->getValue();
                                                 $nombreCelda = $sheet->getCell('A' . $row->getRowIndex())->getValue();
                                                 $Cierre = $sheet->getCell('M' . $row->getRowIndex())->getValue();
                                                 ?>
-                                                <?php if ($nombreCelda === $nombre && ($Cierre === ".CERTIFICADA" || $Cierre === "CERTIFICADA CON NOVEDADES" || $Cierre === ".INSPECCIONADA CON DEFECTO CRITICO VALLE" || $Cierre === ".INSPECCIONADA CON DEFECTO NO CRITICO VALLE")) : ?>
+                                                <?php if (strpos($contrato,":") === 0 && $nombreCelda === $nombre && ($Cierre === ".CERTIFICADA" || $Cierre === "CERTIFICADA CON NOVEDADES" || $Cierre === ".INSPECCIONADA CON DEFECTO CRITICO VALLE" || $Cierre === ".INSPECCIONADA CON DEFECTO NO CRITICO VALLE")) : ?>
                                                     <tr>
                                                         <?php $horaInicialObj = null;
                                                         $horaFinalObj = null;
@@ -137,6 +138,7 @@
                                                             if ($columna === 'H') {
 
                                                                 echo "<td style='background-color: rgb(146, 208, 80);'>" . $valorCelda . "</td>";
+                                                               
                                                             } elseif ($columna === 'D') {
                                                                 $fechaNumeroNatural = $valorCelda;
                                                                 $fecha = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($fechaNumeroNatural);

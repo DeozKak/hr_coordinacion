@@ -1,9 +1,5 @@
-var codigoHTML = "";
+
 $(document).ready(function () {
-
-
-
-
 
     // Inicializar la tabla activa con DataTables
     $('table:not(.no-datatable)').DataTable({
@@ -108,28 +104,21 @@ $(document).ready(function () {
 
     $('#btnGuardar').on('click', function () {
 
-        // Recorrer cada tabla con la clase "tbl_datos"
-        $('.tbl_datos[id]').each(function () {
 
-            var tablaHTML = $(this)[0].outerHTML;
-
-            tablaHTML = tablaHTML.replace(/\s+/g, ' ');
-
-            codigoHTML += tablaHTML;
-
-        });
-            
         $('#loader').show();
         $('#overlay').show();
 
         setTimeout(function () {
             var valoresSeleccionados = {};
-
-
+            let datos = [];
+            const encabezado = ['INSPECTOR','CC OPERARIO','MUNICIPIO','FECHA','N° ACTA','TIPO TRABAJO','CONTRATO','ORDEN TRABAJO','ORDEN EXT','CATEGORIA','RESULTADO  CIERRE','HORA INICIO','HORA FINAL','DURACION','4 RECINTOS O MAS'];
             $('.tbl_datos[id]').each(function (indexTabla) {
 
                 var idTabla = $(this).attr('id');
                 var nombre_convertido = idTabla.replace(/\s/g, '\\ ');
+
+                datosTabla = $('' + nombre_convertido + ' .tbl_datos').DataTable().rows().data().toArray();
+                datos.push(datosTabla)
                 var indexSelect = -1;
                 $('' + nombre_convertido + ' .tbl_datos').DataTable().rows().every(function () {
 
@@ -167,12 +156,12 @@ $(document).ready(function () {
 
             });
 
-            var codigoHTML_tabla_indicadores = "";
+            let codigoHTML_tabla_indicadores = "";
 
 
 
             $('.tabla-indicadores').each(function () {
-                var tablaHTML_indicadores = $(this).prop('outerHTML');
+                let tablaHTML_indicadores = $(this).prop('outerHTML');
                 codigoHTML_tabla_indicadores += tablaHTML_indicadores;
 
             });
@@ -180,26 +169,26 @@ $(document).ready(function () {
             const csrfToken = $('#token').val();
             const url_guardar = $('#url_guardar').val();
             const url_borrar = $('#url_borrar').val();
-
+            console.log(datos);
             // Realizar la petición AJAX
             $.ajax({
                 type: 'POST',
                 url: url_guardar,
                 data: {
                     valoresSeleccionados: valoresSeleccionados,
-                    codigoHTML: codigoHTML,
+                    encabezado: encabezado,
+                    datos: datos,
                     codigoHTML_tabla_indicadores: codigoHTML_tabla_indicadores,
                     _token: csrfToken
                 },
                 success: function (response) {
-
+                    
                     if (!response.error) {
                         const nombreArchivo = response.nombreArchivo;
                         const urlarchivo = response.ruta;
                         if (nombreArchivo !== undefined) {
                             const urlDescarga = urlarchivo + nombreArchivo;
                             window.location.href = urlDescarga;
-                            codigoHTML = null;
                             codigoHTML_tabla_indicadores = null;
                             valoresSeleccionados = null;
                             $('#loader').hide();
@@ -246,6 +235,7 @@ $(document).ready(function () {
                     });
                 },
                 error: function (xhr, status, error) {
+                    console.log(xhr.responseText);
                     $('#loader').hide();
                     $('#overlay').hide();
                     Swal.fire({
