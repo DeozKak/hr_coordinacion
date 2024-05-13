@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\tbl_dv_insp;
 use App\Models\User;
 use App\Models\Tbl_insp_cali;
+use App\Models\tbl_bitacora_archivo;
+use App\Models\tbl_bitacora_contrato;
+use App\Models\Movilidad;
 use DateTime;
 use DOMDocument;
 use Illuminate\Http\Request;
@@ -94,21 +97,13 @@ class BitacoraController extends Controller
 
     public function guardar_tabla(Request $request, User $super)
     {
-
+        //variables que obtienen datos del request
         $encabezados = $request->encabezado;
-
         $dataTable = $request->datos;
-        $codigoHTML_tabla_indicadores = $request->codigoHTML_tabla_indicadores;
+        $indicadores = $request->indicadores;
         $valoresSeleccionados = $request->valoresSeleccionados;
-        // Definir el patrón para encontrar las etiquetas <table> en el código HTML
-        $patron = '/<table.*?>(.*?)<\/table>/s';
 
         $datos_array = array();
-
-        // Encontrar todas las coincidencias de las etiquetas <table> en el código HTML
-        //preg_match_all($patron, $codigoHTML, $matches);
-        preg_match_all($patron, $codigoHTML_tabla_indicadores, $datos);
-
 
         // Crear una instancia de la clase Spreadsheet
         $spreadsheet = new Spreadsheet();
@@ -126,32 +121,21 @@ class BitacoraController extends Controller
             // Crear una nueva hoja de cálculo para esta tabla
             $hoja = $spreadsheet->createSheet($indice);
             $hoja->setTitle($nombre_tabla);
+            // setear la tabla de indicadores
+            $tablaIndicadores = $indicadores[$indice];
+            
+            $hoja->setCellValue([1, 1], ".CERTIFICADA");
+            $hoja->setCellValue([1, 2], "CERTIFICADA CON NOVEDADES");
+            $hoja->setCellValue([1, 3], ".INSPECCIONADA CON DEFECTO CRITICO");
+            $hoja->setCellValue([1, 4], ".INSPECCIONADA CON DEFECTO NO CRITICO");
+            $hoja->setCellValue([1, 5], "TOTAL CONTRATOS OK");
 
-
-            if (array_key_exists($indice, $datos[0])) {
-                $datosTabla = $datos[0][$indice];
-            }
-            $dom_tbl_indicadores = new DOMDocument();
-            $dom_tbl_indicadores->loadHTML($datosTabla);
-            $filas_tbl_indicadores = $dom_tbl_indicadores->getElementsByTagName('tr');
-
-
-            $indiceFila_tbl_ind = 0;
-            foreach ($filas_tbl_indicadores as $indicador) {
-                $indiceColumna_tbl_ind = 1;
-                $datos_indicadores = $indicador->getElementsByTagName('td');
-
-                foreach ($datos_indicadores as $dato) {
-                    $contenidodato = $dato->nodeValue;
-
-                    $hoja->setCellValue([$indiceColumna_tbl_ind, $indiceFila_tbl_ind], $contenidodato);
-                    $indiceColumna_tbl_ind++;
-                }
-
-                $indiceFila_tbl_ind++;
-            }
-
-            // Inicializar el índice de fila en 1
+            $hoja->setCellValue([2, 1], $tablaIndicadores["certificadaCount"]);
+            $hoja->setCellValue([2, 2], $tablaIndicadores["certificadaConNovedadesCount"]);
+            $hoja->setCellValue([2, 3], $tablaIndicadores["inspeccionadaConDefectoCriticoCount"]);
+            $hoja->setCellValue([2, 4], $tablaIndicadores["inspeccionadaConDefectoNoCriticoCount"]);
+            $hoja->setCellValue([2, 5], $tablaIndicadores["totalCount"]);
+          
 
             $indiceFila = 8;
             $indicador_checkbox = 0;
@@ -234,10 +218,12 @@ class BitacoraController extends Controller
                                 $id_cedula = $ids_inspectores[$cedula_insp];
                                 $fecha = $hoja->getCell([4, $indiceFila])->getValue();
                                 $fecha_formateada = $this->conversion_fecha($fecha);
-                                
+                               
                                 $datos_array_OK[] = array(
-                                    'inspector' => $id_cedula,
+                                    'cc_operario' => $hoja->getCell([2, $indiceFila])->getValue(),
+                                    'municipio' => $hoja->getCell([3, $indiceFila])->getValue(),
                                     'fecha_inspeccion' => $fecha_formateada,
+                                    'no_acta'=> $hoja->getCell([5, $indiceFila])->getValue(),
                                     'tipo_de_trabajo' => $hoja->getCell([6, $indiceFila])->getValue(),
                                     'contrato' => $hoja->getCell([7, $indiceFila])->getValue(),
                                     'orden_de_trabajo' => $hoja->getCell([8, $indiceFila])->getValue(),
@@ -246,7 +232,7 @@ class BitacoraController extends Controller
                                     'resultado' => $hoja->getCell([11, $indiceFila])->getValue(),
                                     'hora_inicio' => $hoja->getCell([12, $indiceFila])->getValue(),
                                     'hora_fin' => $hoja->getCell([13, $indiceFila])->getValue(),
-                                    'duracion' => $hoja->getCell([14, $indiceFila])->getValue(),
+                                    '4_recintos' => $hoja->getCell([15, $indiceFila])->getValue(),
                                 );
                             } else {
 
@@ -389,18 +375,21 @@ class BitacoraController extends Controller
             ]);
             $hoja->getStyle('A7:O7')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('0096ff');
         }
+        
         if (!empty($datos_array_OK)) {
            
             foreach ($datos_array_OK as $datos_ok) {
 
                 try {
+
+
                     $resultado_ok = Tbl_dv_insp::where('contrato', $datos_ok['contrato'])
                         ->where('orden_trabajo', $datos_ok['orden_de_trabajo'])
                         ->get();
 
                     //  $resultado_ok = $validacion->getValidación_existentes();
                 } catch (\Exception $e) {
-                    throw new \Exception("Error al consultar los datos en la base de datos");
+                    return response()->json(['error' => 'Error al consultar los datos en la base de datos']);
                 }
 
                 // BitacoraController::dd($resultado_ok[0]['FECHA_GESTION']);
@@ -427,7 +416,7 @@ class BitacoraController extends Controller
 
                     //  $resultado = $validacion->getValidación_existentes();
                 } catch (\Exception $e) {
-                    throw new \Exception("Error al consultar los datos en la base de datos");
+                    return response()->json(['error' => 'Error al consultar los datos en la base de datos']);
                 }
 
                 if ($resultado->isEmpty()) {
@@ -463,8 +452,45 @@ class BitacoraController extends Controller
         $writer->save(storage_path('app/uploads/') . $rutaArchivoFinal . ".xlsx");
 
         $nombreArchivo = $rutaArchivoFinal . ".xlsx";
+   
+        $usuario = Auth::user();
 
-        header('Content-Type: application/json');
+        $bitacora = new tbl_bitacora_archivo();
+        $bitacora->id_usuario = $usuario->id;
+        $bitacora->NOMBRE_ARCHIVO = $nombreArchivo;
+        $bitacora->ruta_archivo = 'storage/app/uploads/';
+        $bitacora->save();
+        
+        foreach ($datos_array_OK as $datos){
+          
+                if($datos['categoria'] === null){
+                    $consultaMovilidad = Movilidad::select('AttrCategoria')->where('NroSitio', $datos['contrato'])->where('IdTarea',$datos['no_acta'])->first();
+                    $datos['categoria'] = $consultaMovilidad->AttrCategoria;
+                }    
+            
+                $exist = tbl_bitacora_contrato::where('CONTRATO', $datos['contrato'])->where('ORDEN_TRABAJO', $datos['orden_de_trabajo'])->exists();
+                if($exist){
+                    continue;
+                }
+                $contrato = new tbl_bitacora_contrato();
+                $contrato->CC_OPERARIO = $datos['cc_operario'];
+                $contrato->MUNICIPIO = $datos['municipio'];
+                $contrato->FECHA = $datos['fecha_inspeccion'];
+                $contrato->No_ACTA = $datos['no_acta'];
+                $contrato->TIPO_TRABAJO = $datos['tipo_de_trabajo'];
+                $contrato->CONTRATO = $datos['contrato'];
+                $contrato->ORDEN_TRABAJO = $datos['orden_de_trabajo'];
+                $contrato->ORDEN_EXT = $datos['orden_externa'];
+                $contrato->CATEGORIA = $datos['categoria'];
+                $contrato->RESULTADO_CIERRE = $datos['resultado'];
+                $contrato->HORA_INICIO = $datos['hora_inicio'];
+                $contrato->HORA_FINAL = $datos['hora_fin'];
+                $contrato->setAttribute('4_RECINTOS', $datos['4_recintos']);
+                $contrato->id_bitacora = $bitacora->id;
+                $contrato->save();
+           
+        }
+
         return response()->json([
             'nombreArchivo' => $nombreArchivo,
             'ruta' => 'storage/app/uploads/'

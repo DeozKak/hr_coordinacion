@@ -1,4 +1,4 @@
-
+let codigoHTML_tabla_indicadores = "";
 $(document).ready(function () {
 
     // Inicializar la tabla activa con DataTables
@@ -109,34 +109,34 @@ $(document).ready(function () {
         $('#overlay').show();
 
         setTimeout(function () {
-            var valoresSeleccionados = {};
+            let valoresSeleccionados = {};
             let datos = [];
-            const encabezado = ['INSPECTOR','CC OPERARIO','MUNICIPIO','FECHA','N° ACTA','TIPO TRABAJO','CONTRATO','ORDEN TRABAJO','ORDEN EXT','CATEGORIA','RESULTADO  CIERRE','HORA INICIO','HORA FINAL','DURACION','4 RECINTOS O MAS'];
+            const encabezado = ['INSPECTOR', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO  CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION', '4 RECINTOS O MAS'];
             $('.tbl_datos[id]').each(function (indexTabla) {
 
-                var idTabla = $(this).attr('id');
-                var nombre_convertido = idTabla.replace(/\s/g, '\\ ');
+                let idTabla = $(this).attr('id');
+                let nombre_convertido = idTabla.replace(/\s/g, '\\ ');
 
                 datosTabla = $('' + nombre_convertido + ' .tbl_datos').DataTable().rows().data().toArray();
                 datos.push(datosTabla)
-                var indexSelect = -1;
+                let indexSelect = -1;
                 $('' + nombre_convertido + ' .tbl_datos').DataTable().rows().every(function () {
 
                     indexSelect = indexSelect + 1;
 
-                    var checkbox = $(this.node()).find('td:eq(14) input').is(':checked');
+                    let checkbox = $(this.node()).find('td:eq(14) input').is(':checked');
 
-                    var idSelect = $(this).attr('id') || 'select_' + indexTabla + '_' + indexSelect;
+                    let idSelect = $(this).attr('id') || 'select_' + indexTabla + '_' + indexSelect;
 
-                    var valorSeleccionado = checkbox;
+                    let valorSeleccionado = checkbox;
 
                     valoresSeleccionados[idSelect] = valorSeleccionado;
 
                     indexSelect = indexSelect + 1;
 
-                    var selectValueCombobox1 = $(this.node()).find('td:eq(15) select').val();
+                    let selectValueCombobox1 = $(this.node()).find('td:eq(15) select').val();
 
-                    var selectValueCombobox2 = $(this.node()).find('td:eq(16) select').val();
+                    let selectValueCombobox2 = $(this.node()).find('td:eq(16) select').val();
 
                     idSelect = $(this).attr('id') || 'select_' + indexTabla + '_' + indexSelect;
 
@@ -155,21 +155,58 @@ $(document).ready(function () {
                 });
 
             });
+          
+            let contador_tabla = 0;
+            let indicadores = [];
+            datos.forEach(element => {
+                let contador_combobox1 = 1;
 
-            let codigoHTML_tabla_indicadores = "";
+                let certificadaCount = 0;
+                let certificadaConNovedadesCount = 0;
+                let inspeccionadaConDefectoCriticoCount = 0;
+                let inspeccionadaConDefectoNoCriticoCount = 0;
+                let totalCount = 0;
 
+                element.forEach(function (value, index) {
 
+                    const selectValueCombobox = valoresSeleccionados["select_" + contador_tabla + "_" + contador_combobox1];
+                    const valor_cierre = value[10];
+                   
+                    // Verificar si la fila cumple con los criterios necesarios para contar
+                    if (selectValueCombobox === 'OK') {
 
-            $('.tabla-indicadores').each(function () {
-                let tablaHTML_indicadores = $(this).prop('outerHTML');
-                codigoHTML_tabla_indicadores += tablaHTML_indicadores;
+                        switch (valor_cierre) {
 
+                            case '.CERTIFICADA':
+                                certificadaCount++;
+                                totalCount++;
+                                break;
+                            case 'CERTIFICADA CON NOVEDADES':
+                                certificadaConNovedadesCount++;
+                                totalCount++;
+                                break;
+                            case '.INSPECCIONADA CON DEFECTO CRITICO VALLE':
+                                inspeccionadaConDefectoCriticoCount++;
+                                totalCount++;
+                                break;
+                            case '.INSPECCIONADA CON DEFECTO NO CRITICO VALLE':
+                                inspeccionadaConDefectoNoCriticoCount++;
+                                totalCount++;
+                                break;
+
+                        }
+                    }
+                    contador_combobox1 = contador_combobox1 + 3;
+                    
+                });
+                indicadores.push({ certificadaCount, certificadaConNovedadesCount, inspeccionadaConDefectoCriticoCount, inspeccionadaConDefectoNoCriticoCount, totalCount });
+                contador_tabla = contador_tabla + 1;
             });
-
+            
             const csrfToken = $('#token').val();
             const url_guardar = $('#url_guardar').val();
             const url_borrar = $('#url_borrar').val();
-            console.log(datos);
+
             // Realizar la petición AJAX
             $.ajax({
                 type: 'POST',
@@ -178,11 +215,11 @@ $(document).ready(function () {
                     valoresSeleccionados: valoresSeleccionados,
                     encabezado: encabezado,
                     datos: datos,
-                    codigoHTML_tabla_indicadores: codigoHTML_tabla_indicadores,
+                    indicadores: indicadores,
                     _token: csrfToken
                 },
                 success: function (response) {
-                    
+
                     if (!response.error) {
                         const nombreArchivo = response.nombreArchivo;
                         const urlarchivo = response.ruta;
@@ -408,8 +445,14 @@ $(document).ready(function () {
                 left: 0,
                 behavior: 'smooth'
             });
-            alert('Por favor complete todos los campos antes de enviar el formulario.');
-
+            Swal.fire({
+                position: "top-end",
+                type: "warning",
+                title: "Por favor complete todos los campos",
+                showConfirmButton: false,
+                toast: true,
+                timer: 4000
+            });
         }
     });
 
@@ -523,12 +566,6 @@ function contadores_dinamicos(nombre) {
     $('.totalCount.' + apellido + '.' + P_nombre).text(totalCount);
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-
-
-
-
-});
 
 function agregar_datos() {
 
@@ -713,4 +750,5 @@ function validacionDatos(orden, contrato, tabla) {
         return false;
     } // Si no se encontraron datos repetidos, retornar false
 }
+
 

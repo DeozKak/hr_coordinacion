@@ -12,7 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tbl_bitacora_archivos', function (Blueprint $table) {
-            $table->id();
+            $table->id()->primary()->autoIncrement();
+            $table->foreignId('id_usuario')->constrained('users');
+            $table->string('nombre_archivo');
+            $table->string('ruta_archivo');
             $table->timestamps();
         });
     }
