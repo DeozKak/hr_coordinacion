@@ -441,6 +441,13 @@ return [
                     'label_color' => 'success',
                 ],
                 [
+                    'text' => 'Ver Reportes',
+                    'url' => 'bitacora/reportes',
+                    'icon' => 'far fa-circle',
+                    'can' => 'ver_bitacoras',
+                    'label_color' => 'success',
+                ],
+                [
                     'text' => 'Devoluciones',
                     'url' => 'bitacora/devoluciones',
                     'icon' => 'far fa-circle',

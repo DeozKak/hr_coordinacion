@@ -39,112 +39,114 @@
                     </div>
                 </div>
                 <div class="row justify-content-center">
-                    <div class="col-md-12 table-responsive" style="padding: 17px;">
-                        <table class="table table-striped table-bordered tbl_datos" id="devoluciones">
-                            <thead>
-                                <tr>
-                                    <th>Supervisor</th>
-                                    <th>Inspector</th>
-                                    <th>Fecha Inspeccion</th>
-                                    <th>Tipo Trabajo</th>
-                                    <th>Contrato</th>
-                                    <th>Orden de trabajo</th>
-                                    <th>Orden Externa</th>
-                                    <th>Resultado</th>
-                                    <th>Causal</th>
-                                    <th>Fecha devolución</th>
-                                    <th>Gestionado</th>
-                                    <th>Fecha gestión</th>
-                                    <th>Dias sin Gestionar</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    @foreach ($devoluciones as $dato)
-                                    <td>{{$dato->Supervisor->name}}</td>
-                                    <td> {{$dato->Inspector->nombres}} {{$dato->Inspector->apellidos}}</td>
-                                    <td> {{$dato->FECHA_INSP}} </td>
-                                    <td> {{$dato->TIPO_TRABAJO}} </td>
-                                    <td> {{$dato->CONTRATO}} </td>
-                                    <td> {{$dato->ORDEN_TRABAJO}} </td>
-                                    <td> {{$dato->ORDEN_EXT}} </td>
-                                    <td> {{$dato->RESULTADO_CIERRE}} </td>
-                                    <td> {{$dato->CAUSAL}} </td>
-                                    <td> {{$dato->FECHA_DV}} </td>
-                                    @if ($dato->GESTIONADO === 0 )
-                                    <td>NO</td>
-                                    @else
-                                    <td style='background-color: rgb(146, 208, 80);'>SI</td>
-                                    @endif
-                                    <td> {{$dato->FECHA_GESTION}} </td>
-                                    @if($dato->DIAS_SIN_GESTION >= 2)
-                                    <td style='background-color: rgb(255, 165, 0);'> {{$dato->DIAS_SIN_GESTION}} </td>
-                                    @else
-                                    <td>{{$dato->DIAS_SIN_GESTION}} </td>
-                                    @endif
+                    <div class="col-md-12">
+                        <div class="col-md-12 table-responsive" style="padding: 17px;">
+                            <table class="table table-striped table-bordered tbl_datos" id="devoluciones">
+                                <thead>
+                                    <tr>
+                                        <th>Supervisor</th>
+                                        <th>Inspector</th>
+                                        <th>Fecha Inspeccion</th>
+                                        <th>Tipo Trabajo</th>
+                                        <th>Contrato</th>
+                                        <th>Orden de trabajo</th>
+                                        <th>Orden Externa</th>
+                                        <th>Resultado</th>
+                                        <th>Causal</th>
+                                        <th>Fecha devolución</th>
+                                        <th>Gestionado</th>
+                                        <th>Fecha gestión</th>
+                                        <th>Dias sin Gestionar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        @foreach ($devoluciones as $dato)
+                                        <td>{{$dato->Supervisor->name}}</td>
+                                        <td> {{$dato->Inspector->nombres}} {{$dato->Inspector->apellidos}}</td>
+                                        <td> {{$dato->FECHA_INSP}} </td>
+                                        <td> {{$dato->TIPO_TRABAJO}} </td>
+                                        <td> {{$dato->CONTRATO}} </td>
+                                        <td> {{$dato->ORDEN_TRABAJO}} </td>
+                                        <td> {{$dato->ORDEN_EXT}} </td>
+                                        <td> {{$dato->RESULTADO_CIERRE}} </td>
+                                        <td> {{$dato->CAUSAL}} </td>
+                                        <td> {{$dato->FECHA_DV}} </td>
+                                        @if ($dato->GESTIONADO === 0 )
+                                        <td>NO</td>
+                                        @else
+                                        <td style='background-color: rgb(146, 208, 80);'>SI</td>
+                                        @endif
+                                        <td> {{$dato->FECHA_GESTION}} </td>
+                                        @if($dato->DIAS_SIN_GESTION >= 2)
+                                        <td style='background-color: rgb(255, 165, 0);'> {{$dato->DIAS_SIN_GESTION}} </td>
+                                        @else
+                                        <td>{{$dato->DIAS_SIN_GESTION}} </td>
+                                        @endif
 
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
 
 
-                        <table class="table table-striped table-bordered tbl_datos" id="gestionados">
-                            <thead>
-                                <tr>
-                                    <th>Supervisor</th>
-                                    <th>Inspector</th>
-                                    <th>Fecha Inspeccion</th>
-                                    <th>Tipo Trabajo</th>
-                                    <th>Contrato</th>
-                                    <th>Orden de trabajo</th>
-                                    <th>Orden Externa</th>
-                                    <th>Resultado</th>
-                                    <th>Causal</th>
-                                    <th>Fecha devolución</th>
-                                    <th>Gestionado</th>
-                                    <th>Fecha gestión</th>
-                                    <th>Dias sin Gestionar</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    @foreach ($gestionados as $dato)
-                                    <td>{{$dato->Supervisor->name}}</td>
-                                    <td> {{$dato->Inspector->nombres}} {{$dato->Inspector->apellidos}}</td>
-                                    <td> {{$dato->FECHA_INSP}} </td>
-                                    <td> {{$dato->TIPO_TRABAJO}} </td>
-                                    <td> {{$dato->CONTRATO}} </td>
-                                    <td> {{$dato->ORDEN_TRABAJO}} </td>
-                                    <td> {{$dato->ORDEN_EXT}} </td>
-                                    <td> {{$dato->RESULTADO_CIERRE}} </td>
-                                    <td> {{$dato->CAUSAL}} </td>
-                                    <td> {{$dato->FECHA_DV}} </td>
-                                    @if ($dato->GESTIONADO === 0 )
-                                    <td>NO</td>
+                            <table class="table table-striped table-bordered tbl_datos" id="gestionados">
+                                <thead>
+                                    <tr>
+                                        <th>Supervisor</th>
+                                        <th>Inspector</th>
+                                        <th>Fecha Inspeccion</th>
+                                        <th>Tipo Trabajo</th>
+                                        <th>Contrato</th>
+                                        <th>Orden de trabajo</th>
+                                        <th>Orden Externa</th>
+                                        <th>Resultado</th>
+                                        <th>Causal</th>
+                                        <th>Fecha devolución</th>
+                                        <th>Gestionado</th>
+                                        <th>Fecha gestión</th>
+                                        <th>Dias sin Gestionar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        @foreach ($gestionados as $dato)
+                                        <td>{{$dato->Supervisor->name}}</td>
+                                        <td> {{$dato->Inspector->nombres}} {{$dato->Inspector->apellidos}}</td>
+                                        <td> {{$dato->FECHA_INSP}} </td>
+                                        <td> {{$dato->TIPO_TRABAJO}} </td>
+                                        <td> {{$dato->CONTRATO}} </td>
+                                        <td> {{$dato->ORDEN_TRABAJO}} </td>
+                                        <td> {{$dato->ORDEN_EXT}} </td>
+                                        <td> {{$dato->RESULTADO_CIERRE}} </td>
+                                        <td> {{$dato->CAUSAL}} </td>
+                                        <td> {{$dato->FECHA_DV}} </td>
+                                        @if ($dato->GESTIONADO === 0 )
+                                        <td>NO</td>
 
-                                    @else
-                                    <td style='background-color: rgb(146, 208, 80);'>SI</td>
-                                    @endif
-                                    <td> {{$dato->FECHA_GESTION}} </td>
-                                    @if($dato->DIAS_SIN_GESTION >= 2)
-                                    <td style='background-color: rgb(255, 165, 0);'> {{$dato->DIAS_SIN_GESTION}} </td>
-                                    @else
-                                    <td>{{$dato->DIAS_SIN_GESTION}} </td>
-                                    @endif
+                                        @else
+                                        <td style='background-color: rgb(146, 208, 80);'>SI</td>
+                                        @endif
+                                        <td> {{$dato->FECHA_GESTION}} </td>
+                                        @if($dato->DIAS_SIN_GESTION >= 2)
+                                        <td style='background-color: rgb(255, 165, 0);'> {{$dato->DIAS_SIN_GESTION}} </td>
+                                        @else
+                                        <td>{{$dato->DIAS_SIN_GESTION}} </td>
+                                        @endif
 
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
                 <div class="d-grid gap-2 d-md-flex group-buttons">
-                <a class="btn btn-primary" href="javascript:history.go(-1)">Ir Atrás</a>
-                <button class="btn btn-success" id="btnGuardar">Exportar</button>
+                    <a class="btn btn-primary" href="javascript:history.go(-1)">Ir Atrás</a>
+                    <button class="btn btn-success" id="btnGuardar">Exportar</button>
+                </div>
             </div>
-            </div>
-            
+
         </div>
 
     </div>

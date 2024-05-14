@@ -86,6 +86,17 @@
         session()->forget('error');
     @endphp
     @endif
+    @if(session('success'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                title: "Éxito",
+                text: "{{session('success')}}",
+                type: "success"
+            });
+        });
+    </script>
+    @endif
 </body>
 
 

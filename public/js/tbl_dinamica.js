@@ -1,4 +1,4 @@
-let codigoHTML_tabla_indicadores = "";
+
 $(document).ready(function () {
 
     // Inicializar la tabla activa con DataTables
@@ -219,27 +219,14 @@ $(document).ready(function () {
                     _token: csrfToken
                 },
                 success: function (response) {
-
-                    if (!response.error) {
-                        const nombreArchivo = response.nombreArchivo;
-                        const urlarchivo = response.ruta;
-                        if (nombreArchivo !== undefined) {
-                            const urlDescarga = urlarchivo + nombreArchivo;
-                            window.location.href = urlDescarga;
+                    console.log(response);
+                    if (response.ruta) {
+                            window.location.href = response.ruta;
                             codigoHTML_tabla_indicadores = null;
                             valoresSeleccionados = null;
                             $('#loader').hide();
                             $('#overlay').hide();
-                        } else {
-                            $('#loader').hide();
-                            $('#overlay').hide();
-                            Swal.fire({
-                                type: 'error',
-                                title: 'Error',
-                                text: "error al exportar archivo, intente de nuevo o contacte al administrador del sistema",
-                            });
-                        }
-
+                
                     } else {
                         $('#loader').hide();
                         $('#overlay').hide();
@@ -250,26 +237,6 @@ $(document).ready(function () {
                         });
                     }
 
-                    $.ajax({
-                        type: 'POST',
-                        url: url_borrar,
-                        data: {
-                            _token: csrfToken
-                        },
-                        success: function (response) {
-
-                        },
-                        error: function (xhr, status, error) {
-
-                            $('#loader').hide();
-                            $('#overlay').hide();
-                            Swal.fire({
-                                type: 'error',
-                                title: 'Error',
-                                text: error,
-                            });
-                        }
-                    });
                 },
                 error: function (xhr, status, error) {
                     console.log(xhr.responseText);

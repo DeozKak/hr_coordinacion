@@ -17,6 +17,7 @@ use App\Models\tbl_localidades_municipio;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use Illuminate\Support\Facades\Session;
 
 class BitacoraController extends Controller
 {
@@ -62,10 +63,19 @@ class BitacoraController extends Controller
     {
 
         session(['nom_archivo' => basename($excelFilePath)]);
+
+        $validacionArchivo1 = str_replace(".xls", " ", basename($excelFilePath));
+        $validacionArchivo2 = str_replace("4.08", "", $validacionArchivo1);
+        
+        $exist = tbl_bitacora_archivo::where('NOMBRE_ARCHIVO', $validacionArchivo2)->exists();
+        if($exist){
+            return redirect()->route('bitacora')->with('error', 'El archivo seleccionado ya ha sido procesado');
+        }
         session(['super' => $nom_super]);
         //consultas a la base de datos
         $inspectores = Tbl_insp_cali::where('SUPERVISOR', $id_super)
             ->where('state', 1)
+            ->orderBy('apellidos', 'asc')
             ->get();
 
         $municipios = tbl_localidades_municipio::all();
@@ -447,9 +457,12 @@ class BitacoraController extends Controller
         // Crear un objeto Writer para guardar la hoja de cálculo como un archivo Excel
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
 
-        $rutaArchivoFinal = str_replace(".xls", " ", session('nom_archivo'));
+        $rutaArchivo = str_replace(".xls", " ", session('nom_archivo'));
+        $rutaArchivoFinal = str_replace("4.08", "", $rutaArchivo);
         // Guardar el archivo Excel
         $writer->save(storage_path('app/uploads/') . $rutaArchivoFinal . ".xlsx");
+
+        
 
         $nombreArchivo = $rutaArchivoFinal . ".xlsx";
    
@@ -457,12 +470,12 @@ class BitacoraController extends Controller
 
         $bitacora = new tbl_bitacora_archivo();
         $bitacora->id_usuario = $usuario->id;
-        $bitacora->NOMBRE_ARCHIVO = $nombreArchivo;
-        $bitacora->ruta_archivo = 'storage/app/uploads/';
+        $bitacora->NOMBRE_ARCHIVO = $rutaArchivoFinal;
+        $bitacora->ruta_archivo = 'storage/app/uploads/'.$nombreArchivo;
         $bitacora->save();
         
         foreach ($datos_array_OK as $datos){
-          
+          try{
                 if($datos['categoria'] === null){
                     $consultaMovilidad = Movilidad::select('AttrCategoria')->where('NroSitio', $datos['contrato'])->where('IdTarea',$datos['no_acta'])->first();
                     $datos['categoria'] = $consultaMovilidad->AttrCategoria;
@@ -488,12 +501,13 @@ class BitacoraController extends Controller
                 $contrato->setAttribute('4_RECINTOS', $datos['4_recintos']);
                 $contrato->id_bitacora = $bitacora->id;
                 $contrato->save();
-           
+            }catch(\Exception $e){
+                return response()->json(['error' => 'Error al guardar los datos en la base de datos']);
+            }
         }
-
+        Session::flash('success', 'Bitacora generada correctamente');
         return response()->json([
-            'nombreArchivo' => $nombreArchivo,
-            'ruta' => 'storage/app/uploads/'
+            'ruta' => 'bitacora'
         ]);
     }
 
@@ -728,5 +742,46 @@ class BitacoraController extends Controller
 
             http_response_code(500);
         }
+    }
+
+
+    public function reportes(){
+        $bitacoras = tbl_bitacora_archivo::all()->map(function ($bitacora) {
+            $bitacora->fecha_creacion = $bitacora->created_at->format('Y-m-d');
+            return $bitacora;
+        });
+        return view('bitacoras.reportes', compact('bitacoras'));
+    }
+
+    public function verReporte($id_bitacora){
+        $bitacora = tbl_bitacora_archivo::find($id_bitacora);
+        return view('bitacoras.verReporte', compact('bitacora'));
+
+    }
+
+    public function consultaReporte($id_bitacora){
+        //contratos asignados a la bitacora
+        $contratos = tbl_bitacora_contrato::selectRaw("CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP, tbl_bitacora_contratos.`4_RECINTOS`")
+        ->join('tbl_insp_cali', 'tbl_insp_cali.cedula', '=', 'tbl_bitacora_contratos.CC_OPERARIO')
+        ->where('tbl_bitacora_contratos.id_bitacora', $id_bitacora)
+        ->get();
+
+        return response()->json(['contratos' => $contratos]);
+    }
+
+    public function consultaIndicadores($id_bitacora){
+     //contadores de cierres
+     $certificadas = tbl_bitacora_contrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', '.CERTIFICADA')->count();
+     $certificadasConNovedades = tbl_bitacora_contrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', 'CERTIFICADA CON NOVEDADES')->count();
+     $inspeccionadasConDefectoCritico = tbl_bitacora_contrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', '.INSPECCIONADA CON DEFECTO CRITICO VALLE')->count();
+     $inspeccionadasConDefectoNoCritico = tbl_bitacora_contrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', '.INSPECCIONADA CON DEFECTO NO CRITICO VALLE')->count();
+     $totalContratosOK = tbl_bitacora_contrato::where('id_bitacora', $id_bitacora)->count();
+     return response()->json([
+         'certificadas' => $certificadas,
+         'certificadasConNovedades' => $certificadasConNovedades,
+         'inspeccionadasConDefectoCritico' => $inspeccionadasConDefectoCritico,
+         'inspeccionadasConDefectoNoCritico' => $inspeccionadasConDefectoNoCritico,
+         'totalContratosOK' => $totalContratosOK
+     ]);
     }
 }

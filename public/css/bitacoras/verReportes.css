@@ -1,0 +1,10 @@
+.handsontable.htReadOnly {
+    background-color: #f9f9f9; /* Cambia el color de fondo a un tono diferente */
+}
+
+.shadow-container {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    margin: 20px auto;  
+    border-radius: 10px;
+    background-color: #f8f9fa;
+}

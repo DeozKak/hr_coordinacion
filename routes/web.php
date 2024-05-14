@@ -39,11 +39,15 @@ Route::get('/bitacora', [BitacoraController::class, 'ver'])->name('bitacora');
 Route::post('/generar_bitacora', [BitacoraController::class, 'generar_bitacora'])->name('bitacoras.generar');
 Route::post('/guardar_tabla/{super}', [BitacoraController::class, 'guardar_tabla'])->name('bitacoras.guardar_tabla');
 Route::post('/borrar_archivos', [BitacoraController::class, 'borrar_archivos'])->name('bitacoras.borrar_archivos');
-Route::get('/storage/app/uploads/{file}', function($nombreArchivo){
+Route::post('/storage/app/uploads/{file}', function($nombreArchivo){
     return response()->download(storage_path('app/uploads/').$nombreArchivo);
 })->name('bitacoras.download');
 Route::get('/bitacora/devoluciones', [BitacoraController::class, 'devoluciones'])->name('bitacora.devoluciones');
 Route::post('/bitacora/exportar_devoluciones', [BitacoraController::class, 'exportar_tabla_devoluciones'])->name('bitacora.exportar_devoluciones');
+Route::get('/bitacora/reportes',[BitacoraController::class, 'reportes'])->name('bitacoras.reportes');
+Route::post('/bitacora/ver_reporte/{id_bitacora}', [BitacoraController::class, 'verReporte'])->name('bitacoras.ver_reporte');
+Route::get('bitacora/consultar_reporte/{id_bitacora}', [BitacoraController::class, 'consultaReporte'])->name('bitacoras.consulta_reporte');
+Route::get('bitacora/consultar_indicadores/{id_bitacora}', [BitacoraController::class, 'ConsultaIndicadores'])->name('bitacoras.Consulta_indicadores');
 
 //Rutas para inspectores----------------------------------------------------------------------------
 Route::get('/inspectores', [InspectorController::class, 'index'])->name('inspectores.index');

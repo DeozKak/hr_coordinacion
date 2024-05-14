@@ -81,3 +81,9 @@
       cursor: pointer;
       margin-left: 5px;
   }
+
+  td,th {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Opcional: añade puntos suspensivos al final del texto si se desborda */
+}

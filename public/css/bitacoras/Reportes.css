@@ -45,54 +45,35 @@
     /* Debajo del loader */
   }
     
-  .tabla-indicadores{
-    font-size: 11.5px;
-  }
-    
-    .tbl_datos {
-        font-size: 12px;
-    }
-
-    .tbl_datos th,
-    .tbl_datos td {
-        padding: 5px;
-       
-    }
-
+  
     .body {
         background-color: #f0f0f0;
         font-family: 'Arial', sans-serif;
     }
-
+  
     .shadow-container {
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        margin: 20px auto;  
+        margin: 20px auto; 
+        max-width: 1250px;  
         border-radius: 10px;
-        background-color: #f8f9fa;
+        background-color: #f8f9fac4;
+    }
+    .card-header{
+        background-color: #f3f3f3;
+        color: white;
+    }
+  
+    .btn-group {
+        display: flex;
+        flex-wrap: nowrap; /* Evita que los botones se envuelvan a la siguiente línea */
+    }
+    
+    .btn {
+        margin-right: 5px; /* Espacio entre los botones */
     }
 
-    #btnPapel{
-       margin: 10px;      
+    td {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis; /* Opcional: añade puntos suspensivos al final del texto si se desborda */
     }
-
-    .form-group {
-      display: flex;
-      align-items: center;
-  }
-
-  .form-group label {
-      margin-right: 10px;
-  }
-
-  .form-group input {
-      flex: 1;
-  }
-
-  .campo-invalido {
-    border: 1px solid red; /* Establecer borde rojo para campos no completados */
-}
-td,th {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis; /* Opcional: añade puntos suspensivos al final del texto si se desborda */
-}
