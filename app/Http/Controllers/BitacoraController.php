@@ -371,6 +371,7 @@ class BitacoraController extends Controller
                 $hoja_OK->getColumnDimension($columnID)->setAutoSize(true);
             }
 
+
             $hoja->getStyle('A1:B5')->applyFromArray([
                 'borders' => [
                     'outline' => [
@@ -476,6 +477,16 @@ class BitacoraController extends Controller
         
         foreach ($datos_array_OK as $datos){
           try{
+
+                $horaInicio = new DateTime($datos['hora_inicio']);
+                $horaFinal = new DateTime($datos['hora_fin']);
+
+                if ($horaFinal < $horaInicio) {
+                    $horaFinal->modify('+1 day'); // Añadir un día si la hora final es menor que la hora de inicio
+                }
+
+                $duracion = $horaInicio->diff($horaFinal);
+                
                 if($datos['categoria'] === null){
                     $consultaMovilidad = Movilidad::select('AttrCategoria')->where('NroSitio', $datos['contrato'])->where('IdTarea',$datos['no_acta'])->first();
                     $datos['categoria'] = $consultaMovilidad->AttrCategoria;
@@ -498,6 +509,7 @@ class BitacoraController extends Controller
                 $contrato->RESULTADO_CIERRE = $datos['resultado'];
                 $contrato->HORA_INICIO = $datos['hora_inicio'];
                 $contrato->HORA_FINAL = $datos['hora_fin'];
+                $contrato->DURACION_INSP = $duracion->format('%H:%I');
                 $contrato->setAttribute('4_RECINTOS', $datos['4_recintos']);
                 $contrato->id_bitacora = $bitacora->id;
                 $contrato->save();

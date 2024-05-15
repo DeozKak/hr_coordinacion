@@ -14,6 +14,7 @@
         "vite": "^5.0"
     },
     "dependencies": {
+        "chartjs-plugin-annotation": "^3.0.1",
         "sweetalert2": "^11.6.13"
     }
 }

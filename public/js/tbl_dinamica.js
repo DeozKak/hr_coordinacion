@@ -60,7 +60,7 @@ $(document).ready(function () {
         $('table').hide();
         $('.btnav').removeClass('active');
         /*  $('table[style*="display: none"]').parent().hide(); */
-        $('div[class*="display: none"]').show();
+        /* $('div[class*="display: none"]').show(); */
         $('div[style*="display: table"]').hide();
         $('div[class*="tab-content"]').parent().show();
         $('div[class*="col-md-4"]').show();
@@ -77,6 +77,8 @@ $(document).ready(function () {
             styleCell.querySelector('.dt-layout-cell').style.display = 'table';
             const styleScroll = selectorid.querySelector('.dt-scroll-headInner');
             styleScroll.style.display = 'table';
+            styleScroll.querySelector('.dt-column-title').click();
+            styleScroll.querySelector('.dt-column-title').click();
             const styleTable = selectorid.querySelector('.dt-scroll-body');
             styleTable.style.display = '';
             styleTable.style.overflowX = 'hidden';

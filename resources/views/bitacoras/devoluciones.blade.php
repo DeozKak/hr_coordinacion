@@ -39,8 +39,8 @@
                     </div>
                 </div>
                 <div class="row justify-content-center">
-                    <div class="col-md-12">
-                        <div class="col-md-12 table-responsive" style="padding: 17px;">
+                    <div class="col-lg-12">
+                        <div class="col-md-12 table-responsive" style="padding: 15px;">
                             <table class="table table-striped table-bordered tbl_datos" id="devoluciones">
                                 <thead>
                                     <tr>

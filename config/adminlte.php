@@ -425,7 +425,7 @@ return [
             ],
         ],
 
-        ['header' => 'Bitacoras','can' => 'ver_bitacoras',],
+        ['header' => 'Bitacoras','can' => ['ver_bitacoras','generar_bitacoras']],
 
          
         [
@@ -461,12 +461,12 @@ return [
 
          
         [
-            'text' => 'Usuarios',
+            'text' => 'Configuración',
             'can' => ['gestion_usuarios','gestion_inspectores'],
             'icon' => 'fas fa-users',
             'submenu' => [
                 [
-                    'text' => 'Gestionar',
+                    'text' => 'Usuarios',
                     'url' => 'admin/users',
                     'icon' => 'far fa-circle',
                     'can' => 'gestion_usuarios',
@@ -477,6 +477,24 @@ return [
                     'url' => 'inspectores',
                     'icon' => 'far fa-circle',
                     'can' => 'gestion_inspectores',
+                    'label_color' => 'success',
+                ],
+            ]
+        ],
+
+        ['header' => 'Supervisión Producción','can' => ['ver_residente'],],
+
+         
+        [
+            'text' => 'Producción',
+            'can' => ['ver_residente'],
+            'icon' => 'fas fa-hammer',
+            'submenu' => [
+                [
+                    'text' => 'Ver Producción',
+                    'url' => '/produccion',
+                    'icon' => 'far fa-circle',
+                    'can' => 'ver_residente',
                     'label_color' => 'success',
                 ],
             ]
@@ -644,13 +662,14 @@ return [
             ],
         ],
         'Chartjs' => [
-            'active' => false,
+            'active' => true,
             'files' => [
                 [
                     'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.0/Chart.bundle.min.js',
+                    'asset' => true,
+                    'location' => '//cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js',
                 ],
+               
             ],
         ],
         'Sweetalert2' => [
