@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tbl_produccion_cortes', function (Blueprint $table) {
-            $table->id()->primary(true)->autoIncrement();
-            $table->date('fecha_inicio');
-            $table->date('fecha_fin');
-            
+        Schema::create('tbl_produccion_zonas', function (Blueprint $table) {
+            $table->id()->autoIncrement()->primary(true);
+            $table->string('nombre');
+            $table->timestamps();
         });
     }
 
@@ -24,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tbl_produccion_cortes');
+        Schema::dropIfExists('tbl_produccion_zonas');
     }
 };

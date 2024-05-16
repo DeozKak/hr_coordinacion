@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id()->autoIncrement();
             $table->string('nombre', 100);
             $table->unsignedBigInteger('id_sede');
+            $table->unsignedBigInteger('id_zona');
+            $table->foreign('id_zona')->references('id')->on('tbl_produccion_zonas');
             $table->foreign('id_sede')->references('id')->on('tbl_localidades_sedes');
         });
     }

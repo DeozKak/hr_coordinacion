@@ -392,7 +392,7 @@ class BitacoraController extends Controller
             foreach ($datos_array_OK as $datos_ok) {
 
                 try {
-
+                    
 
                     $resultado_ok = Tbl_dv_insp::where('contrato', $datos_ok['contrato'])
                         ->where('orden_trabajo', $datos_ok['orden_de_trabajo'])
@@ -473,8 +473,7 @@ class BitacoraController extends Controller
         $bitacora->id_usuario = $usuario->id;
         $bitacora->NOMBRE_ARCHIVO = $rutaArchivoFinal;
         $bitacora->ruta_archivo = 'storage/app/uploads/'.$nombreArchivo;
-        $bitacora->save();
-        
+        $bitacora->save(); 
         foreach ($datos_array_OK as $datos){
           try{
 
@@ -491,7 +490,7 @@ class BitacoraController extends Controller
                     $consultaMovilidad = Movilidad::select('AttrCategoria')->where('NroSitio', $datos['contrato'])->where('IdTarea',$datos['no_acta'])->first();
                     $datos['categoria'] = $consultaMovilidad->AttrCategoria;
                 }    
-            
+               
                 $exist = tbl_bitacora_contrato::where('CONTRATO', $datos['contrato'])->where('ORDEN_TRABAJO', $datos['orden_de_trabajo'])->exists();
                 if($exist){
                     continue;
@@ -517,6 +516,7 @@ class BitacoraController extends Controller
                 return response()->json(['error' => 'Error al guardar los datos en la base de datos']);
             }
         }
+     
         Session::flash('success', 'Bitacora generada correctamente');
         return response()->json([
             'ruta' => 'bitacora'

@@ -14,7 +14,13 @@ $('table').DataTable( {
         "next": "Siguiente",
         "previous": "Anterior"
     }
+    
 }});
 
+const thfecha = $('th[data-dt-column="2"]');
+const spanElement = thfecha.find('span.dt-column-title');
+
+// Simular doble clic en el span
+spanElement.trigger('click').trigger('click');
 
 });
