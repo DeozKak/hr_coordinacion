@@ -62,4 +62,5 @@ Route::get('/inspectores/show_disabled', [InspectorController::class, 'show_disa
 //Rutas para Producción
 Route::get('/produccion', [ProduccionController::class, 'index'])->name('produccion.index')->middleware(CheckPermission::class.':ver_residente');
 Route::get('/produccion/detalles',[ProduccionController::class,'detalles'])->name('produccion.detalles')->middleware(CheckPermission::class.':ver_residente');
+Route::get('/produccion/data',[ProduccionController::class,'datosDetalles'])->name('produccion.datosDetalles')->middleware(CheckPermission::class.':ver_residente');
 });
