@@ -2,15 +2,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const detalles = document.querySelector('#detalles');
     const url = document.querySelector('#id_produccion').value;
-    let json = [];
     let headers = [];
     let rows = [];
-    let currentMonthDays = [];
     $.ajax({
         url: url, // Ruta al archivo PHP que realiza la consulta a la base de datos
         type: 'GET',
         success: function (response) {
-            rows = response.produccionInspector.map(item => ({ cedula: item.cedula, nombres: item.nombres }));
+            console.log(response);
+
+            rows = response.produccionInspector;
             // Extraer la propiedad nombreMes de cada objeto
             const nombresMes = response.diasIntermedios.map(item => item.nombreMes);
             // Obtener los nombres de mes únicos
@@ -26,13 +26,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 label: nombreMes,
                 colspan: conteoRepeticiones[nombreMes]
             }));
-            console.log(resultados);
+
             const headerAdicional = { label: '', colspan: 2 };
-            headers = [headerAdicional, ...resultados.map(item => ({ label: item.label, colspan: item.colspan }))];
+            const headerFinal = { label: '', colspan: 7 };
+            headers = [headerAdicional, ...resultados.map(item => ({ label: item.label, colspan: item.colspan })),headerFinal];
             const datosAdicionales = ['CC', 'INSPECTORES CONTRATO CALI'];
+            const columnasFinales = ['SUB TOTAL', 'MATRICES', 'DOMINGOS Y FESTIVOS', 'DISEÑOS ESPECIALES', '4 O MAS RECINTOS',
+            'COMERCIALES', 'TOTAL'];
             const datosDias = response.diasIntermedios.map(item => item.nombreDia + ' ' + item.dias);
             headers.push(datosDias);
-            datosDias.unshift(...datosAdicionales);  
+            datosDias.unshift(...datosAdicionales);
+            headers[4].push(...columnasFinales);
+            console.log(headers);
         },
         error: function (xhr, status, error) {
             console.error(xhr.responseText);
@@ -45,18 +50,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     setTimeout(() => {
 
-     
+
         const hot = new Handsontable(detalles, {
             readOnly: true,
             manualColumnMove: false,
-            nestedRows: true,
             rowHeaders: true,
-            nestedHeaders:[headers,headers[3]],
+            nestedHeaders: [headers, headers[4]],
             height: '550px',
             data: rows,
             autoWrapRow: true,
             autoWrapCol: true,
             licenseKey: 'non-commercial-and-evaluation' // for non-commercial use only
         });
-    }, 500);
+    }, 6000);
 });
