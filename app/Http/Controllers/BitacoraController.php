@@ -94,10 +94,10 @@ class BitacoraController extends Controller
         try {
             $spreadsheet = IOFactory::load($excelFilePath);
         } catch (\Exception $e) {
-            return redirect()->route('bitacora')->with('error', 'El archivo seleccionado no es válido o no se ha seleccionado un supervisor');
-        }
+             return redirect()->route('bitacora')->with('error', 'El archivo seleccionado no es válido o no se ha seleccionado un supervisor'); 
+      }
         if (!$spreadsheet->sheetNameExists('4.08 Bitacora Valle')) {
-            return redirect()->route('bitacora')->with('error', 'El archivo seleccionado no es válido o no se ha seleccionado un supervisor');
+             return redirect()->route('bitacora')->with('error', 'El archivo seleccionado no es válido o no se ha seleccionado un supervisor'); 
         }
 
         unlink($excelFilePath);
