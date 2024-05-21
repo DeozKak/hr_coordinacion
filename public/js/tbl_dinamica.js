@@ -128,6 +128,8 @@ $(document).ready(function () {
 
                     let checkbox = $(this.node()).find('td:eq(14) input').is(':checked');
 
+                    let recintos = $(this.node()).find('#NroRecintos').val();
+                    console.log(recintos);
                     let idSelect = $(this).attr('id') || 'select_' + indexTabla + '_' + indexSelect;
 
                     let valorSeleccionado = checkbox;
@@ -157,7 +159,7 @@ $(document).ready(function () {
                 });
 
             });
-          
+
             let contador_tabla = 0;
             let indicadores = [];
             datos.forEach(element => {
@@ -173,7 +175,7 @@ $(document).ready(function () {
 
                     const selectValueCombobox = valoresSeleccionados["select_" + contador_tabla + "_" + contador_combobox1];
                     const valor_cierre = value[10];
-                   
+
                     // Verificar si la fila cumple con los criterios necesarios para contar
                     if (selectValueCombobox === 'OK') {
 
@@ -199,12 +201,12 @@ $(document).ready(function () {
                         }
                     }
                     contador_combobox1 = contador_combobox1 + 3;
-                    
+
                 });
                 indicadores.push({ certificadaCount, certificadaConNovedadesCount, inspeccionadaConDefectoCriticoCount, inspeccionadaConDefectoNoCriticoCount, totalCount });
                 contador_tabla = contador_tabla + 1;
             });
-            
+
             const csrfToken = $('#token').val();
             const url_guardar = $('#url_guardar').val();
             const url_borrar = $('#url_borrar').val();
@@ -223,12 +225,12 @@ $(document).ready(function () {
                 success: function (response) {
                     console.log(response);
                     if (response.ruta) {
-                            window.location.href = response.ruta;
-                            codigoHTML_tabla_indicadores = null;
-                            valoresSeleccionados = null;
-                            $('#loader').hide();
-                            $('#overlay').hide();
-                
+                        window.location.href = response.ruta;
+                        codigoHTML_tabla_indicadores = null;
+                        valoresSeleccionados = null;
+                        $('#loader').hide();
+                        $('#overlay').hide();
+
                     } else {
                         $('#loader').hide();
                         $('#overlay').hide();
@@ -254,6 +256,14 @@ $(document).ready(function () {
         }, 100);
 
     });
+    // Función para validar los datos ingresados en la tabla
+    const inputrecintos = document.getElementById('NroRecintos');
+
+    // Permitir solo números
+    inputrecintos.addEventListener('input', function () {
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3);
+    });
+    //--------------------------------------------------------------------------------
 
     // abrir modal agregar inspecciones en papel
     document.getElementById('btnPapel').addEventListener('click', function () {
@@ -458,6 +468,23 @@ document.addEventListener('DOMContentLoaded', function () {
         link.addEventListener('click', function (event) {
             event.preventDefault(); // Evitar el comportamiento predeterminado del enlace
             // Puedes agregar aquí cualquier lógica adicional que desees realizar al hacer clic en el enlace
+        });
+    });
+
+    let check4Recintos = document.querySelectorAll('#checkRecintos');
+    
+    check4Recintos.forEach(function (check) {
+       
+        check.addEventListener('change', function () {
+            if (check.checked) {
+               let fila = check.parentNode.parentNode;
+               fila.querySelector('#NroRecintos').disabled = false;
+            }else{
+                let fila = check.parentNode.parentNode;
+                fila.querySelector('#NroRecintos').disabled = true;
+                fila.querySelector('#NroRecintos').value = '';
+            }
+            
         });
     });
 

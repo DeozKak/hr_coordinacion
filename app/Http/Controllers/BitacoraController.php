@@ -107,6 +107,7 @@ class BitacoraController extends Controller
 
     public function guardar_tabla(Request $request, User $super)
     {
+        dd($request->valoresSeleccionados);
         //variables que obtienen datos del request
         $encabezados = $request->encabezado;
         $dataTable = $request->datos;

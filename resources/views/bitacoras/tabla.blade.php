@@ -187,7 +187,8 @@
                                                             echo "<td>$duracionFormato</td>";
                                                         }
                                                         ?>
-                                                        <td><input type="checkbox" value=""></td>
+                                                        <td><input type="checkbox" value="" id="checkRecintos">
+                                                            <input type="text" id="NroRecintos" size="1" style="text-align: center;" disabled></td>
                                                         <td>
                                                             <select class='form-select nombre-columna' style="width: 80px;">
                                                                 <option value="OK" selected>OK</option>
@@ -318,11 +319,8 @@
                         <br>
                         <div class="form-group">
                             <div class="col-md-6">
-                                <label for="recintos">4 recintos o más</label>
-                                <select class="form-control" name="recintos" id="recintos">
-                                    <option value="NO" selected>NO</option>
-                                    <option value="SI">SI</option>
-                                </select>
+                                <label for="recintos">Recintos</label>
+                                <input type="text" class="form-control" name="recintos" id="recintos">
                             </div>
                             <div class="col-md-6">
                                 <label for="devolucion">Estado</label>
