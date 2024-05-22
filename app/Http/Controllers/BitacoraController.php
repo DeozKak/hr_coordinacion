@@ -35,7 +35,7 @@ class BitacoraController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'supervisor' => 'required',
-            'archivo' => 'required|mimes:xls,xlsx'
+            
         ], [
             'supervisor.required' => 'Por favor seleccione un supervisor',
             'archivo.required' => 'Por favor seleccione un archivo',
@@ -107,7 +107,7 @@ class BitacoraController extends Controller
 
     public function guardar_tabla(Request $request, User $super)
     {
-        dd($request->valoresSeleccionados);
+  
         //variables que obtienen datos del request
         $encabezados = $request->encabezado;
         $dataTable = $request->datos;
@@ -193,12 +193,11 @@ class BitacoraController extends Controller
                         $clave2 = "select_$idTabla" . "_$idCombobox2";
                         if ($indiceColumna === 15 && isset($valoresSeleccionados[$claveCheckbox])) {
                             $contenidoCelda = $valoresSeleccionados[$claveCheckbox];
-                            if ($contenidoCelda === "true") {
-                                $contenidoCelda = "SI";
+                            if ($contenidoCelda === "false") {
+                                $contenidoCelda = "NO";
+                            } else {
                                 $celda_color = $hoja->getCell([$indiceColumna, $indiceFila]);
                                 $celda_color->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('FF8000');
-                            } else {
-                                $contenidoCelda = "NO";
                             }
                             $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoCelda);
                         }

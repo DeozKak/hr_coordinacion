@@ -128,7 +128,7 @@
                                                 $nombreCelda = $sheet->getCell('A' . $row->getRowIndex())->getValue();
                                                 $Cierre = $sheet->getCell('M' . $row->getRowIndex())->getValue();
                                                 ?>
-                                                <?php if (strpos($contrato,":") === 0 && $nombreCelda === $nombre && ($Cierre === ".CERTIFICADA" || $Cierre === "CERTIFICADA CON NOVEDADES" || $Cierre === ".INSPECCIONADA CON DEFECTO CRITICO VALLE" || $Cierre === ".INSPECCIONADA CON DEFECTO NO CRITICO VALLE")) : ?>
+                                                <?php if (strpos($contrato, ":") === 0 && $nombreCelda === $nombre && ($Cierre === ".CERTIFICADA" || $Cierre === "CERTIFICADA CON NOVEDADES" || $Cierre === ".INSPECCIONADA CON DEFECTO CRITICO VALLE" || $Cierre === ".INSPECCIONADA CON DEFECTO NO CRITICO VALLE")) : ?>
                                                     <tr>
                                                         <?php $horaInicialObj = null;
                                                         $horaFinalObj = null;
@@ -138,7 +138,6 @@
                                                             if ($columna === 'H') {
 
                                                                 echo "<td style='background-color: rgb(146, 208, 80);'>" . $valorCelda . "</td>";
-                                                               
                                                             } elseif ($columna === 'D') {
                                                                 $fechaNumeroNatural = $valorCelda;
                                                                 $fecha = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($fechaNumeroNatural);
@@ -188,7 +187,8 @@
                                                         }
                                                         ?>
                                                         <td><input type="checkbox" value="" id="checkRecintos">
-                                                            <input type="text" id="NroRecintos" size="1" style="text-align: center;" disabled></td>
+                                                            <input type="text" id="NroRecintos" size="1" style="text-align: center;" disabled>
+                                                        </td>
                                                         <td>
                                                             <select class='form-select nombre-columna' style="width: 80px;">
                                                                 <option value="OK" selected>OK</option>
@@ -272,6 +272,7 @@
                                 <label for="tipo_trabajo">Tipo de Trabajo</label>
                                 <select class="form-control" name="tipo_trabajo" id="tipo_trabajo">
                                     <option value="">Seleccione Tipo de Trabajo</option>
+                                    <option value="FI-29 revisión periódica línea matriz">FI-29 revisión periódica línea matriz</option>
                                     <option value="RP 10444">RP 10444</option>
                                     <option value="RP 12161">RP 12161</option>
                                     <option value="RN 12162">RN 12162</option>
@@ -288,7 +289,7 @@
                             </div>
                         </div>
                         <br>
-                        <div class="form-group">
+                        <div class="form-group matriz-des1">
                             <div class="col-md-6">
                                 <label for="orden_trabajo">Orden de trabajo</label>
                                 <input type="text" class="form-control" name="orden_trabajo" id="orden_trabajo">
@@ -317,17 +318,17 @@
                             </div>
                         </div>
                         <br>
-                        <div class="form-group">
+                        <div class="form-group matriz-des2">
                             <div class="col-md-6">
-                                <label for="recintos">Recintos</label>
-                                <input type="text" class="form-control" name="recintos" id="recintos">
+                                <label for="recintos">4 Recintos o mas</label>
+                                <select class="form-control" name="recintos" id="recintos">
+                                    <option value="NO" selected>NO</option>
+                                    <option value="SI">SI</option>
+                                </select>
                             </div>
                             <div class="col-md-6">
-                                <label for="devolucion">Estado</label>
-                                <select class="form-control" name="devolucion" id="devolucion">
-                                    <option value="OK" selected>OK</option>
-                                    <option value="DV">DV</option>
-                                </select>
+                                <label for="cantidad_recintos">Cantidad de recintos</label>
+                                <input type="text" class="form-control" id="NroRecintosP" style="text-align: center;" disabled>
                             </div>
                         </div>
                         <br>
@@ -342,6 +343,16 @@
                                     <option value=".INSPECCIONADA CON DEFECTO NO CRITICO VALLE">.INSPECCIONADA CON DEFECTO NO CRITICO VALLE</option>
                                 </select>
                             </div>
+                            <div class="col-md-6" id="cantidad_recintos">
+                                <label for="devolucion">Estado</label>
+                                <select class="form-control" name="devolucion" id="devolucion">
+                                    <option value="OK" selected>OK</option>
+                                    <option value="DV">DV</option>
+                                </select>
+
+                            </div>
+                        </div>
+                        <div class="form-group">
                             <div class="col-md-6" style="display: none;" id="causal_devolucion">
                                 <label for="causal">Causal Devolución</label>
                                 <select class="form-control" name="causal" id="causal">

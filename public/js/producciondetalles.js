@@ -1,5 +1,24 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    let diasFestivos;
+    Handsontable.renderers.registerRenderer('customStylesRenderer', (hotInstance, TD, row, col, prop, value, cellProperties) => {
+        Handsontable.renderers.TextRenderer(hotInstance, TD, row, col, prop, value, cellProperties);
+        
+        if (col === 33 || col === 34 || col === 35 || col === 36 || col === 37) {
+            TD.style.backgroundColor = 'rgb(253, 234, 185)';
+        }
+        if(col === 38 || col === 32){
+            TD.style.backgroundColor = 'rgb(185, 196, 255)';
+        }
+        if(col === 32 && value < 180){
+            TD.style.backgroundColor = 'rgb(255, 185, 185)';
+        }
 
+        const columnName = hotInstance.getColHeader(col);
+        
+
+
+    });
+    
     const detalles = document.querySelector('#detalles');
     const url = document.querySelector('#id_produccion').value;
     let headers = [];
@@ -28,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
 
         const response = await fetchData();
-        console.log(response);
+        diasFestivos = response.diasFestivos;
         rows = response.produccionInspector;
         // Extraer la propiedad nombreMes de cada objeto
         const nombresMes = response.diasIntermedios.map(item => item.nombreMes);
@@ -58,7 +77,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         headers[4].push(...columnasFinales);
 
         const hot = new Handsontable(detalles, {
-            readOnly: true,
+            readOnly: false,
             manualColumnMove: false,
             rowHeaders: true,
             nestedHeaders: [headers, headers[4]],
@@ -67,7 +86,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             autoWrapRow: true,
             autoWrapCol: true,
             fixedColumnsStart: 2,
-            licenseKey: 'non-commercial-and-evaluation' // for non-commercial use only
+            licenseKey: 'non-commercial-and-evaluation', // for non-commercial use only
+            cells: function (row, col) {
+                const cellProperties = {};
+                cellProperties.renderer = 'customStylesRenderer';
+                return cellProperties;
+            }
         });
     } catch (error) {
         console.error('Error fetching data:', error);

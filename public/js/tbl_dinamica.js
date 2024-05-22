@@ -128,13 +128,19 @@ $(document).ready(function () {
 
                     let checkbox = $(this.node()).find('td:eq(14) input').is(':checked');
 
-                    let recintos = $(this.node()).find('#NroRecintos').val();
-                    console.log(recintos);
-                    let idSelect = $(this).attr('id') || 'select_' + indexTabla + '_' + indexSelect;
+                    if (checkbox) {
+                        let recintos = $(this.node()).find('#NroRecintos').val();
+                        let valorSeleccionado = recintos;
+                        let idSelect = $(this).attr('id') || 'select_' + indexTabla + '_' + indexSelect;
+                        valoresSeleccionados[idSelect] = valorSeleccionado;
 
-                    let valorSeleccionado = checkbox;
+                    } else {
+                        let valorSeleccionado = checkbox;
+                        let idSelect = $(this).attr('id') || 'select_' + indexTabla + '_' + indexSelect;
+                        valoresSeleccionados[idSelect] = valorSeleccionado;
 
-                    valoresSeleccionados[idSelect] = valorSeleccionado;
+                    }
+
 
                     indexSelect = indexSelect + 1;
 
@@ -257,14 +263,34 @@ $(document).ready(function () {
 
     });
     // Función para validar los datos ingresados en la tabla
-    const inputrecintos = document.getElementById('NroRecintos');
-
+    const inputrecintos = document.querySelectorAll('#NroRecintos');
+    
     // Permitir solo números
-    inputrecintos.addEventListener('input', function () {
-        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3);
+    inputrecintos.forEach(input => {
+        input.addEventListener('input', function () {
+            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3);
+        });
     });
     //--------------------------------------------------------------------------------
 
+    const inputrecintosP = document.getElementById('NroRecintosP');
+
+    inputrecintosP.addEventListener('input', function () {
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3);
+    });
+
+    const selectrecintos = document.getElementById('recintos');
+
+    selectrecintos.addEventListener('change', function () {
+        console.log(this.value);
+        if (this.value === 'SI') {
+            inputrecintosP.disabled = false; // Habilitar el campo "NroRecintos"
+        } else {
+            inputrecintosP.disabled = true;
+            inputrecintosP.value = ""; // Deshabilitar el campo "NroRecintos"
+        }
+    });
+    //--------------------------------------------------------------------------------
     // abrir modal agregar inspecciones en papel
     document.getElementById('btnPapel').addEventListener('click', function () {
         $('#ventanaEmergente').modal('show');
@@ -354,6 +380,20 @@ $(document).ready(function () {
         }
     });
 
+//--------------------------------------------------------------------------------
+const selectTipoTrabajo = document.getElementById('tipo_trabajo');
+const grupo1 = document.querySelector('.matriz-des1');
+const grupo2 = document.querySelector('.matriz-des2');
+
+selectTipoTrabajo.addEventListener('change', function () {
+    if (selectTipoTrabajo.value === "FI-29 revisión periódica línea matriz"){
+        grupo1.style.display = 'none';
+        grupo2.style.display = 'none';
+    }else{
+        grupo1.style.display = '';
+        grupo2.style.display = '';
+    }
+});
     const btnAgregar = document.getElementById('agregar');
 
 
@@ -373,7 +413,27 @@ $(document).ready(function () {
                     selectCausal.classList.add('campo-invalido'); // Establecer borde rojo para campos no completados
                 }
             }
+            if (campo.value === 'SI') {
+                const inputRecintos = document.getElementById('NroRecintosP');
+                if (inputRecintos.value.trim() === '' && campo.value === 'NO') {
+                    // Validar solo si el campo 'NO' está seleccionado
+                    inputRecintos.classList.add('campo-invalido'); // Establecer borde rojo para campos no completados
+                    formularioValido = false;
+                } else {
+                    inputRecintos.style.border = ''; // Restablecer estilo de borde por defecto
+                }
+            }
             if (campo.value.trim() === '' || campo.value === ':') {
+                const selectTipoTrabajo = document.getElementById('tipo_trabajo');
+                if(selectTipoTrabajo.value === "FI-29 revisión periódica línea matriz"){
+                    if(campo.id === 'orden_trabajo' || campo.id === 'categoria' || campo.id === 'NroRecintosP' || campo.id === 'recintos'){
+                        return;
+                    }
+                }
+                const selectrecintos = document.getElementById('recintos');
+                if (campo.id === 'NroRecintosP' && selectrecintos.value === 'NO') {
+                    return;
+                }
                 formularioValido = false;
                 campo.style.border = '1px solid red'; // Establecer borde rojo para campos no completados
 
@@ -472,19 +532,19 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     let check4Recintos = document.querySelectorAll('#checkRecintos');
-    
+
     check4Recintos.forEach(function (check) {
-       
+
         check.addEventListener('change', function () {
             if (check.checked) {
-               let fila = check.parentNode.parentNode;
-               fila.querySelector('#NroRecintos').disabled = false;
-            }else{
+                let fila = check.parentNode.parentNode;
+                fila.querySelector('#NroRecintos').disabled = false;
+            } else {
                 let fila = check.parentNode.parentNode;
                 fila.querySelector('#NroRecintos').disabled = true;
                 fila.querySelector('#NroRecintos').value = '';
             }
-            
+
         });
     });
 
@@ -584,6 +644,7 @@ function agregar_datos() {
     const hora_inicio = document.getElementById('hora_inicio').value;
     const hora_final = document.getElementById('hora_final').value;
     const recintos = document.getElementById('recintos').value;
+    const cantidadRecintos = document.getElementById('NroRecintosP').value;
     const devolucion = document.getElementById('devolucion').value;
     const resultado_cierre = document.getElementById('resultado_cierre').value;
     const causal = document.getElementById('causal').value;
@@ -622,7 +683,7 @@ function agregar_datos() {
             hora_inicio,
             hora_final,
             duracion,
-            '<input type="checkbox" ' + (recintos === 'SI' ? 'checked' : '') + '>',
+            '<input type="checkbox" id="checkRecintos" ' + (recintos === 'SI' ? 'checked' : '') + '>' + '<input type="text" id="NroRecintos" size="1" value="' + cantidadRecintos + '" style="text-align: center;"' + (recintos === 'SI' ? '' : 'disabled') + '>',
             (devolucion === 'OK' ? '<select class="form-select nombre-columna" style="width: 80px;"><option value="OK" selected>OK</option><option value="DV">DV</option></select>' : '<select class="form-select nombre-columna" style="width: 80px;"><option value="OK">OK</option><option value="DV" selected>DV</option></select>'),
             (causal === '--SELECCIONE CAUSAL--' ? '<select class="form-select combo2 nombre-columna" style="width: 220px; display: none;"><option value="--SELECCIONE CAUSAL--" selected>--SELECCIONE CAUSAL--</option><option value="CONTRATO ERRADO">CONTRATO ERRADO</option><option value="NUMERO DE CUOTAS">NUMERO DE CUOTAS</option><option value="FALTA CARTA">FALTA CARTA</option><option value="FALTA INFORMACIÓN">FALTA INFORMACIÓN</option><option value="INFORMACION ERRADA">INFORMACION ERRADA</option><option value="ORDEN YA REGISTRADA">ORDEN YA REGISTRADA</option></select>' :
                 (causal === 'CONTRATO ERRADO' ? '<select class="form-select combo2 nombre-columna" style="width: 220px; display: none;"><option value="--SELECCIONE CAUSAL--">--SELECCIONE CAUSAL--</option><option value="CONTRATO ERRADO" selected>CONTRATO ERRADO</option><option value="NUMERO DE CUOTAS">NUMERO DE CUOTAS</option><option value="FALTA CARTA">FALTA CARTA</option><option value="FALTA INFORMACIÓN">FALTA INFORMACIÓN</option><option value="INFORMACION ERRADA">INFORMACION ERRADA</option><option value="ORDEN YA REGISTRADA">ORDEN YA REGISTRADA</option></select>' :
@@ -641,13 +702,35 @@ function agregar_datos() {
         }).last();
 
         cambiarColor(ultimoSelect[0]);
-        /* console.log({data: tabla.DataTable().data()}); */
+        $('table.tbl_datos').on('change', 'input#checkRecintos', function () {
+  
+            const check = $(this); // Obtener el checkbox actual
+
+            if (check.prop('checked')) {
+                let fila = check.closest('tr'); // Obtener la fila actual
+                fila.find('#NroRecintos').prop('disabled', false); // Habilitar el campo de entrada
+            } else {
+                let fila = check.closest('tr'); // Obtener la fila actual
+                fila.find('#NroRecintos').prop('disabled', true).val(''); // Deshabilitar el campo de entrada y limpiar su valor
+            }
+        });
+
         $('table.tbl_datos').on('change', 'select.form-select.nombre-columna', function () {
             var id_pestaña = $('.btnav.active').attr('href');
             contadores_dinamicos(id_pestaña);
             cambiarColor(this);
         });
 
+         // Función para validar los datos ingresados en la tabla
+    const inputrecintos = document.querySelectorAll('#NroRecintos');
+    
+    // Permitir solo números
+    inputrecintos.forEach(input => {
+        input.addEventListener('input', function () {
+            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3);
+        });
+    });
+        
         return nombre_insp;
 
     } else {
