@@ -5,23 +5,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     let sabadodobles = [];
     Handsontable.renderers.registerRenderer('customStylesRenderer', (hotInstance, TD, row, col, prop, value, cellProperties) => {
         Handsontable.renderers.TextRenderer(hotInstance, TD, row, col, prop, value, cellProperties);
-
-        if (col !== 0 && col !== 1 && col !== 39 && col !== 41) {
+        let columNameColor = hotInstance.getColHeader(col);
+        if (col !== 0 && col !== 1 && columNameColor !== 'META POR INSPECTOR' && columNameColor !== 'DIAS LABORADOS') {
             TD.style.backgroundColor = 'rgb(215, 232, 255)';
         }
-        if (col === 33 || col === 34 || col === 35 || col === 36 || col === 37) {
+        if (columNameColor === 'MATRICES' || columNameColor === 'DOMINGOS Y FESTIVOS' || columNameColor === 'DISEÑOS ESPECIALES'
+            || columNameColor === '4 O MAS RECINTOS' || columNameColor === 'COMERCIALES') {
             TD.style.backgroundColor = 'rgb(253, 234, 185)';
         }
-        if (col === 38 || col === 32) {
+        if (columNameColor === 'TOTAL' || columNameColor === 'SUB TOTAL') {
             TD.style.backgroundColor = 'rgb(185, 196, 255)';
         }
-        if (col === 32 && value < 180) {
+
+        if (columNameColor === 'SUB TOTAL' && value < 180) {
             TD.style.backgroundColor = 'rgb(255, 185, 185)';
         }
 
-        if (col === 40 && value >= 8) {
+        if (columNameColor === 'PROMEDIO INDIVIDUAL' && value >= 8) {
             TD.style.backgroundColor = 'rgb(147, 255, 134)';
-        } else if (col === 40 && value < 8) {
+        } else if (columNameColor === 'PROMEDIO INDIVIDUAL' && value < 8) {
             TD.style.backgroundColor = 'rgb(255, 185, 185)';
         }
 
@@ -69,6 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
 
         const response = await fetchData();
+
         // asociar las fechas con los nombres de los dias
         fechas = response.diasIntermedios.map((item, index) => {
             return {
@@ -149,8 +152,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             afterChange: function (changes, source) {
                 if (source === 'edit') {
                     changes.forEach(([row, prop, oldValue, newValue]) => {
-                        if ([32, 33, 34, 35, 36, 37].includes(hot.propToCol(prop))) {
-                            calculateAndSetTotal(row);
+                        if (['DISEÑOS ESPECIALES'].includes(hot.getColHeader(hot.propToCol(prop)))) {
+                            calculateAndSetTotal(row, hot.propToCol(prop));
+
                         }
                     });
                 }
@@ -159,8 +163,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const selectedColumn = hot.getSelectedLast()[1]; // Obtiene la última columna seleccionada
                 const columnName = hot.getColHeader(selectedColumn);
-
-                if (selectedColumn >= 2 && selectedColumn <= 31) {
+                const isFechaColumn = fechas.some(fecha => fecha.dia === columnName);
+                if (isFechaColumn) {
                     const selectedRow = hot.getSelectedLast()[0]; // Obtiene la última fila seleccionada
                     const rowData = hot.getDataAtCell(selectedRow, 0);
                     const nombre_completo = hot.getDataAtCell(selectedRow, 1); // Obtiene el valor de la celda en la columna 0 de la fila seleccionada
@@ -179,66 +183,113 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 });
 
-function calculateAndSetTotal(row) {
-    const colIndices = [32, 33, 34, 35, 36, 37];
-    let sum = 0;
+function calculateAndSetTotal(row, indexColumn) {
 
+    const colIndices = [indexColumn - 3, indexColumn - 2, indexColumn - 1, indexColumn, indexColumn + 1, indexColumn + 2];
+    let sum = 0;
+    console.log(colIndices);
     colIndices.forEach(col => {
         const cellValue = hot.getDataAtCell(row, col);
         sum += parseFloat(cellValue) || 0;
     });
 
-    hot.setDataAtCell(row, 38, sum);
+    hot.setDataAtCell(row, indexColumn + 3, sum);
 }
 
 //---------------------------------------------------------------------------------------------------//
 /* MODAL INSPECCIONES POR DIA */
 function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
-
     const contratos_dia = document.querySelector('#contratos_dia');
     const cerrar = document.querySelector('#cerrar_modal');
     const titulo = document.querySelector('#titulo');
     titulo.innerHTML = `INSPECCIONES DEL DÍA ${nombreDia} - ${nombre_completo}`;
-    let datos;
 
-    $.ajax({
-        url: 'detalles_diario/' + fecha + '/' + cc_inspector, // Ruta al archivo PHP que realiza la consulta a la base de datos
-        type: 'GET',
-        success: function (response) {
-            hot_dia.loadData(response);
-        },
-        error: function (xhr, status, error) {
-            console.error(xhr.responseText);
-            Swal.fire({
-                type: 'error',
-                title: 'Error',
-                text: 'Ocurrió un error al cargar los datos de la base de datos'
-            });
-        }
-    });
-  
-   
-        document.getElementById('mensajeNoDatos').style.display = 'block';
-   
+    
+       
+     
         const hot_dia = new Handsontable(contratos_dia, {
             readOnly: true,
             manualColumnMove: false,
-            data: datos,
             rowHeaders: false,
-            colHeaders: ['OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION INSP', '4 RECINTOS O MAS'],
+            colHeaders: ['OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION INSP', '4 RECINTOS O MAS', 'ACCIONES'],
+            columns: [
+                {}, {}, {}, {}, {}, {}, {},
+                 {}, {}, {}, {}, {}, {}, {}, // las columnas existentes
+                {
+                    renderer: function(instance, td, row, col, prop, value, cellProperties) {
+                        td.innerHTML = `
+                        <div style="display: flex; gap: 5px; justify-content: center;">
+                        <button id="btnEditar" class="btn btn-info" onclick="editar(${row})">Editar</button>
+                        <button class="btn btn-danger" onclick="desasociar(${row})">Desasociar</button>
+                        </div>
+                        `;
+                        td.style.textAlign = 'center'; // Centrar los botones
+                        return td;
+                    }
+                }
+            ],
+            className: 'htCenter',
+            className: 'htMiddle',
+            manualRowResize: true,
             autoWrapRow: true,
             autoWrapCol: true,
             licenseKey: 'non-commercial-and-evaluation',
-            height: '350px',
-
+            height: '500px',
         });
 
+        $.ajax({
+            url: `detalles_diario/${fecha}/${cc_inspector}`, // Ruta al archivo PHP que realiza la consulta a la base de datos
+            type: 'GET',
+            success: function (response) {
+                const datosBaseDatos = response; // Asigna los datos obtenidos a la variable
+                const array2D = convertirJSONaArray2D(datosBaseDatos);
+                hot_dia.loadData(array2D);
+                if (array2D && array2D.length > 0) {
+                    document.getElementById('mensajeNoDatos').style.display = 'none';
+                } else {
+                    document.getElementById('mensajeNoDatos').style.display = 'block';
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error(xhr.responseText);
+                Swal.fire({
+                    type: 'error',
+                    title: 'Error',
+                    text: 'Ocurrió un error al cargar los datos de la base de datos'
+                });
+            }
+        });
+      
         cerrar.addEventListener('click', () => {
             try {
                 hot_dia.destroy();
             } catch (e) { }
             $('#exampleModal').modal('hide');
         });
-    
+        
+     
    
+}
+
+//---------------------------------------------------------------------------------------------------//
+
+function editar(event, row) {
+    const hotInstance = Handsontable.dom.getHandsontableInstanceByNode(contratos_dia);
+    console.log(hotInstance);
+
+    hotInstance.selectRows(row);
+    hotInstance.getActiveEditor().enable();
+}
+function desasociar(row) {
+    // Lógica para desasociar la fila
+    console.log('Desasociar fila:', row);
+}
+
+function convertirJSONaArray2D(jsonData) {
+    const columnasDeseadas = ['nombre_completo', 'CC_OPERARIO', 'MUNICIPIO', 'FECHA', 'No_ACTA', 'TIPO_TRABAJO', 'CONTRATO', 'ORDEN_TRABAJO', 'ORDEN_EXT', 'CATEGORIA', 'RESULTADO_CIERRE', 'HORA_INICIO', 'HORA_FINAL', 'DURACION_INSP', '4_RECINTOS'];
+
+    return Object.keys(jsonData).map(key => {
+        const fila = jsonData[key];
+        return columnasDeseadas.map(columna => fila[columna]);
+    });
 }

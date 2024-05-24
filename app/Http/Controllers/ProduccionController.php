@@ -138,8 +138,8 @@ class ProduccionController extends Controller
         foreach ($periodo as $fecha) {
             $fechasIntermedias[] = $fecha->format('Y-m-d');
         }
-       
-        
+
+
         // sacar inspectores
         $inspectores = tbl_insp_cali::orderBy('apellidos', 'asc')->get();
         $sabados = array();
@@ -281,6 +281,7 @@ class ProduccionController extends Controller
             }
 
             $totalFestivos = $contadorFestivos + $sabadosDobles['contadorDiasSabados'];
+
             if ($totalFestivos === 0) {
                 $totalFestivos = null;
             }
@@ -312,6 +313,7 @@ class ProduccionController extends Controller
             $datosInspector['promedio'] = number_format($datosInspector['total'] / $cantidad_dias, 1);
             $datosInspector['meta'] = 180;
             $datosInspector['porcentaje_meta'] = '%' . number_format(($datosInspector['sub_total'] / $datosInspector['meta']) * 100, 2);
+
 
 
 
@@ -387,6 +389,7 @@ class ProduccionController extends Controller
                 ];
             }
         }
+
         $registro = array();
         foreach ($semanas as $index => $semana) {
             // Inicializar el total de contratos
@@ -435,38 +438,40 @@ class ProduccionController extends Controller
             $limiteContratos = $hayFestivoEnSemana ? 40 : 48;
             $limiteContratosBajo = $hayFestivoEnSemana ? 38 : 46;
             $limiteContratosMedio = $hayFestivoEnSemana ? 39 : 47;
+            if ($contratosSabado->count() > 0) {
 
-            if ($totalContratos >= $limiteContratos) {
+
+                if ($totalContratos >= $limiteContratos) {
 
 
-                // Sumar los contratos del sábado
-                $totalContratosSabado = $contratosSabado->sum('total_contratos');
-                $contadorDiasSabados += $totalContratosSabado;
-                try {
-                    $sabadosdobles[] = [
-                        'fecha' => $contratosSabado->first()->fecha,
-                        'cc_inspector' => $inspector->cedula
-                    ];
-                } catch (\Exception $e) {
-                }
-            } elseif ($totalContratos < $limiteContratos && $totalContratos >= $limiteContratosBajo) {
+                    // Sumar los contratos del sábado
+                    $totalContratosSabado = $contratosSabado->sum('total_contratos');
+                    $contadorDiasSabados += $totalContratosSabado;
+                    try {
+                        $sabadosdobles[] = [
+                            'fecha' => $contratosSabado->first()->fecha,
+                            'cc_inspector' => $inspector->cedula
+                        ];
+                    } catch (\Exception $e) {
+                    }
+                } elseif ($totalContratos < $limiteContratos && $totalContratos >= $limiteContratosBajo) {
 
-                // Sumar los contratos del sábado con ajustes
-                $totalContratosSabado = $contratosSabado->sum('total_contratos');
-                $totalContratosSabado = ($totalContratos === $limiteContratosMedio) ? $totalContratosSabado - 1 : $totalContratosSabado - 2;
-                $contadorDiasSabados += $totalContratosSabado;
-                try {
-                    $sabadosdobles[] = [
-                        'fecha' => $contratosSabado->first()->fecha,
-                        'cc_inspector' => $inspector->cedula
-                    ];
-                } catch (\Exception $e) {
+                    // Sumar los contratos del sábado con ajustes
+                    $totalContratosSabado = $contratosSabado->sum('total_contratos');
+                    $totalContratosSabado = ($totalContratos === $limiteContratosMedio) ? $totalContratosSabado - 1 : $totalContratosSabado - 2;
+                    $contadorDiasSabados += $totalContratosSabado;
+                    try {
+                        $sabadosdobles[] = [
+                            'fecha' => $contratosSabado->first()->fecha,
+                            'cc_inspector' => $inspector->cedula
+                        ];
+                    } catch (\Exception $e) {
+                    }
                 }
             }
-
             // Guardar el total de contratos en el array de semanas
             $semanas[$index]['contratos'] = $totalContratos;
-           
+
             // Descomentar para depuración
             // dd($contratosPorSemana, $contratosSabado, $totalContratos, $contadorDiasSabados);
         }
@@ -478,15 +483,15 @@ class ProduccionController extends Controller
     }
 
 
-    public function detallesDiario ($fecha, $inspector){
+    public function detallesDiario($fecha, $inspector)
+    {
 
         $contratosDia = tbl_bitacora_contrato::selectRaw("CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP, tbl_bitacora_contratos.`4_RECINTOS`")
-        ->join('tbl_insp_cali', 'tbl_insp_cali.cedula', '=', 'tbl_bitacora_contratos.CC_OPERARIO')
-        ->where('tbl_bitacora_contratos.CC_OPERARIO','=',$inspector)
-        ->where('tbl_bitacora_contratos.FECHA','=',$fecha)
-        ->get();
-        
-        return response()->json($contratosDia);
+            ->join('tbl_insp_cali', 'tbl_insp_cali.cedula', '=', 'tbl_bitacora_contratos.CC_OPERARIO')
+            ->where('tbl_bitacora_contratos.CC_OPERARIO', '=', $inspector)
+            ->where('tbl_bitacora_contratos.FECHA', '=', $fecha)
+            ->get();
 
+        return response()->json($contratosDia);
     }
 }

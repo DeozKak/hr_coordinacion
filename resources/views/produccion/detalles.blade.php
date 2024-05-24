@@ -15,7 +15,7 @@
     <div class="card-body">
         <a class="btn btn-primary" href="javascript:history.go(-1)" style="margin-bottom: 10px;">Ir Atrás</a>
 
-        <div id="detalles" style=" width: '100px'"></div>
+        <div id="detalles" style="width: '100px'"></div>
 
     </div>
 </div>
@@ -31,7 +31,7 @@
                 </button>
             </div>
             <div class="modal-body" style="margin-bottom: 10px;">
-                <div id="mensajeNoDatos" style="display: none;">No hay datos</div>
+                <div id="mensajeNoDatos" style="display: none;" class="alert alert-warning">No hay datos</div>
                
                 <div id="contratos_dia" style=" width: '100px'; margin-bottom: 10px;"></div>
             </div>

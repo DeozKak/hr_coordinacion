@@ -43,9 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
             hot.loadData(array2D);
             const columnData = hot.getDataAtCol(14);
 
-            
-
-
         },
         error: function (xhr, status, error) {
             console.error(xhr.responseText);

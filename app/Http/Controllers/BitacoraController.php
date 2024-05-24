@@ -35,7 +35,8 @@ class BitacoraController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'supervisor' => 'required',
-            
+            'archivo' => 'required'
+        
         ], [
             'supervisor.required' => 'Por favor seleccione un supervisor',
             'archivo.required' => 'Por favor seleccione un archivo',
@@ -49,7 +50,7 @@ class BitacoraController extends Controller
         $supervisor = User::find($request->supervisor);
 
         $nombreArchivo = $request->archivo->getClientOriginalName() . $supervisor->name . ".xls";
-
+       
         $request->archivo->storeAs('uploads', $nombreArchivo);
 
         $rutaDestino = storage_path('app/uploads/') . $nombreArchivo;
@@ -491,10 +492,17 @@ class BitacoraController extends Controller
                     $datos['categoria'] = $consultaMovilidad->AttrCategoria;
                 }    
                
+                if($datos['tipo_de_trabajo'] === 'SA 12164' || $datos['tipo_de_trabajo'] === 'SA 12163'){
+                    $exist = tbl_bitacora_contrato::where('CONTRATO', $datos['contrato'])->where('ORDEN_TRABAJO', $datos['orden_de_trabajo'])->where('No_ACTA',$datos['no_acta'])->exists();
+                    if($exist){
+                        continue;
+                    }
+                }else{
+
                 $exist = tbl_bitacora_contrato::where('CONTRATO', $datos['contrato'])->where('ORDEN_TRABAJO', $datos['orden_de_trabajo'])->exists();
                 if($exist){
                     continue;
-                }
+                }}
                 $contrato = new tbl_bitacora_contrato();
                 $contrato->CC_OPERARIO = $datos['cc_operario'];
                 $contrato->MUNICIPIO = $datos['municipio'];
@@ -516,7 +524,7 @@ class BitacoraController extends Controller
                 return response()->json(['error' => 'Error al guardar los datos en la base de datos']);
             }
         }
-     
+    
         Session::flash('success', 'Bitacora generada correctamente');
         return response()->json([
             'ruta' => 'bitacora'
