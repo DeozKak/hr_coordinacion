@@ -1,5 +1,6 @@
 
 let hot;
+let hot_dia;
 document.addEventListener('DOMContentLoaded', async () => {
     let diasFestivos;
     let sabadodobles = [];
@@ -204,81 +205,140 @@ function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
     const titulo = document.querySelector('#titulo');
     titulo.innerHTML = `INSPECCIONES DEL DÍA ${nombreDia} - ${nombre_completo}`;
 
-    
-       
-     
-        const hot_dia = new Handsontable(contratos_dia, {
-            readOnly: true,
-            manualColumnMove: false,
-            rowHeaders: false,
-            colHeaders: ['OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION INSP', '4 RECINTOS O MAS', 'ACCIONES'],
-            columns: [
-                {}, {}, {}, {}, {}, {}, {},
-                 {}, {}, {}, {}, {}, {}, {}, // las columnas existentes
-                {
-                    renderer: function(instance, td, row, col, prop, value, cellProperties) {
-                        td.innerHTML = `
+
+
+
+    hot_dia = new Handsontable(contratos_dia, {
+        readOnly: true,
+        manualColumnMove: false,
+        rowHeaders: false,
+        colHeaders: ['OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION INSP', '4 RECINTOS O MAS', 'ACCIONES'],
+        columns: [
+            { type: 'text' }, // OPERARIO
+            { type: 'numeric' }, // CC OPERARIO
+            { type: 'text' }, // MUNICIPIO
+            { type: 'date', dateFormat: 'YYYY-MM-DD', correctFormat: true }, // FECHA
+            { type: 'text' }, // N° ACTA
+            { type: 'text' }, // TIPO TRABAJO
+            { type: 'text' }, // CONTRATO
+            { type: 'text' }, // ORDEN TRABAJO
+            { type: 'text' }, // ORDEN EXT
+            { type: 'text' }, // CATEGORIA
+            { type: 'text' }, // RESULTADO CIERRE
+            { type: 'time', timeFormat: 'HH:mm', correctFormat: true }, // HORA INICIO
+            { type: 'time', timeFormat: 'HH:mm', correctFormat: true }, // HORA FINAL
+            { type: 'time', timeFormat: 'HH:mm', correctFormat: true }, // DURACION INSP
+            { type: 'text' }, // las columnas existentes
+            {
+                renderer: function (instance, td, row, col, prop, value, cellProperties) {
+                    td.innerHTML = `
                         <div style="display: flex; gap: 5px; justify-content: center;">
                         <button id="btnEditar" class="btn btn-info" onclick="editar(${row})">Editar</button>
                         <button class="btn btn-danger" onclick="desasociar(${row})">Desasociar</button>
                         </div>
                         `;
-                        td.style.textAlign = 'center'; // Centrar los botones
-                        return td;
+                    td.style.textAlign = 'center'; // Centrar los botones
+                    return td;
+                }
+            }
+        ],
+        className: 'htCenter',
+        className: 'htMiddle',
+        manualRowResize: true,
+        autoWrapRow: true,
+        autoWrapCol: true,
+        licenseKey: 'non-commercial-and-evaluation',
+        height: '500px',
+        // Añadir el listener para afterChange
+        afterChange: function (changes, source) {
+            if (source === 'loadData') {
+                return; // No enviar cambios cuando se carga la data inicial
+            }
+
+            changes.forEach(async ([row, prop, oldValue, newValue]) => {
+                if (oldValue !== newValue) {
+                    // Enviar cambios al servidor
+                    const payload = {
+                        row: row,
+                        prop: prop,
+                        oldValue: oldValue,
+                        newValue: newValue
+                    };
+                    try {
+                        const response = await fetch(`detalles_diario/actualizar/${id}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(payload)
+                        });
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        const result = await response.json();
+                        alert('Cambio guardado:', result);
+                    } catch (error) {
+                        alert('Error al enviar los cambios:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Ocurrió un error al enviar los cambios al servidor'
+                        });
                     }
                 }
-            ],
-            className: 'htCenter',
-            className: 'htMiddle',
-            manualRowResize: true,
-            autoWrapRow: true,
-            autoWrapCol: true,
-            licenseKey: 'non-commercial-and-evaluation',
-            height: '500px',
-        });
+            })
+        }
+    });
 
-        $.ajax({
-            url: `detalles_diario/${fecha}/${cc_inspector}`, // Ruta al archivo PHP que realiza la consulta a la base de datos
-            type: 'GET',
-            success: function (response) {
-                const datosBaseDatos = response; // Asigna los datos obtenidos a la variable
-                const array2D = convertirJSONaArray2D(datosBaseDatos);
-                hot_dia.loadData(array2D);
-                if (array2D && array2D.length > 0) {
-                    document.getElementById('mensajeNoDatos').style.display = 'none';
-                } else {
-                    document.getElementById('mensajeNoDatos').style.display = 'block';
-                }
-            },
-            error: function (xhr, status, error) {
-                console.error(xhr.responseText);
-                Swal.fire({
-                    type: 'error',
-                    title: 'Error',
-                    text: 'Ocurrió un error al cargar los datos de la base de datos'
-                });
+    $.ajax({
+        url: `detalles_diario/${fecha}/${cc_inspector}`, // Ruta al archivo PHP que realiza la consulta a la base de datos
+        type: 'GET',
+        success: function (response) {
+            const datosBaseDatos = response; // Asigna los datos obtenidos a la variable
+            const array2D = convertirJSONaArray2D(datosBaseDatos);
+            hot_dia.loadData(array2D);
+            if (array2D && array2D.length > 0) {
+                document.getElementById('mensajeNoDatos').style.display = 'none';
+            } else {
+                document.getElementById('mensajeNoDatos').style.display = 'block';
             }
-        });
-      
-        cerrar.addEventListener('click', () => {
-            try {
-                hot_dia.destroy();
-            } catch (e) { }
-            $('#exampleModal').modal('hide');
-        });
-        
-     
-   
+        },
+        error: function (xhr, status, error) {
+            console.error(xhr.responseText);
+            Swal.fire({
+                type: 'error',
+                title: 'Error',
+                text: 'Ocurrió un error al cargar los datos de la base de datos'
+            });
+        }
+    });
+
+    cerrar.addEventListener('click', () => {
+        try {
+            hot_dia.destroy();
+        } catch (e) { }
+        $('#exampleModal').modal('hide');
+    });
+
+
+
 }
 
 //---------------------------------------------------------------------------------------------------//
 
-function editar(event, row) {
-    const hotInstance = Handsontable.dom.getHandsontableInstanceByNode(contratos_dia);
-    console.log(hotInstance);
+function editar(row) {
+    hot_dia.updateSettings({
+        cells: function (r, c) {
+            if (r === row && c !== 15) { // Si es la fila a editar y no es la columna de acciones
+                return {
+                    readOnly: false // Habilita la edición para esta fila
+                };
+            }
+            return {};
+        }
+    });
 
-    hotInstance.selectRows(row);
-    hotInstance.getActiveEditor().enable();
+
 }
 function desasociar(row) {
     // Lógica para desasociar la fila

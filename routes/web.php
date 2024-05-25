@@ -64,4 +64,5 @@ Route::get('/produccion', [ProduccionController::class, 'index'])->name('producc
 Route::get('/produccion/detalles',[ProduccionController::class,'detalles'])->name('produccion.detalles')->middleware(CheckPermission::class.':ver_residente');
 Route::get('/produccion/data',[ProduccionController::class,'datosDetalles'])->name('produccion.datosDetalles')->middleware(CheckPermission::class.':ver_residente');
 Route::get('/produccion/detalles_diario/{fecha}/{inspector}',[ProduccionController::class,'detallesDiario'])->name('produccion.detallesDiario')->middleware(CheckPermission::class.':ver_residente');
+Route::post('/produccion/detalles_diario/actualizar/{id}',[ProduccionController::class,'ActualizarDetallesDiario'])->name('produccion.ActualizarDetallesDiario')->middleware(CheckPermission::class.':ver_residente');
 });
