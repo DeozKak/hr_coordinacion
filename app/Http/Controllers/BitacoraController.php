@@ -519,6 +519,7 @@ class BitacoraController extends Controller
                 $contrato->DURACION_INSP = $duracion->format('%H:%I');
                 $contrato->setAttribute('4_RECINTOS', $datos['4_recintos']);
                 $contrato->id_bitacora = $bitacora->id;
+                $contrato->state = 1;
                 $contrato->save();
             }catch(\Exception $e){
                 return response()->json(['error' => 'Error al guardar los datos en la base de datos']);

@@ -199,24 +199,28 @@ class ProduccionController extends Controller
             $contratosPorDia = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
                 ->where('FECHA', '>=', $corte->fecha_inicio)
                 ->where('FECHA', '<=', $corte->fecha_fin)
+                ->where('state', '=', 1)
                 ->select(DB::raw('DATE(FECHA) as fecha, COUNT(*) as total_contratos'))
                 ->groupBy('fecha')
                 ->get();
 
 
             $contratosPorCategoria = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
+                ->where('state', '=', 1)
                 ->whereBetween('FECHA', [$corte->fecha_inicio, $corte->fecha_fin])
                 ->select('CATEGORIA', DB::raw('COUNT(*) as total_contratos'))
                 ->groupBy('CATEGORIA')
                 ->get();
 
             $contratosPorRecinto = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
+                ->where('state', '=', 1)
                 ->whereBetween('FECHA', [$corte->fecha_inicio, $corte->fecha_fin])
                 ->select('4_RECINTOS', DB::raw('COUNT(*) as total_contratos'))
                 ->groupBy('4_RECINTOS')
                 ->get();
 
             $matrices = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
+                ->where('state', '=', 1)
                 ->whereBetween('FECHA', [$corte->fecha_inicio, $corte->fecha_fin])
                 ->where('TIPO_TRABAJO', '=', 'FI-29 revisión periódica línea matriz')
                 ->count();
@@ -486,7 +490,7 @@ class ProduccionController extends Controller
     public function detallesDiario($fecha, $inspector)
     {
 
-        $contratosDia = tbl_bitacora_contrato::selectRaw("CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP, tbl_bitacora_contratos.`4_RECINTOS`")
+        $contratosDia = tbl_bitacora_contrato::selectRaw("tbl_bitacora_contratos.id, CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP, tbl_bitacora_contratos.`4_RECINTOS`,tbl_bitacora_contratos.state")
             ->join('tbl_insp_cali', 'tbl_insp_cali.cedula', '=', 'tbl_bitacora_contratos.CC_OPERARIO')
             ->where('tbl_bitacora_contratos.CC_OPERARIO', '=', $inspector)
             ->where('tbl_bitacora_contratos.FECHA', '=', $fecha)
@@ -494,4 +498,42 @@ class ProduccionController extends Controller
 
         return response()->json($contratosDia);
     }
+
+    public function ActualizarDetallesDiario(Request $request, $id)
+    {
+        $datos= null;
+        $datos = $request->payload;
+        if ($datos['prop'] === null || $datos['newValue'] === null) {
+           return response()->json(['message' => 'Campo vacio']);
+        
+        }
+        try{
+        $contrato = tbl_bitacora_contrato::find($id);
+        $contrato->{$datos['prop']} = $datos['newValue'];
+        $contrato->save();
+        }catch(\Exception $e){
+            return response()->json(['error' => 'Error al actualizar el contrato']);
+        
+        }
+        return response()->json(['message' => 'OK']);
+    }
+
+    public function eliminarDetallesDiario($id)
+    {
+
+        $contrato = tbl_bitacora_contrato::find($id);
+        if($contrato->state === 0){
+            $contrato->state = 1;
+            $contrato->save();
+            return response()->json(['message' => 'OK']);
+        }
+        if($contrato->state === 1){
+            $contrato->state = 0;
+            $contrato->save();
+            return response()->json(['message' => 'OK']);
+        }
+        
+       
+    }
+
 }
