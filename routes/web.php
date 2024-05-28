@@ -65,5 +65,7 @@ Route::get('/produccion/detalles',[ProduccionController::class,'detalles'])->nam
 Route::get('/produccion/data',[ProduccionController::class,'datosDetalles'])->name('produccion.datosDetalles')->middleware(CheckPermission::class.':ver_residente');
 Route::get('/produccion/detalles_diario/{fecha}/{inspector}',[ProduccionController::class,'detallesDiario'])->name('produccion.detallesDiario')->middleware(CheckPermission::class.':ver_residente');
 Route::post('/produccion/detalles_diario/actualizar/{id}',[ProduccionController::class,'ActualizarDetallesDiario'])->name('produccion.ActualizarDetallesDiario')->middleware(CheckPermission::class.':ver_residente');
-route::post('/produccion/detalles_diario/desasociar/{id}',[ProduccionController::class,'eliminarDetallesDiario'])->name('produccion.eliminarDetallesDiario')->middleware(CheckPermission::class.':ver_residente');
+Route::post('/produccion/detalles_diario/desasociar/{id}',[ProduccionController::class,'eliminarDetallesDiario'])->name('produccion.eliminarDetallesDiario')->middleware(CheckPermission::class.':ver_residente');
+Route::post('/produccion/detalles_diario/insertar',[ProduccionController::class,'insertarContrato'])->name('produccion.insertarContrato')->middleware(CheckPermission::class.':ver_residente');
+Route::get('/produccion/detalles_diario/bitacora/{fecha}/{ccOperario}',[ProduccionController::class,'consultarBitacora'])->name('produccion.bitacora')->middleware(CheckPermission::class.':ver_residente');
 });

@@ -187,7 +187,7 @@ $(document).ready(function () {
 
                         switch (valor_cierre) {
 
-                            case '.CERTIFICADA':
+                            case 'CERTIFICADA':
                                 certificadaCount++;
                                 totalCount++;
                                 break;
@@ -195,11 +195,11 @@ $(document).ready(function () {
                                 certificadaConNovedadesCount++;
                                 totalCount++;
                                 break;
-                            case '.INSPECCIONADA CON DEFECTO CRITICO VALLE':
+                            case 'INSPECCIONADA CON DEFECTO CRITICO VALLE':
                                 inspeccionadaConDefectoCriticoCount++;
                                 totalCount++;
                                 break;
-                            case '.INSPECCIONADA CON DEFECTO NO CRITICO VALLE':
+                            case 'INSPECCIONADA CON DEFECTO NO CRITICO VALLE':
                                 inspeccionadaConDefectoNoCriticoCount++;
                                 totalCount++;
                                 break;
@@ -396,9 +396,6 @@ selectTipoTrabajo.addEventListener('change', function () {
 });
     const btnAgregar = document.getElementById('agregar');
 
-
-
-
     btnAgregar.addEventListener('click', function () {
         const campos = document.querySelectorAll('#ventanaEmergente input, #ventanaEmergente select');
         let formularioValido = true;
@@ -593,7 +590,7 @@ function contadores_dinamicos(nombre) {
 
             switch (valor_cierre) {
 
-                case '.CERTIFICADA':
+                case 'CERTIFICADA':
                     certificadaCount++;
                     totalCount++;
                     break;
@@ -601,11 +598,11 @@ function contadores_dinamicos(nombre) {
                     certificadaConNovedadesCount++;
                     totalCount++;
                     break;
-                case '.INSPECCIONADA CON DEFECTO CRITICO VALLE':
+                case 'INSPECCIONADA CON DEFECTO CRITICO VALLE':
                     inspeccionadaConDefectoCriticoCount++;
                     totalCount++;
                     break;
-                case '.INSPECCIONADA CON DEFECTO NO CRITICO VALLE':
+                case 'INSPECCIONADA CON DEFECTO NO CRITICO VALLE':
                     inspeccionadaConDefectoNoCriticoCount++;
                     totalCount++;
                     break;

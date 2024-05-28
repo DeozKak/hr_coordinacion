@@ -1,8 +1,12 @@
 
+
 let hot;
 let hot_dia;
 let diasFestivos;
 let sabadodobles = [];
+let InspectorSelected;
+let fechaSeleccionada;
+/* Inicializacion tabla de producción */
 document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('exportar').addEventListener('click', exportarExcel);
 
@@ -163,7 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             },
             afterOnCellCornerDblClick: function (event) {
-
+                InspectorSelected = hot.getSelectedLast();
                 const selectedColumn = hot.getSelectedLast()[1]; // Obtiene la última columna seleccionada
                 const columnName = hot.getColHeader(selectedColumn);
                 const isFechaColumn = fechas.some(fecha => fecha.dia === columnName);
@@ -173,7 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const nombre_completo = hot.getDataAtCell(selectedRow, 1); // Obtiene el valor de la celda en la columna 0 de la fila seleccionada
                     // recuperar fecha para la consulta contratos por dia
                     const fecha = fechas.find(fecha => fecha.dia === columnName);
-
+                    fechaSeleccionada = fecha.fecha;
                     $('#exampleModal').modal('show');
                     detallesDia(fecha.fecha, rowData, columnName, nombre_completo);
                 }
@@ -185,7 +189,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 });
-
+//---------------------------------------------------------------------------------------------------//
 
 
 function exportarExcel() {
@@ -241,7 +245,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         readOnly: true,
         manualColumnMove: false,
         rowHeaders: false,
-        colHeaders: ['ID', 'OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION INSP', '4 RECINTOS O MAS','ESTADO', 'ACCIONES'],
+        colHeaders: ['ID', 'OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION INSP', '4 RECINTOS O MAS', 'ESTADO', 'ACCIONES'],
         columns: [
             { type: 'numeric', readOnly: true }, // ID (oculto)
             { type: 'text' }, // OPERARIO
@@ -262,7 +266,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             }, // CATEGORIA
             {
                 editor: 'select', // Tipo combobox
-                selectOptions: ['.CERTIFICADA', 'CERTIFICADA CON NOVEDADES', '.INSPECCIONADA CON DEFECTO CRITICO VALLE', '.INSPECCIONADA CON DEFECTO NO CRITICO VALLE'],
+                selectOptions: ['CERTIFICADA', 'CERTIFICADA CON NOVEDADES', 'INSPECCIONADA CON DEFECTO CRITICO VALLE', 'INSPECCIONADA CON DEFECTO NO CRITICO VALLE'],
             }, // RESULTADO CIERRE
             { type: 'time', timeFormat: 'HH:mm', correctFormat: true }, // HORA INICIO
             { type: 'time', timeFormat: 'HH:mm', correctFormat: true }, // HORA FINAL
@@ -354,6 +358,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         }
     });
 
+    /* consulta llenar tabla */
     $.ajax({
         url: `detalles_diario/${fecha}/${cc_inspector}`, // Ruta al archivo PHP que realiza la consulta a la base de datos
         type: 'GET',
@@ -378,7 +383,28 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             });
         }
     });
-
+    const fechaFormat = formatearFecha(fecha);
+    /* consultar si ya hay bitacora */
+    $.ajax({
+        url: `detalles_diario/bitacora/${fechaFormat}/${cc_inspector}`, // Ruta al archivo PHP que realiza la consulta a la base de datos
+        type: 'GET',
+        success: function (response) {
+            console.log(response);
+            if (response.length > 0) {
+                document.getElementById('agregar').disabled = true;
+            } else {
+                document.getElementById('agregar').disabled = false;
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error(xhr.responseText);
+            Swal.fire({
+                type: 'error',
+                title: 'Error',
+                text: 'Ocurrió un al consultar bitacoras'
+            });
+        }
+    });
     cerrar.addEventListener('click', () => {
         try {
             hot_dia.destroy();
@@ -386,16 +412,243 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         $('#exampleModal').modal('hide');
     });
 
+    const agregar = document.querySelector('#agregar');
+    const ventanaEmergente = new bootstrap.Modal(document.getElementById('ventanaEmergente'));
 
+    agregar.addEventListener('click', () => {
+        const fechaInput = document.getElementById('fecha');
+        const fechaPredefinida = new Date(fechaSeleccionada);
+        // Formatear la fecha predefinida según el formato de fecha requerido por el elemento de entrada de fecha (yyyy-mm-dd)
+        const formattedDate = fechaPredefinida.toISOString().slice(0, 10);
 
+        // Establecer la fecha predefinida en el campo de entrada de fecha
+        fechaInput.value = formattedDate;
+        const nombreInspector = hot.getDataAtCell(InspectorSelected[0], 1);
+        const ccInspector = hot.getDataAtCell(InspectorSelected[0], 0);
+        const selectNombre = document.querySelector('#nombre');
+        const option1 = document.createElement('option');
+        option1.value = ccInspector;
+        option1.text = nombreInspector;
+        selectNombre.appendChild(option1);
+        ventanaEmergente.show();
+        document.getElementById('exampleModal').classList.add('modal-backdrop-custom');
+    });
+
+    $('#ventanaEmergente').on('hidden.bs.modal', () => {
+        document.getElementById('exampleModal').classList.remove('modal-backdrop-custom');
+        const selectNombre = document.getElementById('nombre');
+        selectNombre.innerHTML = ''; // Limpiar las opciones
+        // Deshabilitar el select
+    });
+    //---------------------------------------------------------------------------------------------------//
+    /////////////////////////////////////////////////
+    ////////////////////////////////////////////////
+    //* validacion de campos agregar inspección *///
+    ////////////////////////////////////////////////
+    ////////////////////////////////////////////////
+
+    // Función para validar los datos ingresados en la tabla
+    const inputrecintos = document.querySelectorAll('#NroRecintos');
+
+    // Permitir solo números
+    inputrecintos.forEach(input => {
+        input.addEventListener('input', function () {
+            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3);
+        });
+    });
+    //--------------------------------------------------------------------------------
+
+    const inputrecintosP = document.getElementById('NroRecintosP');
+
+    inputrecintosP.addEventListener('input', function () {
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3);
+    });
+
+    const selectrecintos = document.getElementById('recintos');
+
+    selectrecintos.addEventListener('change', function () {
+        console.log(this.value);
+        if (this.value === 'SI') {
+            inputrecintosP.disabled = false; // Habilitar el campo "NroRecintos"
+        } else {
+            inputrecintosP.disabled = true;
+            inputrecintosP.value = ""; // Deshabilitar el campo "NroRecintos"
+        }
+    });
+
+    // limitar fechas en el campo fecha
+    const inputFecha = document.getElementById('fecha');
+
+    // Obtener la fecha actual
+    const fechaActual = new Date();
+
+    // Restar 7 días a la fecha actual
+    let fechaMinima = new Date(fechaActual);
+    fechaMinima.setDate(fechaActual.getDate() - 7);
+
+    // Formatear la fecha mínima para establecerla en el campo de fecha
+    const dia = ("0" + fechaMinima.getDate()).slice(-2);
+    const mes = ("0" + (fechaMinima.getMonth() + 1)).slice(-2);
+    const fechaFormateada = fechaMinima.getFullYear() + "-" + mes + "-" + dia;
+
+    // Establecer la fecha mínima en el campo de fecha
+    inputFecha.min = fechaFormateada;
+    inputFecha.setAttribute('placeholder', 'dd-mm-yy');
+    //--------------------------------------------------------------------------------
+    // campo numero de acta
+    const inputNumero = document.getElementById('N°acta');
+
+    // Permitir solo números
+    inputNumero.addEventListener('input', function () {
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 18);
+    });
+
+    // Quitar los botones de aumento/decremento
+    inputNumero.addEventListener('mousewheel', function (event) {
+        event.preventDefault();
+    });
+    //--------------------------------------------------------------------------------
+    // campo contrato
+    const inputContrato = document.getElementById('contrato');
+
+    // Preenlazar el campo con ":" al inicio al enfocarse en él
+    inputContrato.addEventListener('focus', function () {
+        if (!this.value.startsWith(':')) {
+            this.value = ':' + this.value;
+        }
+    });
+
+    // Evitar la edición del ":" al inicio y permitir solo números después del ":"
+    inputContrato.addEventListener('input', function () {
+        if (this.value.startsWith(':')) {
+            // Permitir solo números después del ":"
+            this.value = ':' + this.value.replace(/[^0-9]/g, '').slice(0, 18);
+
+        } else {
+            // Si se elimina el ":", volver a agregarlo
+            this.value = ':' + this.value.replace(/[^0-9]/g, '').slice(0, 18);
+
+        }
+    });
+
+    // Evitar el evento de rueda del mouse
+    inputContrato.addEventListener('mousewheel', function (event) {
+        event.preventDefault();
+    });
+    //--------------------------------------------------------------------------------
+    // campo orden de trabajo
+    const inputOrden = document.getElementById('orden_trabajo');
+
+    // Permitir solo números
+    inputOrden.addEventListener('input', function () {
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 18);
+    });
+
+    // Quitar los botones de aumento/decremento
+    inputOrden.addEventListener('mousewheel', function (event) {
+        event.preventDefault();
+    });
+
+    const selectTipoTrabajo = document.getElementById('tipo_trabajo');
+    const grupo1 = document.querySelector('.matriz-des1');
+    const grupo2 = document.querySelector('.matriz-des2');
+
+    selectTipoTrabajo.addEventListener('change', function () {
+        if (selectTipoTrabajo.value === "FI-29 revisión periódica línea matriz") {
+            grupo1.style.display = 'none';
+            grupo2.style.display = 'none';
+        } else {
+            grupo1.style.display = '';
+            grupo2.style.display = '';
+        }
+    });
+
+    const btnAgregar = document.getElementById('agregarInspeccion');
+
+    btnAgregar.addEventListener('click', function () {
+        const campos = document.querySelectorAll('#ventanaEmergente input, #ventanaEmergente select');
+        let formularioValido = true;
+
+        campos.forEach(campo => {
+            if (campo.value === 'DV') {
+                const selectCausal = document.getElementById('causal');
+
+                const valorSeleccionado = selectCausal.value;
+                if (valorSeleccionado === '--SELECCIONE CAUSAL--') {
+                    formularioValido = false;
+                    selectCausal.classList.add('campo-invalido'); // Establecer borde rojo para campos no completados
+                }
+            }
+            if (campo.value === 'SI') {
+                const inputRecintos = document.getElementById('NroRecintosP');
+                if (inputRecintos.value.trim() === '' && campo.value === 'NO') {
+                    // Validar solo si el campo 'NO' está seleccionado
+                    inputRecintos.classList.add('campo-invalido'); // Establecer borde rojo para campos no completados
+                    formularioValido = false;
+                } else {
+                    inputRecintos.style.border = ''; // Restablecer estilo de borde por defecto
+                }
+            }
+            if (campo.value.trim() === '' || campo.value === ':') {
+                const selectTipoTrabajo = document.getElementById('tipo_trabajo');
+                if (selectTipoTrabajo.value === "FI-29 revisión periódica línea matriz") {
+                    if (campo.id === 'orden_trabajo' || campo.id === 'categoria' || campo.id === 'NroRecintosP' || campo.id === 'recintos') {
+                        return;
+                    }
+                }
+                const selectrecintos = document.getElementById('recintos');
+                if (campo.id === 'NroRecintosP' && selectrecintos.value === 'NO') {
+                    return;
+                }
+                formularioValido = false;
+                campo.style.border = '1px solid red'; // Establecer borde rojo para campos no completados
+
+            } else {
+                campo.style.border = ''; // Restablecer estilo de borde por defecto
+            }
+        });
+
+        if (formularioValido) {
+
+           
+
+            agregar_datos();
+
+            campos.forEach(campo => {
+                campo.value = campo.getAttribute('value') || '';
+                switch (campo.id) {
+
+                    case 'recintos':
+                        campo.value = 'NO';
+                        break;
+                }
+
+            });
+
+        } else {
+            window.scrollTo({
+                top: 0,
+                left: 0,
+                behavior: 'smooth'
+            });
+            Swal.fire({
+                position: "top-end",
+                type: "warning",
+                title: "Por favor complete todos los campos",
+                showConfirmButton: false,
+                toast: true,
+                timer: 4000
+            });
+        }
+    });
 }
 
 //---------------------------------------------------------------------------------------------------//
-
+/* funciones para manipular campos de los contratos */
 function editar(row) {
     hot_dia.updateSettings({
         cells: function (r, c) {
-            const nonEditableColumns = [1, 2, 3, 12, 13, 14, 16];
+            const nonEditableColumns = [1, 2, 3, 12, 13, 14, 16, 17];
             if (r === row && !nonEditableColumns.includes(c)) {// Si es la fila a editar y no es la columna de acciones
                 return {
                     readOnly: false // Habilita la edición para esta fila
@@ -407,8 +660,8 @@ function editar(row) {
 
 
 }
-function desasociar(row,fecha,cc_inspector) {
-  
+function desasociar(row, fecha, cc_inspector) {
+
     const id = hot_dia.getDataAtRow(row);
     Swal.fire({
         title: '¿Estás seguro?',
@@ -435,10 +688,9 @@ function desasociar(row,fecha,cc_inspector) {
                         'success'
                     );
                     cargarDatos();
-                    actualizarDatosDia(fecha,cc_inspector);
+                    actualizarDatosDia(fecha, cc_inspector);
                 },
                 error: function (xhr, status, error) {
-                    console.error(xhr.responseText);
                     Swal.fire({
                         type: 'error',
                         title: 'Error',
@@ -450,7 +702,7 @@ function desasociar(row,fecha,cc_inspector) {
     });
 }
 
-function asociar(row,fecha,cc_inspector) {
+function asociar(row, fecha, cc_inspector) {
     const id = hot_dia.getDataAtRow(row);
     Swal.fire({
         title: '¿Estás seguro?',
@@ -477,10 +729,9 @@ function asociar(row,fecha,cc_inspector) {
                         'success'
                     );
                     cargarDatos();
-                    actualizarDatosDia(fecha,cc_inspector);
+                    actualizarDatosDia(fecha, cc_inspector);
                 },
                 error: function (xhr, status, error) {
-                    console.error(xhr.responseText);
                     Swal.fire({
                         type: 'error',
                         title: 'Error',
@@ -492,14 +743,15 @@ function asociar(row,fecha,cc_inspector) {
     });
 
 }
-
-function actualizarDatosDia(fecha,cc_inspector) {
+//---------------------------------------------------------------------------------------------------//
+/* funciones para refrescar los datos de las tablas */
+function actualizarDatosDia(fecha, cc_inspector) {
     $.ajax({
         url: `detalles_diario/${fecha}/${cc_inspector}`, // Ruta al archivo PHP que realiza la consulta a la base de datos
         type: 'GET',
         success: function (response) {
             datosBaseDatos = response;
-            console.log(fecha,cc_inspector);
+            console.log(fecha, cc_inspector);
             // Asigna los datos obtenidos a la variable
             const array2D = convertirJSONaArray2D(datosBaseDatos);
             hot_dia.loadData(array2D);
@@ -612,7 +864,8 @@ async function cargarDatos() {
     hot.loadData(rows);
 
 };
-
+//---------------------------------------------------------------------------------------------------//
+/* funcion para convertir respuesta JSON del servidor a un Array */
 function convertirJSONaArray2D(jsonData) {
     const columnasDeseadas = ['id', 'nombre_completo', 'CC_OPERARIO', 'MUNICIPIO', 'FECHA', 'No_ACTA', 'TIPO_TRABAJO', 'CONTRATO', 'ORDEN_TRABAJO', 'ORDEN_EXT', 'CATEGORIA', 'RESULTADO_CIERRE', 'HORA_INICIO', 'HORA_FINAL', 'DURACION_INSP', '4_RECINTOS', 'state'];
 
@@ -621,3 +874,167 @@ function convertirJSONaArray2D(jsonData) {
         return columnasDeseadas.map(columna => fila[columna]);
     });
 }
+
+//---------------------------------------------------------------------------------------------------//
+/* Función para agregar inspección */
+function agregar_datos() {
+    const select_insp = document.getElementById('nombre');
+    const selectedoption = select_insp.options[select_insp.selectedIndex];
+    let orden_ext = null;
+
+    //obtener el valor de la cedula
+    const cedulaInsp = select_insp.value;
+
+    //obtener el nombre del inspector
+    const nombre_insp = selectedoption.getAttribute('data-nombres');
+
+    const municipio = document.getElementById('municipio').value;
+    const fecha = document.getElementById('fecha').value;
+    const acta = document.getElementById('N°acta').value;
+    const tipo_trabajo = document.getElementById('tipo_trabajo').value;
+    const contrato = document.getElementById('contrato').value;
+    const orden = document.getElementById('orden_trabajo').value;
+    if (tipo_trabajo === "RP 12161") {
+        orden_ext = orden;
+    }
+    const categoria = document.getElementById('categoria').value;
+    const hora_inicio = document.getElementById('hora_inicio').value;
+    const hora_final = document.getElementById('hora_final').value;
+
+    let cantidadRecintos = document.getElementById('NroRecintosP').value;
+    if (cantidadRecintos === "") {
+        cantidadRecintos = "NO";
+    }
+    const resultado_cierre = document.getElementById('resultado_cierre').value;
+
+
+    const duracion = calcularDuracion(hora_inicio, hora_final);
+
+    const [anio, mes, dia] = fecha.split('-').map(Number);
+
+    const fechaObj = new Date(anio, mes - 1, dia); // Restar 1 al mes para que sea 0-indexado
+
+    let diaFormateado = fechaObj.getDate().toString().padStart(2, '0');
+    let mesFormateado = (fechaObj.getMonth() + 1).toString().padStart(2, '0');
+    let anioFormateado = fechaObj.getFullYear().toString().slice(-2);
+
+    const fechaFormateada = `${diaFormateado}-${mesFormateado}-${anioFormateado}`;
+
+    const data = [
+        null, // ID (se asigna automáticamente)
+        nombre_insp, // OPERARIO
+        cedulaInsp, // CC OPERARIO
+        municipio, // MUNICIPIO
+        fechaFormateada, // FECHA
+        acta, // N° ACTA
+        tipo_trabajo, // TIPO TRABAJO
+        contrato, // CONTRATO
+        orden, // ORDEN TRABAJO
+        orden_ext, // ORDEN EXT
+        categoria, // CATEGORIA
+        resultado_cierre, // RESULTADO CIERRE
+        hora_inicio, // HORA INICIO
+        hora_final, // HORA FINAL
+        duracion, // DURACION INSP
+        cantidadRecintos, // 4 RECINTOS O MAS
+        1, // ESTADO
+    ];
+  
+
+    $.ajax({
+        url: 'detalles_diario/insertar', // Ruta al archivo PHP que realiza la consulta a la base de datos
+        type: 'POST',
+        data: {
+            _token: document.querySelector('#token').value,
+            data: data
+        },
+        success: function (response) {
+            if (response.error) {
+                Swal.fire({
+                    type: 'error',
+                    title: 'Error',
+                    text: response.error
+                });
+                return;
+            }
+            if (response.ok) {
+                Swal.fire({
+                    position: "top-end",
+                    type: "success",
+                    title: response.ok,
+                    showConfirmButton: false,
+                    toast: true,
+                    timer: 3000
+                });
+              
+                $('#ventanaEmergente').on('hidden.bs.modal', () => {
+                    document.getElementById('exampleModal').classList.remove('modal-backdrop-custom');
+                    const selectNombre = document.getElementById('nombre');
+                    selectNombre.innerHTML = ''; // Limpiar las opciones
+                    // Deshabilitar el select
+                });
+                actualizarDatosDia(fechaSeleccionada, cedulaInsp);
+                cargarDatos();
+            }
+        },
+        error: function (xhr, status, error) {
+            console.log(xhr.responseText);
+            Swal.fire({
+                type: 'error',
+                title: 'Error',
+                text: error
+            });
+        }
+    });
+    return;
+}
+//---------------------------------------------------------------------------------------------------//
+function calcularDuracion(hora_inicio, hora_final) {
+
+    const [horaInicio, minutoInicio] = hora_inicio.split(':').map(Number);
+    const [horaFinal, minutoFinal] = hora_final.split(':').map(Number);
+
+    const fechaInicio = new Date(0, 0, 0, horaInicio, minutoInicio);
+    const fechaFinal = new Date(0, 0, 0, horaFinal, minutoFinal);
+
+    let diferencia = fechaFinal - fechaInicio;
+
+    if (diferencia < 0) {
+        // Si la hora final es anterior a la hora de inicio, sumar un día
+        diferencia += 24 * 60 * 60 * 1000;
+    }
+
+    const horas = String(Math.floor(diferencia / (60 * 60 * 1000))).padStart(2, '0');
+    const minutos = String(Math.floor((diferencia % (60 * 60 * 1000)) / (60 * 1000))).padStart(2, '0');
+
+    const duracionString = `${horas}:${minutos}`;
+
+    return duracionString; // Duración en formato "hh:mm"
+
+}
+
+
+function formatearFecha(fecha) {
+    // Crear un objeto Date con la fecha proporcionada
+    var fechaObjeto = new Date(fecha);
+  
+    // Obtener el día, mes y año
+    var dia = fechaObjeto.getDate();
+    var mes = fechaObjeto.getMonth() + 1; // Los meses comienzan desde 0, por lo que sumamos 1
+    var año = fechaObjeto.getFullYear();
+  
+    // Agregar ceros a la izquierda si es necesario
+    if (dia < 10) {
+      dia = '0' + dia;
+    }
+    if (mes < 10) {
+      mes = '0' + mes;
+    }
+  
+    // Construir la fecha en el formato deseado
+    var fechaFormateada = dia + '-' + mes + '-' + año;
+  
+    // Retornar la fecha formateada
+    return fechaFormateada;
+  }
+

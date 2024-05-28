@@ -12,3 +12,39 @@
 .highlight {
     background-color: rgb(193, 144, 21);
 }
+
+.form-group {
+    display: flex;
+    align-items: center;
+}
+
+.form-group label {
+    margin-right: 10px;
+}
+
+.form-group input {
+    flex: 1;
+}
+
+.campo-invalido {
+  border: 1px solid red; /* Establecer borde rojo para campos no completados */
+}
+td,th {
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis; /* Opcional: añade puntos suspensivos al final del texto si se desborda */
+}
+
+.modal-backdrop-custom {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+}
+
+#ventanaEmergente {
+    z-index: 1050 !important;
+}

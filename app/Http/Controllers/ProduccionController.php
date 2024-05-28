@@ -110,9 +110,9 @@ class ProduccionController extends Controller
 
     public function detalles()
     {
+        $municipios = tbl_localidades_municipio::all();
 
-
-        return view('produccion.detalles');
+        return view('produccion.detalles', compact('municipios'));
     }
 
     public function datosDetalles()
@@ -414,6 +414,7 @@ class ProduccionController extends Controller
 
             // Obtener contratos de lunes a viernes
             $contratosPorSemana = tbl_bitacora_contrato::whereBetween('FECHA', [$semana['inicio'], $semana['fin']])
+                ->where('state', '=', 1)
                 ->whereRaw('DAYOFWEEK(FECHA) between 2 and 6') // Filtrando días de lunes (2) a viernes (6)
                 ->selectRaw('DATE(FECHA) as fecha, COUNT(*) as total_contratos')
                 ->groupBy('fecha')
@@ -423,6 +424,7 @@ class ProduccionController extends Controller
 
             // Obtener contratos del sábado
             $contratosSabado = tbl_bitacora_contrato::whereBetween('FECHA', [$semana['inicio'], $semana['fin']])
+                ->where('state', '=', 1)
                 ->whereRaw('DAYOFWEEK(FECHA) = 7') // Filtrando el día sábado (7)
                 ->selectRaw('DATE(FECHA) as fecha, COUNT(*) as total_contratos')
                 ->groupBy('fecha')
@@ -501,19 +503,17 @@ class ProduccionController extends Controller
 
     public function ActualizarDetallesDiario(Request $request, $id)
     {
-        $datos= null;
+        $datos = null;
         $datos = $request->payload;
         if ($datos['prop'] === null || $datos['newValue'] === null) {
-           return response()->json(['message' => 'Campo vacio']);
-        
+            return response()->json(['message' => 'Campo vacio']);
         }
-        try{
-        $contrato = tbl_bitacora_contrato::find($id);
-        $contrato->{$datos['prop']} = $datos['newValue'];
-        $contrato->save();
-        }catch(\Exception $e){
+        try {
+            $contrato = tbl_bitacora_contrato::find($id);
+            $contrato->{$datos['prop']} = $datos['newValue'];
+            $contrato->save();
+        } catch (\Exception $e) {
             return response()->json(['error' => 'Error al actualizar el contrato']);
-        
         }
         return response()->json(['message' => 'OK']);
     }
@@ -522,18 +522,101 @@ class ProduccionController extends Controller
     {
 
         $contrato = tbl_bitacora_contrato::find($id);
-        if($contrato->state === 0){
+        if ($contrato->state === 0) {
             $contrato->state = 1;
             $contrato->save();
             return response()->json(['message' => 'OK']);
         }
-        if($contrato->state === 1){
+        if ($contrato->state === 1) {
             $contrato->state = 0;
             $contrato->save();
             return response()->json(['message' => 'OK']);
         }
-        
-       
     }
 
+    public function insertarContrato(Request $request)
+    {
+        $fechaString = $request->data[4];
+        $ccOperario = $request->data[2];
+        $contrato = new tbl_bitacora_contrato();
+
+        // Convertir la fecha a un formato adecuado (suponiendo dd-mm-yy)
+        $fecha = Carbon::createFromFormat('d-m-y', $fechaString)->format('d-m-Y');
+        $fechaDB = Carbon::createFromFormat('d-m-y', $fechaString)->format('Y-m-d');
+        // Proceder con la consulta
+        $resultados = $this->consultarBitacora($fecha, $ccOperario);
+        if ($resultados === null) {
+            return response()->json(['error' => 'No se encontró bitácora para asociar.']);
+        }
+        try {
+            $contrato->CC_OPERARIO = $request->data[2];
+            $contrato->MUNICIPIO = $request->data[3];
+            $contrato->FECHA = $fechaDB;
+            $contrato->No_ACTA = $request->data[5];
+            $contrato->TIPO_TRABAJO = $request->data[6];
+            $contrato->CONTRATO = $request->data[7];
+            $contrato->ORDEN_TRABAJO = $request->data[8];
+            $contrato->ORDEN_EXT = $request->data[9];
+            $contrato->CATEGORIA = $request->data[10];
+            $contrato->RESULTADO_CIERRE = $request->data[11];
+            $contrato->HORA_INICIO = $request->data[12];
+            $contrato->HORA_FINAL = $request->data[13];
+            $contrato->DURACION_INSP = $request->data[14];
+            $contrato->{'4_RECINTOS'} = $request->data[15];
+            $contrato->id_bitacora = $resultados->id;
+            $contrato->state = 1;
+            $contrato->save();
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al insertar el contrato']);
+        }
+        return response()->json(['ok' => 'Insertado correctamente.']);
+    }
+
+    public function consultarBitacora($fecha, $ccOperario)
+    {
+        
+        // Consultar la tabla tbl_insp_cali para obtener el nombre del supervisor
+        $inspector = tbl_insp_cali::select('users.name AS supervisor')
+            ->join('users', 'users.id', '=', 'tbl_insp_cali.SUPERVISOR')
+            ->where('tbl_insp_cali.cedula', '=', $ccOperario)
+            ->first();
+
+        if (!$inspector) {
+            // Manejar el caso donde no se encuentra el supervisor
+            return ['error' => 'Supervisor no encontrado.'];
+        }
+
+        $nombreSupervisor = $inspector->supervisor;
+        $nombreSupervisorSinEspacios = str_replace(' ', '', $nombreSupervisor);
+
+        // Consultar la tabla tbl_bitacora_archivo para obtener los registros que coincidan con la fecha
+        $bitacoras = tbl_bitacora_archivo::select('id', 'nombre_archivo')->where('nombre_archivo', 'like', '%' . $fecha . '%')
+            ->get();
+   
+        foreach ($bitacoras as $bitacora) {
+            $nombreArchivo = $bitacora->nombre_archivo;
+
+            // Extraer la fecha y nombre del supervisor del nombre del archivo
+            // Asumiendo el formato "Bitacora Valle_dd-mm-yyyy____dd-mm-yyyy Supervisor"
+            if (preg_match('/Bitacora Valle_(\d{2}-\d{2}-\d{4})____(\d{2}-\d{2}-\d{4}) (.+)$/', $nombreArchivo, $matches)) {
+
+                $fechaInicio = $matches[1];
+                $fechaFin = $matches[2];
+                $supervisor = $matches[3];
+                $supervisorSinEspacios = str_replace(' ', '', $supervisor);
+
+                // Verificar si la fecha del request está dentro del rango de fechas del archivo y el supervisor coincide
+                $fechaInicioCarbon = Carbon::createFromFormat('d-m-Y', $fechaInicio);
+                $fechaFinCarbon = Carbon::createFromFormat('d-m-Y', $fechaFin);
+                $fechaCarbon = Carbon::createFromFormat('d-m-Y', $fecha);
+
+                if ($fechaCarbon->between($fechaInicioCarbon, $fechaFinCarbon) && $supervisorSinEspacios == $nombreSupervisorSinEspacios) {
+
+                    return $bitacora;
+                }
+            }
+        }
+
+        return null;
+    }
 }

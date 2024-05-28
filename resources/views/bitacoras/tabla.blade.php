@@ -65,7 +65,7 @@
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td>.CERTIFICADA</td>
+                                            <td>CERTIFICADA</td>
                                             <td class="certificadaCount <?= $nombre ?>">0</td>
                                         </tr>
                                         <tr>
@@ -73,11 +73,11 @@
                                             <td class="certificadaConNovedadesCount <?= $nombre ?>">0</td>
                                         </tr>
                                         <tr>
-                                            <td>.INSPECCIONADA CON DEFECTO CRITICO VALLE</td>
+                                            <td>INSPECCIONADA CON DEFECTO CRITICO VALLE</td>
                                             <td class="inspeccionadaConDefectoCriticoCount <?= $nombre ?>">0</td>
                                         </tr>
                                         <tr>
-                                            <td>.INSPECCIONADA CON DEFECTO NO CRITICO VALLE</td>
+                                            <td>INSPECCIONADA CON DEFECTO NO CRITICO VALLE</td>
                                             <td class="inspeccionadaConDefectoNoCriticoCount <?= $nombre ?>">0</td>
                                         </tr>
                                         <tr>
@@ -127,14 +127,20 @@
                                                 $contrato = $sheet->getCell('H' . $row->getRowIndex())->getValue();
                                                 $nombreCelda = $sheet->getCell('A' . $row->getRowIndex())->getValue();
                                                 $Cierre = $sheet->getCell('M' . $row->getRowIndex())->getValue();
+                                                $Cierre = ltrim($Cierre, '.');
+                                                
                                                 ?>
-                                                <?php if (strpos($contrato, ":") === 0 && $nombreCelda === $nombre && ($Cierre === ".CERTIFICADA" || $Cierre === "CERTIFICADA CON NOVEDADES" || $Cierre === ".INSPECCIONADA CON DEFECTO CRITICO VALLE" || $Cierre === ".INSPECCIONADA CON DEFECTO NO CRITICO VALLE")) : ?>
+                                                <?php if (strpos($contrato, ":") === 0 && $nombreCelda === $nombre && ($Cierre === "CERTIFICADA" || $Cierre === "CERTIFICADA CON NOVEDADES" || $Cierre === "INSPECCIONADA CON DEFECTO CRITICO VALLE" || $Cierre === "INSPECCIONADA CON DEFECTO NO CRITICO VALLE")) : ?>
                                                     <tr>
                                                         <?php $horaInicialObj = null;
                                                         $horaFinalObj = null;
                                                         foreach (['A', 'B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K', 'M', 'N', 'O'] as $columna) : ?>
                                                             <?php
+                                                             
                                                             $valorCelda = $sheet->getCell($columna . $row->getRowIndex())->getValue();
+                                                            if($columna === 'M'){
+                                                                $valorCelda = ltrim($sheet->getCell($columna . $row->getRowIndex())->getValue(), '.');
+                                                            }
                                                             if ($columna === 'H') {
 
                                                                 echo "<td style='background-color: rgb(146, 208, 80);'>" . $valorCelda . "</td>";
@@ -337,10 +343,10 @@
                                 <label for="resultado_cierre">Resultado Cierre</label>
                                 <select class="form-control" name="resultado_cierre" id="resultado_cierre">
                                     <option value="">Seleccione categoria</option>
-                                    <option value=".CERTIFICADA">.CERTIFICADA</option>
+                                    <option value="CERTIFICADA">CERTIFICADA</option>
                                     <option value="CERTIFICADA CON NOVEDADES">CERTIFICADA CON NOVEDADES</option>
-                                    <option value=".INSPECCIONADA CON DEFECTO CRITICO VALLE">.INSPECCIONADA CON DEFECTO CRITICO VALLE</option>
-                                    <option value=".INSPECCIONADA CON DEFECTO NO CRITICO VALLE">.INSPECCIONADA CON DEFECTO NO CRITICO VALLE</option>
+                                    <option value="INSPECCIONADA CON DEFECTO CRITICO VALLE">INSPECCIONADA CON DEFECTO CRITICO VALLE</option>
+                                    <option value="INSPECCIONADA CON DEFECTO NO CRITICO VALLE">INSPECCIONADA CON DEFECTO NO CRITICO VALLE</option>
                                 </select>
                             </div>
                             <div class="col-md-6" id="cantidad_recintos">
