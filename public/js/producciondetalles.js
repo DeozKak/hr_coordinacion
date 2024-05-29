@@ -6,6 +6,7 @@ let diasFestivos;
 let sabadodobles = [];
 let InspectorSelected;
 let fechaSeleccionada;
+ 
 /* Inicializacion tabla de producción */
 document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('exportar').addEventListener('click', exportarExcel);
@@ -141,7 +142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         headers[5].push(...columnasFinales);
 
         hot = new Handsontable(detalles, {
-            readOnly: false,
+            readOnly: true,
             manualColumnMove: false,
             rowHeaders: true,
             nestedHeaders: [headers, headers[5]],
@@ -171,15 +172,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const selectedColumn = hot.getSelectedLast()[1]; // Obtiene la última columna seleccionada
                 const columnName = hot.getColHeader(selectedColumn);
                 const isFechaColumn = fechas.some(fecha => fecha.dia === columnName);
+
                 if (isFechaColumn) {
                     const selectedRow = hot.getSelectedLast()[0]; // Obtiene la última fila seleccionada
                     const rowData = hot.getDataAtCell(selectedRow, 0);
                     const nombre_completo = hot.getDataAtCell(selectedRow, 1); // Obtiene el valor de la celda en la columna 0 de la fila seleccionada
-                    // recuperar fecha para la consulta contratos por dia
-                    const fecha = fechas.find(fecha => fecha.dia === columnName);
-                    fechaSeleccionada = fecha.fecha;
-                    $('#exampleModal').modal('show');
-                    detallesDia(fecha.fecha, rowData, columnName, nombre_completo);
+
+                    if (isFechaColumn) {
+                        // recuperar fecha para la consulta contratos por dia
+                        const fecha = fechas.find(fecha => fecha.dia === columnName);
+                        fechaSeleccionada = fecha.fecha;
+                        $('#exampleModal').modal('show');
+                        detallesDia(fecha.fecha, rowData, columnName, nombre_completo);
+                    }
+
+
                 }
             }
         });
@@ -219,6 +226,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
     const token = document.querySelector('#token').value;
     let datosBaseDatos;
     let nomColumna;
+    const fecha_inicioCorte = document.querySelector('#fecha_inicio').value;
     const contratos_dia = document.querySelector('#contratos_dia');
     const cerrar = document.querySelector('#cerrar_modal');
     const titulo = document.querySelector('#titulo');
@@ -240,7 +248,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         Handsontable.validators.registerValidator('custom.text', customTextValidator);
     })(Handsontable);
 
-
+ 
     hot_dia = new Handsontable(contratos_dia, {
         readOnly: true,
         manualColumnMove: false,
@@ -251,7 +259,14 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             { type: 'text' }, // OPERARIO
             { type: 'numeric', validator: 'custom.numeric' }, // CC OPERARIO
             { type: 'text' }, // MUNICIPIO
-            { type: 'date', dateFormat: 'YYYY-MM-DD', correctFormat: true }, // FECHA
+            {
+                type: 'date',
+                dateFormat: 'YYYY-MM-DD',
+                datePickerConfig: {
+                minDate: new Date(fecha_inicioCorte), // Esto establece la fecha mínima como el día de inicio del corte 
+                maxDate: new Date(new Date().getTime() - (24 * 60 * 60 * 1000)) // Esto establece la fecha máxima como el día actual
+                }
+              },// Usa el editor personalizado, // FECHA
             { type: 'numeric', validator: 'custom.numeric' }, // N° ACTA
             {
                 editor: 'select', // Tipo combobox
@@ -276,15 +291,23 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             {
                 renderer: function (instance, td, row, col, prop, value, cellProperties) {
                     const estado = hot_dia.getDataAtRow(row)[16]; // Suponiendo que el estado está en la columna 15
+                    const diseno_especial = hot_dia.getDataAtRow(row)[17]; // Suponiendo que el estado está en la columna 15
                     let buttonHtml = '';
+                    let buttondiseno = '';
                     if (estado === 1) {
-                        buttonHtml = '<button class="btn btn-danger" onclick="desasociar(' + row + ',\'' + fecha + '\',' + cc_inspector + ')">Desasociar</button>';
+                        buttonHtml = '<button class="btn btn-danger" onclick="desasociar(' + row + ',\'' + fecha + '\',' + cc_inspector + ')">Descontar</button>';
                     } else {
-                        buttonHtml = '<button class="btn btn-success" onclick="asociar(' + row + ',\'' + fecha + '\',' + cc_inspector + ')">Asociar</button>';
+                        buttonHtml = '<button class="btn btn-success" onclick="asociar(' + row + ',\'' + fecha + '\',' + cc_inspector + ')">Contar</button>';
+                    }
+                    if (diseno_especial === 1) {
+                        buttondiseno = '<button class="btn btn-warning" onclick="diseñoEspecial(' + row + ',\'' + fecha + '\',' + cc_inspector + ',' + diseno_especial + ')">Quitar Diseño especial</button>';
+                    } else {
+                        buttondiseno = '<button class="btn btn-warning" onclick="diseñoEspecial(' + row + ',\'' + fecha + '\',' + cc_inspector + ',' + diseno_especial + ')">Diseño especial</button>';
                     }
                     td.innerHTML = `
                         <div style="display: flex; gap: 5px; justify-content: center;">
                         <button id="btnEditar" class="btn btn-info" onclick="editar(${row})">Editar</button>
+                        ${buttondiseno}
                         ${buttonHtml}
                         </div>
                         `;
@@ -341,7 +364,6 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                             payload: payload
                         },
                         success: function (response) {
-                            alert(response.message);
                             cargarDatos();
                         },
                         error: function (xhr, status, error) {
@@ -383,14 +405,15 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             });
         }
     });
-    const fechaFormat = formatearFecha(fecha);
+
+    const fechaconvert = formatearFecha(fecha);
+
     /* consultar si ya hay bitacora */
     $.ajax({
-        url: `detalles_diario/bitacora/${fechaFormat}/${cc_inspector}`, // Ruta al archivo PHP que realiza la consulta a la base de datos
+        url: `detalles_diario/bitacora/${fechaconvert}/${cc_inspector}`, // Ruta al archivo PHP que realiza la consulta a la base de datos
         type: 'GET',
         success: function (response) {
-            console.log(response);
-            if (response.length > 0) {
+            if (response.error) {
                 document.getElementById('agregar').disabled = true;
             } else {
                 document.getElementById('agregar').disabled = false;
@@ -610,14 +633,28 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
 
         if (formularioValido) {
 
-           
+
 
             agregar_datos();
 
             campos.forEach(campo => {
                 campo.value = campo.getAttribute('value') || '';
                 switch (campo.id) {
-
+                    case 'nombre':
+                        const selectNombre = document.querySelector('#nombre');
+                        // Selecciona la primera opción
+                        if (selectNombre.options.length > 0) {
+                            selectNombre.selectedIndex = 0;
+                        }
+                        break;
+                    case 'fecha':
+                        const fechaInput = document.getElementById('fecha');
+                        const fechaPredefinida = new Date(fechaSeleccionada);
+                        // Formatear la fecha predefinida según el formato de fecha requerido por el elemento de entrada de fecha (yyyy-mm-dd)
+                        const formattedDate = fechaPredefinida.toISOString().slice(0, 10);
+                        // Establecer la fecha predefinida en el campo de entrada de fecha
+                        fechaInput.value = formattedDate;
+                        break;
                     case 'recintos':
                         campo.value = 'NO';
                         break;
@@ -739,6 +776,62 @@ function asociar(row, fecha, cc_inspector) {
                     });
                 }
             });
+        }
+    });
+
+}
+
+function diseñoEspecial(row, fecha, cc_inspector, currentValue) {
+    const id = hot_dia.getDataAtRow(row);
+    let actionText = currentValue ? 'desactivar' : 'agregar';
+    let actionTitle = currentValue ? 'Desactivar diseño especial' : 'Diseño especial';
+    let actionMessage = currentValue ? '¿Desea desactivar el diseño especial?' : '¿Desea agregar el contrato como un diseño especial?';
+    Swal.fire({
+        title: actionTitle,
+        text: actionMessage,
+        type: 'info',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: '¡Sí!',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.value) {
+            $.ajax({
+                url: `detalles_diario/diseño_especial/${id}`, // Ruta al archivo PHP que realiza la consulta a la base de datos
+                type: 'POST',
+                data: {
+                    _token: document.querySelector('#token').value
+                },
+                success: function (response) {
+                    console.log(response);
+                    if (response.success) {
+                        let successMessage = response.diseño_especial ? 'Se ha agregado un diseño especial.' : 'Se ha desactivado el diseño especial.';
+                        Swal.fire(
+                            actionTitle,
+                            successMessage,
+                            'success'
+                        );
+                        cargarDatos();
+                        actualizarDatosDia(fecha, cc_inspector);
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Ocurrió un error al actualizar el diseño especial'
+                        });
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.log(xhr.responseText);
+                    Swal.fire({
+                        type: 'error',
+                        title: 'Error',
+                        text: 'Ocurrió un error al agregar un diseño especial'
+                    });
+                }
+            });
+
         }
     });
 
@@ -867,7 +960,7 @@ async function cargarDatos() {
 //---------------------------------------------------------------------------------------------------//
 /* funcion para convertir respuesta JSON del servidor a un Array */
 function convertirJSONaArray2D(jsonData) {
-    const columnasDeseadas = ['id', 'nombre_completo', 'CC_OPERARIO', 'MUNICIPIO', 'FECHA', 'No_ACTA', 'TIPO_TRABAJO', 'CONTRATO', 'ORDEN_TRABAJO', 'ORDEN_EXT', 'CATEGORIA', 'RESULTADO_CIERRE', 'HORA_INICIO', 'HORA_FINAL', 'DURACION_INSP', '4_RECINTOS', 'state'];
+    const columnasDeseadas = ['id', 'nombre_completo', 'CC_OPERARIO', 'MUNICIPIO', 'FECHA', 'No_ACTA', 'TIPO_TRABAJO', 'CONTRATO', 'ORDEN_TRABAJO', 'ORDEN_EXT', 'CATEGORIA', 'RESULTADO_CIERRE', 'HORA_INICIO', 'HORA_FINAL', 'DURACION_INSP', '4_RECINTOS', 'state', 'diseno_especial'];
 
     return Object.keys(jsonData).map(key => {
         const fila = jsonData[key];
@@ -939,7 +1032,7 @@ function agregar_datos() {
         cantidadRecintos, // 4 RECINTOS O MAS
         1, // ESTADO
     ];
-  
+
 
     $.ajax({
         url: 'detalles_diario/insertar', // Ruta al archivo PHP que realiza la consulta a la base de datos
@@ -966,7 +1059,7 @@ function agregar_datos() {
                     toast: true,
                     timer: 3000
                 });
-              
+
                 $('#ventanaEmergente').on('hidden.bs.modal', () => {
                     document.getElementById('exampleModal').classList.remove('modal-backdrop-custom');
                     const selectNombre = document.getElementById('nombre');
@@ -1015,26 +1108,16 @@ function calcularDuracion(hora_inicio, hora_final) {
 
 
 function formatearFecha(fecha) {
-    // Crear un objeto Date con la fecha proporcionada
-    var fechaObjeto = new Date(fecha);
-  
-    // Obtener el día, mes y año
-    var dia = fechaObjeto.getDate();
-    var mes = fechaObjeto.getMonth() + 1; // Los meses comienzan desde 0, por lo que sumamos 1
-    var año = fechaObjeto.getFullYear();
-  
-    // Agregar ceros a la izquierda si es necesario
-    if (dia < 10) {
-      dia = '0' + dia;
-    }
-    if (mes < 10) {
-      mes = '0' + mes;
-    }
-  
-    // Construir la fecha en el formato deseado
+    // Dividir la fecha en componentes año, mes, día
+    var partes = fecha.split('-');
+    var año = partes[0];
+    var mes = partes[1];
+    var dia = partes[2];
+
+    // Construir la fecha en el formato deseado dd-mm-yyyy
     var fechaFormateada = dia + '-' + mes + '-' + año;
-  
-    // Retornar la fecha formateada
+
     return fechaFormateada;
-  }
+}
+
 

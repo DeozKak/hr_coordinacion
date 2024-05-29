@@ -9,6 +9,8 @@
 @section('content')
 <link rel="stylesheet" href="{{asset('css/produccion/produccion.css')}}">
 <script src="{{asset('js/producciondetalles.js')}}"></script>
+<script src="{{asset('js/zonas.js')}}"></script>
+<input type="hidden" id="fecha_inicio" value="{{$corte->fecha_inicio}}">
 <input type="hidden" id="id_produccion" value="{{route('produccion.datosDetalles')}}">
 <input type="hidden" name="_token" id="token" value="{{csrf_token()}}">
 <div class="shadow-container">
@@ -17,6 +19,10 @@
         <button type="button" class="btn btn-success" id="exportar" style="margin-bottom: 10px;">Exportar</button>
         <div id="detalles" style="width: '100px'"></div>
 
+    </div>
+    <h1>Zonas</h1>
+    <div class="card-body">
+        <div id="zonas" style="width: '100px'"></div>
     </div>
 </div>
 
@@ -32,7 +38,7 @@
             </div>
             <div class="modal-body" style="margin-bottom: 10px;">
                 <div id="mensajeNoDatos" style="display: none;" class="alert alert-warning">No hay datos</div>
-               
+
                 <div id="contratos_dia" style=" width: '100px'; margin-bottom: 10px;"></div>
             </div>
             <div class="modal-footer">
@@ -45,7 +51,7 @@
 
 <!-- modal agregar Inspeccion -->
 <div class="modal fade" id="ventanaEmergente" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="exampleModalLabel">Agregar Inspección</h5>
@@ -54,122 +60,125 @@
                 </button>
             </div>
             <div class="modal-body">
-            <div class="form-group">
-                            <div class="col-md-6">
-                                <label for="nombre">Inspector:</label>
-                                <select class="form-control" name="nombre" id="nombre" disabled>
-                                    
-                                </select>
-                            </div>
-                            <br>
+                <div class="form-group">
+                    <div class="col-md-6">
+                        <label for="nombre">Inspector:</label>
+                        <select class="form-control" name="nombre" id="nombre" disabled>
 
-                            <div class="col-md-6">
-                                <label for="municipio">Municipio:</label>
-                                <select class="form-control" name="municipio" id="municipio">
-                                    <option value="">Seleccione Municipio</option>
-                                    @foreach ($municipios as $municipio)
-                                    <option value="{{$municipio->nombre}}">{{$municipio->nombre}}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <br>
-                        <div class="form-group">
-                            <div class="col-md-6">
-                                <label for="fecha">Fecha:</label>
-                                <input type="date" class="form-control" name="fecha" id="fecha" placeholder="dd-mm-yy" disabled>
-                            </div>
+                        </select>
+                    </div>
+                    <br>
 
-                            <br>
+                    <div class="col-md-6">
+                        <label for="municipio">Municipio:</label>
+                        <select class="form-control" name="municipio" id="municipio">
+                            <option value="">Seleccione Municipio</option>
+                            @foreach ($municipios as $municipio)
+                            <option value="{{$municipio->nombre}}">{{$municipio->nombre}}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <br>
+                <div class="form-group">
+                    <div class="col-md-6">
+                        <label for="fecha">Fecha:</label>
+                        <input type="date" class="form-control" name="fecha" id="fecha" placeholder="dd-mm-yy" disabled>
+                    </div>
 
-                            <div class="col-md-6">
-                                <label for="N°acta">N° ACTA</label>
-                                <input type="text" class="form-control" name="N°acta" id="N°acta">
-                            </div>
-                        </div>
-                        <br>
-                        <div class="form-group">
-                            <div class="col-md-6">
-                                <label for="tipo_trabajo">Tipo de Trabajo</label>
-                                <select class="form-control" name="tipo_trabajo" id="tipo_trabajo">
-                                    <option value="">Seleccione Tipo de Trabajo</option>
-                                    <option value="FI-29 revisión periódica línea matriz">FI-29 revisión periódica línea matriz</option>
-                                    <option value="RP 10444">RP 10444</option>
-                                    <option value="RP 12161">RP 12161</option>
-                                    <option value="RN 12162">RN 12162</option>
-                                    <option value="SA 12163">SA 12163</option>
-                                    <option value="SA 12164">SA 12164</option>
-                                </select>
-                            </div>
+                    <br>
 
-                            <br>
+                    <div class="col-md-6">
+                        <label for="N°acta">N° ACTA</label>
+                        <input type="text" class="form-control" name="N°acta" id="N°acta">
+                    </div>
+                </div>
+                <br>
+                <div class="form-group">
+                    <div class="col-md-6">
+                        <label for="tipo_trabajo">Tipo de Trabajo</label>
+                        <select class="form-control" name="tipo_trabajo" id="tipo_trabajo">
+                            <option value="">Seleccione Tipo de Trabajo</option>
+                            <option value="FI-29 revisión periódica línea matriz">FI-29 revisión periódica línea matriz</option>
+                            <option value="RP 10444">RP 10444</option>
+                            <option value="RP 12161">RP 12161</option>
+                            <option value="RN 12162">RN 12162</option>
+                            <option value="SA 12163">SA 12163</option>
+                            <option value="SA 12164">SA 12164</option>
+                        </select>
+                    </div>
 
-                            <div class="col-md-6">
-                                <label for="contrato">Contrato</label>
-                                <input type="text" class="form-control" name="contrato" id="contrato" value=":">
-                            </div>
-                        </div>
-                        <br>
-                        <div class="form-group matriz-des1">
-                            <div class="col-md-6">
-                                <label for="orden_trabajo">Orden de trabajo</label>
-                                <input type="text" class="form-control" name="orden_trabajo" id="orden_trabajo">
-                            </div>
+                    <br>
 
-                            <br>
+                    <div class="col-md-6">
+                        <label for="contrato">Contrato</label>
+                        <input type="text" class="form-control" name="contrato" id="contrato" value=":">
+                    </div>
+                </div>
+                <br>
+                <div class="form-group matriz-des1">
+                    <div class="col-md-6">
+                        <label for="orden_trabajo">Orden de trabajo</label>
+                        <input type="text" class="form-control" name="orden_trabajo" id="orden_trabajo">
+                    </div>
 
-                            <div class="col-md-6">
-                                <label for="categoria">Categoria</label>
-                                <select class="form-control" name="categoria" id="categoria">
-                                    <option value="">Seleccione categoria</option>
-                                    <option value="RESIDENCIAL">RESIDENCIAL</option>
-                                    <option value="COMERCIAL">COMERCIAL</option>
-                                </select>
-                            </div>
-                        </div>
-                        <br>
-                        <div class="form-group">
-                            <div class="col-md-6">
-                                <label for="hora_inicio">Hora Inicio</label>
-                                <input type="time" class="form-control" name="hora_inicio" id="hora_inicio" step="60" pattern="[0-9]{2}:[0-9]{2}">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="hora_final" style="margin-left: 10px;">Hora Final</label>
-                                <input type="time" class="form-control" name="hora_final" id="hora_final" step="60" pattern="[0-9]{2}:[0-9]{2}">
-                            </div>
-                        </div>
-                        <br>
-                        <div class="form-group matriz-des2">
-                            <div class="col-md-6">
-                                <label for="recintos">4 Recintos o mas</label>
-                                <select class="form-control" name="recintos" id="recintos">
-                                    <option value="NO" selected>NO</option>
-                                    <option value="SI">SI</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="cantidad_recintos">Cantidad de recintos</label>
-                                <input type="text" class="form-control" id="NroRecintosP" style="text-align: center;" disabled>
-                            </div>
-                        </div>
-                        <br>
-                        <div class="form-group">
-                            <div class="col-md-6">
-                                <label for="resultado_cierre">Resultado Cierre</label>
-                                <select class="form-control" name="resultado_cierre" id="resultado_cierre">
-                                    <option value="">Seleccione categoria</option>
-                                    <option value="CERTIFICADA">CERTIFICADA</option>
-                                    <option value="CERTIFICADA CON NOVEDADES">CERTIFICADA CON NOVEDADES</option>
-                                    <option value="INSPECCIONADA CON DEFECTO CRITICO VALLE">INSPECCIONADA CON DEFECTO CRITICO VALLE</option>
-                                    <option value="INSPECCIONADA CON DEFECTO NO CRITICO VALLE">INSPECCIONADA CON DEFECTO NO CRITICO VALLE</option>
-                                </select>
-                            </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-success" id="agregarInspeccion">Agregar</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <br>
+
+                    <div class="col-md-6">
+                        <label for="categoria">Categoria</label>
+                        <select class="form-control" name="categoria" id="categoria">
+                            <option value="">Seleccione categoria</option>
+                            <option value="RESIDENCIAL">RESIDENCIAL</option>
+                            <option value="COMERCIAL">COMERCIAL</option>
+                        </select>
+                    </div>
+                </div>
+                <br>
+                <div class="form-group">
+                    <div class="col-md-6">
+                        <label for="hora_inicio">Hora Inicio</label>
+                        <input type="time" class="form-control" name="hora_inicio" id="hora_inicio" step="60" pattern="[0-9]{2}:[0-9]{2}">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="hora_final" style="margin-left: 10px;">Hora Final</label>
+                        <input type="time" class="form-control" name="hora_final" id="hora_final" step="60" pattern="[0-9]{2}:[0-9]{2}">
+                    </div>
+                </div>
+                <br>
+                <div class="form-group matriz-des2">
+                    <div class="col-md-6">
+                        <label for="recintos">4 Recintos o mas</label>
+                        <select class="form-control" name="recintos" id="recintos">
+                            <option value="NO" selected>NO</option>
+                            <option value="SI">SI</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="cantidad_recintos">Cantidad de recintos</label>
+                        <input type="text" class="form-control" id="NroRecintosP" style="text-align: center;" disabled>
+                    </div>
+                </div>
+                <br>
+                <div class="form-group">
+                    <div class="col-md-6">
+                        <label for="resultado_cierre">Resultado Cierre</label>
+                        <select class="form-control" name="resultado_cierre" id="resultado_cierre">
+                            <option value="">Seleccione categoria</option>
+                            <option value="CERTIFICADA">CERTIFICADA</option>
+                            <option value="CERTIFICADA CON NOVEDADES">CERTIFICADA CON NOVEDADES</option>
+                            <option value="INSPECCIONADA CON DEFECTO CRITICO VALLE">INSPECCIONADA CON DEFECTO CRITICO VALLE</option>
+                            <option value="INSPECCIONADA CON DEFECTO NO CRITICO VALLE">INSPECCIONADA CON DEFECTO NO CRITICO VALLE</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" id="agregarInspeccion">Agregar</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
-@stop
+
+
+
+    @stop

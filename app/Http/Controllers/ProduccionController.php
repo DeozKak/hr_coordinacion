@@ -40,7 +40,8 @@ class ProduccionController extends Controller
         }
         // sacar contratos del corte activo
         $contratosCorte = tbl_bitacora_contrato::where('FECHA', '>=', $corte->fecha_inicio)
-            ->where('FECHA', '<=', $corte->fecha_fin)
+            ->where('FECHA', '<=', $corte->fecha_fin)->where('state', '=', 1)
+
             ->get();
 
         if (count($contratosCorte->toArray()) === 0 && !$error) {
@@ -54,16 +55,19 @@ class ProduccionController extends Controller
             $error = true;
             $warning = 'No hay inspectores activos';
         }
+        $contadortotal = 0;
         // sacar produccion de cada inspector
         $produccionInspector = array();
         foreach ($inpectores as $inspector) {
 
             $numerosContratos = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)->where('FECHA', '>=', $corte->fecha_inicio)
-                ->where('FECHA', '<=', $corte->fecha_fin)
+                ->where('FECHA', '<=', $corte->fecha_fin)->where('state', '=', 1)->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
                 ->count();
             if ($numerosContratos === 0 && $inspector->state === 0) {
                 continue;
             }
+            $contadortotal += $numerosContratos;
+
             $produccionInspector[] =
                 [
                     'nombres' => $inspector->apellidos,
@@ -72,7 +76,7 @@ class ProduccionController extends Controller
         }
         // sacar categorias de los contratos
         $contratosCategoria = tbl_bitacora_contrato::select('CATEGORIA')->where('FECHA', '>=', $corte->fecha_inicio)
-            ->where('FECHA', '<=', $corte->fecha_fin)
+            ->where('FECHA', '<=', $corte->fecha_fin)->where('state', '=', 1)->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
             ->get();
 
         if (count($contratosCategoria->toArray()) === 0 && !$error) {
@@ -86,12 +90,43 @@ class ProduccionController extends Controller
         foreach ($zonas as $zona) {
             $count = tbl_localidades_municipio::select('nombre')->where('id_zona', '=', $zona->id)->get();
             $contador = 0;
+            /*  // Obtener los municipios de tbl_bitacora_contrato
+            $municipiosContratos = tbl_bitacora_contrato::select('MUNICIPIO')
+                ->where('FECHA', '>=', $corte->fecha_inicio)
+                ->where('FECHA', '<=', $corte->fecha_fin)
+                ->where('state', '=', 1)
+                ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
+                ->distinct()
+                ->get()
+                ->pluck('MUNICIPIO');
+
+            // Obtener los municipios de tbl_localidades_municipios
+            $municipiosLocalidades = tbl_localidades_municipio::select('nombre')
+                ->distinct()
+                ->get()
+                ->pluck('nombre');
+
+            // Comparar los municipios
+            $municipiosNoEncontrados = $municipiosContratos->diff($municipiosLocalidades);
+
+            if ($municipiosNoEncontrados->isEmpty()) {
+              
+            } else {
+                
+                foreach ($municipiosNoEncontrados as $municipio) {
+                   dd($municipio);
+                
+                }
+            } */
             foreach ($count as $c) {
 
                 $cantidades = tbl_bitacora_contrato::where('MUNICIPIO', '=', $c->nombre)->where('FECHA', '>=', $corte->fecha_inicio)
-                    ->where('FECHA', '<=', $corte->fecha_fin)->count();
+                    ->where('FECHA', '<=', $corte->fecha_fin)->where('state', '=', 1)->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')->count();
                 $contador += $cantidades;
+                // Consulta adicional para obtener los registros que no cumplen con la condición del municipio
+
             }
+
             $conteoContratosPorZona[] = [
                 'zona' => $zona->nombre,
                 'contratos' => $contador
@@ -102,6 +137,7 @@ class ProduccionController extends Controller
             $warning = 'error en las zonas';
         }
 
+
         if ($error) {
             return view('produccion.index', ['produccionInspector' => $produccionInspector, 'contratosCategoria' => $contratosCategoria, 'conteoContratosPorZona' => $conteoContratosPorZona, 'corte' => $corte, 'warning' => $warning]);
         }
@@ -111,8 +147,13 @@ class ProduccionController extends Controller
     public function detalles()
     {
         $municipios = tbl_localidades_municipio::all();
+        $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
+        $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
+        $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
+            ->where('fecha_fin', '>=', $fecha_resta_un_dia)
+            ->first();
 
-        return view('produccion.detalles', compact('municipios'));
+        return view('produccion.detalles', compact('municipios', 'corte'));
     }
 
     public function datosDetalles()
@@ -147,6 +188,7 @@ class ProduccionController extends Controller
         $produccionInspector = array();
         foreach ($inspectores as $inspector) {
             //inicializar variables contadores
+            $contadorDiseñosEspeciales = null;
             $contadorMatrices = null;
             $contadorFestivos = null;
             $contratos4recintos = null;
@@ -200,6 +242,7 @@ class ProduccionController extends Controller
                 ->where('FECHA', '>=', $corte->fecha_inicio)
                 ->where('FECHA', '<=', $corte->fecha_fin)
                 ->where('state', '=', 1)
+                ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
                 ->select(DB::raw('DATE(FECHA) as fecha, COUNT(*) as total_contratos'))
                 ->groupBy('fecha')
                 ->get();
@@ -225,6 +268,14 @@ class ProduccionController extends Controller
                 ->where('TIPO_TRABAJO', '=', 'FI-29 revisión periódica línea matriz')
                 ->count();
 
+            $diseñosEspeciales = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
+                ->where('state', '=', 1)
+                ->whereBetween('FECHA', [$corte->fecha_inicio, $corte->fecha_fin])
+                ->where('diseno_especial', '=', 1)
+                ->count();
+            if ($diseñosEspeciales > 0) {
+                $contadorDiseñosEspeciales = $diseñosEspeciales;
+            }
 
             if ($matrices > 0) {
                 $contadorMatrices = $matrices;
@@ -302,7 +353,7 @@ class ProduccionController extends Controller
             $datosInspector['matrices'] = $contadorMatrices;
 
             $datosInspector['festivos'] = $totalFestivos;
-            $datosInspector['diseños_especiales'] = null;
+            $datosInspector['diseños_especiales'] = $contadorDiseñosEspeciales;
             $datosInspector['4_recintos'] = $contratos4recintosRedondeado;
             $datosInspector['comerciales'] = $contadorComerciales;
 
@@ -492,7 +543,8 @@ class ProduccionController extends Controller
     public function detallesDiario($fecha, $inspector)
     {
 
-        $contratosDia = tbl_bitacora_contrato::selectRaw("tbl_bitacora_contratos.id, CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP, tbl_bitacora_contratos.`4_RECINTOS`,tbl_bitacora_contratos.state")
+        $contratosDia = tbl_bitacora_contrato::selectRaw("tbl_bitacora_contratos.id, CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP, 
+        tbl_bitacora_contratos.`4_RECINTOS`,tbl_bitacora_contratos.state,tbl_bitacora_contratos.diseno_especial")
             ->join('tbl_insp_cali', 'tbl_insp_cali.cedula', '=', 'tbl_bitacora_contratos.CC_OPERARIO')
             ->where('tbl_bitacora_contratos.CC_OPERARIO', '=', $inspector)
             ->where('tbl_bitacora_contratos.FECHA', '=', $fecha)
@@ -532,6 +584,21 @@ class ProduccionController extends Controller
             $contrato->save();
             return response()->json(['message' => 'OK']);
         }
+    }
+
+    public function diseñoEspecial($id)
+    {
+        $contrato = tbl_bitacora_contrato::find($id);
+
+        if ($contrato) {
+            // Alternar el valor de diseño_especial
+            $contrato->diseno_especial = !$contrato->diseno_especial;
+            $contrato->save();
+
+            return response()->json(['success' => true, 'diseño_especial' => $contrato->diseno_especial]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Contrato no encontrado']);
     }
 
     public function insertarContrato(Request $request)
@@ -574,7 +641,8 @@ class ProduccionController extends Controller
 
     public function consultarBitacora($fecha, $ccOperario)
     {
-        
+
+
         // Consultar la tabla tbl_insp_cali para obtener el nombre del supervisor
         $inspector = tbl_insp_cali::select('users.name AS supervisor')
             ->join('users', 'users.id', '=', 'tbl_insp_cali.SUPERVISOR')
@@ -590,9 +658,8 @@ class ProduccionController extends Controller
         $nombreSupervisorSinEspacios = str_replace(' ', '', $nombreSupervisor);
 
         // Consultar la tabla tbl_bitacora_archivo para obtener los registros que coincidan con la fecha
-        $bitacoras = tbl_bitacora_archivo::select('id', 'nombre_archivo')->where('nombre_archivo', 'like', '%' . $fecha . '%')
-            ->get();
-   
+        $bitacoras = tbl_bitacora_archivo::select('id', 'nombre_archivo')->get();
+
         foreach ($bitacoras as $bitacora) {
             $nombreArchivo = $bitacora->nombre_archivo;
 
@@ -617,6 +684,62 @@ class ProduccionController extends Controller
             }
         }
 
-        return null;
+        return ['error' => 'Bitácora no encontrada.'];
+    }
+
+    public function zonas()
+    {
+        $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
+        $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
+
+        $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
+            ->where('fecha_fin', '>=', $fecha_resta_un_dia)
+            ->first();
+
+        $diasIntermedios = $this->DiasIntermedios($corte);
+
+        $zonas = tbl_produccion_zona::select('id', 'nombre')->get();
+        $conteoContratosPorZona = [];
+
+        foreach ($zonas as $zona) {
+            $municipios = tbl_localidades_municipio::select('nombre')->where('id_zona', '=', $zona->id)->get();
+            $conteosPorFecha = [];
+           
+            // Iterar por cada día en el intervalo de fechas
+            $period = new DatePeriod(
+                new DateTime($corte->fecha_inicio),
+                new DateInterval('P1D'),
+                (new DateTime($corte->fecha_fin))->modify('+1 day')
+            );
+
+            foreach ($period as $date) {
+                $fecha = $date->format('Y-m-d');
+                $contador = 0;
+              
+                
+                foreach ($municipios as $municipio) {
+                    $cantidades = tbl_bitacora_contrato::where('MUNICIPIO', '=', $municipio->nombre)
+                        ->where('FECHA', '=', $fecha)
+                        ->where('state', '=', 1)
+                        ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
+                        ->count();
+                    $contador += $cantidades;
+                }
+
+                $conteoContratosPorZona[$fecha] = $contador;
+            }
+
+            $conteoContratosPorZona[] = [
+                'zona' => $zona->nombre,
+              
+            ];
+        }
+        dd($conteoContratosPorZona);
+        $response = [
+            'diasIntermedios' => $diasIntermedios,
+            'conteoContratosPorZona' => $conteoContratosPorZona
+        ];
+        
+        return response()->json($response);
     }
 }

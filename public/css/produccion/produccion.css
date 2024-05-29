@@ -3,11 +3,36 @@
 }
 
 .shadow-container {
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-    margin: 20px auto;  
-    border-radius: 10px;
-    background-color: #f8f9fa;
+    background-color: #f9f9f9; /* Color de fondo claro */
+    border: 1px solid #ccc; /* Borde sutil */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra suave */
+    padding: 20px; /* Espacio dentro del contenedor */
+    margin-bottom: 20px; /* Espacio entre contenedores */
 }
+
+.card-body {
+    background-color: white;
+    padding: 15px;
+    margin-bottom: 10px; /* Espacio entre elementos del card */
+    border-radius: 5px; /* Bordes redondeados */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.btn {
+    margin-right: 10px; /* Espacio entre botones */
+}
+
+#zonas, #detalles {
+    width: 100%; /* Aprovecha todo el ancho disponible */
+    height: 300px; /* Altura fija para Handsontable */
+}
+
+h1 {
+    color: #333;
+    text-align: center;
+    margin-top: 0;
+}
+
 
 .highlight {
     background-color: rgb(193, 144, 21);
@@ -46,5 +71,9 @@ text-overflow: ellipsis; /* Opcional: añade puntos suspensivos al final del tex
 }
 
 #ventanaEmergente {
+    z-index: 1050 !important;
+}
+
+#modalDiseños {
     z-index: 1050 !important;
 }

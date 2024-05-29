@@ -68,4 +68,7 @@ Route::post('/produccion/detalles_diario/actualizar/{id}',[ProduccionController:
 Route::post('/produccion/detalles_diario/desasociar/{id}',[ProduccionController::class,'eliminarDetallesDiario'])->name('produccion.eliminarDetallesDiario')->middleware(CheckPermission::class.':ver_residente');
 Route::post('/produccion/detalles_diario/insertar',[ProduccionController::class,'insertarContrato'])->name('produccion.insertarContrato')->middleware(CheckPermission::class.':ver_residente');
 Route::get('/produccion/detalles_diario/bitacora/{fecha}/{ccOperario}',[ProduccionController::class,'consultarBitacora'])->name('produccion.bitacora')->middleware(CheckPermission::class.':ver_residente');
+Route::post('/produccion/detalles_diario/diseño_especial/{id}',[ProduccionController::class,'diseñoEspecial'])->name('produccion.diseñoEspecial')->middleware(CheckPermission::class.':ver_residente');
+//Rutas Zonas
+Route::get('/produccion/zonas',[ProduccionController::class,'zonas'])->name('produccion.zonas')->middleware(CheckPermission::class.':ver_residente');
 });

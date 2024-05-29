@@ -499,10 +499,25 @@ return [
                 ],
                 [
                     'text' => 'Detalles',
-                    'url' => '/produccion/detalles',
                     'icon' => 'far fa-circle',
                     'can' => 'ver_residente',
-                    'label_color' => 'success',
+                    'submenu' => [
+                        [
+                            'text' => 'Detalles Producción',
+                            'url' => '/produccion/detalles',
+                            'icon' => 'fas fa-circle',
+                            'can' => 'ver_residente',
+                            'label_color' => 'success',
+                        ],
+                        [
+                            'text' => 'Zonas',
+                            'url' => '/produccion/zonas',
+                            'icon' => 'fas fa-circle',
+                            'can' => 'ver_residente',
+                            'label_color' => 'success',
+                        ],
+                    
+                    ],
                 ],
             ]
         ],
