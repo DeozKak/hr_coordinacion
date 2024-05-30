@@ -13,7 +13,10 @@
 <input type="hidden" id="fecha_inicio" value="{{$corte->fecha_inicio}}">
 <input type="hidden" id="id_produccion" value="{{route('produccion.datosDetalles')}}">
 <input type="hidden" name="_token" id="token" value="{{csrf_token()}}">
+<div id="loader"></div>
+<div id="overlay"></div>
 <div class="shadow-container">
+
     <div class="card-body">
         <a class="btn btn-primary" href="javascript:history.go(-1)" style="margin-bottom: 10px;">Ir Atrás</a>
         <button type="button" class="btn btn-success" id="exportar" style="margin-bottom: 10px;">Exportar</button>

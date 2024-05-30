@@ -6,7 +6,7 @@ let diasFestivos;
 let sabadodobles = [];
 let InspectorSelected;
 let fechaSeleccionada;
- 
+let totalColspan = 0;
 /* Inicializacion tabla de producción */
 document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('exportar').addEventListener('click', exportarExcel);
@@ -128,7 +128,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             label: nombreMes,
             colspan: conteoRepeticiones[nombreMes]
         }));
-
+        
+        for (const col of resultados) {
+            totalColspan += col.colspan;
+        }
+        
         const headerAdicional = { label: '', colspan: 2 };
         const headerFinal = { label: '', colspan: 7 };
         const headerDatosAdicionales = { label: '', colspan: 4 };
@@ -193,11 +197,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         console.error('Error fetching data:', error);
     }
-
-
+    hot.alter('insert_row_above', hot.countRows());
+    for (let i = 0; i < totalColspan; i++) {
+    hot.updateSettings({
+        columnSummary: [
+            {
+                destinationRow: hot.countRows() - 1, // Última fila (ahora vacía)
+                destinationColumn: i+2, // Columna donde se mostrará la suma
+                sourceColumn: i+2, // Rango de columnas a sumar (desde la 2 hasta la última)
+                type: 'sum',
+              },
+        ],
+      });
+    }
 });
 //---------------------------------------------------------------------------------------------------//
-
 
 function exportarExcel() {
     hot.getPlugin('exportFile').downloadFile('csv', {

@@ -316,7 +316,7 @@ return [
             'url' => 'admin/blog',
             'can' => 'manage-blog',
         ],
-        ['header' => 'Resvisiones Periódicas','can' => 'ver_coordinacion_RP',],
+        ['header' => 'Resvisiones Periódicas', 'can' => 'ver_coordinacion_RP',],
         [
             'text' => 'Cargues',
             'icon' => 'fas fa-upload',
@@ -328,7 +328,7 @@ return [
                     'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
-               
+
             ],
         ],
 
@@ -425,9 +425,9 @@ return [
             ],
         ],
 
-        ['header' => 'Bitacoras','can' => ['ver_bitacoras','generar_bitacoras']],
+        ['header' => 'Bitacoras', 'can' => ['ver_bitacoras', 'generar_bitacoras']],
 
-         
+
         [
             'text' => 'Bitacoras',
             'icon' => 'fas fa-file-alt',
@@ -456,14 +456,14 @@ return [
                 ],
             ]
         ],
-       
-        ['header' => 'Gestión usuarios','can' => ['gestion_usuarios','gestion_inspectores'],],
 
-         
+        ['header' => 'Gestión usuarios', 'can' => ['gestion_usuarios', 'gestion_inspectores'],],
+
+
         [
             'text' => 'Configuración',
-            'can' => ['gestion_usuarios','gestion_inspectores'],
-            'icon' => 'fas fa-users',
+            'can' => ['gestion_usuarios', 'gestion_inspectores','ver_residente'],
+            'icon' => 'fas fa-wrench',
             'submenu' => [
                 [
                     'text' => 'Usuarios',
@@ -479,12 +479,20 @@ return [
                     'can' => 'gestion_inspectores',
                     'label_color' => 'success',
                 ],
+                [
+                    'text' => 'Cortes Producción',
+                    'url' => 'cortes_produccion',
+                    'icon' => 'far fa-circle',
+                    'can' => 'ver_residente',
+                    'label_color' => 'success',
+
+                ],
             ]
         ],
 
-        ['header' => 'Supervisión Producción','can' => ['ver_residente'],],
+        ['header' => 'Supervisión Producción', 'can' => ['ver_residente'],],
 
-         
+
         [
             'text' => 'Producción',
             'can' => ['ver_residente'],
@@ -498,30 +506,15 @@ return [
                     'label_color' => 'success',
                 ],
                 [
-                    'text' => 'Detalles',
-                    'icon' => 'far fa-circle',
+                    'text' => 'Detalles Producción',
+                    'url' => '/produccion/detalles',
+                    'icon' => 'fas fa-circle',
                     'can' => 'ver_residente',
-                    'submenu' => [
-                        [
-                            'text' => 'Detalles Producción',
-                            'url' => '/produccion/detalles',
-                            'icon' => 'fas fa-circle',
-                            'can' => 'ver_residente',
-                            'label_color' => 'success',
-                        ],
-                        [
-                            'text' => 'Zonas',
-                            'url' => '/produccion/zonas',
-                            'icon' => 'fas fa-circle',
-                            'can' => 'ver_residente',
-                            'label_color' => 'success',
-                        ],
-                    
-                    ],
+                    'label_color' => 'success',
                 ],
             ]
         ],
-       /*  [
+        /*  [
             'text' => 'change_password',
             'url' => 'admin/settings',
             'icon' => 'fas fa-fw fa-lock',
@@ -564,7 +557,7 @@ return [
                 ],
             ],
         ], */
-       /*  ['header' => 'labels'],
+        /*  ['header' => 'labels'],
         [
             'text' => 'important',
             'icon_color' => 'red',
@@ -645,7 +638,7 @@ return [
                     'asset' => true,
                     'location' => '//cdn.datatables.net/scroller/2.4.2/css/scroller.dataTables.css',
                 ]
-                
+
                 /* [
                     'type' => 'css',
                     'asset' => true,
@@ -691,7 +684,7 @@ return [
                     'asset' => true,
                     'location' => '//cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js',
                 ],
-               
+
             ],
         ],
         'Sweetalert2' => [

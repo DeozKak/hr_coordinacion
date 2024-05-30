@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', () => {
     let respuesta;
     let headers = [];
@@ -8,14 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
         readOnly: true,
         rowHeaders: true,
         filters: true,
+        height: '300px',
         licenseKey: 'non-commercial-and-evaluation',
-        columns: [
-            {data: 'zona', type: 'text' },
-            {},
-            {},
-            {},
-            {},
-        ],
     });
 
     $.ajax({
@@ -23,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
         type: 'GET',
         dataType: 'json',
         success: function (response) {
-            console.log(response);
             const nombresMes = response.diasIntermedios.map(item => item.nombreMes);
             // Obtener los nombres de mes únicos
             const nombresMesUnicos = [...new Set(nombresMes)];
@@ -47,7 +39,15 @@ document.addEventListener('DOMContentLoaded', () => {
             zonas.updateSettings({
                 nestedHeaders: [headers, headers[3]]
             });
-            zonas.loadData(response.zonas);
+
+            const combinedDataForHandsontable = response.residencial.concat(response.comercial);
+           
+            zonas.loadData(combinedDataForHandsontable);
+            zonas.alter('insert_row_above', 3);
+
+            $('#loader').hide();
+            $('#overlay').hide();
+          
         },
         error: function (xhr, status, error) {
             console.log(xhr.responseText);

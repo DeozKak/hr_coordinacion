@@ -10,7 +10,7 @@ use App\Http\Controllers\AsignadasController;
 use App\Http\Controllers\CoordinacionController;
 use App\Http\Controllers\BitacoraController;
 use App\Http\Controllers\InspectorController;
-
+use App\Http\Controllers\CorteProduccionController;
 Route::get('/', function () {
     return view('auth.login');
 });
@@ -71,4 +71,7 @@ Route::get('/produccion/detalles_diario/bitacora/{fecha}/{ccOperario}',[Producci
 Route::post('/produccion/detalles_diario/diseño_especial/{id}',[ProduccionController::class,'diseñoEspecial'])->name('produccion.diseñoEspecial')->middleware(CheckPermission::class.':ver_residente');
 //Rutas Zonas
 Route::get('/produccion/zonas',[ProduccionController::class,'zonas'])->name('produccion.zonas')->middleware(CheckPermission::class.':ver_residente');
+//Rutas Cortes Producción
+Route::get('/cortes_produccion',[CorteProduccionController::class,'index'])->name('cortes_produccion.index')->middleware(CheckPermission::class.':ver_residente');
+
 });
