@@ -24,6 +24,8 @@ $(document).ready(function () {
     });
     
     $('#devoluciones').DataTable({
+        scrollCollapse: true,
+        scrollX: true,
         "language": {
             "lengthMenu": "Mostrar _MENU_ registros por página",
             "zeroRecords": "Nada encontrado - lo siento",
@@ -41,6 +43,8 @@ $(document).ready(function () {
     });
 
     $('#gestionados').DataTable({
+        scrollCollapse: true,
+        scrollX: true,
         "language": {
             "lengthMenu": "Mostrar _MENU_ registros por página",
             "zeroRecords": "Nada encontrado - lo siento",

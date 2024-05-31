@@ -72,6 +72,12 @@ Route::post('/produccion/detalles_diario/diseño_especial/{id}',[ProduccionContr
 //Rutas Zonas
 Route::get('/produccion/zonas',[ProduccionController::class,'zonas'])->name('produccion.zonas')->middleware(CheckPermission::class.':ver_residente');
 //Rutas Cortes Producción
-Route::get('/cortes_produccion',[CorteProduccionController::class,'index'])->name('cortes_produccion.index')->middleware(CheckPermission::class.':ver_residente');
-
+Route::get('/cortes_produccion',[CorteProduccionController::class,'index'])->name('cortes_produccion.index')->middleware(CheckPermission::class.':ver_residente,ver_coordinacion_RP');
+Route::post('/cortes_produccion/store/Corte',[CorteProduccionController::class,'storeCorte'])->name('cortes_produccion.store')->middleware(CheckPermission::class.':ver_residente,ver_coordinacion_RP');
+Route::post('/cortes_produccion/store/Municipio',[CorteProduccionController::class,'storeMunicipio'])->name('cortes_produccion.storeMunicipio')->middleware(CheckPermission::class.':ver_residente,ver_coordinacion_RP');
+Route::post('/cortes_produccion/store/Sede',[CorteProduccionController::class,'storeSede'])->name('cortes_produccion.storeSede')->middleware(CheckPermission::class.':ver_residente,ver_coordinacion_RP');
+Route::get('/cortes_producction/{id}/editCorte',[CorteProduccionController::class,'editCorte'])->name('cortes_produccion.editCorte')->middleware(CheckPermission::class.':ver_residente');
+Route::put('/cortes_produccion/{id}/updateCorte',[CorteProduccionController::class,'updateCorte'])->name('cortes_produccion.updateCorte')->middleware(CheckPermission::class.':ver_residente');
+Route::get('/cortes_producction/{id}/editMunicipio',[CorteProduccionController::class,'editMunicipio'])->name('cortes_produccion.editMunicipio')->middleware(CheckPermission::class.':ver_residente,ver_coordinacion_RP');
+Route::put('/cortes_produccion/{id}/updateMunicipio',[CorteProduccionController::class,'updateMunicipio'])->name('cortes_produccion.updateMunicipio')->middleware(CheckPermission::class.':ver_residente,ver_coordinacion_RP');
 });

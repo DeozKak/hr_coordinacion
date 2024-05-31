@@ -264,7 +264,7 @@ $(document).ready(function () {
     });
     // Función para validar los datos ingresados en la tabla
     const inputrecintos = document.querySelectorAll('#NroRecintos');
-    
+
     // Permitir solo números
     inputrecintos.forEach(input => {
         input.addEventListener('input', function () {
@@ -319,7 +319,12 @@ $(document).ready(function () {
 
     // Permitir solo números
     inputNumero.addEventListener('input', function () {
-        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 18);
+        // Asegurar que siempre comience con "P"
+        if (!this.value.startsWith('P')) {
+            this.value = 'P' + this.value;
+        }
+        // Permitir solo números después de la "P" y limitar la longitud total
+        this.value = this.value.replace(/[^P0-9]/g, '').slice(0, 19); // 18 números + la "P"
     });
 
     // Quitar los botones de aumento/decremento
@@ -380,20 +385,20 @@ $(document).ready(function () {
         }
     });
 
-//--------------------------------------------------------------------------------
-const selectTipoTrabajo = document.getElementById('tipo_trabajo');
-const grupo1 = document.querySelector('.matriz-des1');
-const grupo2 = document.querySelector('.matriz-des2');
+    //--------------------------------------------------------------------------------
+    const selectTipoTrabajo = document.getElementById('tipo_trabajo');
+    const grupo1 = document.querySelector('.matriz-des1');
+    const grupo2 = document.querySelector('.matriz-des2');
 
-selectTipoTrabajo.addEventListener('change', function () {
-    if (selectTipoTrabajo.value === "FI-29 revisión periódica línea matriz"){
-        grupo1.style.display = 'none';
-        grupo2.style.display = 'none';
-    }else{
-        grupo1.style.display = '';
-        grupo2.style.display = '';
-    }
-});
+    selectTipoTrabajo.addEventListener('change', function () {
+        if (selectTipoTrabajo.value === "FI-29 revisión periódica línea matriz") {
+            grupo1.style.display = 'none';
+            grupo2.style.display = 'none';
+        } else {
+            grupo1.style.display = '';
+            grupo2.style.display = '';
+        }
+    });
     const btnAgregar = document.getElementById('agregar');
 
     btnAgregar.addEventListener('click', function () {
@@ -420,10 +425,10 @@ selectTipoTrabajo.addEventListener('change', function () {
                     inputRecintos.style.border = ''; // Restablecer estilo de borde por defecto
                 }
             }
-            if (campo.value.trim() === '' || campo.value === ':') {
+            if (campo.value.trim() === '' || campo.value === ':'|| campo.value === 'P') {
                 const selectTipoTrabajo = document.getElementById('tipo_trabajo');
-                if(selectTipoTrabajo.value === "FI-29 revisión periódica línea matriz"){
-                    if(campo.id === 'orden_trabajo' || campo.id === 'categoria' || campo.id === 'NroRecintosP' || campo.id === 'recintos'){
+                if (selectTipoTrabajo.value === "FI-29 revisión periódica línea matriz") {
+                    if (campo.id === 'orden_trabajo' || campo.id === 'categoria' || campo.id === 'NroRecintosP' || campo.id === 'recintos') {
                         return;
                     }
                 }
@@ -700,7 +705,7 @@ function agregar_datos() {
 
         cambiarColor(ultimoSelect[0]);
         $('table.tbl_datos').on('change', 'input#checkRecintos', function () {
-  
+
             const check = $(this); // Obtener el checkbox actual
 
             if (check.prop('checked')) {
@@ -718,16 +723,16 @@ function agregar_datos() {
             cambiarColor(this);
         });
 
-         // Función para validar los datos ingresados en la tabla
-    const inputrecintos = document.querySelectorAll('#NroRecintos');
-    
-    // Permitir solo números
-    inputrecintos.forEach(input => {
-        input.addEventListener('input', function () {
-            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3);
+        // Función para validar los datos ingresados en la tabla
+        const inputrecintos = document.querySelectorAll('#NroRecintos');
+
+        // Permitir solo números
+        inputrecintos.forEach(input => {
+            input.addEventListener('input', function () {
+                this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3);
+            });
         });
-    });
-        
+
         return nombre_insp;
 
     } else {

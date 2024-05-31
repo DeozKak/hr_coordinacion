@@ -309,18 +309,18 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                     let buttonHtml = '';
                     let buttondiseno = '';
                     if (estado === 1) {
-                        buttonHtml = '<button class="btn btn-danger" onclick="desasociar(' + row + ',\'' + fecha + '\',' + cc_inspector + ')">Descontar</button>';
+                        buttonHtml = '<button class="btn btn-danger btn-sm" onclick="desasociar(' + row + ',\'' + fecha + '\',' + cc_inspector + ')">Descontar</button>';
                     } else {
-                        buttonHtml = '<button class="btn btn-success" onclick="asociar(' + row + ',\'' + fecha + '\',' + cc_inspector + ')">Contar</button>';
+                        buttonHtml = '<button class="btn btn-success btn-sm" onclick="asociar(' + row + ',\'' + fecha + '\',' + cc_inspector + ')">Contar</button>';
                     }
                     if (diseno_especial === 1) {
-                        buttondiseno = '<button class="btn btn-warning" onclick="diseñoEspecial(' + row + ',\'' + fecha + '\',' + cc_inspector + ',' + diseno_especial + ')">Quitar Diseño especial</button>';
+                        buttondiseno = '<button class="btn btn-warning btn-sm" onclick="diseñoEspecial(' + row + ',\'' + fecha + '\',' + cc_inspector + ',' + diseno_especial + ')">Quitar Diseño especial</button>';
                     } else {
-                        buttondiseno = '<button class="btn btn-warning" onclick="diseñoEspecial(' + row + ',\'' + fecha + '\',' + cc_inspector + ',' + diseno_especial + ')">Diseño especial</button>';
+                        buttondiseno = '<button class="btn btn-warning btn-sm" onclick="diseñoEspecial(' + row + ',\'' + fecha + '\',' + cc_inspector + ',' + diseno_especial + ')">Diseño especial</button>';
                     }
                     td.innerHTML = `
                         <div style="display: flex; gap: 5px; justify-content: center;">
-                        <button id="btnEditar" class="btn btn-info" onclick="editar(${row})">Editar</button>
+                        <button id="btnEditar" class="btn btn-info btn-sm" onclick="editar(${row})">Editar</button>
                         ${buttondiseno}
                         ${buttonHtml}
                         </div>

@@ -483,7 +483,7 @@ return [
                     'text' => 'Cortes Producción',
                     'url' => 'cortes_produccion',
                     'icon' => 'far fa-circle',
-                    'can' => 'ver_residente',
+                    'can' => ['ver_residente', 'ver_coordinacion_RP'],
                     'label_color' => 'success',
 
                 ],

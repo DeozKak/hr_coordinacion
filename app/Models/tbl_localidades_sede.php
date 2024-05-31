@@ -7,6 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class tbl_localidades_sede extends Model
 {
-    protected $timesatmps = false;
+    public $timestamps = false;
     use HasFactory;
 }
