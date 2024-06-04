@@ -13,12 +13,10 @@ use DateInterval;
 use DatePeriod;
 use DateTime;
 use Illuminate\Support\Facades\DB;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Rmunate\Calendario\CalendarioColombia;
 
-use function Laravel\Prompts\warning;
 
 
 class ProduccionController extends Controller
@@ -144,28 +142,58 @@ class ProduccionController extends Controller
         return view('produccion.index', compact('produccionInspector', 'contratosCategoria', 'conteoContratosPorZona', 'corte', 'warning'));
     }
 
+    public function detallesCorte($id)
+    {
+       
+        session(['id_corte' => $id]);
+
+        return $this->detalles();
+    }
+
+    
+    public function crearSession(){
+        session()->forget('id_corte');
+        return redirect()->route('produccion.index');
+    }
+
     public function detalles()
     {
         $municipios = tbl_localidades_municipio::all();
+        if(session('id_corte')){
+            $corte = tbl_produccion_corte::find(session('id_corte'));
+            $id_corte = session('id_corte');
+            if ($corte) { // Verificación adicional
+                session(['fecha_inicio' => $corte->fecha_inicio]);
+                return view('produccion.detalles', compact('municipios', 'corte', 'id_corte'));
+            } else {
+                // Manejar el caso en que $corte es nulo (mostrar un mensaje de error, redirigir, etc.)
+                return redirect()->back()->with('error', 'No se encontró el corte seleccionado.'); 
+            }
+        }
         $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
         $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
         $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
             ->where('fecha_fin', '>=', $fecha_resta_un_dia)
             ->first();
-
         return view('produccion.detalles', compact('municipios', 'corte'));
+        
     }
 
     public function datosDetalles()
     {
+        if(session('id_corte')){
+            $corte = tbl_produccion_corte::find(session('id_corte'));
+            session()->forget('id_corte');
+        }else{
+
         $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
         $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
-
 
         $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
             ->where('fecha_fin', '>=', $fecha_resta_un_dia)
             ->first();
 
+        }
         $diasIntermedios = $this->DiasIntermedios($corte);
         $cantidad_dias = count($diasIntermedios);
 
@@ -542,7 +570,7 @@ class ProduccionController extends Controller
 
     public function detallesDiario($fecha, $inspector)
     {
-
+      
         $contratosDia = tbl_bitacora_contrato::selectRaw("tbl_bitacora_contratos.id, CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP, 
         tbl_bitacora_contratos.`4_RECINTOS`,tbl_bitacora_contratos.state,tbl_bitacora_contratos.diseno_especial")
             ->join('tbl_insp_cali', 'tbl_insp_cali.cedula', '=', 'tbl_bitacora_contratos.CC_OPERARIO')

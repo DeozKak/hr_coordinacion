@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+/* document.addEventListener('DOMContentLoaded', () => {
     let respuesta;
     let headers = [];
     let zonas = document.querySelector('#zonas');
@@ -58,4 +58,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-});
+}); */

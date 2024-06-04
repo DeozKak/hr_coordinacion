@@ -36,7 +36,7 @@
                             <td>{{ $corte->meta }}</td>
                             <td>
                                 <a class="btn btn-success btn-sm" data-corte-id="{{ $corte->id }}">Editar</a>
-                                <a class="btn btn-primary btn-sm" id="btndetallesCorte">Detalles</a>
+                                <a class="btn btn-primary btn-sm" data-corte-id="{{ $corte->id }}" id="btndetallesCorte">Detalles</a>
                             </td>
                         </tr>
                         @endforeach
@@ -113,8 +113,6 @@
                 <h3 class="card-title">Zonas</h3>
             </div>
             <div class="card-body">
-                <a class="btn btn-primary mb-2" id="btnCrearSede">Crear Zona</a>
-                
                 <table class="table table-striped" id="zonas">
                     <thead>
                         <tr>

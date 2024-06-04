@@ -9,6 +9,8 @@ let fechaSeleccionada;
 let totalColspan = 0;
 /* Inicializacion tabla de producción */
 document.addEventListener('DOMContentLoaded', async () => {
+    $('#loader').hide();
+    $('#overlay').hide();
     document.getElementById('exportar').addEventListener('click', exportarExcel);
 
 
@@ -241,6 +243,12 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
     let datosBaseDatos;
     let nomColumna;
     const fecha_inicioCorte = document.querySelector('#fecha_inicio').value;
+    /* variable de rutas sale de la vista */
+     const response = await fetch(urlObtenerDetalles+`?fecha=${fecha}&cc_inspector=${cc_inspector}`);
+    const urlDetalles = await response.text();
+
+  
+
     const contratos_dia = document.querySelector('#contratos_dia');
     const cerrar = document.querySelector('#cerrar_modal');
     const titulo = document.querySelector('#titulo');
@@ -304,6 +312,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             {}, // las columnas existentes
             {
                 renderer: function (instance, td, row, col, prop, value, cellProperties) {
+                    const hot_dia = hot.getInstance();
                     const estado = hot_dia.getDataAtRow(row)[16]; // Suponiendo que el estado está en la columna 15
                     const diseno_especial = hot_dia.getDataAtRow(row)[17]; // Suponiendo que el estado está en la columna 15
                     let buttonHtml = '';
@@ -370,14 +379,34 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                         oldValue: oldValue,
                         newValue: newValue
                     };
+                    const urlCompleta = urlActualizarDetallesDiario.replace(':id', id[0]);
                     $.ajax({
-                        url: `detalles_diario/actualizar/${id[0]}`, // Ruta al archivo PHP que realiza la consulta a la base de datos
+                        url: urlCompleta, // Ruta al archivo PHP que realiza la consulta a la base de datos
                         type: 'POST',
                         data: {
                             _token: token,
                             payload: payload
                         },
                         success: function (response) {
+                            const idCorteDetallesInput = document.querySelector('#id_corte_detalles');
+
+                            if (idCorteDetallesInput) { // Verificar si el elemento existe
+                                const id_corte_detalles = idCorteDetallesInput.value;
+                            
+                                $.ajax({
+                                    url: '/hr_coordinacion/public/produccion/detalles_corte/crear-sesion-corte',
+                                    type: 'POST',
+                                    data:{
+                                        _token: token,
+                                        id_corte: id_corte_detalles
+                                    },
+                                    success: function (response){
+                                        console.log(response);
+                                    },error: function(xhr, status, error){
+                                        console.error(xhr.responseText);
+                                    } // Ruta al archivo PHP que realiza la consulta a la base de datos
+                                });
+                            }
                             cargarDatos();
                         },
                         error: function (xhr, status, error) {
@@ -393,10 +422,10 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             })
         }
     });
-
+   
     /* consulta llenar tabla */
     $.ajax({
-        url: `detalles_diario/${fecha}/${cc_inspector}`, // Ruta al archivo PHP que realiza la consulta a la base de datos
+        url: urlDetalles, // Ruta al archivo PHP que realiza la consulta a la base de datos
         type: 'GET',
         success: function (response) {
             datosBaseDatos = response;
@@ -421,10 +450,13 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
     });
 
     const fechaconvert = formatearFecha(fecha);
-
+    /* Variable sale de la vista Blade */
+    const responseBitacoras = await fetch(urlObtenerBitacoras+`?fecha=${fechaconvert}&cc_inspector=${cc_inspector}`);
+    const urlBitacoras = await responseBitacoras.text();
+    
     /* consultar si ya hay bitacora */
     $.ajax({
-        url: `detalles_diario/bitacora/${fechaconvert}/${cc_inspector}`, // Ruta al archivo PHP que realiza la consulta a la base de datos
+        url: urlBitacoras, // Ruta al archivo PHP que realiza la consulta a la base de datos
         type: 'GET',
         success: function (response) {
             if (response.error) {
@@ -887,6 +919,7 @@ async function cargarDatos() {
                 url: url, // Ruta al archivo PHP que realiza la consulta a la base de datos
                 type: 'GET',
                 success: function (response) {
+                    console.log(response);
                     resolve(response);
                 },
                 error: function (xhr, status, error) {
