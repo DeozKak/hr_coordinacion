@@ -35,8 +35,11 @@
                             <td>{{ $corte->fecha_fin }}</td>
                             <td>{{ $corte->meta }}</td>
                             <td>
-                                <a class="btn btn-success btn-sm" data-corte-id="{{ $corte->id }}">Editar</a>
-                                <a class="btn btn-primary btn-sm" data-corte-id="{{ $corte->id }}" id="btndetallesCorte">Detalles</a>
+                                <div class="d-flex justify-content-center gap-2">
+                                    <a class="btn btn-success btn-sm" data-corte-id="{{ $corte->id }}">Editar</a>
+                                    <a class="btn btn-primary btn-sm" data-corte-id="{{ $corte->id }}" id="btndetallesCorte">Detalles</a>
+                                    <a class="btn btn-secondary btn-sm" data-corte-id="{{ $corte->id }}">Graficos</a>
+                                </div>
                             </td>
                         </tr>
                         @endforeach
@@ -88,7 +91,6 @@
             </div>
             <div class="card-body">
                 <a class="btn btn-primary mb-2" id="btnCrearSede">Crear Sede</a>
-                
                 <table class="table table-striped" id="sedes">
                     <thead>
                         <tr>

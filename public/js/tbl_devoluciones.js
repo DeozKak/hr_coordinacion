@@ -90,15 +90,19 @@ $(document).ready(function () {
         $('#overlay').show();
 
         const url = document.getElementById('exportar_devoluciones').value;
+        console.log(url);
+        console.log(codigoHTMLdev);
+        console.log(codigoHTMLges);
+
         const csrfToken = document.getElementById('token').value;
         $.ajax({
             type: 'POST',
             url: url,
             data: {
-                codigoHTMLdev: codigoHTMLdev,
-                codigoHTMLges: codigoHTMLges,
+                codigoHTMLdev:codigoHTMLdev, // Comprimido
+                codigoHTMLges: codigoHTMLges, // Comprimido
                 _token: csrfToken
-            },
+              },
             success: function (response) {
                 console.log(response);
                 const nombreArchivo = response.nombreArchivo;
@@ -112,7 +116,7 @@ $(document).ready(function () {
                 $('#loader').hide();
                 $('#overlay').hide();
                 Swal.fire({
-                    icon: 'error',
+                    type: 'error',
                     title: 'Error',
                     text: "error al exportar archivo, intente de nuevo o contacte al administrador del sistema",
                 });}
@@ -123,7 +127,7 @@ $(document).ready(function () {
                 $('#loader').hide();
                 $('#overlay').hide();
                 Swal.fire({
-                    icon: 'error',
+                    type: 'error',
                     title: 'Error',
                     text: "error al exportar archivo, intente de nuevo o contacte al administrador del sistema",
                 });
@@ -137,13 +141,14 @@ $(document).ready(function () {
 
         $('#loader').show();
         $('#overlay').show();
-
-
+        const url = document.getElementById('exportar_devoluciones').value;
+        const csrfToken = document.getElementById('token').value;
         $.ajax({
             type: 'POST',
-            url: 'routes.php?accion=exportar_tabla_gestionados',
+            url: url,
             data: {
                 codigoHTML: codigoHTML,
+             
             },
             success: function (response) {
                
@@ -157,7 +162,7 @@ $(document).ready(function () {
                 $('#loader').hide();
                 $('#overlay').hide();
                 Swal.fire({
-                    icon: 'error',
+                    type: 'error',
                     title: 'Error',
                     text: "error al exportar archivo, intente de nuevo o contacte al administrador del sistema",
                 });}
@@ -168,7 +173,7 @@ $(document).ready(function () {
                 $('#loader').hide();
                 $('#overlay').hide();
                 Swal.fire({
-                    icon: 'error',
+                    type: 'error',
                     title: 'Error',
                     text: "error al exportar archivo, intente de nuevo o contacte al administrador del sistema",
                 });

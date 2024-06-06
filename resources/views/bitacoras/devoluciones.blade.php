@@ -151,12 +151,11 @@
 
     </div>
 
-    @section('js')
-    <script>
 
-    </script>
-    @endsection
 </body>
-
+@section('js')
+<script src="https://cdn.jsdelivr.net/npm/pako@2.0.4/dist/pako.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pako@2.0.4/dist/pako_deflate.min.js"></script>
+@stop
 
 @endsection

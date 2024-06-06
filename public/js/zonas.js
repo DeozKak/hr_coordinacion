@@ -1,5 +1,6 @@
-/* document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     let respuesta;
+    let idCorteDetalles;
     let headers = [];
     let zonas = document.querySelector('#zonas');
 
@@ -10,10 +11,18 @@
         height: '300px',
         licenseKey: 'non-commercial-and-evaluation',
     });
+    console.log("zonas");
+
+    const idCorteDetallesInput = document.querySelector('#id_corte_detalles');
+
+    if (idCorteDetallesInput) { // Verificar si el elemento existe
+        idCorteDetalles = idCorteDetallesInput.value;
+    }
 
     $.ajax({
-        url: 'zonas',
+        url: urlZonas,
         type: 'GET',
+        data: { idCorteDetalles },
         dataType: 'json',
         success: function (response) {
             const nombresMes = response.diasIntermedios.map(item => item.nombreMes);
@@ -58,4 +67,4 @@
 
 
 
-}); */
+});

@@ -110,6 +110,12 @@ $('#cortes').on('click', '.btn-primary[data-corte-id]', function() {
  
 });
 
+$('#cortes').on('click', '.btn-secondary[data-corte-id]', function() {
+    const corteId = $(this).data('corte-id');
+    Graficos(corteId);  
+ 
+});
+
 $('#municipios').on('click', '.btn-success[data-municipio-id]', function() {
     const municipioId = $(this).data('municipio-id');
     editarMunicipio(municipioId);
@@ -389,4 +395,8 @@ function EnviarServidorUpdate(nombreTabla, id) {
 
 function detallesCorte(id) {
    window.location.href = `produccion/detalles_corte/${id}`;
+}
+
+function Graficos(id) {
+    window.location.href = `produccion?id=${id}`;
 }

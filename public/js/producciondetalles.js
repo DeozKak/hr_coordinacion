@@ -9,8 +9,7 @@ let fechaSeleccionada;
 let totalColspan = 0;
 /* Inicializacion tabla de producción */
 document.addEventListener('DOMContentLoaded', async () => {
-    $('#loader').hide();
-    $('#overlay').hide();
+
     document.getElementById('exportar').addEventListener('click', exportarExcel);
 
 
@@ -67,7 +66,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     resolve(response);
                 },
                 error: function (xhr, status, error) {
-                    console.error(xhr.responseText);
+                 console.log(xhr.responseText);
+
                     Swal.fire({
                         type: 'error',
                         title: 'Error',
@@ -97,7 +97,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             let nombreDia = fechaObj.toLocaleDateString('es-ES', options);
             return nombreDia.charAt(0).toUpperCase() + nombreDia.slice(1);
         });
-
+        const idCorteDetallesInput = document.getElementById('id_corte_detalles');
+        idCorteDetallesInput.value = response.corte;
+      
         // datos para resaltar los sabados dobles
         response.sabadodobles.forEach(entry => {
             // Iterar a través de cada registro en el array de datos
@@ -113,7 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             });
         });
-
+          
         rows = response.produccionInspector;
         // Extraer la propiedad nombreMes de cada objeto
         const nombresMes = response.diasIntermedios.map(item => item.nombreMes);
@@ -130,11 +132,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             label: nombreMes,
             colspan: conteoRepeticiones[nombreMes]
         }));
-        
+
         for (const col of resultados) {
             totalColspan += col.colspan;
         }
-        
+
         const headerAdicional = { label: '', colspan: 2 };
         const headerFinal = { label: '', colspan: 7 };
         const headerDatosAdicionales = { label: '', colspan: 4 };
@@ -201,16 +203,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     hot.alter('insert_row_above', hot.countRows());
     for (let i = 0; i < totalColspan; i++) {
-    hot.updateSettings({
-        columnSummary: [
-            {
-                destinationRow: hot.countRows() - 1, // Última fila (ahora vacía)
-                destinationColumn: i+2, // Columna donde se mostrará la suma
-                sourceColumn: i+2, // Rango de columnas a sumar (desde la 2 hasta la última)
-                type: 'sum',
-              },
-        ],
-      });
+        hot.updateSettings({
+            columnSummary: [
+                {
+                    destinationRow: hot.countRows() - 1, // Última fila (ahora vacía)
+                    destinationColumn: i + 2, // Columna donde se mostrará la suma
+                    sourceColumn: i + 2, // Rango de columnas a sumar (desde la 2 hasta la última)
+                    type: 'sum',
+                },
+            ],
+        });
     }
 });
 //---------------------------------------------------------------------------------------------------//
@@ -244,10 +246,10 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
     let nomColumna;
     const fecha_inicioCorte = document.querySelector('#fecha_inicio').value;
     /* variable de rutas sale de la vista */
-     const response = await fetch(urlObtenerDetalles+`?fecha=${fecha}&cc_inspector=${cc_inspector}`);
+    const response = await fetch(urlObtenerDetalles + `?fecha=${fecha}&cc_inspector=${cc_inspector}`);
     const urlDetalles = await response.text();
 
-  
+
 
     const contratos_dia = document.querySelector('#contratos_dia');
     const cerrar = document.querySelector('#cerrar_modal');
@@ -270,7 +272,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         Handsontable.validators.registerValidator('custom.text', customTextValidator);
     })(Handsontable);
 
- 
+
     hot_dia = new Handsontable(contratos_dia, {
         readOnly: true,
         manualColumnMove: false,
@@ -285,10 +287,10 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                 type: 'date',
                 dateFormat: 'YYYY-MM-DD',
                 datePickerConfig: {
-                minDate: new Date(fecha_inicioCorte), // Esto establece la fecha mínima como el día de inicio del corte 
-                maxDate: new Date(new Date().getTime() - (24 * 60 * 60 * 1000)) // Esto establece la fecha máxima como el día actual
+                    minDate: new Date(fecha_inicioCorte), // Esto establece la fecha mínima como el día de inicio del corte 
+                    maxDate: new Date(new Date().getTime() - (24 * 60 * 60 * 1000)) // Esto establece la fecha máxima como el día actual
                 }
-              },// Usa el editor personalizado, // FECHA
+            },// Usa el editor personalizado, // FECHA
             { type: 'numeric', validator: 'custom.numeric' }, // N° ACTA
             {
                 editor: 'select', // Tipo combobox
@@ -312,9 +314,11 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             {}, // las columnas existentes
             {
                 renderer: function (instance, td, row, col, prop, value, cellProperties) {
-                    const hot_dia = hot.getInstance();
-                    const estado = hot_dia.getDataAtRow(row)[16]; // Suponiendo que el estado está en la columna 15
-                    const diseno_especial = hot_dia.getDataAtRow(row)[17]; // Suponiendo que el estado está en la columna 15
+                    
+                    const estado = instance.getDataAtRow(row)[16]; // Suponiendo que el estado está en la columna 15
+                    const diseno_especial = instance.getDataAtRow(row)[17]; // Suponiendo que el estado está en la columna 15
+                    
+
                     let buttonHtml = '';
                     let buttondiseno = '';
                     if (estado === 1) {
@@ -391,23 +395,11 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                             const idCorteDetallesInput = document.querySelector('#id_corte_detalles');
 
                             if (idCorteDetallesInput) { // Verificar si el elemento existe
-                                const id_corte_detalles = idCorteDetallesInput.value;
-                            
-                                $.ajax({
-                                    url: '/hr_coordinacion/public/produccion/detalles_corte/crear-sesion-corte',
-                                    type: 'POST',
-                                    data:{
-                                        _token: token,
-                                        id_corte: id_corte_detalles
-                                    },
-                                    success: function (response){
-                                        console.log(response);
-                                    },error: function(xhr, status, error){
-                                        console.error(xhr.responseText);
-                                    } // Ruta al archivo PHP que realiza la consulta a la base de datos
-                                });
+                                cargarDatos(idCorteDetallesInput.value);
+                            } else {
+                                cargarDatos();
                             }
-                            cargarDatos();
+
                         },
                         error: function (xhr, status, error) {
                             console.log(xhr.responseText);
@@ -422,7 +414,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             })
         }
     });
-   
+
     /* consulta llenar tabla */
     $.ajax({
         url: urlDetalles, // Ruta al archivo PHP que realiza la consulta a la base de datos
@@ -440,7 +432,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
 
         },
         error: function (xhr, status, error) {
-            console.error(xhr.responseText);
+   
             Swal.fire({
                 type: 'error',
                 title: 'Error',
@@ -451,9 +443,9 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
 
     const fechaconvert = formatearFecha(fecha);
     /* Variable sale de la vista Blade */
-    const responseBitacoras = await fetch(urlObtenerBitacoras+`?fecha=${fechaconvert}&cc_inspector=${cc_inspector}`);
+    const responseBitacoras = await fetch(urlObtenerBitacoras + `?fecha=${fechaconvert}&cc_inspector=${cc_inspector}`);
     const urlBitacoras = await responseBitacoras.text();
-    
+
     /* consultar si ya hay bitacora */
     $.ajax({
         url: urlBitacoras, // Ruta al archivo PHP que realiza la consulta a la base de datos
@@ -466,7 +458,6 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             }
         },
         error: function (xhr, status, error) {
-            console.error(xhr.responseText);
             Swal.fire({
                 type: 'error',
                 title: 'Error',
@@ -746,6 +737,7 @@ function editar(row) {
 function desasociar(row, fecha, cc_inspector) {
 
     const id = hot_dia.getDataAtRow(row);
+    const url = urlDesasociar.replace(':id', id[0]);
     Swal.fire({
         title: '¿Estás seguro?',
         text: "¡Se descontará de producción!",
@@ -758,7 +750,7 @@ function desasociar(row, fecha, cc_inspector) {
     }).then((result) => {
         if (result.value) {
             $.ajax({
-                url: `detalles_diario/desasociar/${id[0]}`, // Ruta al archivo PHP que realiza la consulta a la base de datos
+                url: url, // Ruta al archivo PHP que realiza la consulta a la base de datos
                 type: 'POST',
                 data: {
                     _token: document.querySelector('#token').value
@@ -770,7 +762,13 @@ function desasociar(row, fecha, cc_inspector) {
                         'El registro ha sido descontado.',
                         'success'
                     );
-                    cargarDatos();
+                    const idCorteDetallesInput = document.querySelector('#id_corte_detalles');
+
+                    if (idCorteDetallesInput) { // Verificar si el elemento existe
+                        cargarDatos(idCorteDetallesInput.value);
+                    } else {
+                        cargarDatos();
+                    }
                     actualizarDatosDia(fecha, cc_inspector);
                 },
                 error: function (xhr, status, error) {
@@ -787,6 +785,7 @@ function desasociar(row, fecha, cc_inspector) {
 
 function asociar(row, fecha, cc_inspector) {
     const id = hot_dia.getDataAtRow(row);
+    const url = urlDesasociar.replace(':id', id[0]);
     Swal.fire({
         title: '¿Estás seguro?',
         text: "¡Se sumará a producción!",
@@ -799,7 +798,7 @@ function asociar(row, fecha, cc_inspector) {
     }).then((result) => {
         if (result.value) {
             $.ajax({
-                url: `detalles_diario/desasociar/${id[0]}`, // Ruta al archivo PHP que realiza la consulta a la base de datos
+                url: url, // Ruta al archivo PHP que realiza la consulta a la base de datos
                 type: 'POST',
                 data: {
                     _token: document.querySelector('#token').value
@@ -811,7 +810,13 @@ function asociar(row, fecha, cc_inspector) {
                         'El registro ha sido sumado.',
                         'success'
                     );
-                    cargarDatos();
+                    const idCorteDetallesInput = document.querySelector('#id_corte_detalles');
+
+                    if (idCorteDetallesInput) { // Verificar si el elemento existe
+                        cargarDatos(idCorteDetallesInput.value);
+                    } else {
+                        cargarDatos();
+                    }
                     actualizarDatosDia(fecha, cc_inspector);
                 },
                 error: function (xhr, status, error) {
@@ -832,6 +837,7 @@ function diseñoEspecial(row, fecha, cc_inspector, currentValue) {
     let actionText = currentValue ? 'desactivar' : 'agregar';
     let actionTitle = currentValue ? 'Desactivar diseño especial' : 'Diseño especial';
     let actionMessage = currentValue ? '¿Desea desactivar el diseño especial?' : '¿Desea agregar el contrato como un diseño especial?';
+    const url = urlDiseñoEspecial.replace(':id', id);
     Swal.fire({
         title: actionTitle,
         text: actionMessage,
@@ -844,7 +850,7 @@ function diseñoEspecial(row, fecha, cc_inspector, currentValue) {
     }).then((result) => {
         if (result.value) {
             $.ajax({
-                url: `detalles_diario/diseño_especial/${id}`, // Ruta al archivo PHP que realiza la consulta a la base de datos
+                url: url, // Ruta al archivo PHP que realiza la consulta a la base de datos
                 type: 'POST',
                 data: {
                     _token: document.querySelector('#token').value
@@ -858,7 +864,13 @@ function diseñoEspecial(row, fecha, cc_inspector, currentValue) {
                             successMessage,
                             'success'
                         );
-                        cargarDatos();
+                        const idCorteDetallesInput = document.querySelector('#id_corte_detalles');
+
+                        if (idCorteDetallesInput) { // Verificar si el elemento existe
+                            cargarDatos(idCorteDetallesInput.value);
+                        } else {
+                            cargarDatos();
+                        }
                         actualizarDatosDia(fecha, cc_inspector);
                     } else {
                         Swal.fire({
@@ -885,8 +897,9 @@ function diseñoEspecial(row, fecha, cc_inspector, currentValue) {
 //---------------------------------------------------------------------------------------------------//
 /* funciones para refrescar los datos de las tablas */
 function actualizarDatosDia(fecha, cc_inspector) {
+    const url = urlActualizarDetallesDia.replace(':fecha', fecha).replace(':inspector', cc_inspector);
     $.ajax({
-        url: `detalles_diario/${fecha}/${cc_inspector}`, // Ruta al archivo PHP que realiza la consulta a la base de datos
+        url: url, // Ruta al archivo PHP que realiza la consulta a la base de datos
         type: 'GET',
         success: function (response) {
             datosBaseDatos = response;
@@ -902,7 +915,7 @@ function actualizarDatosDia(fecha, cc_inspector) {
 
         },
         error: function (xhr, status, error) {
-            console.error(xhr.responseText);
+         
             Swal.fire({
                 type: 'error',
                 title: 'Error',
@@ -911,19 +924,21 @@ function actualizarDatosDia(fecha, cc_inspector) {
         }
     });
 }
-async function cargarDatos() {
+async function cargarDatos(idCorteDetalles = null) {
+
     const fetchData = () => {
         return new Promise((resolve, reject) => {
             const url = document.querySelector('#id_produccion').value;
             $.ajax({
                 url: url, // Ruta al archivo PHP que realiza la consulta a la base de datos
+                data: { idCorteDetalles },
                 type: 'GET',
                 success: function (response) {
                     console.log(response);
                     resolve(response);
                 },
                 error: function (xhr, status, error) {
-                    console.error(xhr.responseText);
+                    
                     Swal.fire({
                         type: 'error',
                         title: 'Error',
@@ -1114,7 +1129,13 @@ function agregar_datos() {
                     // Deshabilitar el select
                 });
                 actualizarDatosDia(fechaSeleccionada, cedulaInsp);
-                cargarDatos();
+                const idCorteDetallesInput = document.querySelector('#id_corte_detalles');
+
+                if (idCorteDetallesInput) { // Verificar si el elemento existe
+                    cargarDatos(idCorteDetallesInput.value);
+                } else {
+                    cargarDatos();
+                }
             }
         },
         error: function (xhr, status, error) {

@@ -42,7 +42,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/generar_bitacora', [BitacoraController::class, 'generar_bitacora'])->name('bitacoras.generar')->middleware(CheckPermission::class . ':generar_bitacoras');
     Route::post('/guardar_tabla/{super}', [BitacoraController::class, 'guardar_tabla'])->name('bitacoras.guardar_tabla')->middleware(CheckPermission::class . ':generar_bitacoras');
     Route::post('/borrar_archivos', [BitacoraController::class, 'borrar_archivos'])->name('bitacoras.borrar_archivos')->middleware(CheckPermission::class . ':generar_bitacoras');
-    Route::post('/storage/app/uploads/{file}', function ($nombreArchivo) {
+    Route::get('/storage/app/uploads/{file}', function ($nombreArchivo) {
         return response()->download(storage_path('app/uploads/') . $nombreArchivo);
     })->name('bitacoras.download')->middleware(CheckPermission::class . ':ver_bitacoras');
     Route::get('/bitacora/devoluciones', [BitacoraController::class, 'devoluciones'])->name('bitacora.devoluciones')->middleware(CheckPermission::class . ':ver_bitacoras');
@@ -84,7 +84,7 @@ Route::middleware('auth')->group(function () {
             'ccOperario' => $request->cc_inspector
         ]);
     })->name('obtener-url-bitacoras');
-    Route::post('/produccion/detalles_corte/crear-session-corte', [ProduccionController::class, 'crearSession'])->name('produccion.crearSession')->middleware(CheckPermission::class . ':ver_residente');
+    Route::post('/crear-session-corte', [ProduccionController::class, 'crearSession'])->name('produccion.crearSession')->middleware(CheckPermission::class . ':ver_residente');
     //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     //Rutas Zonas
     Route::get('/produccion/zonas', [ProduccionController::class, 'zonas'])->name('produccion.zonas')->middleware(CheckPermission::class . ':ver_residente');

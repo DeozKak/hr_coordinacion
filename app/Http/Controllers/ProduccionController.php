@@ -21,16 +21,21 @@ use Rmunate\Calendario\CalendarioColombia;
 
 class ProduccionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        if ($request->id) {
+            $corte = tbl_produccion_corte::find($request->id);
+        } else {
+            $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
+            $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
+            $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
+                ->where('fecha_fin', '>=', $fecha_resta_un_dia)
+                ->first();
+        }
         $warning = null;
         $error = false;
         // sacar cortes activos
-        $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
-        $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
-        $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
-            ->where('fecha_fin', '>=', $fecha_resta_un_dia)
-            ->first();
+
 
         if (count($corte->toArray()) === 0 && !$error) {
             $error = true;
@@ -144,22 +149,18 @@ class ProduccionController extends Controller
 
     public function detallesCorte($id)
     {
-       
-        session(['id_corte' => $id]);
 
-        return $this->detalles();
-    }
-
+          session(['id_corte' => $id]);
     
-    public function crearSession(){
-        session()->forget('id_corte');
-        return redirect()->route('produccion.index');
+        return $this->detalles();
     }
 
     public function detalles()
     {
+       
+      
         $municipios = tbl_localidades_municipio::all();
-        if(session('id_corte')){
+        if (session('id_corte')) {
             $corte = tbl_produccion_corte::find(session('id_corte'));
             $id_corte = session('id_corte');
             if ($corte) { // Verificación adicional
@@ -167,7 +168,7 @@ class ProduccionController extends Controller
                 return view('produccion.detalles', compact('municipios', 'corte', 'id_corte'));
             } else {
                 // Manejar el caso en que $corte es nulo (mostrar un mensaje de error, redirigir, etc.)
-                return redirect()->back()->with('error', 'No se encontró el corte seleccionado.'); 
+                return redirect()->back()->with('error', 'No se encontró el corte seleccionado.');
             }
         }
         $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
@@ -175,24 +176,25 @@ class ProduccionController extends Controller
         $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
             ->where('fecha_fin', '>=', $fecha_resta_un_dia)
             ->first();
-        return view('produccion.detalles', compact('municipios', 'corte'));
-        
+        return view('produccion.detalles', compact('municipios'));
     }
 
-    public function datosDetalles()
+    public function datosDetalles(Request $request)
     {
-        if(session('id_corte')){
-            $corte = tbl_produccion_corte::find(session('id_corte'));
+        
+        if (session('id_corte') || $request->idCorteDetalles) {
+            $idCorte = session('id_corte') ?? $request->idCorteDetalles;
+            $corte = tbl_produccion_corte::find($idCorte);
+
             session()->forget('id_corte');
-        }else{
+            session()->save();
+        } else {
+            $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
+            $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
 
-        $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
-        $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
-
-        $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
-            ->where('fecha_fin', '>=', $fecha_resta_un_dia)
-            ->first();
-
+            $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
+                ->where('fecha_fin', '>=', $fecha_resta_un_dia)
+                ->first();
         }
         $diasIntermedios = $this->DiasIntermedios($corte);
         $cantidad_dias = count($diasIntermedios);
@@ -394,7 +396,7 @@ class ProduccionController extends Controller
                 $datosInspector['diseños_especiales'];
             $datosInspector['dias_laborados'] = $contadorDiasLaborados;
             $datosInspector['promedio'] = number_format($datosInspector['total'] / $cantidad_dias, 1);
-            $datosInspector['meta'] = 180;
+            $datosInspector['meta'] = $corte->meta;
             $datosInspector['porcentaje_meta'] = '%' . number_format(($datosInspector['sub_total'] / $datosInspector['meta']) * 100, 2);
 
 
@@ -413,9 +415,8 @@ class ProduccionController extends Controller
             'diasFestivos' => $diasFestivosRango,
             'sabadodobles' => $sabados,
             'fechasIntermedias' => $fechasIntermedias,
-
+            'corte' => $corte->id,
         ];
-
         return response()->json($reponse);
     }
 
@@ -449,7 +450,6 @@ class ProduccionController extends Controller
         }
         return $diasIntermedios;
     }
-
 
     public function calcularDobles($fechaInicio, $fechaFin, $inspector, $diasFestivos)
     {
@@ -567,10 +567,9 @@ class ProduccionController extends Controller
         ];
     }
 
-
     public function detallesDiario($fecha, $inspector)
     {
-      
+
         $contratosDia = tbl_bitacora_contrato::selectRaw("tbl_bitacora_contratos.id, CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP, 
         tbl_bitacora_contratos.`4_RECINTOS`,tbl_bitacora_contratos.state,tbl_bitacora_contratos.diseno_especial")
             ->join('tbl_insp_cali', 'tbl_insp_cali.cedula', '=', 'tbl_bitacora_contratos.CC_OPERARIO')
@@ -715,37 +714,41 @@ class ProduccionController extends Controller
         return ['error' => 'Bitácora no encontrada.'];
     }
 
-    public function zonas()
+    public function zonas(Request $request)
     {
-        $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
-        $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
-    
-        $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
-            ->where('fecha_fin', '>=', $fecha_resta_un_dia)
-            ->first();
-    
+
+        if ($request->idCorteDetalles) {
+            $corte = tbl_produccion_corte::find($request->idCorteDetalles);
+        } else {
+            $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
+            $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
+
+            $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
+                ->where('fecha_fin', '>=', $fecha_resta_un_dia)
+                ->first();
+        }
         $diasIntermedios = $this->DiasIntermedios($corte);
-    
+
         $zonas = tbl_produccion_zona::select('id', 'nombre')->get();
-    
-    
+
+
         foreach ($zonas as $zona) {
             $municipios = tbl_localidades_municipio::select('nombre')->where('id_zona', '=', $zona->id)->get();
-    
-            $ContratosPorZonaReidencial = ['zona' => $zona->nombre." RESIDENCIAL"];  // Inicializa con la zona
-            $ContratosPorZonaComercial = ['zona' => $zona->nombre." COMERCIAL"];
+
+            $ContratosPorZonaReidencial = ['zona' => $zona->nombre . " RESIDENCIAL"];  // Inicializa con la zona
+            $ContratosPorZonaComercial = ['zona' => $zona->nombre . " COMERCIAL"];
             // Iterar por cada día en el intervalo de fechas
             $period = new DatePeriod(
                 new DateTime($corte->fecha_inicio),
                 new DateInterval('P1D'),
                 (new DateTime($corte->fecha_fin))->modify('+1 day')
             );
-    
+
             foreach ($period as $date) {
                 $fecha = $date->format('Y-m-d');
                 $contadorResidencial = null;
                 $contadorComercial = null;
-    
+
                 foreach ($municipios as $municipio) {
                     $cantidadesResidencial = tbl_bitacora_contrato::where('MUNICIPIO', '=', $municipio->nombre)
                         ->where('CATEGORIA', '=', 'RESIDENCIAL')
@@ -754,7 +757,7 @@ class ProduccionController extends Controller
                         ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
                         ->count();
                     $contadorResidencial += $cantidadesResidencial;
-    
+
                     $cantidadesComercial = tbl_bitacora_contrato::where('MUNICIPIO', '=', $municipio->nombre)
                         ->where('CATEGORIA', '=', 'COMERCIAL')
                         ->where('FECHA', '=', $fecha)
@@ -763,20 +766,20 @@ class ProduccionController extends Controller
                         ->count();
                     $contadorComercial += $cantidadesComercial;
                 }
-    
+
                 $ContratosPorZonaReidencial[$fecha] = $contadorResidencial;
                 $ContratosPorZonaComercial[$fecha] = $contadorComercial;
             }
-    
-            $conteoContratosResidencial[]= $ContratosPorZonaReidencial;
-            $conteoContratosComercial[]= $ContratosPorZonaComercial; // Agrega el array resultante al array final
+
+            $conteoContratosResidencial[] = $ContratosPorZonaReidencial;
+            $conteoContratosComercial[] = $ContratosPorZonaComercial; // Agrega el array resultante al array final
         }
-        
-         $response = [
-        'diasIntermedios' => $diasIntermedios,
-        'residencial' => $conteoContratosResidencial,
-        'comercial' => $conteoContratosComercial,
-    ];
+
+        $response = [
+            'diasIntermedios' => $diasIntermedios,
+            'residencial' => $conteoContratosResidencial,
+            'comercial' => $conteoContratosComercial,
+        ];
         // Retornar la respuesta JSON
         return response()->json($response);
     }

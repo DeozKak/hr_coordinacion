@@ -8,7 +8,7 @@
     }
   }
   
-  #loader {
+  #zonas #loader {
     border: 16px solid rgba(0, 0, 0, 0.329);
     /* Borde transparente */
     border-top: 16px solid #3498db;
@@ -33,7 +33,7 @@
   }
   
   /* Estilo adicional para oscurecer el fondo */
-  #overlay {
+  #zonas #overlay {
     position: fixed;
     top: 0;
     left: 0;
