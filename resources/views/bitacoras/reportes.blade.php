@@ -38,8 +38,7 @@
                                             @csrf
                                             <button class="btn btn-primary" id="verReporte">Ver reporte</button>
                                         </form>
-                                        <form action="{{route('bitacoras.download',['file'=>$bitacora->nombre_archivo.".xlsx"])}}" method="POST">
-                                            @csrf
+                                        <form action="{{route('bitacoras.download',['file'=>$bitacora->nombre_archivo.".xlsx"])}}" method="GET">
                                             <button class="btn btn-success" id="btnDescargar">Descargar Xlsx</button>
                                         </form>
                                     </div>

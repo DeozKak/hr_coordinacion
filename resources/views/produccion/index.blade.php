@@ -10,11 +10,10 @@
 <script src="{{asset('js/produccionIndex.js')}}"></script>
 <div class="card">
     <div class="card-body">
+    <a class="btn btn-primary" href="javascript:history.go(-1)" style="margin-bottom: 10px;">Ir Atrás</a>
         <x-adminlte-card title="Total Inspecciones por Operario" theme="info" icon="fas fa-hard-hat">
             <canvas id="inspeccionesDiarias"></canvas>
         </x-adminlte-card>
-
-
     </div>
     <div class="row">
         <div class="col-6">

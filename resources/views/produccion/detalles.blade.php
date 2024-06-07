@@ -13,8 +13,6 @@
 <script src="{{asset('js/zonas.js')}}"></script>
 
 <input type="hidden" id="id_corte_detalles" value="">
-
-
 <input type="hidden" id="id_produccion" value="{{route('produccion.datosDetalles')}}">
 <input type="hidden" name="_token" id="token" value="{{csrf_token()}}">
 
@@ -29,7 +27,6 @@
     <h1>Zonas</h1>
 
     <div class="card-body">
-
         <div id="zonas" style="width: '100px'">
             <div id="loader"></div>
             <div id="overlay"></div>

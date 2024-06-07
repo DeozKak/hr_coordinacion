@@ -14,10 +14,12 @@ use App\Http\Controllers\CorteProduccionController;
 use Illuminate\Http\Request;
 
 Route::get('/', function () {
-    return view('auth.login');
+    return redirect()->route('home'); 
 });
+Route::middleware('web')->group(function () {
 
 Auth::routes();
+
 Route::middleware('auth')->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
 
@@ -97,4 +99,5 @@ Route::middleware('auth')->group(function () {
     Route::put('/cortes_produccion/{id}/updateCorte', [CorteProduccionController::class, 'updateCorte'])->name('cortes_produccion.updateCorte')->middleware(CheckPermission::class . ':ver_residente');
     Route::get('/cortes_producction/{id}/editMunicipio', [CorteProduccionController::class, 'editMunicipio'])->name('cortes_produccion.editMunicipio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
     Route::put('/cortes_produccion/{id}/updateMunicipio', [CorteProduccionController::class, 'updateMunicipio'])->name('cortes_produccion.updateMunicipio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
+});
 });
