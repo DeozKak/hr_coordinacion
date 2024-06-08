@@ -186,8 +186,7 @@ class ProduccionController extends Controller
             $idCorte = session('id_corte') ?? $request->idCorteDetalles;
             $corte = tbl_produccion_corte::find($idCorte);
 
-            session()->forget('id_corte');
-            session()->save();
+          
         } else {
             $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
             $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
@@ -716,9 +715,11 @@ class ProduccionController extends Controller
 
     public function zonas(Request $request)
     {
-
-        if ($request->idCorteDetalles) {
-            $corte = tbl_produccion_corte::find($request->idCorteDetalles);
+    
+        if (session('id_corte')) {
+            $corte = tbl_produccion_corte::find(session('id_corte'));
+            session()->forget('id_corte');
+            session()->save();
         } else {
             $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
             $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));

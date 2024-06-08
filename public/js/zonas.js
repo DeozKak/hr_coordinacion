@@ -11,8 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
         height: '300px',
         licenseKey: 'non-commercial-and-evaluation',
     });
-    console.log("zonas");
-
+   
+    setTimeout(() => {
     const idCorteDetallesInput = document.querySelector('#id_corte_detalles');
 
     if (idCorteDetallesInput) { // Verificar si el elemento existe
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-   
+}, 100);
 
 
 
