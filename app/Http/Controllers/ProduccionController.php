@@ -150,15 +150,15 @@ class ProduccionController extends Controller
     public function detallesCorte($id)
     {
 
-          session(['id_corte' => $id]);
-    
+        session(['id_corte' => $id]);
+
         return $this->detalles();
     }
 
     public function detalles()
     {
-       
-      
+
+
         $municipios = tbl_localidades_municipio::all();
         if (session('id_corte')) {
             $corte = tbl_produccion_corte::find(session('id_corte'));
@@ -181,12 +181,10 @@ class ProduccionController extends Controller
 
     public function datosDetalles(Request $request)
     {
-        
+
         if (session('id_corte') || $request->idCorteDetalles) {
             $idCorte = session('id_corte') ?? $request->idCorteDetalles;
             $corte = tbl_produccion_corte::find($idCorte);
-
-          
         } else {
             $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
             $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
@@ -245,6 +243,7 @@ class ProduccionController extends Controller
 
             // Verificar si los días festivos en el rango ya están en caché
             $diasFestivosRango = Cache::get($cacheKeyRango);
+            /* Cache::forget($cacheKeyRango); */
 
             if (!$diasFestivosRango) {
                 $diasFestivosRango = [];
@@ -252,11 +251,14 @@ class ProduccionController extends Controller
                 // Calcular y almacenar los días festivos en el rango de fechas
                 for ($date = $fechaInicioRango; $date->lte($fechaFinRango); $date->addDay()) {
                     $fechas[$date->format('Y-m-d')] = "";
+                    // Filtrar las fechas para mantener solo las originales
+                    $fechas = array_filter($fechas, function ($fecha) use ($fechaInicio, $fechaFin) {
+                        return $fecha >= $fechaInicio->format('Y-m-d') && $fecha <= $fechaFin->format('Y-m-d');
+                    }, ARRAY_FILTER_USE_KEY);
                     if (CalendarioColombia::date($date->format('Y-m-d'))->isHoliday()) {
                         $diasFestivosRango[] = $date->format('Y-m-d');
                     }
-                }
-
+                }   
                 // Guardar los días festivos en el rango en caché por un tiempo determinado (por ejemplo, 24 horas)
                 Cache::put($cacheKeyRango, $diasFestivosRango, $duracionCorte);
             } else {
@@ -320,6 +322,7 @@ class ProduccionController extends Controller
                 }
 
                 $fechas[$contrato->fecha] = $contrato->total_contratos;
+
                 $sumaInspecciones += $contrato->total_contratos;
             }
 
@@ -456,22 +459,27 @@ class ProduccionController extends Controller
         $contadorDiasSabados = null;
         $sabadosdobles = array();
 
-
+      
+        
         // Generar las semanas en el rango del corte
         $semanas = [];
         for ($date = $fechaInicio->copy(); $date->lte($fechaFin); $date->addWeek()) {
             $inicioSemana = $date->copy()->startOfWeek();
             $finSemana = $date->copy()->endOfWeek();
-            if ($inicioSemana->lte($fechaFin)) {
-                $semanas[] = [
-                    'inicio' => $inicioSemana->format('Y-m-d'),
-                    'fin' => $finSemana->format('Y-m-d'),
-                    'contratos' => 0,
-                    'festivos' => 0,
-                ];
+        
+            // Ajustar la fecha de fin de semana si excede la fecha final
+            if ($finSemana->gt($fechaFin)) {
+                $finSemana = $fechaFin->copy(); // Limitar al último día del rango
             }
+        
+            $semanas[] = [
+                'inicio' => $inicioSemana->format('Y-m-d'),
+                'fin' => $finSemana->format('Y-m-d'),
+                'contratos' => 0,
+                'festivos' => 0,
+            ];
         }
-
+    
         $registro = array();
         foreach ($semanas as $index => $semana) {
             // Inicializar el total de contratos
@@ -715,7 +723,7 @@ class ProduccionController extends Controller
 
     public function zonas(Request $request)
     {
-    
+
         if (session('id_corte')) {
             $corte = tbl_produccion_corte::find(session('id_corte'));
             session()->forget('id_corte');

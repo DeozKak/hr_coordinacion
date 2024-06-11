@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     resolve(response);
                 },
                 error: function (xhr, status, error) {
-                 console.log(xhr.responseText);
+                 
 
                     Swal.fire({
                         type: 'error',
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         const idCorteDetallesInput = document.getElementById('id_corte_detalles');
         idCorteDetallesInput.value = response.corte;
-      
+        
         // datos para resaltar los sabados dobles
         response.sabadodobles.forEach(entry => {
             // Iterar a través de cada registro en el array de datos
@@ -229,7 +229,7 @@ function calculateAndSetTotal(row, indexColumn) {
 
     const colIndices = [indexColumn - 3, indexColumn - 2, indexColumn - 1, indexColumn, indexColumn + 1, indexColumn + 2];
     let sum = 0;
-    console.log(colIndices);
+    
     colIndices.forEach(col => {
         const cellValue = hot.getDataAtCell(row, col);
         sum += parseFloat(cellValue) || 0;
@@ -375,7 +375,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                         });
                     });
                     if (nomColumna === null) {
-                        console.log(nomColumna + "nulo");
+                   
                     }
                     const payload = {
                         row: row,
@@ -402,7 +402,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
 
                         },
                         error: function (xhr, status, error) {
-                            console.log(xhr.responseText);
+                          
                             Swal.fire({
                                 type: 'error',
                                 title: 'Error',
@@ -527,7 +527,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
     const selectrecintos = document.getElementById('recintos');
 
     selectrecintos.addEventListener('change', function () {
-        console.log(this.value);
+      
         if (this.value === 'SI') {
             inputrecintosP.disabled = false; // Habilitar el campo "NroRecintos"
         } else {
@@ -756,7 +756,7 @@ function desasociar(row, fecha, cc_inspector) {
                     _token: document.querySelector('#token').value
                 },
                 success: function (response) {
-                    console.log(response);
+                 
                     Swal.fire(
                         'Desasociado!',
                         'El registro ha sido descontado.',
@@ -804,7 +804,7 @@ function asociar(row, fecha, cc_inspector) {
                     _token: document.querySelector('#token').value
                 },
                 success: function (response) {
-                    console.log(response);
+                 
                     Swal.fire(
                         'Asociado!',
                         'El registro ha sido sumado.',
@@ -856,7 +856,7 @@ function diseñoEspecial(row, fecha, cc_inspector, currentValue) {
                     _token: document.querySelector('#token').value
                 },
                 success: function (response) {
-                    console.log(response);
+               
                     if (response.success) {
                         let successMessage = response.diseño_especial ? 'Se ha agregado un diseño especial.' : 'Se ha desactivado el diseño especial.';
                         Swal.fire(
@@ -881,7 +881,7 @@ function diseñoEspecial(row, fecha, cc_inspector, currentValue) {
                     }
                 },
                 error: function (xhr, status, error) {
-                    console.log(xhr.responseText);
+                  
                     Swal.fire({
                         type: 'error',
                         title: 'Error',
@@ -903,7 +903,7 @@ function actualizarDatosDia(fecha, cc_inspector) {
         type: 'GET',
         success: function (response) {
             datosBaseDatos = response;
-            console.log(fecha, cc_inspector);
+           
             // Asigna los datos obtenidos a la variable
             const array2D = convertirJSONaArray2D(datosBaseDatos);
             hot_dia.loadData(array2D);
@@ -934,7 +934,7 @@ async function cargarDatos(idCorteDetalles = null) {
                 data: { idCorteDetalles },
                 type: 'GET',
                 success: function (response) {
-                    console.log(response);
+             
                     resolve(response);
                 },
                 error: function (xhr, status, error) {
@@ -1139,7 +1139,7 @@ function agregar_datos() {
             }
         },
         error: function (xhr, status, error) {
-            console.log(xhr.responseText);
+         
             Swal.fire({
                 type: 'error',
                 title: 'Error',
