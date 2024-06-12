@@ -11,6 +11,7 @@ use App\Http\Controllers\CoordinacionController;
 use App\Http\Controllers\BitacoraController;
 use App\Http\Controllers\InspectorController;
 use App\Http\Controllers\CorteProduccionController;
+use App\Http\Controllers\NotificationsController;
 use Illuminate\Http\Request;
 
 Route::get('/', function () {
@@ -53,6 +54,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/bitacora/ver_reporte/{id_bitacora}', [BitacoraController::class, 'verReporte'])->name('bitacoras.ver_reporte')->middleware(CheckPermission::class . ':ver_bitacoras');
     Route::get('bitacora/consultar_reporte/{id_bitacora}', [BitacoraController::class, 'consultaReporte'])->name('bitacoras.consulta_reporte')->middleware(CheckPermission::class . ':ver_bitacoras');
     Route::get('bitacora/consultar_indicadores/{id_bitacora}', [BitacoraController::class, 'ConsultaIndicadores'])->name('bitacoras.Consulta_indicadores')->middleware(CheckPermission::class . ':ver_bitacoras');
+    Route::post('bitacora/devoluciones/actualizar/{id}', [BitacoraController::class, 'actualizar_devolucion'])->name('bitacoras.actualizar_devolucion')->middleware(CheckPermission::class . ':mod_devoluciones');
 
     //Rutas para inspectores----------------------------------------------------------------------------
     Route::get('/inspectores', [InspectorController::class, 'index'])->name('inspectores.index')->middleware(CheckPermission::class . ':gestion_inspectores');
@@ -100,4 +102,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/cortes_producction/{id}/editMunicipio', [CorteProduccionController::class, 'editMunicipio'])->name('cortes_produccion.editMunicipio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
     Route::put('/cortes_produccion/{id}/updateMunicipio', [CorteProduccionController::class, 'updateMunicipio'])->name('cortes_produccion.updateMunicipio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
 });
+
+Route::get(
+    'notifications/get',
+    [NotificationsController::class, 'getNotificationsData']
+)->name('notifications.get');
+
 });

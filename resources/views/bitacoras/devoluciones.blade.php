@@ -57,6 +57,10 @@
                                         <th>Gestionado</th>
                                         <th>Fecha gestión</th>
                                         <th>Dias sin Gestionar</th>
+                                        @haspermission('mod_devoluciones')
+                                        <th>Acciones</th>
+                                        @endhaspermission
+
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -83,7 +87,20 @@
                                         @else
                                         <td>{{$dato->DIAS_SIN_GESTION}} </td>
                                         @endif
-
+                                        @haspermission('mod_devoluciones')
+                                        @if ($dato->GESTIONADO === 0)
+                                        <td>
+                                            <form action="{{route('bitacoras.actualizar_devolucion',['id' => $dato->id])}}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="btn btn-primary btn-xs">Cambiar</button>
+                                            </form>
+                                        </td>
+                                        @else
+                                        <td>
+                                            -
+                                        </td>
+                                        @endif
+                                        @endhaspermission
                                     </tr>
                                     @endforeach
                                 </tbody>
@@ -106,6 +123,8 @@
                                         <th>Gestionado</th>
                                         <th>Fecha gestión</th>
                                         <th>Dias sin Gestionar</th>
+
+
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -146,16 +165,34 @@
                     <button class="btn btn-success" id="btnGuardar">Exportar</button>
                 </div>
             </div>
-
         </div>
-
     </div>
-
-
 </body>
 @section('js')
-<script src="https://cdn.jsdelivr.net/npm/pako@2.0.4/dist/pako.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/pako@2.0.4/dist/pako_deflate.min.js"></script>
-@stop
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault(); 
 
+                let currentForm = this; 
+                
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: '¿Quieres cambiar el estado del la devolucion?',
+                    type: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sí, cambiar estado'
+                }).then((result) => {
+                    if (result.value == true) {  
+                        currentForm.submit(); 
+                    }
+                });
+            });
+        });
+    });
+</script>
+@stop
 @endsection

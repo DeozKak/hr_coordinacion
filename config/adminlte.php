@@ -1,4 +1,5 @@
 <?php
+use function PHPUnit\Framework\isFalse;
 
 return [
 
@@ -155,7 +156,7 @@ return [
 
     'layout_topnav' => null,
     'layout_boxed' => null,
-    'layout_fixed_sidebar' => true,
+    'layout_fixed_sidebar' => false,
     'layout_fixed_navbar' => false,
     'layout_fixed_footer' => null,
     'layout_dark_mode' => null,
@@ -237,10 +238,10 @@ return [
     |
     */
 
-    'right_sidebar' => true,
+    'right_sidebar' => false,
     'right_sidebar_icon' => 'fas fa-cogs',
     'right_sidebar_theme' => 'dark',
-    'right_sidebar_slide' => true,
+    'right_sidebar_slide' => false,
     'right_sidebar_push' => false,
     'right_sidebar_scrollbar_theme' => 'os-theme-light',
     'right_sidebar_scrollbar_auto_hide' => 'l',
@@ -304,6 +305,21 @@ return [
         [
             'type' => 'fullscreen-widget',
             'topnav_right' => true,
+        ],
+
+
+        [
+            'type' => 'navbar-notification',
+            'id' => 'my-notification',
+            'icon' => 'fas fa-bell',
+            'url' => 'notifications/show',
+            'topnav_right' => true,
+            'dropdown_mode' => true,
+            'dropdown_flabel' => 'All notifications',
+            'update_cfg' => [
+                'url' => 'notifications/get',
+                'period' => 30,
+            ],
         ],
 
         // Sidebar items:
@@ -462,7 +478,7 @@ return [
 
         [
             'text' => 'Configuración',
-            'can' => ['gestion_usuarios', 'gestion_inspectores','ver_residente'],
+            'can' => ['gestion_usuarios', 'gestion_inspectores', 'ver_residente'],
             'icon' => 'fas fa-wrench',
             'submenu' => [
                 [
