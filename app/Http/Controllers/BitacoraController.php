@@ -9,6 +9,7 @@ use App\Models\tbl_bitacora_archivo;
 use App\Models\tbl_bitacora_contrato;
 use App\Models\Movilidad;
 use App\Notifications\Mod_Devolucion;
+use App\Notifications\Bitacora;
 use DateTime;
 use DOMDocument;
 use Illuminate\Http\Request;
@@ -34,6 +35,7 @@ class BitacoraController extends Controller
 
     public function generar_bitacora(Request $request)
     {
+
         $validator = Validator::make($request->all(), [
             'supervisor' => 'required',
             'archivo' => 'required'
@@ -277,6 +279,7 @@ class BitacoraController extends Controller
                                 'contrato' => $hoja->getCell([7, $indiceFila])->getValue(),
                                 'orden_de_trabajo' => $hoja->getCell([8, $indiceFila])->getValue(),
                                 'orden_externa' => $hoja->getCell([9, $indiceFila])->getValue(),
+                                'categoria' => $hoja->getCell([10, $indiceFila])->getValue(),
                                 'resultado' => $hoja->getCell([11, $indiceFila])->getValue(),
                                 'Hora_inicio' => $hoja->getCell([12, $indiceFila])->getValue(),
                                 'Hora_fin' => $hoja->getCell([13, $indiceFila])->getValue(),
@@ -519,6 +522,11 @@ class BitacoraController extends Controller
                         $horaFinal->modify('+1 day'); // Añadir un día si la hora final es menor que la hora de inicio
                     }
 
+                    if ($dato['categoria'] === null) {
+                        $consultaMovilidad = Movilidad::select('AttrCategoria')->where('NroSitio', $dato['contrato'])->where('IdTarea', $dato['No_ACTA'])->first();
+                        $dato['categoria'] = $consultaMovilidad->AttrCategoria;
+                    }
+
                     $duracion = $horaInicio->diff($horaFinal);
 
                     $guardar_dv = new Tbl_dv_insp();
@@ -532,6 +540,7 @@ class BitacoraController extends Controller
                     $guardar_dv->contrato = $dato['contrato'];
                     $guardar_dv->orden_trabajo = $dato['orden_de_trabajo'];
                     $guardar_dv->orden_ext = $dato['orden_externa'];
+                    $guardar_dv->categoria = $dato['categoria'];
                     $guardar_dv->resultado_cierre = $dato['resultado'];
                     $guardar_dv->HORA_INICIO = $dato['Hora_inicio'];
                     $guardar_dv->HORA_FINAL = $dato['Hora_fin'];
@@ -547,6 +556,15 @@ class BitacoraController extends Controller
                     $guardar_dv->save();
                 }
             }
+        }
+
+        // Obtener los usuarios que deben recibir la notificación
+        $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN'])->get();
+        $usuarioLog = Auth::user();
+
+        // Enviar la notificación a cada usuario
+        foreach ($usuarios as $usuario) {
+            $usuario->notify(new Bitacora($usuarioLog->name, $bitacora->id));
         }
 
         Session::flash('success', 'Bitacora generada correctamente');
@@ -843,10 +861,10 @@ class BitacoraController extends Controller
         if ($exist) {
             // Obtener los usuarios que deben recibir la notificación
             $usuarios = User::role('admin')->get(); // Ejemplo: todos los administradores
-
+            $usuarioLog = Auth::user();
             // Enviar la notificación a cada usuario
             foreach ($usuarios as $usuario) {
-                $usuario->notify(new Mod_Devolucion());
+                $usuario->notify(new Mod_Devolucion($usuarioLog->name, $devolucion->CONTRATO, $devolucion->id_bitacora));
             }
             return redirect()->route('bitacora.devoluciones');
         }
@@ -871,13 +889,13 @@ class BitacoraController extends Controller
         $contrato->save();
 
         // Obtener los usuarios que deben recibir la notificación
-        $usuarios = User::role('admin')->get(); // Ejemplo: todos los administradores
+        $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN'])->get();
+        $usuarioLog = Auth::user();
 
         // Enviar la notificación a cada usuario
         foreach ($usuarios as $usuario) {
-            $usuario->notify(new Mod_Devolucion());
+            $usuario->notify(new Mod_Devolucion($usuarioLog->name, $devolucion->CONTRATO, $devolucion->id_bitacora));
         }
         return redirect()->route('bitacora.devoluciones');
-       
     }
 }

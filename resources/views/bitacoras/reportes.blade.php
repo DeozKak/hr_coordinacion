@@ -34,8 +34,8 @@
                                 <td>{{$bitacora->fecha_creacion}}</td>
                                 <td>
                                     <div class="btn-group" role="group" aria-label="Botones">
-                                        <form action="{{route('bitacoras.ver_reporte',['id_bitacora'=> $bitacora->id])}}" method="POST">
-                                            @csrf
+                                        <form action="{{route('bitacoras.ver_reporte',['id_bitacora'=> $bitacora->id])}}" method="GET">
+                                           
                                             <button class="btn btn-primary" id="verReporte">Ver reporte</button>
                                         </form>
                                         <form action="{{route('bitacoras.download',['file'=>$bitacora->nombre_archivo.".xlsx"])}}" method="GET">

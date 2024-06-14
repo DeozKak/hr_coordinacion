@@ -156,7 +156,7 @@ return [
 
     'layout_topnav' => null,
     'layout_boxed' => null,
-    'layout_fixed_sidebar' => false,
+    'layout_fixed_sidebar' => true,
     'layout_fixed_navbar' => false,
     'layout_fixed_footer' => null,
     'layout_dark_mode' => null,
@@ -315,12 +315,14 @@ return [
             'url' => 'notifications/show',
             'topnav_right' => true,
             'dropdown_mode' => true,
-            'dropdown_flabel' => 'All notifications',
+            'dropdown_flabel' => 'todas las notificaciones',
             'update_cfg' => [
                 'url' => 'notifications/get',
-                'period' => 30,
+                'period' => 5,
             ],
         ],
+
+       
 
         // Sidebar items:
         [

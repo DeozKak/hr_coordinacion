@@ -129,6 +129,7 @@
                                 </thead>
                                 <tbody>
                                     <tr>
+                                  
                                         @foreach ($gestionados as $dato)
                                         <td>{{$dato->Supervisor->name}}</td>
                                         <td> {{$dato->Inspector->nombres}} {{$dato->Inspector->apellidos}}</td>
@@ -193,6 +194,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
+
+
 </script>
 @stop
 @endsection

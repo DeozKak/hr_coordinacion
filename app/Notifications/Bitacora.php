@@ -9,25 +9,27 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\tbl_bitacora_archivo;
-
-class Mod_Devolucion extends Notification
+class Bitacora extends Notification
 {
     use Queueable;
 
     private $user;
-    private $contrato;
     private $bitacora;
     
+    
+
     /**
      * Create a new notification instance.
      */
-    public function __construct($user,$contrato,$bitacora)
+    public function __construct($user,$bitacora)
     {
         $this->user = $user;
-        $this->contrato = $contrato;
+       
         $this->bitacora = $bitacora;
     
     }
+
+    
 
     /**
      * Get the notification's delivery channels.
@@ -47,10 +49,9 @@ class Mod_Devolucion extends Notification
         $archivo = tbl_bitacora_archivo::where('id',$this->bitacora)->first();
         
         return (new MailMessage)
-        ->subject("Contrato " . $this->contrato . '  Gestionado')
-        ->view('mail.devolucion', [
+        ->subject($archivo->nombre_archivo . '| Generada')
+        ->view('mail.bitacora', [
             'user' => $this->user,
-            'contrato' => $this->contrato,
             'archivo' => $archivo,
             'bitacora' => $this->bitacora,
         ]);
@@ -67,8 +68,8 @@ class Mod_Devolucion extends Notification
         $time->setTimezone(new DateTimeZone('America/Bogota')); // Zona horaria de Colombia
         $horaActual = $time->format('h:i:s A');
         return [
-            'icon' => 'fas fa-fw fa-check-circle', 
-            'text' => 'Contrato '.$this->contrato.' gestionado.',
+            'icon' => 'fas fa-file-alt', 
+            'text' => 'Bitacora Generada.',
             'time' => $this->user." ".$horaActual, // O puedes calcular el tiempo transcurrido
             'link' => route('bitacoras.ver_reporte',['id_bitacora'=>$this->bitacora])
         ];

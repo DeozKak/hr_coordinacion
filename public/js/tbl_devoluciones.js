@@ -2,7 +2,9 @@ let codigoHTMLdev = "";
 let codigoHTMLges = "";
 
 $(document).ready(function () {
-
+    $.fn.dataTable.ext.errMode = function (settings, helpPage, message) {
+      
+    };
     $('#devoluciones').each(function () {
 
         let tablaHTMLdev = $(this)[0].outerHTML;
