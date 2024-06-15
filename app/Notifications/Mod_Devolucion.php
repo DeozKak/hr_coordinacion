@@ -63,13 +63,11 @@ class Mod_Devolucion extends Notification
      */
     public function toArray(object $notifiable): array
     {
-        $time = new DateTime();
-        $time->setTimezone(new DateTimeZone('America/Bogota')); // Zona horaria de Colombia
-        $horaActual = $time->format('h:i:s A');
+  
         return [
             'icon' => 'fas fa-fw fa-check-circle', 
             'text' => 'Contrato '.$this->contrato.' gestionado.',
-            'time' => $this->user." ".$horaActual, // O puedes calcular el tiempo transcurrido
+            'user' => $this->user, 
             'link' => route('bitacoras.ver_reporte',['id_bitacora'=>$this->bitacora])
         ];
     }

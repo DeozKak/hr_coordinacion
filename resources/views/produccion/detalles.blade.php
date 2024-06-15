@@ -50,7 +50,9 @@
                 <div id="contratos_dia" style=" width: '100px'; margin-bottom: 10px;"></div>
             </div>
             <div class="modal-footer">
+                @haspermission('ver_residente')
                 <button type="button" class="btn btn-success" id="agregar">Agregar Inspección</button>
+                @endhaspermission
                 <button type="button" class="btn btn-secondary" id="cerrar_modal" data-dismiss="modal">Cerrar</button>
             </div>
         </div>
@@ -186,8 +188,16 @@
             </div>
         </div>
     </div>
-
     <script>
+        let permission = 0;
+    </script>
+    @haspermission('ver_residente')
+    <script>
+         permission = 1;
+    </script>
+    @endhaspermission
+    <script>
+        
         const urlObtenerDetalles = "{{ route('obtener-url-detalles') }}"; // Usando el helper route()
         const urlObtenerBitacoras = "{{ route('obtener-url-bitacoras') }}"; // Usando el helper route()
         const urlActualizarDetallesDiario = "{{ route('produccion.ActualizarDetallesDiario', ['id' => ':id']) }}";

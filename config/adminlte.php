@@ -312,7 +312,7 @@ return [
             'type' => 'navbar-notification',
             'id' => 'my-notification',
             'icon' => 'fas fa-bell',
-            'url' => 'notifications/show',
+            'route' => 'notifications.index',
             'topnav_right' => true,
             'dropdown_mode' => true,
             'dropdown_flabel' => 'todas las notificaciones',
@@ -508,12 +508,12 @@ return [
             ]
         ],
 
-        ['header' => 'Supervisión Producción', 'can' => ['ver_residente'],],
+        ['header' => 'Supervisión Producción', 'can' => ['ver_residente','ver_produccion'],],
 
 
         [
             'text' => 'Producción',
-            'can' => ['ver_residente'],
+            'can' => ['ver_residente','ver_produccion'],
             'icon' => 'fas fa-hammer',
             'submenu' => [
                 [
@@ -527,7 +527,7 @@ return [
                     'text' => 'Detalles Producción',
                     'url' => '/produccion/detalles',
                     'icon' => 'fas fa-circle',
-                    'can' => 'ver_residente',
+                    'can' => ['ver_residente','ver_produccion'],
                     'label_color' => 'success',
                 ],
             ]

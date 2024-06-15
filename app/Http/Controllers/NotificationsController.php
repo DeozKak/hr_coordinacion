@@ -10,6 +10,13 @@ use Illuminate\Routing\Route;
 
 class NotificationsController extends Controller
 {
+
+    public function index()
+    {
+        $notifications = auth()->user()->notifications()->paginate(10);
+        return view('notifications.notificaciones', compact('notifications'));
+    }
+
     public function getNotificationsData()
     {
         // Obtener todas las notificaciones no leídas de tipo Mod_Devolucion para el usuario autenticado
@@ -26,7 +33,7 @@ class NotificationsController extends Controller
             $dropdownHtml .= '<a id='.$notification->id.' href='.$notification->data['link'].' class="dropdown-item" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">'
                 . '<i class="mr-2 text-sm ' . $notification->data['icon'] . '"></i>'
                 . $notification->data['text']
-                . '<span class="float-right text-muted text-sm">' . $notification->data['time'] . '</span>'
+                . '<span class="float-right text-muted text-sm">' . $notification->data['user'] ." ".$notification->created_at->diffForHumans() . '</span>'
                 . '</a>';
 
             if ($key < $notifications->count() - 1) {

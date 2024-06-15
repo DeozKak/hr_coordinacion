@@ -898,4 +898,18 @@ class BitacoraController extends Controller
         }
         return redirect()->route('bitacora.devoluciones');
     }
+
+    public function buscarPorContrato(Request $request)
+    {
+        $contrato = $request->input('contrato');
+
+        $bitacoras = tbl_bitacora_archivo::whereIn(
+            'id',
+            tbl_bitacora_contrato::select('id_bitacora')
+                ->where('CONTRATO', 'LIKE', '%' . $contrato . '%')
+        )->get();
+
+        // Devolver resultados en formato JSON
+        return response()->json($bitacoras);
+    }
 }

@@ -89,11 +89,13 @@ class ProduccionController extends Controller
         // sacar cantidad de contratos por zona
         $zonas = tbl_produccion_zona::all();
         $conteoContratosPorZona = array();
-
+        $municipiosNoEncontrados = array();
+        
         foreach ($zonas as $zona) {
             $count = tbl_localidades_municipio::select('nombre')->where('id_zona', '=', $zona->id)->get();
             $contador = 0;
-            /*  // Obtener los municipios de tbl_bitacora_contrato
+            // Verificador de municipios no encontrados
+            // Obtener los municipios de tbl_bitacora_contrato
             $municipiosContratos = tbl_bitacora_contrato::select('MUNICIPIO')
                 ->where('FECHA', '>=', $corte->fecha_inicio)
                 ->where('FECHA', '<=', $corte->fecha_fin)
@@ -117,10 +119,11 @@ class ProduccionController extends Controller
             } else {
                 
                 foreach ($municipiosNoEncontrados as $municipio) {
-                   dd($municipio);
+                  
+                    $municipiosNoEncontrados = collect(array_unique($municipiosNoEncontrados->toArray())); 
                 
                 }
-            } */
+            }
             foreach ($count as $c) {
 
                 $cantidades = tbl_bitacora_contrato::where('MUNICIPIO', '=', $c->nombre)->where('FECHA', '>=', $corte->fecha_inicio)
@@ -144,7 +147,7 @@ class ProduccionController extends Controller
         if ($error) {
             return view('produccion.index', ['produccionInspector' => $produccionInspector, 'contratosCategoria' => $contratosCategoria, 'conteoContratosPorZona' => $conteoContratosPorZona, 'corte' => $corte, 'warning' => $warning]);
         }
-        return view('produccion.index', compact('produccionInspector', 'contratosCategoria', 'conteoContratosPorZona', 'corte', 'warning'));
+        return view('produccion.index', compact('produccionInspector', 'contratosCategoria', 'conteoContratosPorZona', 'corte', 'warning','municipiosNoEncontrados'));
     }
 
     public function detallesCorte($id)
@@ -157,8 +160,7 @@ class ProduccionController extends Controller
 
     public function detalles()
     {
-
-
+       
         $municipios = tbl_localidades_municipio::all();
         if (session('id_corte')) {
             $corte = tbl_produccion_corte::find(session('id_corte'));
@@ -723,9 +725,10 @@ class ProduccionController extends Controller
 
     public function zonas(Request $request)
     {
-
-        if (session('id_corte')) {
-            $corte = tbl_produccion_corte::find(session('id_corte'));
+        
+        if (session('id_corte') || $request->idCorteDetalles) {
+            $idCorte = session('id_corte') ?? $request->idCorteDetalles;
+            $corte = tbl_produccion_corte::find($idCorte);
             session()->forget('id_corte');
             session()->save();
         } else {
