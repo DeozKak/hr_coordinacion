@@ -111,7 +111,8 @@ class BitacoraController extends Controller
 
     public function guardar_tabla(Request $request, User $super)
     {
-
+      
+        
         //variables que obtienen datos del request
         $encabezados = $request->encabezado;
         $dataTable = $request->datos;
@@ -182,9 +183,9 @@ class BitacoraController extends Controller
                     foreach ($fila as $celda) {
 
 
-
+                     
                         $contenidoCelda = $celda;
-
+                        $vence = $fila[17];
 
                         // Obtener el identificador único del combobox y checkbox
                         $idCheckbox = $indicador_checkbox;
@@ -232,7 +233,7 @@ class BitacoraController extends Controller
                                 $id_cedula = $ids_inspectores[$cedula_insp];
                                 $fecha = $hoja->getCell([4, $indiceFila])->getValue();
                                 $fecha_formateada = $this->conversion_fecha($fecha);
-
+                                
                                 $datos_array_OK[] = array(
                                     'cc_operario' => $hoja->getCell([2, $indiceFila])->getValue(),
                                     'municipio' => $hoja->getCell([3, $indiceFila])->getValue(),
@@ -247,6 +248,7 @@ class BitacoraController extends Controller
                                     'hora_inicio' => $hoja->getCell([12, $indiceFila])->getValue(),
                                     'hora_fin' => $hoja->getCell([13, $indiceFila])->getValue(),
                                     '4_recintos' => $hoja->getCell([15, $indiceFila])->getValue(),
+                                    'vence' => $vence,
                                 );
                             } else {
 
@@ -267,7 +269,7 @@ class BitacoraController extends Controller
                             $id_cedula = $ids_inspectores[$cedula_insp];
                             $fecha = $hoja->getCell([4, $indiceFila])->getValue();
                             $fecha_formateada = $this->conversion_fecha($fecha);
-
+                            
                             $datos_array[] = array(
                                 "supervisor" => $super->id,
                                 'inspector' => $id_cedula,
@@ -286,6 +288,7 @@ class BitacoraController extends Controller
                                 '4_recintos' => $hoja->getCell([15, $indiceFila])->getValue(),
                                 'causal' => $contenidoCelda,
                                 'fecha_devolucion' => date('Y-m-d'),
+                                'vence' => $vence,
                                 'gestionado' => 0,
                                 'dias_sin_gestion' => 0
                             );
@@ -492,6 +495,7 @@ class BitacoraController extends Controller
                 $contrato->HORA_FINAL = $datos['hora_fin'];
                 $contrato->DURACION_INSP = $duracion->format('%H:%I');
                 $contrato->setAttribute('4_RECINTOS', $datos['4_recintos']);
+                $contrato->vence = $datos['vence'];
                 $contrato->id_bitacora = $bitacora->id;
                 $contrato->state = 1;
                 $contrato->save();
@@ -547,6 +551,7 @@ class BitacoraController extends Controller
                     $guardar_dv->DURACION_INSP = $duracion->format('%H:%I');
                     $guardar_dv->setAttribute('4_RECINTOS', $dato['4_recintos']);
                     $guardar_dv->causal = $dato['causal'];
+                    $guardar_dv->vence = $dato['vence'];
                     $guardar_dv->fecha_dv = $dato['fecha_devolucion'];
                     $guardar_dv->gestionado = $dato['gestionado'];
                     $guardar_dv->dias_sin_gestion = $dato['dias_sin_gestion'];
@@ -825,7 +830,8 @@ class BitacoraController extends Controller
     public function consultaReporte($id_bitacora)
     {
         //contratos asignados a la bitacora
-        $contratos = tbl_bitacora_contrato::selectRaw("CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP, tbl_bitacora_contratos.`4_RECINTOS`")
+        $contratos = tbl_bitacora_contrato::selectRaw("CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP, tbl_bitacora_contratos.`4_RECINTOS`,
+        tbl_bitacora_contratos.`vence`")
             ->join('tbl_insp_cali', 'tbl_insp_cali.cedula', '=', 'tbl_bitacora_contratos.CC_OPERARIO')
             ->where('tbl_bitacora_contratos.id_bitacora', $id_bitacora)
             ->get();
@@ -860,7 +866,7 @@ class BitacoraController extends Controller
         $exist = tbl_bitacora_contrato::where('CONTRATO', $devolucion->CONTRATO)->where('ORDEN_TRABAJO', $devolucion->ORDEN_TRABAJO)->exists();
         if ($exist) {
             // Obtener los usuarios que deben recibir la notificación
-            $usuarios = User::role('admin')->get(); // Ejemplo: todos los administradores
+            $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN'])->get();
             $usuarioLog = Auth::user();
             // Enviar la notificación a cada usuario
             foreach ($usuarios as $usuario) {
@@ -885,6 +891,7 @@ class BitacoraController extends Controller
         $contrato->DURACION_INSP = $devolucion->DURACION_INSP;
         $contrato->setAttribute('4_RECINTOS', $devolucion->getAttribute('4_RECINTOS'));
         $contrato->id_bitacora = $devolucion->id_bitacora;
+        $contrato->vence = $devolucion->vence;
         $contrato->state = 1;
         $contrato->save();
 

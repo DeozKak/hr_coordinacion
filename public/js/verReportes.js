@@ -1,7 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
     Handsontable.renderers.registerRenderer('customStylesRenderer', (hotInstance, TD, row, col, prop, value, cellProperties) => {
         Handsontable.renderers.TextRenderer(hotInstance, TD, row, col, prop, value, cellProperties);
+       
+        if (value === '60 meses') {
+            TD.style.backgroundColor = 'rgb(251, 201, 255)'; 
+        }
         
+
         if (value === 'SI') {
             TD.style.backgroundColor = 'rgb(253, 221, 140)';
         }
@@ -26,23 +31,24 @@ document.addEventListener('DOMContentLoaded', () => {
         autoWrapRow: true,
         autoWrapCol: true,
         columns: [
-            {},{},{},{},{},{},{},{},{},{renderer: 'customStylesRenderer'},{},{},{},{renderer: 'customStylesRenderer'},{ renderer: 'customStylesRenderer' } // Aplicar el renderer personalizado a todas las celdas de la columna
+            {renderer: 'customStylesRenderer'},{},{},{},{},{},{},{},{},{renderer: 'customStylesRenderer'},{},{},{},{renderer: 'customStylesRenderer'},{ renderer: 'customStylesRenderer' },{} // Aplicar el renderer personalizado a todas las celdas de la columna
           ],
         filters: true,
         dropdownMenu: true, // Habilita los filtros en la tabla
-        colHeaders: ['OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION INSP', '4 RECINTOS O MAS'],
-        licenseKey: 'non-commercial-and-evaluation'
-    });
+        colHeaders: ['vence','OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION INSP', '4 RECINTOS O MAS'],
+        licenseKey: 'non-commercial-and-evaluation',
+    },
+
+);
     // Realizar una petición AJAX para obtener los datos de la base de datos
     $.ajax({
         url: id_bitacora, // Ruta al archivo PHP que realiza la consulta a la base de datos
         type: 'GET',
-        success: function (response) {
+        success: function (response) {     
             const datosBaseDatos = response.contratos; // Asigna los datos obtenidos a la variable
             const array2D = convertirJSONaArray2D(datosBaseDatos);
             hot.loadData(array2D);
             const columnData = hot.getDataAtCol(14);
-
         },
         error: function (xhr, status, error) {
             console.error(xhr.responseText);
@@ -94,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function convertirJSONaArray2D(jsonData) {
-    const columnasDeseadas = ['nombre_completo', 'CC_OPERARIO', 'MUNICIPIO', 'FECHA', 'No_ACTA', 'TIPO_TRABAJO', 'CONTRATO', 'ORDEN_TRABAJO', 'ORDEN_EXT', 'CATEGORIA', 'RESULTADO_CIERRE', 'HORA_INICIO', 'HORA_FINAL', 'DURACION_INSP', '4_RECINTOS'];
+    const columnasDeseadas = ['vence','nombre_completo', 'CC_OPERARIO', 'MUNICIPIO', 'FECHA', 'No_ACTA', 'TIPO_TRABAJO', 'CONTRATO', 'ORDEN_TRABAJO', 'ORDEN_EXT', 'CATEGORIA', 'RESULTADO_CIERRE', 'HORA_INICIO', 'HORA_FINAL', 'DURACION_INSP', '4_RECINTOS'];
 
     return Object.keys(jsonData).map(key => {
         const fila = jsonData[key];
