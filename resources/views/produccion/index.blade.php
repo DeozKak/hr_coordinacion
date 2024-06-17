@@ -52,6 +52,27 @@
  {{$warning = null;}}
 @endif
 
+
+
+@if($municipiosNoEncontrados->isNotEmpty())
+<script>
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        Swal.fire({
+            title: "Por favor, ingrese los siguientes municipios en la base de datos:",
+            html: `
+              
+                    @foreach ($municipiosNoEncontrados as $municipio)
+                        <li>{{ $municipio }}</li>
+                    @endforeach
+               
+            `,
+            type: "warning"
+        });
+    });
+</script>
+@endif
+
 @section('js')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>

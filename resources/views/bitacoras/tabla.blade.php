@@ -126,19 +126,24 @@
                                                 <?php
                                                 $contrato = $sheet->getCell('H' . $row->getRowIndex())->getValue();
                                                 $nombreCelda = $sheet->getCell('A' . $row->getRowIndex())->getValue();
+                                                $vence = $sheet->getCell('Q' . $row->getRowIndex())->getValue();
                                                 $Cierre = $sheet->getCell('M' . $row->getRowIndex())->getValue();
                                                 $Cierre = ltrim($Cierre, '.');
-                                                
+
                                                 ?>
                                                 <?php if (strpos($contrato, ":") === 0 && $nombreCelda === $nombre && ($Cierre === "CERTIFICADA" || $Cierre === "CERTIFICADA CON NOVEDADES" || $Cierre === "INSPECCIONADA CON DEFECTO CRITICO VALLE" || $Cierre === "INSPECCIONADA CON DEFECTO NO CRITICO VALLE")) : ?>
-                                                    <tr>
+                                                    <tr style='<?php
+                                            
+                                                                $venceDate = DateTime::createFromFormat('d/m/Y', $vence);
+                                                                echo ($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m')) ? "background-color: rgb(251,201,255);" : "";
+                                                                ?>'>
                                                         <?php $horaInicialObj = null;
                                                         $horaFinalObj = null;
                                                         foreach (['A', 'B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K', 'M', 'N', 'O'] as $columna) : ?>
                                                             <?php
-                                                             
                                                             $valorCelda = $sheet->getCell($columna . $row->getRowIndex())->getValue();
-                                                            if($columna === 'M'){
+
+                                                            if ($columna === 'M') {
                                                                 $valorCelda = ltrim($sheet->getCell($columna . $row->getRowIndex())->getValue(), '.');
                                                             }
                                                             if ($columna === 'H') {

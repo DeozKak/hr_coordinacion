@@ -11,8 +11,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <link rel="stylesheet" href="{{asset('css/bitacoras/generar.css')}}">
+<!--     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+ -->    <link rel="stylesheet" href="{{asset('css/bitacoras/generar.css')}}">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <title>Subir Archivos</title>
 </head>
@@ -28,6 +28,7 @@
                 <select class="form-control form-select-lg mb-3" name="supervisor" id="supervisor" disabled>
                     <option value="{{$supervisores->id}}" selected>{{$supervisores->name}}</option>
                 </select>
+                <input type="hidden" name="supervisor" value="{{$supervisores->id}}">
                 @error('supervisor')
                 <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -44,7 +45,7 @@
             @endrole
             @unlessrole('Supervisor')
             <form action="{{route('bitacoras.generar')}}" method="POST" enctype="multipart/form-data">
-                <select class="form-select form-select-lg mb-3" name="supervisor" id="supervisor">
+                <select class="form-control form-select-lg mb-3" name="supervisor" id="supervisor">
                     <option value="">Seleccione Supervisor</option>
                     @foreach ($supervisores as $supervisor)
 

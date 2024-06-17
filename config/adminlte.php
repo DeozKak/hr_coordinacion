@@ -1,4 +1,5 @@
 <?php
+use function PHPUnit\Framework\isFalse;
 
 return [
 
@@ -237,10 +238,10 @@ return [
     |
     */
 
-    'right_sidebar' => true,
+    'right_sidebar' => false,
     'right_sidebar_icon' => 'fas fa-cogs',
     'right_sidebar_theme' => 'dark',
-    'right_sidebar_slide' => true,
+    'right_sidebar_slide' => false,
     'right_sidebar_push' => false,
     'right_sidebar_scrollbar_theme' => 'os-theme-light',
     'right_sidebar_scrollbar_auto_hide' => 'l',
@@ -305,6 +306,23 @@ return [
             'type' => 'fullscreen-widget',
             'topnav_right' => true,
         ],
+
+
+        [
+            'type' => 'navbar-notification',
+            'id' => 'my-notification',
+            'icon' => 'fas fa-bell',
+            'route' => 'notifications.index',
+            'topnav_right' => true,
+            'dropdown_mode' => true,
+            'dropdown_flabel' => 'todas las notificaciones',
+            'update_cfg' => [
+                'url' => 'notifications/get',
+                'period' => 5,
+            ],
+        ],
+
+       
 
         // Sidebar items:
         [
@@ -462,7 +480,7 @@ return [
 
         [
             'text' => 'Configuración',
-            'can' => ['gestion_usuarios', 'gestion_inspectores','ver_residente'],
+            'can' => ['gestion_usuarios', 'gestion_inspectores', 'ver_residente'],
             'icon' => 'fas fa-wrench',
             'submenu' => [
                 [
@@ -490,12 +508,12 @@ return [
             ]
         ],
 
-        ['header' => 'Supervisión Producción', 'can' => ['ver_residente'],],
+        ['header' => 'Supervisión Producción', 'can' => ['ver_residente','ver_produccion'],],
 
 
         [
             'text' => 'Producción',
-            'can' => ['ver_residente'],
+            'can' => ['ver_residente','ver_produccion'],
             'icon' => 'fas fa-hammer',
             'submenu' => [
                 [
@@ -509,7 +527,7 @@ return [
                     'text' => 'Detalles Producción',
                     'url' => '/produccion/detalles',
                     'icon' => 'fas fa-circle',
-                    'can' => 'ver_residente',
+                    'can' => ['ver_residente','ver_produccion'],
                     'label_color' => 'success',
                 ],
             ]

@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     resolve(response);
                 },
                 error: function (xhr, status, error) {
-                 
+
 
                     Swal.fire({
                         type: 'error',
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         const idCorteDetallesInput = document.getElementById('id_corte_detalles');
         idCorteDetallesInput.value = response.corte;
-        
+
         // datos para resaltar los sabados dobles
         response.sabadodobles.forEach(entry => {
             // Iterar a través de cada registro en el array de datos
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             });
         });
-          
+
         rows = response.produccionInspector;
         // Extraer la propiedad nombreMes de cada objeto
         const nombresMes = response.diasIntermedios.map(item => item.nombreMes);
@@ -229,7 +229,7 @@ function calculateAndSetTotal(row, indexColumn) {
 
     const colIndices = [indexColumn - 3, indexColumn - 2, indexColumn - 1, indexColumn, indexColumn + 1, indexColumn + 2];
     let sum = 0;
-    
+
     colIndices.forEach(col => {
         const cellValue = hot.getDataAtCell(row, col);
         sum += parseFloat(cellValue) || 0;
@@ -314,32 +314,34 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             {}, // las columnas existentes
             {
                 renderer: function (instance, td, row, col, prop, value, cellProperties) {
-                    
+
                     const estado = instance.getDataAtRow(row)[16]; // Suponiendo que el estado está en la columna 15
                     const diseno_especial = instance.getDataAtRow(row)[17]; // Suponiendo que el estado está en la columna 15
-                    
+
 
                     let buttonHtml = '';
                     let buttondiseno = '';
-                    if (estado === 1) {
-                        buttonHtml = '<button class="btn btn-danger btn-sm" onclick="desasociar(' + row + ',\'' + fecha + '\',' + cc_inspector + ')">Descontar</button>';
-                    } else {
-                        buttonHtml = '<button class="btn btn-success btn-sm" onclick="asociar(' + row + ',\'' + fecha + '\',' + cc_inspector + ')">Contar</button>';
-                    }
-                    if (diseno_especial === 1) {
-                        buttondiseno = '<button class="btn btn-warning btn-sm" onclick="diseñoEspecial(' + row + ',\'' + fecha + '\',' + cc_inspector + ',' + diseno_especial + ')">Quitar Diseño especial</button>';
-                    } else {
-                        buttondiseno = '<button class="btn btn-warning btn-sm" onclick="diseñoEspecial(' + row + ',\'' + fecha + '\',' + cc_inspector + ',' + diseno_especial + ')">Diseño especial</button>';
-                    }
-                    td.innerHTML = `
+                    if (permission === 1) {
+                        if (estado === 1) {
+                            buttonHtml = '<button class="btn btn-danger btn-sm" onclick="desasociar(' + row + ',\'' + fecha + '\',' + cc_inspector + ')">Descontar</button>';
+                        } else {
+                            buttonHtml = '<button class="btn btn-success btn-sm" onclick="asociar(' + row + ',\'' + fecha + '\',' + cc_inspector + ')">Contar</button>';
+                        }
+                        if (diseno_especial === 1) {
+                            buttondiseno = '<button class="btn btn-warning btn-sm" onclick="diseñoEspecial(' + row + ',\'' + fecha + '\',' + cc_inspector + ',' + diseno_especial + ')">Quitar Diseño especial</button>';
+                        } else {
+                            buttondiseno = '<button class="btn btn-warning btn-sm" onclick="diseñoEspecial(' + row + ',\'' + fecha + '\',' + cc_inspector + ',' + diseno_especial + ')">Diseño especial</button>';
+                        }
+                        td.innerHTML = `
                         <div style="display: flex; gap: 5px; justify-content: center;">
                         <button id="btnEditar" class="btn btn-info btn-sm" onclick="editar(${row})">Editar</button>
                         ${buttondiseno}
                         ${buttonHtml}
                         </div>
                         `;
-                    td.style.textAlign = 'center'; // Centrar los botones
-                    return td;
+                        td.style.textAlign = 'center'; // Centrar los botones
+                        return td;
+                    }
                 }
             }
         ],
@@ -375,7 +377,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                         });
                     });
                     if (nomColumna === null) {
-                   
+
                     }
                     const payload = {
                         row: row,
@@ -402,7 +404,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
 
                         },
                         error: function (xhr, status, error) {
-                          
+
                             Swal.fire({
                                 type: 'error',
                                 title: 'Error',
@@ -432,7 +434,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
 
         },
         error: function (xhr, status, error) {
-   
+
             Swal.fire({
                 type: 'error',
                 title: 'Error',
@@ -527,7 +529,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
     const selectrecintos = document.getElementById('recintos');
 
     selectrecintos.addEventListener('change', function () {
-      
+
         if (this.value === 'SI') {
             inputrecintosP.disabled = false; // Habilitar el campo "NroRecintos"
         } else {
@@ -756,7 +758,7 @@ function desasociar(row, fecha, cc_inspector) {
                     _token: document.querySelector('#token').value
                 },
                 success: function (response) {
-                 
+
                     Swal.fire(
                         'Desasociado!',
                         'El registro ha sido descontado.',
@@ -804,7 +806,7 @@ function asociar(row, fecha, cc_inspector) {
                     _token: document.querySelector('#token').value
                 },
                 success: function (response) {
-                 
+
                     Swal.fire(
                         'Asociado!',
                         'El registro ha sido sumado.',
@@ -856,7 +858,7 @@ function diseñoEspecial(row, fecha, cc_inspector, currentValue) {
                     _token: document.querySelector('#token').value
                 },
                 success: function (response) {
-               
+
                     if (response.success) {
                         let successMessage = response.diseño_especial ? 'Se ha agregado un diseño especial.' : 'Se ha desactivado el diseño especial.';
                         Swal.fire(
@@ -881,7 +883,7 @@ function diseñoEspecial(row, fecha, cc_inspector, currentValue) {
                     }
                 },
                 error: function (xhr, status, error) {
-                  
+
                     Swal.fire({
                         type: 'error',
                         title: 'Error',
@@ -903,7 +905,7 @@ function actualizarDatosDia(fecha, cc_inspector) {
         type: 'GET',
         success: function (response) {
             datosBaseDatos = response;
-           
+
             // Asigna los datos obtenidos a la variable
             const array2D = convertirJSONaArray2D(datosBaseDatos);
             hot_dia.loadData(array2D);
@@ -915,7 +917,7 @@ function actualizarDatosDia(fecha, cc_inspector) {
 
         },
         error: function (xhr, status, error) {
-         
+
             Swal.fire({
                 type: 'error',
                 title: 'Error',
@@ -934,11 +936,10 @@ async function cargarDatos(idCorteDetalles = null) {
                 data: { idCorteDetalles },
                 type: 'GET',
                 success: function (response) {
-             
                     resolve(response);
                 },
                 error: function (xhr, status, error) {
-                    
+
                     Swal.fire({
                         type: 'error',
                         title: 'Error',
@@ -1139,7 +1140,7 @@ function agregar_datos() {
             }
         },
         error: function (xhr, status, error) {
-         
+
             Swal.fire({
                 type: 'error',
                 title: 'Error',
@@ -1187,5 +1188,19 @@ function formatearFecha(fecha) {
 
     return fechaFormateada;
 }
+
+setInterval(() => {
+    try {
+      const idCorteDetallesInput = document.querySelector('#id_corte_detalles');
+      if (idCorteDetallesInput) {
+        cargarDatos(idCorteDetallesInput.value);
+      } else {
+        cargarDatos();
+      }
+    } catch (error) {
+      console.error("Error al cargar datos:", error);
+      // Puedes agregar aquí lógica adicional para manejar el error, como mostrar un mensaje al usuario.
+    }
+  }, 150000);
 
 
