@@ -97,10 +97,19 @@
         });
 
         function buscarBitacorasPorContrato(contrato) {
+            if (contrato.trim() === '') {
+                $('#resultadosBusqueda').empty(); // Limpiar la lista de resultados
+                return; // Salir de la función si está vacío
+            }
+
             $.ajax({
-                // ... (tu configuración AJAX)
+                url: '{{ route("bitacoras.buscar_por_contrato") }}', // Ruta a tu nueva función en el controlador
+                type: 'GET',
+                data: {
+                    contrato: contrato
+                },
                 success: function(response) {
-                    console.log(response);
+                    
                     let listaHtml = '<ul>';
                     response.forEach(bitacora => {
                         listaHtml += `<li data-id="${bitacora.id}">${bitacora.nombre_archivo} (ID: ${bitacora.id})</li>`;
@@ -111,10 +120,12 @@
                     // Evento de clic para cada elemento de la lista
                     $('.lista-resultados li').click(function() {
                         const idBitacora = $(this).data('id');
-                        // Aquí puedes realizar la acción que desees al seleccionar una bitácora
-                        // Por ejemplo, mostrar los detalles de la bitácora en otro lugar de la página
-                        console.log("Bitácora seleccionada:", idBitacora);
+                        const url = "{{ route('bitacoras.ver_reporte', ['id_bitacora' => ':id']) }}".replace(':id', idBitacora);
+                        window.location.href = url;
                     });
+                },
+                error: function(xhr, status, error) {
+                    console.log(xhr.responseText);
                 }
             });
         }
