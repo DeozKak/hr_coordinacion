@@ -277,9 +277,10 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         readOnly: true,
         manualColumnMove: false,
         rowHeaders: false,
-        colHeaders: ['ID', 'OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION INSP', '4 RECINTOS O MAS', 'ESTADO', 'ACCIONES'],
+        colHeaders: ['ID','vence' ,'OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION INSP', '4 RECINTOS O MAS', 'ESTADO', 'ACCIONES'],
         columns: [
             { type: 'numeric', readOnly: true }, // ID (oculto)
+            {}, 
             { type: 'text' }, // OPERARIO
             { type: 'numeric', validator: 'custom.numeric' }, // CC OPERARIO
             { type: 'text' }, // MUNICIPIO
@@ -315,8 +316,8 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             {
                 renderer: function (instance, td, row, col, prop, value, cellProperties) {
 
-                    const estado = instance.getDataAtRow(row)[16]; // Suponiendo que el estado está en la columna 15
-                    const diseno_especial = instance.getDataAtRow(row)[17]; // Suponiendo que el estado está en la columna 15
+                    const estado = instance.getDataAtRow(row)[17]; 
+                    const diseno_especial = instance.getDataAtRow(row)[18]; 
 
 
                     let buttonHtml = '';
@@ -724,7 +725,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
 function editar(row) {
     hot_dia.updateSettings({
         cells: function (r, c) {
-            const nonEditableColumns = [1, 2, 3, 12, 13, 14, 16, 17];
+            const nonEditableColumns = [1, 2, 3, 4, 13, 14, 15, 17, 18];
             if (r === row && !nonEditableColumns.includes(c)) {// Si es la fila a editar y no es la columna de acciones
                 return {
                     readOnly: false // Habilita la edición para esta fila
@@ -1023,7 +1024,7 @@ async function cargarDatos(idCorteDetalles = null) {
 //---------------------------------------------------------------------------------------------------//
 /* funcion para convertir respuesta JSON del servidor a un Array */
 function convertirJSONaArray2D(jsonData) {
-    const columnasDeseadas = ['id', 'nombre_completo', 'CC_OPERARIO', 'MUNICIPIO', 'FECHA', 'No_ACTA', 'TIPO_TRABAJO', 'CONTRATO', 'ORDEN_TRABAJO', 'ORDEN_EXT', 'CATEGORIA', 'RESULTADO_CIERRE', 'HORA_INICIO', 'HORA_FINAL', 'DURACION_INSP', '4_RECINTOS', 'state', 'diseno_especial'];
+    const columnasDeseadas = ['id', 'vence','nombre_completo', 'CC_OPERARIO', 'MUNICIPIO', 'FECHA', 'No_ACTA', 'TIPO_TRABAJO', 'CONTRATO', 'ORDEN_TRABAJO', 'ORDEN_EXT', 'CATEGORIA', 'RESULTADO_CIERRE', 'HORA_INICIO', 'HORA_FINAL', 'DURACION_INSP', '4_RECINTOS', 'state', 'diseno_especial'];
 
     return Object.keys(jsonData).map(key => {
         const fila = jsonData[key];

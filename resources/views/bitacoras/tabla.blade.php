@@ -114,6 +114,7 @@
                                             <th>4 RECINTOS O MAS</th>
                                             <th></th>
                                             <th></th>
+                                            <th></th>
                                         </tr>
 
                                     </thead>
@@ -129,12 +130,15 @@
                                                 $vence = $sheet->getCell('Q' . $row->getRowIndex())->getValue();
                                                 $Cierre = $sheet->getCell('M' . $row->getRowIndex())->getValue();
                                                 $Cierre = ltrim($Cierre, '.');
-
+                                                $venceDate = DateTime::createFromFormat('d/m/Y', $vence);
+                                                if($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m')){
+                                                    $vence = "60 meses";
+                                                }else{
+                                                    $vence = "";
+                                                }
                                                 ?>
                                                 <?php if (strpos($contrato, ":") === 0 && $nombreCelda === $nombre && ($Cierre === "CERTIFICADA" || $Cierre === "CERTIFICADA CON NOVEDADES" || $Cierre === "INSPECCIONADA CON DEFECTO CRITICO VALLE" || $Cierre === "INSPECCIONADA CON DEFECTO NO CRITICO VALLE")) : ?>
                                                     <tr style='<?php
-                                            
-                                                                $venceDate = DateTime::createFromFormat('d/m/Y', $vence);
                                                                 echo ($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m')) ? "background-color: rgb(251,201,255);" : "";
                                                                 ?>'>
                                                         <?php $horaInicialObj = null;
@@ -216,6 +220,9 @@
                                                                 <option value="INFORMACION ERRADA">INFORMACION ERRADA</option>
                                                                 <option value="ORDEN YA REGISTRADA">ORDEN YA REGISTRADA</option>
                                                             </select>
+                                                        </td>
+                                                        <td>
+                                                            <?php echo $vence; ?>
                                                         </td>
                                                     </tr>
                                                 <?php endif; ?>

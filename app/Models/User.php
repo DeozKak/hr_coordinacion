@@ -15,11 +15,6 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
     use HasRoles;
 
-
-    public function sendPasswordResetNotification($token)
-    {
-        Mail::to($this->email)->send(new ResetPasswordMail($token));
-    }
     /**
      * The attributes that are mass assignable.
      *

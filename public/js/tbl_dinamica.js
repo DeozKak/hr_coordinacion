@@ -24,7 +24,13 @@ $(document).ready(function () {
                 "next": "Siguiente",
                 "previous": "Anterior"
             }
-        }
+        },
+        "columnDefs": [
+            {
+                "targets": [17], // 
+                "visible": false 
+            }
+        ]
     });
 
     // Ocultar todas las tablas y inicializar la tabla activa
@@ -229,7 +235,7 @@ $(document).ready(function () {
                     _token: csrfToken
                 },
                 success: function (response) {
-                    console.log(response);
+                    
                     if (response.ruta) {
                         window.location.href = response.ruta;
                         codigoHTML_tabla_indicadores = null;

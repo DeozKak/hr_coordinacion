@@ -64,8 +64,11 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        @foreach ($devoluciones as $dato)
+                                    @foreach ($devoluciones as $dato)
+                                    <tr style="<?php if ($dato->vence === "60 meses") {
+                                                    echo ("background-color: rgb(251,201,255);");
+                                                } ?>">
+
                                         <td>{{$dato->Supervisor->name}}</td>
                                         <td> {{$dato->Inspector->nombres}} {{$dato->Inspector->apellidos}}</td>
                                         <td> {{$dato->FECHA_INSP}} </td>
@@ -109,7 +112,9 @@
 
                             <table class="table table-striped table-bordered tbl_datos" id="gestionados">
                                 <thead>
-                                    <tr>
+                                <tr style="<?php if ($dato->vence === "60 meses") {
+                                                    echo ("background-color: rgb(251,201,255);");
+                                                } ?>">
                                         <th>Supervisor</th>
                                         <th>Inspector</th>
                                         <th>Fecha Inspeccion</th>
@@ -128,9 +133,8 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    @foreach ($gestionados as $dato)
                                     <tr>
-                                  
-                                        @foreach ($gestionados as $dato)
                                         <td>{{$dato->Supervisor->name}}</td>
                                         <td> {{$dato->Inspector->nombres}} {{$dato->Inspector->apellidos}}</td>
                                         <td> {{$dato->FECHA_INSP}} </td>
@@ -171,13 +175,13 @@
 </body>
 @section('js')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('form').forEach(form => {
             form.addEventListener('submit', function(e) {
-                e.preventDefault(); 
+                e.preventDefault();
 
-                let currentForm = this; 
-                
+                let currentForm = this;
+
                 Swal.fire({
                     title: '¿Estás seguro?',
                     text: '¿Quieres cambiar el estado del la devolucion?',
@@ -187,15 +191,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     cancelButtonColor: '#d33',
                     confirmButtonText: 'Sí, cambiar estado'
                 }).then((result) => {
-                    if (result.value == true) {  
-                        currentForm.submit(); 
+                    if (result.value == true) {
+                        currentForm.submit();
                     }
                 });
             });
         });
     });
-
-
 </script>
 @stop
 @endsection

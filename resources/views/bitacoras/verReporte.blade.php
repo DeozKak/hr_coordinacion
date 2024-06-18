@@ -9,6 +9,7 @@
 
 @section('content')
 <link rel="stylesheet" href="{{asset('css/bitacoras/verReportes.css')}}">
+
 <body>
     <input type="hidden" id="id_bitacora" value="{{route('bitacoras.consulta_reporte',['id_bitacora'=>$bitacora->id])}}">
     <input type="hidden" id="url_indicadores" value="{{route('bitacoras.Consulta_indicadores',['id_bitacora'=>$bitacora->id])}}">
