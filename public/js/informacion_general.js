@@ -330,7 +330,7 @@ function ValidarFormularioMunicipios() {
     const inputNombre = document.getElementById('nombreMunicipio');
     inputNombre.addEventListener('input', function () {
         if (this.value.length > 30) {
-            this.value = this.value.slice(0, 30);
+            this.value = this.value.slice(0, 100);
         }
     });
 }

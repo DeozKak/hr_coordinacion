@@ -206,5 +206,6 @@
         const urlCrearSession = "{{ route('produccion.crearSession') }}";
         const urlActualizarDetallesDia = "{{ route('produccion.detallesDiario',['fecha' => ':fecha', 'inspector' => ':inspector']) }}";
         const urlZonas = "{{ route('produccion.zonas') }}";
+        const urlInsertar = "{{ route('produccion.insertarContrato') }}"
     </script>
     @stop

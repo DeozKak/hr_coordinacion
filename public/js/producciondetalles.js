@@ -200,6 +200,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     } catch (error) {
         console.error('Error fetching data:', error);
+        Swal.fire({
+            type: 'error',
+            title: 'Error',
+            text: 'Ocurrió un error al cargar los datos de la base de datos'
+        });
+        $('#loader').hide();
+        $('#overlay').hide();
     }
     hot.alter('insert_row_above', hot.countRows());
     for (let i = 0; i < totalColspan; i++) {
@@ -1099,7 +1106,7 @@ function agregar_datos() {
 
 
     $.ajax({
-        url: 'detalles_diario/insertar', // Ruta al archivo PHP que realiza la consulta a la base de datos
+        url: urlInsertar, // Ruta al archivo PHP que realiza la consulta a la base de datos
         type: 'POST',
         data: {
             _token: document.querySelector('#token').value,
@@ -1141,7 +1148,6 @@ function agregar_datos() {
             }
         },
         error: function (xhr, status, error) {
-
             Swal.fire({
                 type: 'error',
                 title: 'Error',

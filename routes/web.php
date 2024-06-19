@@ -19,8 +19,9 @@ Route::get('/', function () {
 });
 Route::middleware('web')->group(function () {
 
-    Auth::routes();
-
+    Route::middleware('throttle:60,1')->group(function () {
+        Auth::routes(); 
+    });
     Route::middleware('auth')->group(function () {
         Route::get('/home', [HomeController::class, 'index'])->name('home');
 

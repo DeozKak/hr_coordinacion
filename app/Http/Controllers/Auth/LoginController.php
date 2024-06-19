@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class LoginController extends Controller
 {
@@ -50,14 +52,60 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials)) {
             if (Auth::user()->state == 1) {
-                return $this->sendLoginResponse($request);
+                return $this->loginResponse($request);
             } else {
                 Auth::logout();
                 return redirect()->back()->with('error', 'Tu cuenta está inactiva. Por favor contacta al administrador.');
             }
         }
 
-        return $this->sendFailedLoginResponse($request);
+        return $this->failedLogin($request);
     }
+
+    public function loginResponse(Request $request)
+    {
+        $user = User::where('email', $request->input('email'))->first();
+        
+        $request->session()->regenerate();
+
+        $this->clearLoginAttempts($request);
+
+        if ($response = $this->authenticated($request, $this->guard()->user())) {
+            return $response;
+        }
+
+        $user->login_attempts = 0;
+        $user->save();
+
+        return $request->wantsJson()
+            ? new JsonResponse([], 204)
+            : redirect()->intended($this->redirectPath());
+    }
+
+    
+
+    public function failedLogin(Request $request)
+    {
+        $user = User::where('email', $request->input('email'))->first();
+        
+        if ($user) {
+            $user->increment('login_attempts');
+            
+            if ($user->login_attempts > 3) {
+                
+                $user->state = 0;
+                $user->save();
+                return redirect()->back()
+                ->withInput($request->only($this->username(), 'remember'))
+                ->withErrors(['email' => trans('Usuario Bloqueado.')]);
+            }
+        }
+
+        return redirect()->back()
+            ->withInput($request->only($this->username(), 'remember'))
+            ->withErrors(['email' => trans('Usuario o contraseña incorrectos.')]);
+
+    }
+
 }
 
