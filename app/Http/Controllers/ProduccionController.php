@@ -8,15 +8,17 @@ use App\Models\tbl_produccion_zona;
 use App\Models\tbl_insp_cali;
 use App\Models\tbl_bitacora_contrato;
 use App\Models\tbl_produccion_corte;
+use App\Models\User;
 use Carbon\Carbon;
 use DateInterval;
 use DatePeriod;
 use DateTime;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Rmunate\Calendario\CalendarioColombia;
-
+use App\Notifications\Produccion;
 
 
 class ProduccionController extends Controller
@@ -36,10 +38,10 @@ class ProduccionController extends Controller
         $error = false;
         // sacar cortes activos
 
-
-        if (count($corte->toArray()) === 0 && !$error) {
+        if ($corte === null && !$error) {
             $error = true;
             $warning = 'No hay corte activo';
+            return view('produccion.index', ['produccionInspector' => "produccionInspector", 'contratosCategoria' => "contratosCategoria", 'conteoContratosPorZona' =>" conteoContratosPorZona", 'corte' => $corte, 'warning' => $warning]);
         }
         // sacar contratos del corte activo
         $contratosCorte = tbl_bitacora_contrato::where('FECHA', '>=', $corte->fecha_inicio)
@@ -642,10 +644,11 @@ class ProduccionController extends Controller
         $fechaString = $request->data[4];
         $ccOperario = $request->data[2];
         $contrato = new tbl_bitacora_contrato();
-
+        $nomInspector = tbl_insp_cali::select('apellidos', 'nombres')->where('cedula', '=', $ccOperario)->first();
         // Convertir la fecha a un formato adecuado (suponiendo dd-mm-yy)
         $fecha = Carbon::createFromFormat('d-m-y', $fechaString)->format('d-m-Y');
         $fechaDB = Carbon::createFromFormat('d-m-y', $fechaString)->format('Y-m-d');
+     
         // Proceder con la consulta
         $resultados = $this->consultarBitacora($fecha, $ccOperario);
         if ($resultados === null) {
@@ -672,6 +675,14 @@ class ProduccionController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => 'Error al insertar el contrato']);
         }
+          // Obtener los usuarios que deben recibir la notificación
+          $usuarios = User::role(['admin'])->get();
+          $usuarioLog = Auth::user();
+  
+          // Enviar la notificación a cada usuario
+          foreach ($usuarios as $usuario) {
+              $usuario->notify(new Produccion($request->data[7], $usuarioLog->name,$fechaDB, $nomInspector));
+          }
         return response()->json(['ok' => 'Insertado correctamente.']);
     }
 

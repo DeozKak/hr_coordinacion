@@ -53,7 +53,7 @@ class NotificationsController extends Controller
     {
         try{
         $notificationId = $request->notification_id; // Obtén el ID de la notificación
-        
+       
         $notification = auth()->user()->unreadNotifications()
             ->where('id', $notificationId) // Busca la notificación por ID
             ->first(); // Obtén la primera notificación que coincida (o null si no se encuentra)

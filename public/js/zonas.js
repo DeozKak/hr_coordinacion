@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             },
             error: function (xhr, status, error) {
-                console.error(error);
+                console.error(xhr.responseText);
             }
         });
 

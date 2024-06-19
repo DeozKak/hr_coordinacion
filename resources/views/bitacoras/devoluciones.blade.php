@@ -112,9 +112,7 @@
 
                             <table class="table table-striped table-bordered tbl_datos" id="gestionados">
                                 <thead>
-                                <tr style="<?php if ($dato->vence === "60 meses") {
-                                                    echo ("background-color: rgb(251,201,255);");
-                                                } ?>">
+                                <tr>
                                         <th>Supervisor</th>
                                         <th>Inspector</th>
                                         <th>Fecha Inspeccion</th>
@@ -134,7 +132,9 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($gestionados as $dato)
-                                    <tr>
+                                    <tr style="<?php if ($dato->vence === "60 meses") {
+                                                    echo ("background-color: rgb(251,201,255);");
+                                                } ?>">
                                         <td>{{$dato->Supervisor->name}}</td>
                                         <td> {{$dato->Inspector->nombres}} {{$dato->Inspector->apellidos}}</td>
                                         <td> {{$dato->FECHA_INSP}} </td>

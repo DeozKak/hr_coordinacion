@@ -26,7 +26,8 @@ class User extends Authenticatable
         'password',
         'type_id', 
         'identification', 
-        'state',
+        'state', 
+        'login_attempts',
     ];
 
     /**

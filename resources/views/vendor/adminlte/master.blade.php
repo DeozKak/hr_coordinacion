@@ -109,19 +109,31 @@
             const makeRead = document.getElementById('makeRead').value;
             setTimeout(() => {
                 document.addEventListener('click', function(event) {
-                    if (event.target.matches('.dropdown-item:not(.dropdown-footer)')) {
-                        const notificationId = event.target.id;
-                        const requestUrl = `${makeRead}?notification_id=${notificationId}`; // URL con parámetro
-                        fetch(requestUrl)
-                            .then(response => response.json())
-                            .then(data => {
-                            })
-                            .catch(error => {
-                                console.error('Error en la petición:', error);
-                            });
+                    let dropdownLink = null;
+                    if (event.target.matches('a.dropdown-item:not(.dropdown-footer)')) {
+                        dropdownLink = event.target;
+                    } else if (event.target.matches('a.dropdown-item:not(.dropdown-footer) span')) {
+                        dropdownLink = event.target.closest('a.dropdown-item:not(.dropdown-footer)');
+                    }
+
+                    if (dropdownLink) {
+                        const notificationId = dropdownLink.id;
+                  
+                        const requestUrl = `${makeRead}?notification_id=${notificationId}`;
+
+                        $.ajax({
+                            url: requestUrl,
+                            type: 'GET',
+                            success: function(response) {
+                         
+                            },
+                            error: function(xhr, status, error) {
+                              
+                            }
+                        });
                     }
                 });
-            }, 50);
+            }, 10);
         });
     </script>
 </body>

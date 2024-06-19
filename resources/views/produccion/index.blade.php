@@ -3,7 +3,7 @@
 @section('title', 'Producción')
 
 @section('content_header')
-<h1>Producción Corte {{$corte->fecha_inicio}}  a  {{$corte->fecha_fin}}</h1>
+<h1>Producción Corte {{$corte?->fecha_inicio}} a {{$corte?->fecha_fin}}</h1>
 @endsection
 
 @section('content')
@@ -54,7 +54,7 @@
 
 
 
-@if($municipiosNoEncontrados->isNotEmpty())
+@if(isset($municipiosNoEncontrados) && $municipiosNoEncontrados->isNotEmpty())
 <script>
     
     document.addEventListener('DOMContentLoaded', function() {
