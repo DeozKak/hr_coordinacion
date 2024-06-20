@@ -73,9 +73,9 @@
 
                                             <button class="btn btn-primary" id="verReporte">Ver reporte</button>
                                         </form>
-                                        <form action="{{route('bitacoras.download',['file'=>$bitacora->nombre_archivo.".xlsx"])}}" method="GET">
+                                       <!--  <form action="{{route('bitacoras.download',['file'=>$bitacora->nombre_archivo.".xlsx"])}}" method="GET">
                                             <button class="btn btn-success" id="btnDescargar">Descargar Xlsx</button>
-                                        </form>
+                                        </form> -->
                                     </div>
                                 </td>
                             </tr>

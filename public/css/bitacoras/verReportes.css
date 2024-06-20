@@ -1,3 +1,16 @@
+.handsontable table .fila-60-meses {
+    background-color: rgb(251, 201, 255) ; /* Lila claro */
+}
+
+.handsontable table .fila-acta-p {
+    background-color: rgb(184, 250, 195); /* Color para filas donde N° ACTA empieza con "P" */
+}
+
+.handsontable table .celda-amarilla {
+    background-color: rgb(253, 221, 140); /* Amarillo claro */
+}
+
+
 .handsontable.htReadOnly {
     background-color: #f9f9f9; /* Cambia el color de fondo a un tono diferente */
 }

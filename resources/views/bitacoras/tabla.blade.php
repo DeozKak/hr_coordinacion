@@ -115,6 +115,7 @@
                                             <th></th>
                                             <th></th>
                                             <th></th>
+                                            <th></th>
                                         </tr>
 
                                     </thead>
@@ -131,9 +132,9 @@
                                                 $Cierre = $sheet->getCell('M' . $row->getRowIndex())->getValue();
                                                 $Cierre = ltrim($Cierre, '.');
                                                 $venceDate = DateTime::createFromFormat('d/m/Y', $vence);
-                                                if($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m')){
+                                                if ($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m')) {
                                                     $vence = "60 meses";
-                                                }else{
+                                                } else {
                                                     $vence = "";
                                                 }
                                                 ?>
@@ -224,6 +225,8 @@
                                                         <td>
                                                             <?php echo $vence; ?>
                                                         </td>
+                                                        <td>
+                                                        </td>
                                                     </tr>
                                                 <?php endif; ?>
                                             <?php endforeach; ?>
@@ -307,14 +310,17 @@
                             </div>
                         </div>
                         <br>
-                        <div class="form-group matriz-des1">
+                        <div class="form-group">
                             <div class="col-md-6">
-                                <label for="orden_trabajo">Orden de trabajo</label>
-                                <input type="text" class="form-control" name="orden_trabajo" id="orden_trabajo">
+                                <label for="resultado_cierre">Resultado Cierre</label>
+                                <select class="form-control" name="resultado_cierre" id="resultado_cierre">
+                                    <option value="">Seleccione categoria</option>
+                                    <option value="CERTIFICADA">CERTIFICADA</option>
+                                    <option value="INSPECCIONADA CON DEFECTO CRITICO VALLE">INSPECCIONADA CON DEFECTO CRITICO VALLE</option>
+                                    <option value="INSPECCIONADA CON DEFECTO NO CRITICO VALLE">INSPECCIONADA CON DEFECTO NO CRITICO VALLE</option>
+                                </select>
                             </div>
-
                             <br>
-
                             <div class="col-md-6">
                                 <label for="categoria">Categoria</label>
                                 <select class="form-control" name="categoria" id="categoria">
@@ -322,17 +328,6 @@
                                     <option value="RESIDENCIAL">RESIDENCIAL</option>
                                     <option value="COMERCIAL">COMERCIAL</option>
                                 </select>
-                            </div>
-                        </div>
-                        <br>
-                        <div class="form-group">
-                            <div class="col-md-6">
-                                <label for="hora_inicio">Hora Inicio</label>
-                                <input type="time" class="form-control" name="hora_inicio" id="hora_inicio" step="60" pattern="[0-9]{2}:[0-9]{2}">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="hora_final" style="margin-left: 10px;">Hora Final</label>
-                                <input type="time" class="form-control" name="hora_final" id="hora_final" step="60" pattern="[0-9]{2}:[0-9]{2}">
                             </div>
                         </div>
                         <br>
@@ -350,40 +345,13 @@
                             </div>
                         </div>
                         <br>
-                        <div class="form-group">
+                        <div class="form-group causal" style="display: none;">
                             <div class="col-md-6">
-                                <label for="resultado_cierre">Resultado Cierre</label>
-                                <select class="form-control" name="resultado_cierre" id="resultado_cierre">
-                                    <option value="">Seleccione categoria</option>
-                                    <option value="CERTIFICADA">CERTIFICADA</option>
-                                    <option value="CERTIFICADA CON NOVEDADES">CERTIFICADA CON NOVEDADES</option>
-                                    <option value="INSPECCIONADA CON DEFECTO CRITICO VALLE">INSPECCIONADA CON DEFECTO CRITICO VALLE</option>
-                                    <option value="INSPECCIONADA CON DEFECTO NO CRITICO VALLE">INSPECCIONADA CON DEFECTO NO CRITICO VALLE</option>
-                                </select>
+                                <label for="causal">Causal de rechazo</label>
+                                <input type="text" class="form-control" name="causal" id="causal">
                             </div>
-                            <div class="col-md-6" id="cantidad_recintos">
-                                <label for="devolucion">Estado</label>
-                                <select class="form-control" name="devolucion" id="devolucion">
-                                    <option value="OK" selected>OK</option>
-                                    <option value="DV">DV</option>
-                                </select>
+                        </div>
 
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="col-md-6" style="display: none;" id="causal_devolucion">
-                                <label for="causal">Causal Devolución</label>
-                                <select class="form-control" name="causal" id="causal">
-                                    <option value="--SELECCIONE CAUSAL--" selected>--SELECCIONE CAUSAL--</option>
-                                    <option value="CONTRATO ERRADO">CONTRATO ERRADO</option>
-                                    <option value="NUMERO DE CUOTAS">NUMERO DE CUOTAS</option>
-                                    <option value="FALTA CARTA">FALTA CARTA</option>
-                                    <option value="FALTA INFORMACIÓN">FALTA INFORMACIÓN</option>
-                                    <option value="INFORMACION ERRADA">INFORMACION ERRADA</option>
-                                    <option value="ORDEN YA REGISTRADA">ORDEN YA REGISTRADA</option>
-                                </select>
-                            </div>
-                        </div>
                     </div>
                     <div class="modal-footer">
 

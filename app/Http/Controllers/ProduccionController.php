@@ -676,7 +676,7 @@ class ProduccionController extends Controller
             return response()->json(['error' => 'Error al insertar el contrato']);
         }
           // Obtener los usuarios que deben recibir la notificación
-          $usuarios = User::role(['admin'])->get();
+          $usuarios = User::role(['admin','Director','Residente'])->get();
           $usuarioLog = Auth::user();
   
           // Enviar la notificación a cada usuario

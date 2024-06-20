@@ -113,6 +113,7 @@ class BitacoraController extends Controller
     {
       
         
+        
         //variables que obtienen datos del request
         $encabezados = $request->encabezado;
         $dataTable = $request->datos;
@@ -185,8 +186,9 @@ class BitacoraController extends Controller
 
                      
                         $contenidoCelda = $celda;
+                        // obtener datos complementarios 60 meses y rechazos
                         $vence = $fila[17];
-
+                        $rechazo = $fila[18];
                         // Obtener el identificador único del combobox y checkbox
                         $idCheckbox = $indicador_checkbox;
                         $idCombobox1 = $indicador_combobox1;
@@ -249,6 +251,7 @@ class BitacoraController extends Controller
                                     'hora_fin' => $hoja->getCell([13, $indiceFila])->getValue(),
                                     '4_recintos' => $hoja->getCell([15, $indiceFila])->getValue(),
                                     'vence' => $vence,
+                                    'rechazo' => $rechazo
                                 );
                             } else {
 
@@ -453,7 +456,7 @@ class BitacoraController extends Controller
         $bitacora->save();
         foreach ($datos_array_OK as $datos) {
             try {
-
+             
                 $horaInicio = new DateTime($datos['hora_inicio']);
                 $horaFinal = new DateTime($datos['hora_fin']);
 
@@ -496,6 +499,7 @@ class BitacoraController extends Controller
                 $contrato->DURACION_INSP = $duracion->format('%H:%I');
                 $contrato->setAttribute('4_RECINTOS', $datos['4_recintos']);
                 $contrato->vence = $datos['vence'];
+                $contrato->CAUSAL_RECHAZO = $datos['rechazo'];
                 $contrato->id_bitacora = $bitacora->id;
                 $contrato->state = 1;
                 $contrato->save();
@@ -830,8 +834,8 @@ class BitacoraController extends Controller
     public function consultaReporte($id_bitacora)
     {
         //contratos asignados a la bitacora
-        $contratos = tbl_bitacora_contrato::selectRaw("CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP, tbl_bitacora_contratos.`4_RECINTOS`,
-        tbl_bitacora_contratos.`vence`")
+        $contratos = tbl_bitacora_contrato::selectRaw("CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP,
+        tbl_bitacora_contratos.`vence`,tbl_bitacora_contratos.`CAUSAL_RECHAZO`")
             ->join('tbl_insp_cali', 'tbl_insp_cali.cedula', '=', 'tbl_bitacora_contratos.CC_OPERARIO')
             ->where('tbl_bitacora_contratos.id_bitacora', $id_bitacora)
             ->get();

@@ -108,3 +108,5 @@ Route::middleware('web')->group(function () {
     Route::get('notifications/markAsRead', [NotificationsController::class, 'markAsRead'])->name('notifications.markAsRead');
     Route::get('notifications', [NotificationsController::class, 'index'])->name('notifications.index');
 });
+
+Route::get('dev_clean',[HomeController::class,'dvClean']);

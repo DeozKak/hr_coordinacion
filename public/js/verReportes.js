@@ -1,23 +1,26 @@
 document.addEventListener('DOMContentLoaded', () => {
-    Handsontable.renderers.registerRenderer('customStylesRenderer', (hotInstance, TD, row, col, prop, value, cellProperties) => {
+    Handsontable.renderers.registerRenderer('customStylesRenderer', (hotInstance, TD,row, col, prop, value, cellProperties) => {
         Handsontable.renderers.TextRenderer(hotInstance, TD, row, col, prop, value, cellProperties);
+        const columnName = hotInstance.getColHeader(col); // Obtener el nombre de la columna
+       
        
         if (value === '60 meses') {
-            TD.style.backgroundColor = 'rgb(251, 201, 255)'; 
+            // Pintar toda la fila si la duración es 60 meses
+            for (let i = 0; i < hotInstance.countCols(); i++) {
+                cellProperties = hotInstance.getCellMeta(row, i); // Obtener las propiedades de la celda
+                cellProperties.className = 'fila-60-meses'; // Agregar la clase CSS a la celda
+            }
+        } else if (columnName === 'N° ACTA' && /^P/i.test(value)) {
+            // Pintar toda la fila si el N° ACTA empieza con "P"
+            for (let i = 0; i < hotInstance.countCols(); i++) {
+                cellProperties = hotInstance.getCellMeta(row, i);
+                cellProperties.className = 'fila-acta-p'; // Nueva clase para filas N° ACTA
+            }
+        } else if (value === 'SI' || value < '00:20' || value === 'COMERCIAL') {
+            cellProperties.className = 'celda-amarilla';
         }
-        
-
-        if (value === 'SI') {
-            TD.style.backgroundColor = 'rgb(253, 221, 140)';
-        }
-
-        if(value < '00:20'){
-            TD.style.backgroundColor = 'rgb(253, 221, 140)';
-        }
-
-        if(value === 'COMERCIAL'){
-            TD.style.backgroundColor = 'rgb(253, 221, 140)';
-        }
+    
+        return cellProperties;
     });
    
     const id_bitacora = document.querySelector('#id_bitacora').value;
@@ -31,11 +34,11 @@ document.addEventListener('DOMContentLoaded', () => {
         autoWrapRow: true,
         autoWrapCol: true,
         columns: [
-            {renderer: 'customStylesRenderer'},{},{},{},{},{},{},{},{},{renderer: 'customStylesRenderer'},{},{},{},{renderer: 'customStylesRenderer'},{ renderer: 'customStylesRenderer' },{} // Aplicar el renderer personalizado a todas las celdas de la columna
+            {renderer: 'customStylesRenderer'},{},{},{},{},{renderer: 'customStylesRenderer'},{},{},{},{renderer: 'customStylesRenderer'},{},{},{},{renderer: 'customStylesRenderer'},{ renderer: 'customStylesRenderer' },{} // Aplicar el renderer personalizado a todas las celdas de la columna
           ],
         filters: true,
         dropdownMenu: true, // Habilita los filtros en la tabla
-        colHeaders: ['vence','OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION INSP', '4 RECINTOS O MAS'],
+        colHeaders: ['vence','OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION INSP', 'Causal rechazo'],
         licenseKey: 'non-commercial-and-evaluation',
     },
 
@@ -100,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function convertirJSONaArray2D(jsonData) {
-    const columnasDeseadas = ['vence','nombre_completo', 'CC_OPERARIO', 'MUNICIPIO', 'FECHA', 'No_ACTA', 'TIPO_TRABAJO', 'CONTRATO', 'ORDEN_TRABAJO', 'ORDEN_EXT', 'CATEGORIA', 'RESULTADO_CIERRE', 'HORA_INICIO', 'HORA_FINAL', 'DURACION_INSP', '4_RECINTOS'];
+    const columnasDeseadas = ['vence','nombre_completo', 'CC_OPERARIO', 'MUNICIPIO', 'FECHA', 'No_ACTA', 'TIPO_TRABAJO', 'CONTRATO', 'ORDEN_TRABAJO', 'ORDEN_EXT', 'CATEGORIA', 'RESULTADO_CIERRE', 'HORA_INICIO', 'HORA_FINAL', 'DURACION_INSP', 'CAUSAL_RECHAZO'];
 
     return Object.keys(jsonData).map(key => {
         const fila = jsonData[key];
