@@ -81,12 +81,7 @@
 
                     <div class="col-md-6">
                         <label for="municipio">Municipio:</label>
-                        <select class="form-control" name="municipio" id="municipio">
-                            <option value="">Seleccione Municipio</option>
-                            @foreach ($municipios as $municipio)
-                            <option value="{{$municipio->nombre}}">{{$municipio->nombre}}</option>
-                            @endforeach
-                        </select>
+                        <select class="form-control select2" name="municipio" id="municipio-select"></select>
                     </div>
                 </div>
                 <br>
@@ -188,16 +183,20 @@
             </div>
         </div>
     </div>
+    @section('js')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/es.js"></script>
     <script>
         let permission = 0;
     </script>
     @haspermission('ver_residente')
     <script>
-         permission = 1;
+        permission = 1;
     </script>
     @endhaspermission
     <script>
-        
+        const urlMunicipios = "{{ route('municipios.json') }}"; // Usando el helper route()
         const urlObtenerDetalles = "{{ route('obtener-url-detalles') }}"; // Usando el helper route()
         const urlObtenerBitacoras = "{{ route('obtener-url-bitacoras') }}"; // Usando el helper route()
         const urlActualizarDetallesDiario = "{{ route('produccion.ActualizarDetallesDiario', ['id' => ':id']) }}";
@@ -207,5 +206,69 @@
         const urlActualizarDetallesDia = "{{ route('produccion.detallesDiario',['fecha' => ':fecha', 'inspector' => ':inspector']) }}";
         const urlZonas = "{{ route('produccion.zonas') }}";
         const urlInsertar = "{{ route('produccion.insertarContrato') }}"
+
+
+        $(document).ready(function() {
+            $('#ventanaEmergente').on('shown.bs.modal', function() {
+                select2();
+                function select2() {
+                    $('#municipio-select').select2({
+                        language: "es",
+                        ajax: {
+                            url: urlMunicipios, // Ruta a la función del controlador
+                            dataType: 'json',
+                            delay: 250, // Retraso antes de realizar la búsqueda
+                            data: function(params) {
+                                return {
+                                    term: params.term // Término de búsqueda
+                                };
+                            },
+                            processResults: function(data) {
+                                return {
+                                    results: $.map(data, function(item, key) { // Mapear resultados
+                                        return {
+                                            id: key,
+                                            text: item
+                                        };
+                                    })
+                                };
+                            },
+                            cache: true
+                        },
+                        minimumInputLength: 2 // Mínimo de caracteres para iniciar la búsqueda
+                    });
+                }
+            });
+            $(window).on('resize', function() {
+                $('#municipio-select').select2('destroy'); // Destruir la instancia actual de Select2
+                $('#municipio-select').select2({
+                    language: "es",
+                        ajax: {
+                            url: urlMunicipios, // Ruta a la función del controlador
+                            dataType: 'json',
+                            delay: 250, // Retraso antes de realizar la búsqueda
+                            data: function(params) {
+                                return {
+                                    term: params.term // Término de búsqueda
+                                };
+                            },
+                            processResults: function(data) {
+                                return {
+                                    results: $.map(data, function(item, key) { // Mapear resultados
+                                        return {
+                                            id: key,
+                                            text: item
+                                        };
+                                    })
+                                };
+                            },
+                            cache: true
+                        },
+                        minimumInputLength: 2 // Mínimo de caracteres para iniciar la búsqueda
+                    });
+               
+            });
+        });
     </script>
+    @stop
     @stop

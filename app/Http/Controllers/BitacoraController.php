@@ -925,4 +925,14 @@ class BitacoraController extends Controller
         // Devolver resultados en formato JSON
         return response()->json($bitacoras);
     }
+
+    public function getMunicipiosJson(Request $request)
+{
+    $term = $request->input('term');
+
+    $municipios = tbl_localidades_municipio::where('nombre', 'like', "%$term%")
+        ->pluck('nombre','nombre'); // Obtener nombre e ID
+
+    return response()->json($municipios);
+}
 }

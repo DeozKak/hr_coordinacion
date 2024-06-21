@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProduccionController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\CheckPermission;
+use App\Http\Middleware\BypassAuth;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
@@ -14,13 +15,14 @@ use App\Http\Controllers\CorteProduccionController;
 use App\Http\Controllers\NotificationsController;
 use Illuminate\Http\Request;
 
+
 Route::get('/', function () {
     return redirect()->route('home');
 });
 Route::middleware('web')->group(function () {
 
     Route::middleware('throttle:60,1')->group(function () {
-        Auth::routes(); 
+        Auth::routes();
     });
     Route::middleware('auth')->group(function () {
         Route::get('/home', [HomeController::class, 'index'])->name('home');
@@ -57,6 +59,7 @@ Route::middleware('web')->group(function () {
         Route::get('bitacora/consultar_indicadores/{id_bitacora}', [BitacoraController::class, 'ConsultaIndicadores'])->name('bitacoras.Consulta_indicadores')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::post('bitacora/devoluciones/actualizar/{id}', [BitacoraController::class, 'actualizar_devolucion'])->name('bitacoras.actualizar_devolucion')->middleware(CheckPermission::class . ':mod_devoluciones');
         Route::get('bitacoras/buscar_por_contrato', [BitacoraController::class, 'buscarPorContrato'])->name('bitacoras.buscar_por_contrato')->middleware(CheckPermission::class . ':ver_bitacoras');
+        Route::get('municipios/json', [BitacoraController::class, 'getMunicipiosJson'])->name('municipios.json')->middleware(CheckPermission::class . ':ver_bitacoras');
         //Rutas para inspectores----------------------------------------------------------------------------
         Route::get('/inspectores', [InspectorController::class, 'index'])->name('inspectores.index')->middleware(CheckPermission::class . ':gestion_inspectores');
         Route::get('/inspectores/create', [InspectorController::class, 'create'])->name('inspectores.create')->middleware(CheckPermission::class . ':gestion_inspectores');
@@ -109,4 +112,3 @@ Route::middleware('web')->group(function () {
     Route::get('notifications', [NotificationsController::class, 'index'])->name('notifications.index');
 });
 
-Route::get('dev_clean',[HomeController::class,'dvClean']);

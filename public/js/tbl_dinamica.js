@@ -303,7 +303,10 @@ $(document).ready(function () {
     //--------------------------------------------------------------------------------
     // abrir modal agregar inspecciones en papel
     document.getElementById('btnPapel').addEventListener('click', function () {
-        $('#ventanaEmergente').modal('show');
+        $('#ventanaEmergente').modal({
+            show: true, // Mostrar el modal
+            focus: false // Deshabilitar el autoenfoque
+        });
     });
     // limitar fechas en el campo fecha
     const inputFecha = document.getElementById('fecha');
@@ -371,20 +374,21 @@ $(document).ready(function () {
     });
     //--------------------------------------------------------------------------------
 
+   
     //-------------------------------------------------------------------------------- 
 
 
     //--------------------------------------------------------------------------------
     const selectTipoTrabajo = document.getElementById('tipo_trabajo');
-
+    const grupo1 = document.querySelector('.matriz-des1');
     const grupo2 = document.querySelector('.matriz-des2');
 
     selectTipoTrabajo.addEventListener('change', function () {
         if (selectTipoTrabajo.value === "FI-29 revisión periódica línea matriz") {
-
+            grupo1.style.display = 'none';
             grupo2.style.display = 'none';
         } else {
-
+            grupo1.style.display = '';
             grupo2.style.display = '';
         }
     });
@@ -430,7 +434,7 @@ $(document).ready(function () {
             if (campo.value.trim() === '' || campo.value === ':' || campo.value === 'P') {
                 const selectTipoTrabajo = document.getElementById('tipo_trabajo');
                 if (selectTipoTrabajo.value === "FI-29 revisión periódica línea matriz") {
-                    if (campo.id === 'orden_trabajo' || campo.id === 'NroRecintosP' || campo.id === 'recintos') {
+                    if (campo.id === 'orden_trabajo' || campo.id === 'NroRecintosP' || campo.id === 'recintos' || campo.id === 'categoria') {
                         return;
                     }
                 }
@@ -643,7 +647,7 @@ function agregar_datos() {
     //obtener el nombre del inspector
     const nombre_insp = selectedoption.getAttribute('data-nombres');
 
-    const municipio = document.getElementById('municipio').value;
+    const municipio = document.getElementById('municipio-select').value;
     const fecha = document.getElementById('fecha').value;
     const acta = document.getElementById('N°acta').value;
     const tipo_trabajo = document.getElementById('tipo_trabajo').value;
@@ -653,7 +657,7 @@ function agregar_datos() {
     const cantidadRecintos = document.getElementById('NroRecintosP').value;
     const resultado_cierre = document.getElementById('resultado_cierre').value;
     const rechazo = document.getElementById('causal').value;
-    console.log(rechazo);
+    
 
     const [anio, mes, dia] = fecha.split('-').map(Number);
 

@@ -679,7 +679,7 @@ return [
                 ],
             ],
         ],
-        'Select2' => [
+       /*  'Select2' => [
             'active' => true,
             'files' => [
                 [
@@ -693,7 +693,7 @@ return [
                     'location' => '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.css',
                 ],
             ],
-        ],
+        ], */
         'Chartjs' => [
             'active' => true,
             'files' => [

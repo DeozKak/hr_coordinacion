@@ -531,9 +531,9 @@ class ProduccionController extends Controller
             }
 
             // Ajustar los límites de las condicionales si hay un festivo en la semana
-            $limiteContratos = $hayFestivoEnSemana ? 40 : 48;
-            $limiteContratosBajo = $hayFestivoEnSemana ? 38 : 46;
-            $limiteContratosMedio = $hayFestivoEnSemana ? 39 : 47;
+            $limiteContratos = $hayFestivoEnSemana ? 42 : 50;
+            $limiteContratosBajo = $hayFestivoEnSemana ? 40 : 48;
+            $limiteContratosMedio = $hayFestivoEnSemana ? 41 : 49;
             if ($contratosSabado->count() > 0) {
 
 

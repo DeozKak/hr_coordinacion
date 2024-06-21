@@ -262,15 +262,9 @@
                                 </select>
                             </div>
                             <br>
-
                             <div class="col-md-6">
                                 <label for="municipio">Municipio:</label>
-                                <select class="form-control" name="municipio" id="municipio">
-                                    <option value="">Seleccione Municipio</option>
-                                    @foreach ($municipios as $municipio)
-                                    <option value="{{$municipio->nombre}}">{{$municipio->nombre}}</option>
-                                    @endforeach
-                                </select>
+                                <select class="form-control select2" name="municipio" id="municipio-select"></select>
                             </div>
                         </div>
                         <br>
@@ -321,7 +315,7 @@
                                 </select>
                             </div>
                             <br>
-                            <div class="col-md-6">
+                            <div class="col-md-6 matriz-des1">
                                 <label for="categoria">Categoria</label>
                                 <select class="form-control" name="categoria" id="categoria">
                                     <option value="">Seleccione categoria</option>
@@ -371,7 +365,99 @@
 
 
     </div>
+    @section('js')
+    <!--  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script> -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/es.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#ventanaEmergente').on('shown.bs.modal', function() {
+                select2();
 
+                function select2() {
+                    $('#municipio-select').select2({
+                        language: "es",
+                        ajax: {
+                            url: 'municipios/json', // Ruta a la función del controlador
+                            dataType: 'json',
+                            delay: 250, // Retraso antes de realizar la búsqueda
+                            data: function(params) {
+                                return {
+                                    term: params.term // Término de búsqueda
+                                };
+                            },
+                            processResults: function(data) {
+                                return {
+                                    results: $.map(data, function(item, key) { // Mapear resultados
+                                        return {
+                                            id: key,
+                                            text: item
+                                        };
+                                    })
+                                };
+                            },
+                            cache: true
+                        },
+                        minimumInputLength: 2 // Mínimo de caracteres para iniciar la búsqueda
+                    });
+                }
+            });
+            $(window).on('resize', function() {
+                $('#municipio-select').select2('destroy'); // Destruir la instancia actual de Select2
+                $('#municipio-select').select2({
+                    language: "es",
+                    ajax: {
+                        url: 'municipios/json', // Ruta a la función del controlador
+                        dataType: 'json',
+                        delay: 250, // Retraso antes de realizar la búsqueda
+                        data: function(params) {
+                            return {
+                                term: params.term // Término de búsqueda
+                            };
+                        },
+                        processResults: function(data) {
+                            return {
+                                results: $.map(data, function(item, key) { // Mapear resultados
+                                    return {
+                                        id: key,
+                                        text: item
+                                    };
+                                })
+                            };
+                        },
+                        cache: true
+                    },
+                    minimumInputLength: 2 // Mínimo de caracteres para iniciar la búsqueda
+                });
+
+            });
+        });
+
+
+        /*  $(document).ready(function() {
+             $("#municipio-autocomplete").autocomplete({
+                 source: function(request, response) {
+                     $.ajax({
+                         url: 'municipios/json', // Ruta a la función del controlador
+                         dataType: "json",
+                         data: {
+                             term: request.term // Término de búsqueda
+                         },
+                         success: function(data) {
+                             response(data); // Pasa los datos al autocompletado
+                         },
+                         error: function(xhr, status, error) {
+                             console.log(xhr.responseText);
+                         }
+                     });
+                 },
+                 minLength: 2
+             });
+         }); */
+    </script>
+    @stop
 </body>
 
 
