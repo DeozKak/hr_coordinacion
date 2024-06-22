@@ -28,7 +28,11 @@ $(document).ready(function () {
         "columnDefs": [
             {
                 "targets": [17], // 
-                "visible": false 
+                "visible": false
+            },
+            {
+                "targets": [18], // 
+                "visible": false
             }
         ]
     });
@@ -235,7 +239,7 @@ $(document).ready(function () {
                     _token: csrfToken
                 },
                 success: function (response) {
-                    
+
                     if (response.ruta) {
                         window.location.href = response.ruta;
                         codigoHTML_tabla_indicadores = null;
@@ -299,7 +303,10 @@ $(document).ready(function () {
     //--------------------------------------------------------------------------------
     // abrir modal agregar inspecciones en papel
     document.getElementById('btnPapel').addEventListener('click', function () {
-        $('#ventanaEmergente').modal('show');
+        $('#ventanaEmergente').modal({
+            show: true, // Mostrar el modal
+            focus: false // Deshabilitar el autoenfoque
+        });
     });
     // limitar fechas en el campo fecha
     const inputFecha = document.getElementById('fecha');
@@ -366,30 +373,10 @@ $(document).ready(function () {
         event.preventDefault();
     });
     //--------------------------------------------------------------------------------
-    // campo orden de trabajo
-    const inputOrden = document.getElementById('orden_trabajo');
 
-    // Permitir solo números
-    inputOrden.addEventListener('input', function () {
-        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 18);
-    });
-
-    // Quitar los botones de aumento/decremento
-    inputOrden.addEventListener('mousewheel', function (event) {
-        event.preventDefault();
-    });
+   
     //-------------------------------------------------------------------------------- 
-    // control de devoluci´pn
-    const devolucionSelect = document.getElementById('devolucion');
-    const causalDevolucionGroup = document.getElementById('causal_devolucion');
 
-    devolucionSelect.addEventListener('change', function () {
-        if (this.value === 'DV') {
-            causalDevolucionGroup.style.display = 'block'; // Mostrar el campo "Causal Devolución"
-        } else {
-            causalDevolucionGroup.style.display = 'none'; // Ocultar el campo "Causal Devolución"
-        }
-    });
 
     //--------------------------------------------------------------------------------
     const selectTipoTrabajo = document.getElementById('tipo_trabajo');
@@ -405,6 +392,19 @@ $(document).ready(function () {
             grupo2.style.display = '';
         }
     });
+
+    //--------------------------------------------------------------------------------
+    const resultado_cierre = document.getElementById('resultado_cierre');
+    const causal = document.querySelector('.causal');
+
+    resultado_cierre.addEventListener('change', function () {
+        if (resultado_cierre.value === 'CERTIFICADA' || resultado_cierre.value === '') {
+            causal.style.display = 'none';
+        } else {
+            causal.style.display = '';
+        }
+    });
+
     const btnAgregar = document.getElementById('agregar');
 
     btnAgregar.addEventListener('click', function () {
@@ -431,10 +431,17 @@ $(document).ready(function () {
                     inputRecintos.style.border = ''; // Restablecer estilo de borde por defecto
                 }
             }
-            if (campo.value.trim() === '' || campo.value === ':'|| campo.value === 'P') {
+            if (campo.value.trim() === '' || campo.value === ':' || campo.value === 'P') {
                 const selectTipoTrabajo = document.getElementById('tipo_trabajo');
                 if (selectTipoTrabajo.value === "FI-29 revisión periódica línea matriz") {
-                    if (campo.id === 'orden_trabajo' || campo.id === 'categoria' || campo.id === 'NroRecintosP' || campo.id === 'recintos') {
+                    if (campo.id === 'orden_trabajo' || campo.id === 'NroRecintosP' || campo.id === 'recintos' || campo.id === 'categoria') {
+                        return;
+                    }
+                }
+                const resultado_cierre = document.getElementById('resultado_cierre');
+
+                if (resultado_cierre.value === 'CERTIFICADA' || resultado_cierre.value === '') {
+                    if (campo.id === 'causal') {
                         return;
                     }
                 }
@@ -470,8 +477,6 @@ $(document).ready(function () {
                             campo.value = 'NO';
                             break;
                     }
-
-                    causalDevolucionGroup.style.display = 'none'; // Ocultar el campo "Causal Devolución"
 
                 });
                 contadores_dinamicos('#' + nombre_insp);
@@ -642,22 +647,17 @@ function agregar_datos() {
     //obtener el nombre del inspector
     const nombre_insp = selectedoption.getAttribute('data-nombres');
 
-    const municipio = document.getElementById('municipio').value;
+    const municipio = document.getElementById('municipio-select').value;
     const fecha = document.getElementById('fecha').value;
     const acta = document.getElementById('N°acta').value;
     const tipo_trabajo = document.getElementById('tipo_trabajo').value;
     const contrato = document.getElementById('contrato').value;
-    const orden = document.getElementById('orden_trabajo').value;
     const categoria = document.getElementById('categoria').value;
-    const hora_inicio = document.getElementById('hora_inicio').value;
-    const hora_final = document.getElementById('hora_final').value;
     const recintos = document.getElementById('recintos').value;
     const cantidadRecintos = document.getElementById('NroRecintosP').value;
-    const devolucion = document.getElementById('devolucion').value;
     const resultado_cierre = document.getElementById('resultado_cierre').value;
-    const causal = document.getElementById('causal').value;
-
-    const duracion = calcularDuracion(hora_inicio, hora_final);
+    const rechazo = document.getElementById('causal').value;
+    
 
     const [anio, mes, dia] = fecha.split('-').map(Number);
 
@@ -670,8 +670,13 @@ function agregar_datos() {
     const fechaFormateada = `${diaFormateado}-${mesFormateado}-${anioFormateado}`;
 
     const tabla = $('table.tbl_datos[id^="#' + nombre_insp + '"]');
-
-    const validador = validacionDatos(orden, contrato, tabla);
+    const orden = "";
+    const hora_inicio = "";
+    const hora_final = "";
+    const duracion = "";
+    const devolucion = "OK";
+    const causal = "--SELECCIONE CAUSAL--";
+    const validador = validacionDatos(contrato, tabla);
 
     if (validador === false) {
         // Crear una nueva fila y celdas para agregar los valores
@@ -701,6 +706,8 @@ function agregar_datos() {
                                 (causal === 'INFORMACION ERRADA' ? '<select class="form-select combo2 nombre-columna" style="width: 220px; display: none;"><option value="--SELECCIONE CAUSAL--">--SELECCIONE CAUSAL--</option><option value="CONTRATO ERRADO">CONTRATO ERRADO</option><option value="NUMERO DE CUOTAS">NUMERO DE CUOTAS</option><option value="FALTA CARTA">FALTA CARTA</option><option value="FALTA INFORMACIÓN">FALTA INFORMACIÓN</option><option value="INFORMACION ERRADA" selected>INFORMACION ERRADA</option><option value="ORDEN YA REGISTRADA">ORDEN YA REGISTRADA</option></select>' :
                                     (causal === 'ORDEN YA REGISTRADA' ? '<select class="form-select combo2 nombre-columna" style="width: 220px; display: none;"><option value="--SELECCIONE CAUSAL--">--SELECCIONE CAUSAL--</option><option value="CONTRATO ERRADO">CONTRATO ERRADO</option><option value="NUMERO DE CUOTAS">NUMERO DE CUOTAS</option><option value="FALTA CARTA">FALTA CARTA</option><option value="FALTA INFORMACIÓN">FALTA INFORMACIÓN</option><option value="INFORMACION ERRADA">INFORMACION ERRADA</option><option value="ORDEN YA REGISTRADA" selected>ORDEN YA REGISTRADA</option></select>' :
                                         '<select class="form-select combo2 nombre-columna" style="width: 220px; display: none;"><option value="--SELECCIONE CAUSAL--" selected>--SELECCIONE CAUSAL--</option><option value="CONTRATO ERRADO">CONTRATO ERRADO</option><option value="NUMERO DE CUOTAS">NUMERO DE CUOTAS</option><option value="FALTA CARTA">FALTA CARTA</option><option value="FALTA INFORMACIÓN">FALTA INFORMACIÓN</option><option value="INFORMACION ERRADA">INFORMACION ERRADA</option><option value="ORDEN YA REGISTRADA">ORDEN YA REGISTRADA</option></select>'))))))),
+            "",
+            rechazo,
 
         ]).draw().data();
 
@@ -814,10 +821,10 @@ function cambiarColor(select) {
     }
 }
 
-function validacionDatos(orden, contrato, tabla) {
+function validacionDatos(contrato, tabla) {
 
     const contratoNuevo = contrato;
-    const ordenNuevo = orden;
+
 
     // Obtener los datos existentes en la tabla
     const data = tabla.DataTable().data();
@@ -827,7 +834,7 @@ function validacionDatos(orden, contrato, tabla) {
         const contratoExistente = value[6]; // Índice de la columna del contrato en los datos existentes
         const ordenExistente = value[7]; // Índice de la columna de la orden en los datos existentes
 
-        if (contratoExistente === contratoNuevo && ordenExistente === ordenNuevo) {
+        if (contratoExistente === contratoNuevo) {
             datosRepetidos = true; // Salir del bucle each si se encuentran datos repetidos
         }
     });

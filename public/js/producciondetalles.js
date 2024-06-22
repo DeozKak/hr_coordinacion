@@ -190,7 +190,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // recuperar fecha para la consulta contratos por dia
                         const fecha = fechas.find(fecha => fecha.dia === columnName);
                         fechaSeleccionada = fecha.fecha;
-                        $('#exampleModal').modal('show');
+                        $('#exampleModal').modal({
+                            show: true, // Mostrar el modal
+                            focus: false // Deshabilitar el autoenfoque
+                        });
                         detallesDia(fecha.fecha, rowData, columnName, nombre_completo);
                     }
 
@@ -263,6 +266,30 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
     const titulo = document.querySelector('#titulo');
     titulo.innerHTML = `INSPECCIONES DEL DÍA ${nombreDia} - ${nombre_completo}`;
 
+    Handsontable.renderers.registerRenderer('customStylesRendererdays', (hotInstance, TD,row, col, prop, value, cellProperties) => {
+        Handsontable.renderers.TextRenderer(hotInstance, TD, row, col, prop, value, cellProperties);
+        const columnName = hotInstance.getColHeader(col); // Obtener el nombre de la columna
+       
+       
+        if (value === '60 meses') {
+            // Pintar toda la fila si la duración es 60 meses
+            for (let i = 0; i < hotInstance.countCols(); i++) {
+                cellProperties = hotInstance.getCellMeta(row, i); // Obtener las propiedades de la celda
+                cellProperties.className = 'fila-60-meses'; // Agregar la clase CSS a la celda
+            }
+        } else if (columnName === 'N° ACTA' && /^P/i.test(value)) {
+            // Pintar toda la fila si el N° ACTA empieza con "P"
+            for (let i = 0; i < hotInstance.countCols(); i++) {
+                cellProperties = hotInstance.getCellMeta(row, i);
+                cellProperties.className = 'fila-acta-p'; // Nueva clase para filas N° ACTA
+            }
+        } else if (value === 'SI' || value < '00:20' || value === 'COMERCIAL') {
+            cellProperties.className = 'celda-amarilla';
+        }
+    
+        return cellProperties;
+    });
+
     (Handsontable => {
         function customTextValidator(value, callback) {
             const valid = value !== '' && (value === 'NO' || !isNaN(Number(value)));
@@ -287,7 +314,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         colHeaders: ['ID','vence' ,'OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION INSP', '4 RECINTOS O MAS', 'ESTADO', 'ACCIONES'],
         columns: [
             { type: 'numeric', readOnly: true }, // ID (oculto)
-            {}, 
+            {renderer: 'customStylesRendererdays'}, // VENCE
             { type: 'text' }, // OPERARIO
             { type: 'numeric', validator: 'custom.numeric' }, // CC OPERARIO
             { type: 'text' }, // MUNICIPIO
@@ -299,7 +326,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                     maxDate: new Date(new Date().getTime() - (24 * 60 * 60 * 1000)) // Esto establece la fecha máxima como el día actual
                 }
             },// Usa el editor personalizado, // FECHA
-            { type: 'numeric', validator: 'custom.numeric' }, // N° ACTA
+            { type: 'numeric', validator: 'custom.numeric' , renderer: 'customStylesRendererdays'}, // N° ACTA
             {
                 editor: 'select', // Tipo combobox
                 selectOptions: ['RP 10444', 'RP 12161', 'RN 12162', 'SA 12164', 'SA 12163'],
@@ -317,7 +344,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             }, // RESULTADO CIERRE
             { type: 'time', timeFormat: 'HH:mm', correctFormat: true }, // HORA INICIO
             { type: 'time', timeFormat: 'HH:mm', correctFormat: true }, // HORA FINAL
-            { type: 'time', timeFormat: 'HH:mm', correctFormat: true }, // DURACION INSP
+            { type: 'time', timeFormat: 'HH:mm', correctFormat: true , renderer: 'customStylesRendererdays'}, // DURACION INSP
             { type: 'text', validator: 'custom.text', allowInvalid: false },
             {}, // las columnas existentes
             {
@@ -483,7 +510,9 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
     });
 
     const agregar = document.querySelector('#agregar');
-    const ventanaEmergente = new bootstrap.Modal(document.getElementById('ventanaEmergente'));
+    /* const ventanaEmergente = new bootstrap.Modal(document.getElementById('ventanaEmergente'), {
+        focus: false // Deshabilitar el enfoque automático
+    }); */
 
     agregar.addEventListener('click', () => {
         const fechaInput = document.getElementById('fecha');
@@ -500,7 +529,11 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         option1.value = ccInspector;
         option1.text = nombreInspector;
         selectNombre.appendChild(option1);
-        ventanaEmergente.show();
+        $('#ventanaEmergente').modal({
+            show: true, // Mostrar el modal
+            focus: false // Deshabilitar el autoenfoque
+        });
+        /* ventanaEmergente.show(); */
         document.getElementById('exampleModal').classList.add('modal-backdrop-custom');
     });
 
@@ -1052,7 +1085,7 @@ function agregar_datos() {
     //obtener el nombre del inspector
     const nombre_insp = selectedoption.getAttribute('data-nombres');
 
-    const municipio = document.getElementById('municipio').value;
+    const municipio = document.getElementById('municipio-select').value;
     const fecha = document.getElementById('fecha').value;
     const acta = document.getElementById('N°acta').value;
     const tipo_trabajo = document.getElementById('tipo_trabajo').value;

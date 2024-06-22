@@ -22,7 +22,7 @@
                     </div>
                     <div class="form-group">
                         <label for="Tipo de identificacion">Tipo de identificación</label>
-                        <select name="Tipo de identificacion" id="Tipo de identificacion" class="form-select" disabled>
+                        <select name="Tipo de identificacion" id="Tipo de identificacion" class="form-control" disabled>
                             <option value="{{$user->type_id}}">{{$user->type_id}}</option>
                         </select>
                     </div>
@@ -33,7 +33,7 @@
 
                     <div class="form-group">
                         <label for="roles">Rol</label>
-                        <select name="roles" id="roles" class="form-select" disabled>
+                        <select name="roles" id="roles" class="form-control" disabled>
                             <option value="{{$currentRole->name}}" selected>{{$currentRole->name}}</option>
                         </select>
                     </div>
