@@ -75,10 +75,10 @@ document.addEventListener('DOMContentLoaded', () => {
         success: function (response) {
             const hotIndicadores = new Handsontable(tablaIndicadores, {
                 data: [
-                    ['.CERTIFICADA', response.certificadas],
+                    ['CERTIFICADA', response.certificadas],
                     ['CERTIFICADA CON NOVEDADES', response.certificadasConNovedades],
-                    ['.INSPECCIONADA CON DEFECTO CRITICO', response.inspeccionadasConDefectoCritico],
-                    ['.INSPECCIONADA CON DEFECTO NO CRITICO', response.inspeccionadasConDefectoNoCritico],
+                    ['INSPECCIONADA CON DEFECTO CRITICO', response.inspeccionadasConDefectoCritico],
+                    ['INSPECCIONADA CON DEFECTO NO CRITICO', response.inspeccionadasConDefectoNoCritico],
                     ['TOTAL', response.totalContratosOK]
                 ],
                 readOnly: true,

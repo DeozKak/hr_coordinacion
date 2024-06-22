@@ -1,3 +1,15 @@
+#contratos_dia .fila-60-meses {
+    background-color: rgb(251, 201, 255) ; /* Lila claro */
+}
+
+#contratos_dia .fila-acta-p {
+    background-color: rgb(184, 250, 195); /* Color para filas donde N° ACTA empieza con "P" */
+}
+
+#contratos_dia .celda-amarilla {
+    background-color: rgb(253, 221, 140); /* Amarillo claro */
+}
+
 @keyframes spin {
     0% {
       transform: rotate(0deg);

@@ -846,10 +846,10 @@ class BitacoraController extends Controller
     public function consultaIndicadores($id_bitacora)
     {
         //contadores de cierres
-        $certificadas = tbl_bitacora_contrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', '.CERTIFICADA')->count();
+        $certificadas = tbl_bitacora_contrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', 'CERTIFICADA')->count();
         $certificadasConNovedades = tbl_bitacora_contrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', 'CERTIFICADA CON NOVEDADES')->count();
-        $inspeccionadasConDefectoCritico = tbl_bitacora_contrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', '.INSPECCIONADA CON DEFECTO CRITICO VALLE')->count();
-        $inspeccionadasConDefectoNoCritico = tbl_bitacora_contrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', '.INSPECCIONADA CON DEFECTO NO CRITICO VALLE')->count();
+        $inspeccionadasConDefectoCritico = tbl_bitacora_contrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', 'INSPECCIONADA CON DEFECTO CRITICO VALLE')->count();
+        $inspeccionadasConDefectoNoCritico = tbl_bitacora_contrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', 'INSPECCIONADA CON DEFECTO NO CRITICO VALLE')->count();
         $totalContratosOK = tbl_bitacora_contrato::where('id_bitacora', $id_bitacora)->count();
         return response()->json([
             'certificadas' => $certificadas,
