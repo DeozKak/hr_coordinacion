@@ -433,6 +433,16 @@
                 });
 
             });
+
+            const id_super = {!!json_encode($id_super) !!};
+
+            if (id_super == null) {
+                document.getElementById('btnGuardar').click();// Habilitar el botón
+                // Opcional: Simular un clic automático
+                // document.getElementById('miBoton').click();
+            }
+
+
         });
 
 

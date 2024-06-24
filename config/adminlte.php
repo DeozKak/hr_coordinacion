@@ -449,7 +449,7 @@ return [
         [
             'text' => 'Bitacoras',
             'icon' => 'fas fa-file-alt',
-            'can' => 'ver_bitacoras',
+            'can' => ['ver_bitacoras', 'generar_bitacoras'],
             'submenu' => [
                 [
                     'text' => 'Generar',

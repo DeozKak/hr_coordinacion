@@ -104,6 +104,19 @@
 
     {{-- Custom Scripts --}}
     @yield('adminlte_js')
+
+    @if (session('error'))
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        Swal.fire({
+            title: "Error",
+            text: "{{session('error')}}",
+            type: "error"
+        });
+    });
+</script>
+@endif
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const makeRead = document.getElementById('makeRead').value;
