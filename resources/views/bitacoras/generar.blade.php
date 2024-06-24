@@ -47,6 +47,7 @@
             <form action="{{route('bitacoras.generar')}}" method="POST" enctype="multipart/form-data">
                 <select class="form-control form-select-lg mb-3" name="supervisor" id="supervisor">
                     <option value="">Seleccione Supervisor</option>
+                    <option value="0">Cierre</option>
                     @foreach ($supervisores as $supervisor)
 
                     <option value="{{$supervisor->id}}">{{$supervisor->name}}</option>

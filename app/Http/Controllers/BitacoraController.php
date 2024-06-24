@@ -14,6 +14,7 @@ use DateTime;
 use DOMDocument;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Models\tbl_localidades_municipio;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -50,6 +51,19 @@ class BitacoraController extends Controller
             return redirect()->route('bitacora')->withErrors($validator)->withInput()->with('error', $validator->errors()->first());
         }
 
+        if ($request->supervisor === "0") {
+
+            $nombreArchivo = $request->archivo->getClientOriginalName() . "Todos" . ".xls";
+
+            $request->archivo->storeAs('uploads', $nombreArchivo);
+
+            $rutaDestino = storage_path('app/uploads/') . $nombreArchivo;
+
+            $excelFilePath = $rutaDestino;
+
+            return $this->procesarArchivoExcel($excelFilePath);
+        }
+
         $supervisor = User::find($request->supervisor);
 
         $nombreArchivo = $request->archivo->getClientOriginalName() . $supervisor->name . ".xls";
@@ -60,11 +74,14 @@ class BitacoraController extends Controller
 
         $excelFilePath = $rutaDestino;
 
-        return $this->procesarArchivoExcel($supervisor->name, $supervisor->id, $excelFilePath);
+        return $this->procesarArchivoExcel($excelFilePath, $supervisor->name, $supervisor->id);
     }
 
-    public function procesarArchivoExcel($nom_super, $id_super, $excelFilePath)
+    public function procesarArchivoExcel($excelFilePath, $nom_super = null, $id_super = null)
     {
+
+
+
 
         session(['nom_archivo' => basename($excelFilePath)]);
 
@@ -77,11 +94,16 @@ class BitacoraController extends Controller
         }
         session(['super' => $nom_super]);
         //consultas a la base de datos
-        $inspectores = tbl_insp_cali::where('SUPERVISOR', $id_super)
-            ->where('state', 1)
-            ->orderBy('apellidos', 'asc')
-            ->get();
-
+        if ($nom_super === null || $id_super === null) {
+            $inspectores = tbl_insp_cali::where('state', 1)
+                ->orderBy('apellidos', 'asc')
+                ->get();
+        } else {
+            $inspectores = tbl_insp_cali::where('SUPERVISOR', $id_super)
+                ->where('state', 1)
+                ->orderBy('apellidos', 'asc')
+                ->get();
+        }
         $municipios = tbl_localidades_municipio::all();
 
         $nombres = array();
@@ -109,11 +131,11 @@ class BitacoraController extends Controller
         return view('bitacoras.tabla', compact('nombres', 'spreadsheet', 'id_super', 'municipios', 'inspectores'));
     }
 
-    public function guardar_tabla(Request $request, User $super)
+    public function guardar_tabla(Request $request, User $super = null)
     {
-      
-        
-        
+
+
+
         //variables que obtienen datos del request
         $encabezados = $request->encabezado;
         $dataTable = $request->datos;
@@ -184,7 +206,7 @@ class BitacoraController extends Controller
                     foreach ($fila as $celda) {
 
 
-                     
+
                         $contenidoCelda = $celda;
                         // obtener datos complementarios 60 meses y rechazos
                         $vence = $fila[17];
@@ -235,7 +257,7 @@ class BitacoraController extends Controller
                                 $id_cedula = $ids_inspectores[$cedula_insp];
                                 $fecha = $hoja->getCell([4, $indiceFila])->getValue();
                                 $fecha_formateada = $this->conversion_fecha($fecha);
-                                
+
                                 $datos_array_OK[] = array(
                                     'cc_operario' => $hoja->getCell([2, $indiceFila])->getValue(),
                                     'municipio' => $hoja->getCell([3, $indiceFila])->getValue(),
@@ -272,7 +294,7 @@ class BitacoraController extends Controller
                             $id_cedula = $ids_inspectores[$cedula_insp];
                             $fecha = $hoja->getCell([4, $indiceFila])->getValue();
                             $fecha_formateada = $this->conversion_fecha($fecha);
-                            
+
                             $datos_array[] = array(
                                 "supervisor" => $super->id,
                                 'inspector' => $id_cedula,
@@ -400,36 +422,37 @@ class BitacoraController extends Controller
             ]);
             $hoja->getStyle('A7:O7')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('0096ff');
         }
+        if ($super !== null) {
 
-        if (!empty($datos_array_OK)) {
+            if (!empty($datos_array_OK)) {
 
-            foreach ($datos_array_OK as $datos_ok) {
+                foreach ($datos_array_OK as $datos_ok) {
 
-                try {
+                    try {
 
 
-                    $resultado_ok = Tbl_dv_insp::where('contrato', $datos_ok['contrato'])
-                        ->where('orden_trabajo', $datos_ok['orden_de_trabajo'])
-                        ->get();
+                        $resultado_ok = Tbl_dv_insp::where('contrato', $datos_ok['contrato'])
+                            ->where('orden_trabajo', $datos_ok['orden_de_trabajo'])
+                            ->get();
 
-                    //  $resultado_ok = $validacion->getValidación_existentes();
-                } catch (\Exception $e) {
-                    return response()->json(['error' => 'Error al consultar los datos en la base de datos']);
-                }
+                        //  $resultado_ok = $validacion->getValidación_existentes();
+                    } catch (\Exception $e) {
+                        return response()->json(['error' => 'Error al consultar los datos en la base de datos']);
+                    }
 
-                // BitacoraController::dd($resultado_ok[0]['FECHA_GESTION']);
-                if (!$resultado_ok->isEmpty()) {
-                    foreach ($resultado_ok as $resultado) {
-                        if ($resultado->fecha_gestion == null) {
-                            $resultado->gestionado = 1;
-                            $resultado->fecha_gestion = date('Y-m-d');
-                            $resultado->save();
+                    // BitacoraController::dd($resultado_ok[0]['FECHA_GESTION']);
+                    if (!$resultado_ok->isEmpty()) {
+                        foreach ($resultado_ok as $resultado) {
+                            if ($resultado->fecha_gestion == null) {
+                                $resultado->gestionado = 1;
+                                $resultado->fecha_gestion = date('Y-m-d');
+                                $resultado->save();
+                            }
                         }
                     }
                 }
             }
         }
-
 
         $hoja_OK->setTitle('OK');
         $totalHojas = $spreadsheet->getSheetCount();
@@ -446,139 +469,141 @@ class BitacoraController extends Controller
 
 
         $nombreArchivo = $rutaArchivoFinal . ".xlsx";
+        if ($super !== null) {
 
-        $usuario = Auth::user();
+            $usuario = Auth::user();
 
-        $bitacora = new tbl_bitacora_archivo();
-        $bitacora->id_usuario = $usuario->id;
-        $bitacora->NOMBRE_ARCHIVO = $rutaArchivoFinal;
-        $bitacora->ruta_archivo = 'storage/app/uploads/' . $nombreArchivo;
-        $bitacora->save();
-        foreach ($datos_array_OK as $datos) {
-            try {
-             
-                $horaInicio = new DateTime($datos['hora_inicio']);
-                $horaFinal = new DateTime($datos['hora_fin']);
-
-                if ($horaFinal < $horaInicio) {
-                    $horaFinal->modify('+1 day'); // Añadir un día si la hora final es menor que la hora de inicio
-                }
-
-                $duracion = $horaInicio->diff($horaFinal);
-
-                if ($datos['categoria'] === null) {
-                    $consultaMovilidad = Movilidad::select('AttrCategoria')->where('NroSitio', $datos['contrato'])->where('IdTarea', $datos['no_acta'])->first();
-                    $datos['categoria'] = $consultaMovilidad->AttrCategoria;
-                }
-
-                if ($datos['tipo_de_trabajo'] === 'SA 12164' || $datos['tipo_de_trabajo'] === 'SA 12163') {
-                    $exist = tbl_bitacora_contrato::where('CONTRATO', $datos['contrato'])->where('ORDEN_TRABAJO', $datos['orden_de_trabajo'])->where('No_ACTA', $datos['no_acta'])->exists();
-                    if ($exist) {
-                        continue;
-                    }
-                } else {
-
-                    $exist = tbl_bitacora_contrato::where('CONTRATO', $datos['contrato'])->where('ORDEN_TRABAJO', $datos['orden_de_trabajo'])->exists();
-                    if ($exist) {
-                        continue;
-                    }
-                }
-                $contrato = new tbl_bitacora_contrato();
-                $contrato->CC_OPERARIO = $datos['cc_operario'];
-                $contrato->MUNICIPIO = $datos['municipio'];
-                $contrato->FECHA = $datos['fecha_inspeccion'];
-                $contrato->No_ACTA = $datos['no_acta'];
-                $contrato->TIPO_TRABAJO = $datos['tipo_de_trabajo'];
-                $contrato->CONTRATO = $datos['contrato'];
-                $contrato->ORDEN_TRABAJO = $datos['orden_de_trabajo'];
-                $contrato->ORDEN_EXT = $datos['orden_externa'];
-                $contrato->CATEGORIA = $datos['categoria'];
-                $contrato->RESULTADO_CIERRE = $datos['resultado'];
-                $contrato->HORA_INICIO = $datos['hora_inicio'];
-                $contrato->HORA_FINAL = $datos['hora_fin'];
-                $contrato->DURACION_INSP = $duracion->format('%H:%I');
-                $contrato->setAttribute('4_RECINTOS', $datos['4_recintos']);
-                $contrato->vence = $datos['vence'];
-                $contrato->CAUSAL_RECHAZO = $datos['rechazo'];
-                $contrato->id_bitacora = $bitacora->id;
-                $contrato->state = 1;
-                $contrato->save();
-            } catch (\Exception $e) {
-                return response()->json(['error' => 'Error al guardar los datos en la base de datos']);
-            }
-        }
-
-        if (!empty($datos_array)) {
-
-            foreach ($datos_array as $dato) {
+            $bitacora = new tbl_bitacora_archivo();
+            $bitacora->id_usuario = $usuario->id;
+            $bitacora->NOMBRE_ARCHIVO = $rutaArchivoFinal;
+            $bitacora->ruta_archivo = 'storage/app/uploads/' . $nombreArchivo;
+            $bitacora->save();
+            foreach ($datos_array_OK as $datos) {
                 try {
 
-                    $resultado = Tbl_dv_insp::where('contrato', $dato['contrato'])
-                        ->where('orden_trabajo', $dato['orden_de_trabajo'])
-                        ->get();
-
-                    //  $resultado = $validacion->getValidación_existentes();
-                } catch (\Exception $e) {
-                    return response()->json(['error' => 'Error al consultar los datos en la base de datos']);
-                }
-
-                if ($resultado->isEmpty()) {
-                    $horaInicio = new DateTime($dato['Hora_inicio']);
-                    $horaFinal = new DateTime($dato['Hora_fin']);
+                    $horaInicio = new DateTime($datos['hora_inicio']);
+                    $horaFinal = new DateTime($datos['hora_fin']);
 
                     if ($horaFinal < $horaInicio) {
                         $horaFinal->modify('+1 day'); // Añadir un día si la hora final es menor que la hora de inicio
                     }
 
-                    if ($dato['categoria'] === null) {
-                        $consultaMovilidad = Movilidad::select('AttrCategoria')->where('NroSitio', $dato['contrato'])->where('IdTarea', $dato['No_ACTA'])->first();
-                        $dato['categoria'] = $consultaMovilidad->AttrCategoria;
-                    }
-
                     $duracion = $horaInicio->diff($horaFinal);
 
-                    $guardar_dv = new Tbl_dv_insp();
-                    $guardar_dv->supervisor = $dato['supervisor'];
-                    $guardar_dv->inspector = $dato['inspector'];
-                    $guardar_dv->CC_OPERARIO = $dato['cc_operario'];
-                    $guardar_dv->municipio = $dato['municipio'];
-                    $guardar_dv->fecha_insp = $dato['fecha_inspeccion'];
-                    $guardar_dv->No_ACTA = $dato['No_ACTA'];
-                    $guardar_dv->tipo_trabajo = $dato['tipo_de_trabajo'];
-                    $guardar_dv->contrato = $dato['contrato'];
-                    $guardar_dv->orden_trabajo = $dato['orden_de_trabajo'];
-                    $guardar_dv->orden_ext = $dato['orden_externa'];
-                    $guardar_dv->categoria = $dato['categoria'];
-                    $guardar_dv->resultado_cierre = $dato['resultado'];
-                    $guardar_dv->HORA_INICIO = $dato['Hora_inicio'];
-                    $guardar_dv->HORA_FINAL = $dato['Hora_fin'];
-                    $guardar_dv->DURACION_INSP = $duracion->format('%H:%I');
-                    $guardar_dv->setAttribute('4_RECINTOS', $dato['4_recintos']);
-                    $guardar_dv->causal = $dato['causal'];
-                    $guardar_dv->vence = $dato['vence'];
-                    $guardar_dv->fecha_dv = $dato['fecha_devolucion'];
-                    $guardar_dv->gestionado = $dato['gestionado'];
-                    $guardar_dv->dias_sin_gestion = $dato['dias_sin_gestion'];
-                    $guardar_dv->id_bitacora = $bitacora->id;
-                    $guardar_dv->activado = 1;
+                    if ($datos['categoria'] === null) {
+                        $consultaMovilidad = Movilidad::select('AttrCategoria')->where('NroSitio', $datos['contrato'])->where('IdTarea', $datos['no_acta'])->first();
+                        $datos['categoria'] = $consultaMovilidad->AttrCategoria;
+                    }
 
-                    $guardar_dv->save();
+                    if ($datos['tipo_de_trabajo'] === 'SA 12164' || $datos['tipo_de_trabajo'] === 'SA 12163') {
+                        $exist = tbl_bitacora_contrato::where('CONTRATO', $datos['contrato'])->where('ORDEN_TRABAJO', $datos['orden_de_trabajo'])->where('No_ACTA', $datos['no_acta'])->exists();
+                        if ($exist) {
+                            continue;
+                        }
+                    } else {
+
+                        $exist = tbl_bitacora_contrato::where('CONTRATO', $datos['contrato'])->where('ORDEN_TRABAJO', $datos['orden_de_trabajo'])->exists();
+                        if ($exist) {
+                            continue;
+                        }
+                    }
+                    $contrato = new tbl_bitacora_contrato();
+                    $contrato->CC_OPERARIO = $datos['cc_operario'];
+                    $contrato->MUNICIPIO = $datos['municipio'];
+                    $contrato->FECHA = $datos['fecha_inspeccion'];
+                    $contrato->No_ACTA = $datos['no_acta'];
+                    $contrato->TIPO_TRABAJO = $datos['tipo_de_trabajo'];
+                    $contrato->CONTRATO = $datos['contrato'];
+                    $contrato->ORDEN_TRABAJO = $datos['orden_de_trabajo'];
+                    $contrato->ORDEN_EXT = $datos['orden_externa'];
+                    $contrato->CATEGORIA = $datos['categoria'];
+                    $contrato->RESULTADO_CIERRE = $datos['resultado'];
+                    $contrato->HORA_INICIO = $datos['hora_inicio'];
+                    $contrato->HORA_FINAL = $datos['hora_fin'];
+                    $contrato->DURACION_INSP = $duracion->format('%H:%I');
+                    $contrato->setAttribute('4_RECINTOS', $datos['4_recintos']);
+                    $contrato->vence = $datos['vence'];
+                    $contrato->CAUSAL_RECHAZO = $datos['rechazo'];
+                    $contrato->id_bitacora = $bitacora->id;
+                    $contrato->state = 1;
+                    $contrato->save();
+                } catch (\Exception $e) {
+                    return response()->json(['error' => 'Error al guardar los datos en la base de datos']);
                 }
             }
+
+            if (!empty($datos_array)) {
+
+                foreach ($datos_array as $dato) {
+                    try {
+
+                        $resultado = Tbl_dv_insp::where('contrato', $dato['contrato'])
+                            ->where('orden_trabajo', $dato['orden_de_trabajo'])
+                            ->get();
+
+                        //  $resultado = $validacion->getValidación_existentes();
+                    } catch (\Exception $e) {
+                        return response()->json(['error' => 'Error al consultar los datos en la base de datos']);
+                    }
+
+                    if ($resultado->isEmpty()) {
+                        $horaInicio = new DateTime($dato['Hora_inicio']);
+                        $horaFinal = new DateTime($dato['Hora_fin']);
+
+                        if ($horaFinal < $horaInicio) {
+                            $horaFinal->modify('+1 day'); // Añadir un día si la hora final es menor que la hora de inicio
+                        }
+
+                        if ($dato['categoria'] === null) {
+                            $consultaMovilidad = Movilidad::select('AttrCategoria')->where('NroSitio', $dato['contrato'])->where('IdTarea', $dato['No_ACTA'])->first();
+                            $dato['categoria'] = $consultaMovilidad->AttrCategoria;
+                        }
+
+                        $duracion = $horaInicio->diff($horaFinal);
+
+                        $guardar_dv = new Tbl_dv_insp();
+                        $guardar_dv->supervisor = $dato['supervisor'];
+                        $guardar_dv->inspector = $dato['inspector'];
+                        $guardar_dv->CC_OPERARIO = $dato['cc_operario'];
+                        $guardar_dv->municipio = $dato['municipio'];
+                        $guardar_dv->fecha_insp = $dato['fecha_inspeccion'];
+                        $guardar_dv->No_ACTA = $dato['No_ACTA'];
+                        $guardar_dv->tipo_trabajo = $dato['tipo_de_trabajo'];
+                        $guardar_dv->contrato = $dato['contrato'];
+                        $guardar_dv->orden_trabajo = $dato['orden_de_trabajo'];
+                        $guardar_dv->orden_ext = $dato['orden_externa'];
+                        $guardar_dv->categoria = $dato['categoria'];
+                        $guardar_dv->resultado_cierre = $dato['resultado'];
+                        $guardar_dv->HORA_INICIO = $dato['Hora_inicio'];
+                        $guardar_dv->HORA_FINAL = $dato['Hora_fin'];
+                        $guardar_dv->DURACION_INSP = $duracion->format('%H:%I');
+                        $guardar_dv->setAttribute('4_RECINTOS', $dato['4_recintos']);
+                        $guardar_dv->causal = $dato['causal'];
+                        $guardar_dv->vence = $dato['vence'];
+                        $guardar_dv->fecha_dv = $dato['fecha_devolucion'];
+                        $guardar_dv->gestionado = $dato['gestionado'];
+                        $guardar_dv->dias_sin_gestion = $dato['dias_sin_gestion'];
+                        $guardar_dv->id_bitacora = $bitacora->id;
+                        $guardar_dv->activado = 1;
+
+                        $guardar_dv->save();
+                    }
+                }
+            }
+
+            // Obtener los usuarios que deben recibir la notificación
+            $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN','Auxiliar_coordinacion'])->get();
+            $usuarioLog = Auth::user();
+
+            // Enviar la notificación a cada usuario
+            foreach ($usuarios as $usuario) {
+                $usuario->notify(new Bitacora($usuarioLog->name, $bitacora->id));
+            }
         }
-
-        // Obtener los usuarios que deben recibir la notificación
-        $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN'])->get();
-        $usuarioLog = Auth::user();
-
-        // Enviar la notificación a cada usuario
-        foreach ($usuarios as $usuario) {
-            $usuario->notify(new Bitacora($usuarioLog->name, $bitacora->id));
-        }
-
         Session::flash('success', 'Bitacora generada correctamente');
         return response()->json([
-            'ruta' => 'bitacora'
+            'ruta' => 'bitacora',
+            'nombre' => '../storage/app/uploads/' . $nombreArchivo
         ]);
     }
 
@@ -828,6 +853,9 @@ class BitacoraController extends Controller
     public function verReporte($id_bitacora)
     {
         $bitacora = tbl_bitacora_archivo::find($id_bitacora);
+        if($bitacora == null){
+            return redirect()->route('bitacoras.reportes')->with('error', 'Bitacora no encontrada');
+        }
         return view('bitacoras.verReporte', compact('bitacora'));
     }
 
@@ -912,7 +940,7 @@ class BitacoraController extends Controller
 
     public function buscarPorContrato(Request $request)
     {
-     
+
         $contrato = $request->input('contrato');
 
         $bitacoras = tbl_bitacora_archivo::whereIn(
@@ -920,19 +948,34 @@ class BitacoraController extends Controller
             tbl_bitacora_contrato::select('id_bitacora')
                 ->where('CONTRATO', 'LIKE', '%' . $contrato . '%')
         )->get();
-        
-        
+
+
         // Devolver resultados en formato JSON
         return response()->json($bitacoras);
     }
 
     public function getMunicipiosJson(Request $request)
-{
-    $term = $request->input('term');
+    {
+        $term = $request->input('term');
 
-    $municipios = tbl_localidades_municipio::where('nombre', 'like', "%$term%")
-        ->pluck('nombre','nombre'); // Obtener nombre e ID
+        $municipios = tbl_localidades_municipio::where('nombre', 'like', "%$term%")
+            ->pluck('nombre', 'nombre'); // Obtener nombre e ID
 
-    return response()->json($municipios);
-}
+        return response()->json($municipios);
+    }
+
+    public function download($nombreArchivo)
+    {
+        $rutaCompleta = storage_path('app/uploads/') . $nombreArchivo;
+
+        // Verificar si el archivo existe
+        if (Storage::exists('uploads/' . $nombreArchivo)) { 
+            return response()->download($rutaCompleta);
+        } else {
+            // El archivo no existe, manejar el error
+           return redirect()->route('bitacoras.reportes')->with('error', 'Archivo no encontrado');
+           
+        }
+    }
+
 }

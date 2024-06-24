@@ -11,7 +11,7 @@ clean_data($conn);
 function connect()
 {
 
-    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__); // Corregir la ruta
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__); 
     $dotenv->load();
   
 

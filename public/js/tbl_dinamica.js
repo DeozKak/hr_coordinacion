@@ -37,6 +37,8 @@ $(document).ready(function () {
         ]
     });
 
+
+
     // Ocultar todas las tablas y inicializar la tabla activa
     $('table[style*="display: none"]').parent().hide();
     $('div[class*="tab-content"]').show();
@@ -239,7 +241,14 @@ $(document).ready(function () {
                     _token: csrfToken
                 },
                 success: function (response) {
-
+                    console.log(response);
+                    if (response.nombre){
+                        window.location.href = response.nombre;
+                        codigoHTML_tabla_indicadores = null;
+                        valoresSeleccionados = null;
+                        $('#loader').hide();
+                        $('#overlay').hide();
+                    }
                     if (response.ruta) {
                         window.location.href = response.ruta;
                         codigoHTML_tabla_indicadores = null;
