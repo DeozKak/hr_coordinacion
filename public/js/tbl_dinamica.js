@@ -241,7 +241,7 @@ $(document).ready(function () {
                     _token: csrfToken
                 },
                 success: function (response) {
-                    console.log(response);
+                    
                     if (response.nombre){
                         window.location.href = response.nombre;
                         codigoHTML_tabla_indicadores = null;
@@ -268,7 +268,7 @@ $(document).ready(function () {
 
                 },
                 error: function (xhr, status, error) {
-                    console.log(xhr.responseText);
+                    
                     $('#loader').hide();
                     $('#overlay').hide();
                     Swal.fire({
