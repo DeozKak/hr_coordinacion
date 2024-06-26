@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const id_bitacora = document.querySelector('#id_bitacora').value;
     const container = document.querySelector('#tabla');
     const hot = new Handsontable(container, {
+        language: 'es-MX',
         readOnly: true,
         manualColumnMove: false,
         rowHeaders: true,

@@ -266,11 +266,11 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
     const titulo = document.querySelector('#titulo');
     titulo.innerHTML = `INSPECCIONES DEL DÍA ${nombreDia} - ${nombre_completo}`;
 
-    Handsontable.renderers.registerRenderer('customStylesRendererdays', (hotInstance, TD,row, col, prop, value, cellProperties) => {
+    Handsontable.renderers.registerRenderer('customStylesRendererdays', (hotInstance, TD, row, col, prop, value, cellProperties) => {
         Handsontable.renderers.TextRenderer(hotInstance, TD, row, col, prop, value, cellProperties);
         const columnName = hotInstance.getColHeader(col); // Obtener el nombre de la columna
-       
-       
+
+
         if (value === '60 meses') {
             // Pintar toda la fila si la duración es 60 meses
             for (let i = 0; i < hotInstance.countCols(); i++) {
@@ -286,7 +286,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         } else if (value === 'SI' || value < '00:20' || value === 'COMERCIAL') {
             cellProperties.className = 'celda-amarilla';
         }
-    
+
         return cellProperties;
     });
 
@@ -311,10 +311,10 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         readOnly: true,
         manualColumnMove: false,
         rowHeaders: false,
-        colHeaders: ['ID','vence' ,'OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION INSP', '4 RECINTOS O MAS', 'ESTADO', 'ACCIONES'],
+        colHeaders: ['ID', 'vence', 'OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION INSP', '4 RECINTOS O MAS', 'ESTADO', 'ACCIONES'],
         columns: [
             { type: 'numeric', readOnly: true }, // ID (oculto)
-            {renderer: 'customStylesRendererdays'}, // VENCE
+            { renderer: 'customStylesRendererdays' }, // VENCE
             { type: 'text' }, // OPERARIO
             { type: 'numeric', validator: 'custom.numeric' }, // CC OPERARIO
             { type: 'text' }, // MUNICIPIO
@@ -326,7 +326,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                     maxDate: new Date(new Date().getTime() - (24 * 60 * 60 * 1000)) // Esto establece la fecha máxima como el día actual
                 }
             },// Usa el editor personalizado, // FECHA
-            { type: 'numeric', validator: 'custom.numeric' , renderer: 'customStylesRendererdays'}, // N° ACTA
+            { type: 'numeric', validator: 'custom.numeric', renderer: 'customStylesRendererdays' }, // N° ACTA
             {
                 editor: 'select', // Tipo combobox
                 selectOptions: ['RP 10444', 'RP 12161', 'RN 12162', 'SA 12164', 'SA 12163'],
@@ -344,14 +344,14 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             }, // RESULTADO CIERRE
             { type: 'time', timeFormat: 'HH:mm', correctFormat: true }, // HORA INICIO
             { type: 'time', timeFormat: 'HH:mm', correctFormat: true }, // HORA FINAL
-            { type: 'time', timeFormat: 'HH:mm', correctFormat: true , renderer: 'customStylesRendererdays'}, // DURACION INSP
+            { type: 'time', timeFormat: 'HH:mm', correctFormat: true, renderer: 'customStylesRendererdays' }, // DURACION INSP
             { type: 'text', validator: 'custom.text', allowInvalid: false },
             {}, // las columnas existentes
             {
                 renderer: function (instance, td, row, col, prop, value, cellProperties) {
 
-                    const estado = instance.getDataAtRow(row)[17]; 
-                    const diseno_especial = instance.getDataAtRow(row)[18]; 
+                    const estado = instance.getDataAtRow(row)[17];
+                    const diseno_especial = instance.getDataAtRow(row)[18];
 
 
                     let buttonHtml = '';
@@ -489,7 +489,12 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         type: 'GET',
         success: function (response) {
             if (response.error) {
-                document.getElementById('agregar').disabled = true;
+                const agregar = document.querySelector('#agregar');
+                const agregarClon = agregar.cloneNode(true); // Clonar el elemento y sus hijos
+
+                agregar.parentNode.replaceChild(agregarClon, agregar);
+                agregarClon.disabled = true;
+
             } else {
                 document.getElementById('agregar').disabled = false;
             }
@@ -1064,7 +1069,7 @@ async function cargarDatos(idCorteDetalles = null) {
 //---------------------------------------------------------------------------------------------------//
 /* funcion para convertir respuesta JSON del servidor a un Array */
 function convertirJSONaArray2D(jsonData) {
-    const columnasDeseadas = ['id', 'vence','nombre_completo', 'CC_OPERARIO', 'MUNICIPIO', 'FECHA', 'No_ACTA', 'TIPO_TRABAJO', 'CONTRATO', 'ORDEN_TRABAJO', 'ORDEN_EXT', 'CATEGORIA', 'RESULTADO_CIERRE', 'HORA_INICIO', 'HORA_FINAL', 'DURACION_INSP', '4_RECINTOS', 'state', 'diseno_especial'];
+    const columnasDeseadas = ['id', 'vence', 'nombre_completo', 'CC_OPERARIO', 'MUNICIPIO', 'FECHA', 'No_ACTA', 'TIPO_TRABAJO', 'CONTRATO', 'ORDEN_TRABAJO', 'ORDEN_EXT', 'CATEGORIA', 'RESULTADO_CIERRE', 'HORA_INICIO', 'HORA_FINAL', 'DURACION_INSP', '4_RECINTOS', 'state', 'diseno_especial'];
 
     return Object.keys(jsonData).map(key => {
         const fila = jsonData[key];
@@ -1231,16 +1236,16 @@ function formatearFecha(fecha) {
 
 setInterval(() => {
     try {
-      const idCorteDetallesInput = document.querySelector('#id_corte_detalles');
-      if (idCorteDetallesInput) {
-        cargarDatos(idCorteDetallesInput.value);
-      } else {
-        cargarDatos();
-      }
+        const idCorteDetallesInput = document.querySelector('#id_corte_detalles');
+        if (idCorteDetallesInput) {
+            cargarDatos(idCorteDetallesInput.value);
+        } else {
+            cargarDatos();
+        }
     } catch (error) {
-      console.error("Error al cargar datos:", error);
-      // Puedes agregar aquí lógica adicional para manejar el error, como mostrar un mensaje al usuario.
+        console.error("Error al cargar datos:", error);
+        // Puedes agregar aquí lógica adicional para manejar el error, como mostrar un mensaje al usuario.
     }
-  }, 150000);
+}, 150000);
 
 
