@@ -334,7 +334,7 @@ return [
             'url' => 'admin/blog',
             'can' => 'manage-blog',
         ],
-        ['header' => 'Resvisiones Periódicas', 'can' => 'ver_coordinacion_RP',],
+        ['header' => 'Resvisiones Nuevas', 'can' => 'ver_coordinacion_RN',],
         [
             'text' => 'Cargues',
             'icon' => 'fas fa-upload',
@@ -353,7 +353,7 @@ return [
         [
             'text' => 'Gestión',
             'icon' => 'fas fa-tasks',
-            'can' => 'ver_coordinacion_RP',
+            'can' => 'ver_coordinacion_RN',
             'submenu' => [
                 [
                     'text' => 'Coordinación',
@@ -396,7 +396,7 @@ return [
         [
             'text' => 'Seguimiento',
             'icon' => 'fas fa-walking',
-            'can' => 'ver_coordinacion_RP',
+            'can' => 'ver_coordinacion_RN',
             'submenu' => [
                 [
                     'text' => 'App',

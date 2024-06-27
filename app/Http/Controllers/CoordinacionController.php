@@ -15,7 +15,7 @@ class CoordinacionController extends Controller
         return view('gestion.coordinacion');
     }
 
-    public function getdataCoordinacionRP(Request $request)
+    public function getdataCoordinacion(Request $request)
     {
         /*  $porPagina = 100; // Cantidad de registros por página
         $pagina = $request->input('pagina', 1); // Obtener el número de página de la solicitud
@@ -29,7 +29,7 @@ class CoordinacionController extends Controller
 
         return response()->json($datos);
  */
-        $datos =  asignadas::whereIn('tipo_trabajo', [10444, 12161])->get();
+        $datos =  asignadas::whereIn('tipo_trabajo', [12162, 12163, 12164])->get();
 
 
         return response()->json($datos);
