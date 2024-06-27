@@ -1062,8 +1062,22 @@ async function cargarDatos(idCorteDetalles = null) {
     } catch (error) {
         console.error('Error fetching data:', error);
     }
-
+    
     hot.loadData(rows);
+
+    hot.alter('insert_row_above', hot.countRows());
+    for (let i = 0; i < totalColspan; i++) {
+        hot.updateSettings({
+            columnSummary: [
+                {
+                    destinationRow: hot.countRows() - 1, // Última fila (ahora vacía)
+                    destinationColumn: i + 2, // Columna donde se mostrará la suma
+                    sourceColumn: i + 2, // Rango de columnas a sumar (desde la 2 hasta la última)
+                    type: 'sum',
+                },
+            ],
+        });
+    }
 
 };
 //---------------------------------------------------------------------------------------------------//

@@ -843,8 +843,7 @@ class BitacoraController extends Controller
     }
 
 
-    public function reportes()
-    {
+    public function reportes(){
         $bitacoras = tbl_bitacora_archivo::all()->map(function ($bitacora) {
             $bitacora->fecha_creacion = $bitacora->created_at->format('Y-m-d');
             return $bitacora;
