@@ -228,7 +228,7 @@ $(document).ready(function () {
             const csrfToken = $('#token').val();
             const url_guardar = $('#url_guardar').val();
             const url_borrar = $('#url_borrar').val();
-
+            
             // Realizar la petición AJAX
             $.ajax({
                 type: 'POST',
@@ -241,7 +241,8 @@ $(document).ready(function () {
                     _token: csrfToken
                 },
                 success: function (response) {
-                    
+                   
+
                     if (response.nombre){
                         window.location.href = response.nombre;
                         codigoHTML_tabla_indicadores = null;

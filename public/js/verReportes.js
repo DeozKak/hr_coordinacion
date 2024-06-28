@@ -34,13 +34,20 @@ document.addEventListener('DOMContentLoaded', () => {
         height: '550px',
         autoWrapRow: true,
         autoWrapCol: true,
+        manualRowResize: true,
         columns: [
-            {renderer: 'customStylesRenderer'},{},{},{},{},{renderer: 'customStylesRenderer'},{},{},{},{renderer: 'customStylesRenderer'},{},{},{},{renderer: 'customStylesRenderer'},{ renderer: 'customStylesRenderer' },{} // Aplicar el renderer personalizado a todas las celdas de la columna
+            {},{renderer: 'customStylesRenderer'},{},{},{},{},{renderer: 'customStylesRenderer'},{},{},{},{renderer: 'customStylesRenderer'},{},{},{},{renderer: 'customStylesRenderer'},{ renderer: 'customStylesRenderer' },{},
+            { type: 'checkbox',
+                readOnly: false,
+             }// Aplicar el renderer personalizado a todas las celdas de la columna
           ],
         filters: true,
         dropdownMenu: true, // Habilita los filtros en la tabla
-        colHeaders: ['vence','OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION INSP', 'Causal rechazo'],
+        colHeaders: ['id','vence','OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION INSP', 'Causal rechazo',' '],
         licenseKey: 'non-commercial-and-evaluation',
+        hiddenColumns: {
+            columns: [0],
+          },
     },
 
 );
@@ -48,7 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
     $.ajax({
         url: id_bitacora, // Ruta al archivo PHP que realiza la consulta a la base de datos
         type: 'GET',
-        success: function (response) {     
+        success: function (response) {   
+            console.log(response);  
             const datosBaseDatos = response.contratos; // Asigna los datos obtenidos a la variable
             const array2D = convertirJSONaArray2D(datosBaseDatos);
             hot.loadData(array2D);
@@ -101,13 +109,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     })
 
+    document.getElementById('devolucion').addEventListener('click', () => {
+        
+    });
+
 });
 
 function convertirJSONaArray2D(jsonData) {
-    const columnasDeseadas = ['vence','nombre_completo', 'CC_OPERARIO', 'MUNICIPIO', 'FECHA', 'No_ACTA', 'TIPO_TRABAJO', 'CONTRATO', 'ORDEN_TRABAJO', 'ORDEN_EXT', 'CATEGORIA', 'RESULTADO_CIERRE', 'HORA_INICIO', 'HORA_FINAL', 'DURACION_INSP', 'CAUSAL_RECHAZO'];
+    const columnasDeseadas = ['id','vence','nombre_completo', 'CC_OPERARIO', 'MUNICIPIO', 'FECHA', 'No_ACTA', 'TIPO_TRABAJO', 'CONTRATO', 'ORDEN_TRABAJO', 'ORDEN_EXT', 'CATEGORIA', 'RESULTADO_CIERRE', 'HORA_INICIO', 'HORA_FINAL', 'DURACION_INSP', 'CAUSAL_RECHAZO'];
 
     return Object.keys(jsonData).map(key => {
         const fila = jsonData[key];
         return columnasDeseadas.map(columna => fila[columna]);
     });
 }
+
+
+function devolucion(){
+   
+    
+
+
+    }
+
+

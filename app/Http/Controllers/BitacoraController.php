@@ -863,7 +863,7 @@ class BitacoraController extends Controller
     public function consultaReporte($id_bitacora)
     {
         //contratos asignados a la bitacora
-        $contratos = tbl_bitacora_contrato::selectRaw("CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP,
+        $contratos = tbl_bitacora_contrato::selectRaw("CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.id,tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP,
         tbl_bitacora_contratos.`vence`,tbl_bitacora_contratos.`CAUSAL_RECHAZO`")
             ->join('tbl_insp_cali', 'tbl_insp_cali.cedula', '=', 'tbl_bitacora_contratos.CC_OPERARIO')
             ->where('tbl_bitacora_contratos.id_bitacora', $id_bitacora)
@@ -908,7 +908,7 @@ class BitacoraController extends Controller
             return redirect()->route('bitacora.devoluciones');
         }
 
-        $contrato = new tbl_bitacora_contrato();
+       /*  $contrato = new tbl_bitacora_contrato();
         $contrato->CC_OPERARIO = $devolucion->CC_OPERARIO;
         $contrato->MUNICIPIO = $devolucion->MUNICIPIO;
         $contrato->FECHA = $devolucion->FECHA_INSP;
@@ -927,7 +927,7 @@ class BitacoraController extends Controller
         $contrato->vence = $devolucion->vence;
         $contrato->state = 1;
         $contrato->save();
-
+ */
         // Obtener los usuarios que deben recibir la notificación
         $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN'])->get();
         $usuarioLog = Auth::user();

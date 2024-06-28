@@ -17,8 +17,9 @@
 <div class="shadow-container">
     <div class="card-body">
     <a class="btn btn-primary" href="javascript:history.go(-1)" style="margin-bottom: 10px;">Ir Atrás</a>
-        <div id="indicadores"style=" margin-bottom: 10px;"></div>
 
+        <div id="indicadores"style=" margin-bottom: 10px;"></div>
+        <a class="btn btn-secondary" id="devolucion" style="margin-bottom: 10px;">Devolver</a>
         <div id="tabla" style=" width: '100px'"></div>
 
         @csrf
