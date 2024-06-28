@@ -31,8 +31,10 @@ document.addEventListener('DOMContentLoaded', function () {
         colHeaders: true,
         filters: true,
         licenseKey: 'non-commercial-and-evaluation',
-        fixedColumnsStart: 2,
+        fixedColumnsStart: 3,
         dropdownMenu: true,
+        manualColumnResize: true,
+        manualRowResize: true,
     });
 
     $.ajax({
