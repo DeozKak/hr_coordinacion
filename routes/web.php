@@ -53,6 +53,7 @@ Route::middleware('web')->group(function () {
         Route::post('/bitacora/exportar_devoluciones', [BitacoraController::class, 'exportar_tabla_devoluciones'])->name('bitacora.exportar_devoluciones')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('/bitacora/reportes', [BitacoraController::class, 'reportes'])->name('bitacoras.reportes')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('/bitacora/ver_reporte/{id_bitacora}', [BitacoraController::class, 'verReporte'])->name('bitacoras.ver_reporte')->middleware(CheckPermission::class . ':ver_bitacoras');
+        Route::post('/bitacora/reportes/devoluciones/{ids}/{bitacora}', [BitacoraController::class, 'devolver'])->name('bitacoras.devolver')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('bitacora/consultar_reporte/{id_bitacora}', [BitacoraController::class, 'consultaReporte'])->name('bitacoras.consulta_reporte')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('bitacora/consultar_indicadores/{id_bitacora}', [BitacoraController::class, 'ConsultaIndicadores'])->name('bitacoras.Consulta_indicadores')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::post('bitacora/devoluciones/actualizar/{id}', [BitacoraController::class, 'actualizar_devolucion'])->name('bitacoras.actualizar_devolucion')->middleware(CheckPermission::class . ':mod_devoluciones');

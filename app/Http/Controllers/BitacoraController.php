@@ -21,6 +21,11 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\DB;
+use App\Models\tbl_bitacoras_causal;
+use App\Notifications\devolucion;
+
+
 
 class BitacoraController extends Controller
 {
@@ -478,7 +483,7 @@ class BitacoraController extends Controller
             $bitacora->NOMBRE_ARCHIVO = $rutaArchivoFinal;
             $bitacora->ruta_archivo = 'storage/app/uploads/' . $nombreArchivo;
             $bitacora->save();
-           
+
             foreach ($datos_array_OK as $datos) {
                 try {
 
@@ -507,7 +512,7 @@ class BitacoraController extends Controller
                         if ($exist) {
                             continue;
                         }
-                    }                                  
+                    }
                     $contrato = new tbl_bitacora_contrato();
                     $contrato->CC_OPERARIO = $datos['cc_operario'];
                     $contrato->MUNICIPIO = $datos['municipio'];
@@ -532,7 +537,7 @@ class BitacoraController extends Controller
                     return response()->json(['error' => 'Error al guardar los datos en la base de datos']);
                 }
             }
-           
+
 
             if (!empty($datos_array)) {
 
@@ -594,7 +599,7 @@ class BitacoraController extends Controller
             }
 
             // Obtener los usuarios que deben recibir la notificación
-            $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN','Auxiliar_coordinacion'])->get();
+            $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN', 'Auxiliar_coordinacion'])->get();
             $usuarioLog = Auth::user();
 
             // Enviar la notificación a cada usuario
@@ -843,7 +848,8 @@ class BitacoraController extends Controller
     }
 
 
-    public function reportes(){
+    public function reportes()
+    {
         $bitacoras = tbl_bitacora_archivo::all()->map(function ($bitacora) {
             $bitacora->fecha_creacion = $bitacora->created_at->format('Y-m-d');
             return $bitacora;
@@ -854,10 +860,12 @@ class BitacoraController extends Controller
     public function verReporte($id_bitacora)
     {
         $bitacora = tbl_bitacora_archivo::find($id_bitacora);
-        if($bitacora == null){
+        $causales_dv = tbl_bitacoras_causal::all();
+    
+        if ($bitacora == null) {
             return redirect()->route('bitacoras.reportes')->with('error', 'Bitacora no encontrada');
         }
-        return view('bitacoras.verReporte', compact('bitacora'));
+        return view('bitacoras.verReporte', compact('bitacora','causales_dv'));
     }
 
     public function consultaReporte($id_bitacora)
@@ -908,7 +916,7 @@ class BitacoraController extends Controller
             return redirect()->route('bitacora.devoluciones');
         }
 
-       /*  $contrato = new tbl_bitacora_contrato();
+        /*  $contrato = new tbl_bitacora_contrato();
         $contrato->CC_OPERARIO = $devolucion->CC_OPERARIO;
         $contrato->MUNICIPIO = $devolucion->MUNICIPIO;
         $contrato->FECHA = $devolucion->FECHA_INSP;
@@ -970,13 +978,62 @@ class BitacoraController extends Controller
         $rutaCompleta = storage_path('app/uploads/') . $nombreArchivo;
 
         // Verificar si el archivo existe
-        if (Storage::exists('uploads/' . $nombreArchivo)) { 
+        if (Storage::exists('uploads/' . $nombreArchivo)) {
             return response()->download($rutaCompleta);
         } else {
             // El archivo no existe, manejar el error
-           return redirect()->route('bitacoras.reportes')->with('error', 'Archivo no encontrado');
-           
+            return redirect()->route('bitacoras.reportes')->with('error', 'Archivo no encontrado');
         }
     }
 
+    public function devolver(Request $request, $ids, $bitacora)
+    {
+        $idsArray = explode(',', $ids);
+        $archivo = tbl_bitacora_archivo::find($bitacora);
+   
+        // Validar y sanitizar los IDs (como en el ejemplo anterior)
+        try {
+            $contratos = tbl_bitacora_contrato::findMany($idsArray);
+         
+            foreach ($contratos as $contrato) {
+                $inspector = tbl_insp_cali::where('cedula', $contrato->CC_OPERARIO)->first();
+                $devolucion = new tbl_dv_insp();
+                $devolucion->supervisor = $archivo->id_usuario;
+                $devolucion->inspector = $inspector->id;
+                $devolucion->CC_OPERARIO = $contrato->CC_OPERARIO;
+                $devolucion->municipio = $contrato->MUNICIPIO;
+                $devolucion->fecha_insp = $contrato->FECHA;
+                $devolucion->No_ACTA = $contrato->No_ACTA;
+                $devolucion->tipo_trabajo = $contrato->TIPO_TRABAJO;
+                $devolucion->contrato = $contrato->CONTRATO;
+                $devolucion->orden_trabajo = $contrato->ORDEN_TRABAJO;
+                $devolucion->orden_ext = $contrato->ORDEN_EXT;
+                $devolucion->categoria = $contrato->CATEGORIA;
+                $devolucion->resultado_cierre = $contrato->RESULTADO_CIERRE;
+                $devolucion->HORA_INICIO = $contrato->HORA_INICIO;
+                $devolucion->HORA_FINAL = $contrato->HORA_FINAL;
+                $devolucion->DURACION_INSP = $contrato->DURACION_INSP;
+                $devolucion->setAttribute('4_RECINTOS', $contrato->getAttribute('4_RECINTOS'));
+                $devolucion->vence = $contrato->vence;
+                $devolucion->fecha_dv = date('Y-m-d');
+                $devolucion->gestionado = 0;
+                $devolucion->dias_sin_gestion = 0;
+                $devolucion->id_bitacora = $bitacora;
+                $devolucion->activado = 1;
+                $devolucion->diseno_especial = 0;
+                $devolucion->CAUSAL = $request->input('causal');
+                $devolucion->save();
+                $contrato->delete();
+            }
+
+            $userLog = Auth::user();
+            $super = User::find($archivo->id_usuario);
+
+            $super->notify(new devolucion($userLog->name, $devolucion->contrato, $super->name, $archivo));
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al devolver los contratos '.$e->getMessage()]);
+        }
+        return response()->json($contratos);
+    }
 }
