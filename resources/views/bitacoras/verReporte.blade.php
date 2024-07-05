@@ -31,7 +31,6 @@
 
 <script>
     const causales = {!!json_encode($causales_dv) !!};
-    console.log(causales);
 </script>
 
 

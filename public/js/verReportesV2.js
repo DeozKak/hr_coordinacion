@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             causal: causalSeleccionada, // Enviar el valor seleccionado
                         },
                         success: function (response) {
-                            console.log(response);
+                          
                             Swal.fire({
                                 type: 'success',
                                 title: 'Devolución exitosa',
