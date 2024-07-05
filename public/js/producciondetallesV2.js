@@ -608,8 +608,14 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
 
     // Permitir solo números
     inputNumero.addEventListener('input', function () {
-        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 18);
+        // Asegurar que siempre comience con "P"
+        if (!this.value.startsWith('P')) {
+            this.value = 'P' + this.value;
+        }
+        // Permitir solo números después de la "P" y limitar la longitud total
+        this.value = this.value.replace(/[^P0-9]/g, '').slice(0, 19); // 18 números + la "P"
     });
+
 
     // Quitar los botones de aumento/decremento
     inputNumero.addEventListener('mousewheel', function (event) {

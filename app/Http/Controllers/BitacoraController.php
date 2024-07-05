@@ -1029,7 +1029,7 @@ class BitacoraController extends Controller
             $userLog = Auth::user();
             $super = User::find($archivo->id_usuario);
 
-            $super->notify(new devolucion($userLog->name, $devolucion->contrato, $super->name, $archivo));
+            $super->notify(new devolucion($userLog->name, $devolucion->contrato, $super->name, $archivo, $request->input('causal')));
 
         } catch (\Exception $e) {
             return response()->json(['error' => 'Error al devolver los contratos '.$e->getMessage()]);

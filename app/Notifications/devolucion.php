@@ -14,17 +14,19 @@ class devolucion extends Notification
     private $user;
     private $contrato;
     private $super;
-
+    private $causal;
     private $archivo;
     /**
      * Create a new notification instance.
      */
-    public function __construct($user, $contrato, $super, $archivo)
+    public function __construct($user, $contrato, $super, $archivo, $causal)
     {
         $this->user = $user;
         $this->contrato = $contrato;
         $this->super = $super;
         $this->archivo = $archivo;
+        $this->causal = $causal;
+   
     }
 
     /**
@@ -49,6 +51,7 @@ class devolucion extends Notification
             'contrato' => $this->contrato,
             'super' => $this->super,
             'archivo' => $this->archivo,
+            'causal' => $this->causal,
         ]);
     }
 
