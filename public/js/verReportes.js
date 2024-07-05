@@ -1,5 +1,6 @@
 
 let hot;
+let hotIndicadores;
 document.addEventListener('DOMContentLoaded', () => {
 
     function carga_datos() {
@@ -84,7 +85,13 @@ document.addEventListener('DOMContentLoaded', () => {
             url: urlIndicadores, // Ruta al archivo PHP que realiza la consulta a la base de datos
             type: 'GET',
             success: function (response) {
-                const hotIndicadores = new Handsontable(tablaIndicadores, {
+
+                if (hotIndicadores) {
+                    // Destruir la instancia existente de Handsontable
+                    hotIndicadores.destroy();
+                }
+        
+                 hotIndicadores = new Handsontable(tablaIndicadores, {
                     data: [
                         ['CERTIFICADA', response.certificadas],
                         ['CERTIFICADA CON NOVEDADES', response.certificadasConNovedades],
@@ -220,12 +227,5 @@ function convertirJSONaArray2D(jsonData) {
     });
 }
 
-
-function devolucion() {
-
-
-
-
-}
 
 
