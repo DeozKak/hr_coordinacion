@@ -673,6 +673,11 @@ return [
                     'location' => '//cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js',
                 ],
                 [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => '//cdn.jsdelivr.net/npm/handsontable/dist/languages/es-MX.js',
+                ],
+                [
                     'type' => 'css',
                     'asset' => true,
                     'location' => '//cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css',

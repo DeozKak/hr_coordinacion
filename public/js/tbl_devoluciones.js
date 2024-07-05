@@ -68,7 +68,7 @@ $(document).ready(function () {
     $('.btnav').on('click', function () {
         
         const btn = $(this).attr('id');
-        console.log(btn);
+       
         if (btn === 'Devoluciones') {
             const devoluciones = $('a[id="Devoluciones"]');
             devoluciones.addClass('active');
@@ -92,9 +92,6 @@ $(document).ready(function () {
         $('#overlay').show();
 
         const url = document.getElementById('exportar_devoluciones').value;
-        console.log(url);
-        console.log(codigoHTMLdev);
-        console.log(codigoHTMLges);
 
         const csrfToken = document.getElementById('token').value;
         $.ajax({
