@@ -228,7 +228,7 @@ $(document).ready(function () {
             const csrfToken = $('#token').val();
             const url_guardar = $('#url_guardar').val();
             const url_borrar = $('#url_borrar').val();
-            
+       
             // Realizar la petición AJAX
             $.ajax({
                 type: 'POST',
@@ -251,11 +251,13 @@ $(document).ready(function () {
                         $('#overlay').hide();
                     }
                     if (response.ruta) {
-                        window.location.href = response.ruta;
-                        codigoHTML_tabla_indicadores = null;
-                        valoresSeleccionados = null;
-                        $('#loader').hide();
-                        $('#overlay').hide();
+                        setTimeout(function() {
+                            window.location.href = response.ruta;
+                            codigoHTML_tabla_indicadores = null;
+                            valoresSeleccionados = null;
+                            $('#loader').hide();
+                            $('#overlay').hide();
+                            }, 200);
 
                     } else {
                         $('#loader').hide();

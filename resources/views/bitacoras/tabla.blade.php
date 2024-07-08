@@ -11,11 +11,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <link rel="stylesheet" type="text/css" href="{{asset('css/bitacoras/Tablas.css')}}">
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{{asset('js/tbl_dinamica.js')}}"></script>
-
 </head>
 
 <body>
@@ -435,8 +435,9 @@
             });
 
             const id_super = {!!json_encode($id_super) !!};
-
+          
             if (id_super == null) {
+
                 document.getElementById('btnGuardar').click();// Habilitar el botón
                 // Opcional: Simular un clic automático
                 // document.getElementById('miBoton').click();
