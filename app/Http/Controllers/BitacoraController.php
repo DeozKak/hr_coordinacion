@@ -132,8 +132,8 @@ class BitacoraController extends Controller
         }
 
         unlink($excelFilePath);
-
-        return view('bitacoras.tabla', compact('nombres', 'spreadsheet', 'id_super', 'municipios', 'inspectores'));
+        $causales = tbl_bitacoras_causal::all();
+        return view('bitacoras.tabla', compact('nombres', 'spreadsheet', 'id_super', 'municipios', 'inspectores','causales'));
     }
 
     public function guardar_tabla(Request $request, User $super = null)
