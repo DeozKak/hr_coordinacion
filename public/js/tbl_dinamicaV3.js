@@ -225,7 +225,7 @@ $(document).ready(function () {
                 indicadores.push({ certificadaCount, certificadaConNovedadesCount, inspeccionadaConDefectoCriticoCount, inspeccionadaConDefectoNoCriticoCount, totalCount });
                 contador_tabla = contador_tabla + 1;
             });
-
+    
             const csrfToken = $('#token').val();
             const url_guardar = $('#url_guardar').val();
             const url_borrar = $('#url_borrar').val();          

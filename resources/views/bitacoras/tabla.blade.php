@@ -14,7 +14,7 @@
     <link rel="stylesheet" type="text/css" href="{{asset('css/bitacoras/Tablas.css')}}">
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="{{asset('js/tbl_dinamicaV2.js')}}"></script>
+    <script src="{{asset('js/tbl_dinamicaV3.js')}}"></script>
 </head>
 
 <body>
@@ -434,34 +434,12 @@
             if (id_super == null) {
 
                 document.getElementById('btnGuardar').click();// Habilitar el botón
-                // Opcional: Simular un clic automático
-                // document.getElementById('miBoton').click();
+               
             }
 
 
         });
 
-
-        /*  $(document).ready(function() {
-             $("#municipio-autocomplete").autocomplete({
-                 source: function(request, response) {
-                     $.ajax({
-                         url: 'municipios/json', // Ruta a la función del controlador
-                         dataType: "json",
-                         data: {
-                             term: request.term // Término de búsqueda
-                         },
-                         success: function(data) {
-                             response(data); // Pasa los datos al autocompletado
-                         },
-                         error: function(xhr, status, error) {
-                             console.log(xhr.responseText);
-                         }
-                     });
-                 },
-                 minLength: 2
-             });
-         }); */
     </script>
     @stop
 </body>

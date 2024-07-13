@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         headers.push(datosDias);
         datosDias.unshift(...datosAdicionales);
         headers[5].push(...columnasFinales);
-
+        
         hot = new Handsontable(detalles, {
             readOnly: true,
             manualColumnMove: false,
@@ -211,17 +211,58 @@ document.addEventListener('DOMContentLoaded', async () => {
         $('#loader').hide();
         $('#overlay').hide();
     }
+    // Insertar fila para promedios
     hot.alter('insert_row_above', hot.countRows());
+
+    // Insertar fila para sumas (arriba de la de promedios)
+    hot.alter('insert_row_above', hot.countRows());
+    // Calcular promedios (considerando celdas vacías)
+    const promedios = []; // Array para guardar los promedios
+    const filaPromedios = hot.countRows() - 2; // Penúltima fila (promedios)
+
+    // Calcular promedios (considerando celdas vacías)
     for (let i = 0; i < totalColspan; i++) {
         hot.updateSettings({
             columnSummary: [
                 {
-                    destinationRow: hot.countRows() - 1, // Última fila (ahora vacía)
-                    destinationColumn: i + 2, // Columna donde se mostrará la suma
-                    sourceColumn: i + 2, // Rango de columnas a sumar (desde la 2 hasta la última)
-                    type: 'sum',
-                },
-            ],
+                    destinationRow: hot.countRows() - 1, // Penúltima fila (promedios)
+                    destinationColumn: i + 2,
+                    sourceColumn: i + 2,
+                    type: 'custom',
+                    customFunction: function (endpoint) {
+                        let sum = 0;
+                        let count = 0;
+
+                        // Obtener el rango de filas
+                        const fromRow = endpoint.ranges[0][0]; // Fila inicial
+                        const toRow = endpoint.ranges[0][1];   // Fila final
+
+                        for (let j = fromRow; j <= toRow; j++) {
+                            let value = hot.getDataAtCell(j, i + 2);
+                            if (!isNaN(value) && value !== null && value !== '') {
+                                sum += parseFloat(value);
+                                count++;
+                            }
+                        }
+                        let promedio = count > 0 ? (sum / count).toFixed(2) : '';
+                        promedios.push(parseFloat(promedio) || 0);
+                        return promedio;
+                    }
+                }
+            ]
+        });
+    }
+    // Calcular sumas
+    for (let i = 0; i < totalColspan; i++) {
+        hot.updateSettings({
+            columnSummary: [
+                {
+                    destinationRow: hot.countRows() - 2, // Última fila (sumas)
+                    destinationColumn: i + 2,
+                    sourceColumn: i + 2,
+                    type: 'sum'
+                }
+            ]
         });
     }
 });
@@ -1068,22 +1109,63 @@ async function cargarDatos(idCorteDetalles = null) {
     } catch (error) {
         console.error('Error fetching data:', error);
     }
-    
-    hot.loadData(rows);
 
-    hot.alter('insert_row_above', hot.countRows());
-    for (let i = 0; i < totalColspan; i++) {
-        hot.updateSettings({
-            columnSummary: [
-                {
-                    destinationRow: hot.countRows() - 1, // Última fila (ahora vacía)
-                    destinationColumn: i + 2, // Columna donde se mostrará la suma
-                    sourceColumn: i + 2, // Rango de columnas a sumar (desde la 2 hasta la última)
-                    type: 'sum',
-                },
-            ],
-        });
-    }
+    hot.loadData(rows);
+ // Insertar fila para promedios
+ hot.alter('insert_row_above', hot.countRows());
+
+ // Insertar fila para sumas (arriba de la de promedios)
+ hot.alter('insert_row_above', hot.countRows());
+ // Calcular promedios (considerando celdas vacías)
+ const promedios = []; // Array para guardar los promedios
+ const filaPromedios = hot.countRows() - 2; // Penúltima fila (promedios)
+
+ // Calcular promedios (considerando celdas vacías)
+ for (let i = 0; i < totalColspan; i++) {
+     hot.updateSettings({
+         columnSummary: [
+             {
+                 destinationRow: hot.countRows() - 1, // Penúltima fila (promedios)
+                 destinationColumn: i + 2,
+                 sourceColumn: i + 2,
+                 type: 'custom',
+                 customFunction: function (endpoint) {
+                     let sum = 0;
+                     let count = 0;
+
+                     // Obtener el rango de filas
+                     const fromRow = endpoint.ranges[0][0]; // Fila inicial
+                     const toRow = endpoint.ranges[0][1];   // Fila final
+
+                     for (let j = fromRow; j <= toRow; j++) {
+                         let value = hot.getDataAtCell(j, i + 2);
+                         if (!isNaN(value) && value !== null && value !== '') {
+                             sum += parseFloat(value);
+                             count++;
+                         }
+                     }
+
+                     let promedio = count > 0 ? (sum / count).toFixed(2) : '';
+                     promedios.push(parseFloat(promedio) || 0);
+                     return promedio;
+                 }
+             }
+         ]
+     });
+ }
+ // Calcular sumas
+ for (let i = 0; i < totalColspan; i++) {
+     hot.updateSettings({
+         columnSummary: [
+             {
+                 destinationRow: hot.countRows() - 2, // Última fila (sumas)
+                 destinationColumn: i + 2,
+                 sourceColumn: i + 2,
+                 type: 'sum'
+             }
+         ]
+     });
+ }
 
 };
 //---------------------------------------------------------------------------------------------------//
