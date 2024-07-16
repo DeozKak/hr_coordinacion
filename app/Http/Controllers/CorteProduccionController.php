@@ -5,7 +5,7 @@ use App\Models\tbl_produccion_corte;
 use App\Models\tbl_localidades_municipio;
 use App\Models\tbl_localidades_sede;
 use App\Models\tbl_produccion_zona;
-
+use App\Models\tbl_bitacoras_causal;
 use Illuminate\Http\Request;
 
 class CorteProduccionController extends Controller
@@ -17,9 +17,9 @@ class CorteProduccionController extends Controller
         $municipios = tbl_localidades_municipio::all();
         $sedes = tbl_localidades_sede::all();
         $zonas = tbl_produccion_zona::all();
-        
+        $causales = tbl_bitacoras_causal::all();
        
-        return view('corte.index', compact('cortes','municipios','sedes','zonas'));
+        return view('corte.index', compact('cortes','municipios','sedes','zonas','causales'));
     }
 
 
@@ -59,6 +59,33 @@ class CorteProduccionController extends Controller
 
         session()->flash('success', 'Sede creada correctamente');
         return response()->json(['success' => $sede]);
+    }
+
+    public function storeCausal(Request $request)
+    {
+        
+        $causal = new tbl_bitacoras_causal();
+        $causal->nom_causal = $request->datos['nombre'];
+        $causal->save();
+
+        session()->flash('success', 'Causal creado correctamente');
+        return response()->json(['success' => $causal]);
+    }
+
+    public function editCausal($id)
+    {
+        $causal = tbl_bitacoras_causal::find($id);
+        return response()->json([$causal]);
+    }
+
+    public function updateCausal(Request $request, $id)
+    {
+        $causal = tbl_bitacoras_causal::find($id);
+        $causal->nom_causal = $request->datos['nombre'];
+        $causal->save();
+
+        session()->flash('success', 'Causal actualizado correctamente');
+        return response()->json(['success' => $causal]);
     }
 
     public function editCorte($id)

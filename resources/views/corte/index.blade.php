@@ -132,6 +132,39 @@
             </div>
         </div>
     </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Causales Devolución</h3>
+            </div>
+            <div class="card-body">
+                <a class="btn btn-primary mb-2" id="btnCrearCausal">Crear Causal</a>
+                <table class="table table-striped" id="devolucion">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($causales as $index => $causal)
+                        <tr>
+                            <td>{{ $causal->nom_causal }}</td>
+                            <td>
+                                <div style="display: flex; gap: 5px; justify-content: center;">
+                                    @if ($index > 0) {{-- Only show the button if the index is greater than 0 --}}
+                                    <a class="btn btn-success btn-sm" data-causal-id="{{ $causal->id }}">Editar</a>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 </div>
 
@@ -230,6 +263,27 @@
             </div>
             <div class="modal-footer">
                 <button type="submit" id="crearSede" class="btn btn-primary">Crear</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal para crear Causal --}}
+<div class="modal fade" id="CausalModal" tabindex="-1" aria-labelledby="crearCausalModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearCausalModalLabel">Ingresar Causal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="nombre">Nombre</label>
+                    <input type="text" class="form-control" id="nombreCausal" name="nombre">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" id="crearCausal" class="btn btn-primary">Guardar</button>
             </div>
         </div>
     </div>
