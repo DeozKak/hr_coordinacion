@@ -8,7 +8,7 @@
 
 @section('content')
 <input type="hidden" id="token" value="{{csrf_token()}}">
-<script src="{{asset('js/informacion_general.js')}}"></script>
+<script src="{{asset('js/informacion_generalV2.js')}}"></script>
 <div class="row">
     <div class="col-md-6">
         <div class="card">
