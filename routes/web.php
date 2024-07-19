@@ -12,6 +12,7 @@ use App\Http\Controllers\BitacoraController;
 use App\Http\Controllers\InspectorController;
 use App\Http\Controllers\CorteProduccionController;
 use App\Http\Controllers\NotificationsController;
+use App\Http\Controllers\ProgramacionController;
 use Illuminate\Http\Request;
 
 
@@ -114,5 +115,8 @@ Route::middleware('web')->group(function () {
     Route::get('notifications/get', [NotificationsController::class, 'getNotificationsData'])->name('notifications.get');
     Route::get('notifications/markAsRead', [NotificationsController::class, 'markAsRead'])->name('notifications.markAsRead');
     Route::get('notifications', [NotificationsController::class, 'index'])->name('notifications.index');
+
+    //Rutas Programación
+    Route::get('/programacion', [ProgramacionController::class, 'index'])->name('programacion.index');
 });
 
