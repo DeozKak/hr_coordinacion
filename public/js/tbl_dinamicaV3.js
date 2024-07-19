@@ -1,6 +1,7 @@
 
 $(document).ready(function () {
-
+    const contenedor = document.getElementById('miContenedor');
+    const idSuper = JSON.parse(contenedor.dataset.idSuper);
     // Inicializar la tabla activa con DataTables
     $('table:not(.no-datatable)').DataTable({
         "paging": false,
@@ -224,11 +225,10 @@ $(document).ready(function () {
                 indicadores.push({ certificadaCount, certificadaConNovedadesCount, inspeccionadaConDefectoCriticoCount, inspeccionadaConDefectoNoCriticoCount, totalCount });
                 contador_tabla = contador_tabla + 1;
             });
-
+    
             const csrfToken = $('#token').val();
             const url_guardar = $('#url_guardar').val();
-            const url_borrar = $('#url_borrar').val();
-            
+            const url_borrar = $('#url_borrar').val();          
             // Realizar la petición AJAX
             $.ajax({
                 type: 'POST',
@@ -241,9 +241,8 @@ $(document).ready(function () {
                     _token: csrfToken
                 },
                 success: function (response) {
-                   
-
-                    if (response.nombre){
+                    
+                    if (response.nombre && idSuper === null){
                         window.location.href = response.nombre;
                         codigoHTML_tabla_indicadores = null;
                         valoresSeleccionados = null;
@@ -251,11 +250,13 @@ $(document).ready(function () {
                         $('#overlay').hide();
                     }
                     if (response.ruta) {
-                        window.location.href = response.ruta;
-                        codigoHTML_tabla_indicadores = null;
-                        valoresSeleccionados = null;
-                        $('#loader').hide();
-                        $('#overlay').hide();
+                        setTimeout(function() {
+                            window.location.href = response.ruta;
+                            codigoHTML_tabla_indicadores = null;
+                            valoresSeleccionados = null;
+                            $('#loader').hide();
+                            $('#overlay').hide();
+                            }, 200);
 
                     } else {
                         $('#loader').hide();
@@ -478,7 +479,6 @@ $(document).ready(function () {
                     campo.value = campo.getAttribute('value') || '';
                     switch (campo.id) {
                         case 'causal':
-                            campo.value = '--SELECCIONE CAUSAL--';
                             campo.classList.remove('campo-invalido');
                             break;
                         case 'devolucion':
@@ -709,14 +709,7 @@ function agregar_datos() {
             duracion,
             '<input type="checkbox" id="checkRecintos" ' + (recintos === 'SI' ? 'checked' : '') + '>' + '<input type="text" id="NroRecintos" size="1" value="' + cantidadRecintos + '" style="text-align: center;"' + (recintos === 'SI' ? '' : 'disabled') + '>',
             (devolucion === 'OK' ? '<select class="form-select nombre-columna" style="width: 80px;"><option value="OK" selected>OK</option><option value="DV">DV</option></select>' : '<select class="form-select nombre-columna" style="width: 80px;"><option value="OK">OK</option><option value="DV" selected>DV</option></select>'),
-            (causal === '--SELECCIONE CAUSAL--' ? '<select class="form-select combo2 nombre-columna" style="width: 220px; display: none;"><option value="--SELECCIONE CAUSAL--" selected>--SELECCIONE CAUSAL--</option><option value="CONTRATO ERRADO">CONTRATO ERRADO</option><option value="NUMERO DE CUOTAS">NUMERO DE CUOTAS</option><option value="FALTA CARTA">FALTA CARTA</option><option value="FALTA INFORMACIÓN">FALTA INFORMACIÓN</option><option value="INFORMACION ERRADA">INFORMACION ERRADA</option><option value="ORDEN YA REGISTRADA">ORDEN YA REGISTRADA</option></select>' :
-                (causal === 'CONTRATO ERRADO' ? '<select class="form-select combo2 nombre-columna" style="width: 220px; display: none;"><option value="--SELECCIONE CAUSAL--">--SELECCIONE CAUSAL--</option><option value="CONTRATO ERRADO" selected>CONTRATO ERRADO</option><option value="NUMERO DE CUOTAS">NUMERO DE CUOTAS</option><option value="FALTA CARTA">FALTA CARTA</option><option value="FALTA INFORMACIÓN">FALTA INFORMACIÓN</option><option value="INFORMACION ERRADA">INFORMACION ERRADA</option><option value="ORDEN YA REGISTRADA">ORDEN YA REGISTRADA</option></select>' :
-                    (causal === 'NUMERO DE CUOTAS' ? '<select class="form-select combo2 nombre-columna" style="width: 220px; display: none;"><option value="--SELECCIONE CAUSAL--">--SELECCIONE CAUSAL--</option><option value="CONTRATO ERRADO">CONTRATO ERRADO</option><option value="NUMERO DE CUOTAS" selected>NUMERO DE CUOTAS</option><option value="FALTA CARTA">FALTA CARTA</option><option value="FALTA INFORMACIÓN">FALTA INFORMACIÓN</option><option value="INFORMACION ERRADA">INFORMACION ERRADA</option><option value="ORDEN YA REGISTRADA">ORDEN YA REGISTRADA</option></select>' :
-                        (causal === 'FALTA CARTA' ? '<select class="form-select combo2 nombre-columna" style="width: 220px; display: none;"><option value="--SELECCIONE CAUSAL--">--SELECCIONE CAUSAL--</option><option value="CONTRATO ERRADO">CONTRATO ERRADO</option><option value="NUMERO DE CUOTAS">NUMERO DE CUOTAS</option><option value="FALTA CARTA" selected>FALTA CARTA</option><option value="FALTA INFORMACIÓN">FALTA INFORMACIÓN</option><option value="INFORMACION ERRADA">INFORMACION ERRADA</option><option value="ORDEN YA REGISTRADA">ORDEN YA REGISTRADA</option></select>' :
-                            (causal === 'FALTA INFORMACIÓN' ? '<select class="form-select combo2 nombre-columna" style="width: 220px; display: none;"><option value="--SELECCIONE CAUSAL--">--SELECCIONE CAUSAL--</option><option value="CONTRATO ERRADO">CONTRATO ERRADO</option><option value="NUMERO DE CUOTAS">NUMERO DE CUOTAS</option><option value="FALTA CARTA">FALTA CARTA</option><option value="FALTA INFORMACIÓN" selected>FALTA INFORMACIÓN</option><option value="INFORMACION ERRADA">INFORMACION ERRADA</option><option value="ORDEN YA REGISTRADA">ORDEN YA REGISTRADA</option></select>' :
-                                (causal === 'INFORMACION ERRADA' ? '<select class="form-select combo2 nombre-columna" style="width: 220px; display: none;"><option value="--SELECCIONE CAUSAL--">--SELECCIONE CAUSAL--</option><option value="CONTRATO ERRADO">CONTRATO ERRADO</option><option value="NUMERO DE CUOTAS">NUMERO DE CUOTAS</option><option value="FALTA CARTA">FALTA CARTA</option><option value="FALTA INFORMACIÓN">FALTA INFORMACIÓN</option><option value="INFORMACION ERRADA" selected>INFORMACION ERRADA</option><option value="ORDEN YA REGISTRADA">ORDEN YA REGISTRADA</option></select>' :
-                                    (causal === 'ORDEN YA REGISTRADA' ? '<select class="form-select combo2 nombre-columna" style="width: 220px; display: none;"><option value="--SELECCIONE CAUSAL--">--SELECCIONE CAUSAL--</option><option value="CONTRATO ERRADO">CONTRATO ERRADO</option><option value="NUMERO DE CUOTAS">NUMERO DE CUOTAS</option><option value="FALTA CARTA">FALTA CARTA</option><option value="FALTA INFORMACIÓN">FALTA INFORMACIÓN</option><option value="INFORMACION ERRADA">INFORMACION ERRADA</option><option value="ORDEN YA REGISTRADA" selected>ORDEN YA REGISTRADA</option></select>' :
-                                        '<select class="form-select combo2 nombre-columna" style="width: 220px; display: none;"><option value="--SELECCIONE CAUSAL--" selected>--SELECCIONE CAUSAL--</option><option value="CONTRATO ERRADO">CONTRATO ERRADO</option><option value="NUMERO DE CUOTAS">NUMERO DE CUOTAS</option><option value="FALTA CARTA">FALTA CARTA</option><option value="FALTA INFORMACIÓN">FALTA INFORMACIÓN</option><option value="INFORMACION ERRADA">INFORMACION ERRADA</option><option value="ORDEN YA REGISTRADA">ORDEN YA REGISTRADA</option></select>'))))))),
+            '<select class="form-select combo2 nombre-columna" style="width: 220px; display: none;"><option value="--SELECCIONE CAUSAL--" selected>--SELECCIONE CAUSAL--</option><option value="CONTRATO ERRADO">CONTRATO ERRADO</option><option value="NUMERO DE CUOTAS">NUMERO DE CUOTAS</option><option value="FALTA CARTA">FALTA CARTA</option><option value="FALTA INFORMACIÓN">FALTA INFORMACIÓN</option><option value="INFORMACION ERRADA">INFORMACION ERRADA</option><option value="ORDEN YA REGISTRADA">ORDEN YA REGISTRADA</option></select>',
             "",
             rechazo,
 

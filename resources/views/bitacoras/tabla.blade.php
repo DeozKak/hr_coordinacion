@@ -14,12 +14,11 @@
     <link rel="stylesheet" type="text/css" href="{{asset('css/bitacoras/Tablas.css')}}">
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="{{asset('js/tbl_dinamica.js')}}"></script>
-
+    <script src="{{asset('js/tbl_dinamicaV3.js')}}"></script>
 </head>
 
 <body>
-
+    <div id="miContenedor" data-id-super="{{ json_encode($id_super) }}"></div>
     <div id="loader" style="display: none;"></div>
     <div id="overlay" style="display: none;"></div>
     <input type="hidden" id="token" name="csrf_token" value="{{ csrf_token() }}">
@@ -213,13 +212,9 @@
                                                         </td>
                                                         <td>
                                                             <select class='form-select combo2 nombre-columna' style="width: 220px; display: none;">
-                                                                <option value="--SELECCIONE CAUSAL--" selected>--SELECCIONE CAUSAL--</option>
-                                                                <option value="CONTRATO ERRADO">CONTRATO ERRADO</option>
-                                                                <option value="NUMERO DE CUOTAS">NUMERO DE CUOTAS</option>
-                                                                <option value="FALTA CARTA">FALTA CARTA</option>
-                                                                <option value="FALTA INFORMACIÓN">FALTA INFORMACIÓN</option>
-                                                                <option value="INFORMACION ERRADA">INFORMACION ERRADA</option>
-                                                                <option value="ORDEN YA REGISTRADA">ORDEN YA REGISTRADA</option>
+                                                                @foreach ($causales as $causal )
+                                                                    <option value="{{$causal->nom_causal}}">{{$causal->nom_causal}}</option>
+                                                                @endforeach
                                                             </select>
                                                         </td>
                                                         <td>
@@ -435,37 +430,16 @@
             });
 
             const id_super = {!!json_encode($id_super) !!};
-
+          
             if (id_super == null) {
+
                 document.getElementById('btnGuardar').click();// Habilitar el botón
-                // Opcional: Simular un clic automático
-                // document.getElementById('miBoton').click();
+               
             }
 
 
         });
 
-
-        /*  $(document).ready(function() {
-             $("#municipio-autocomplete").autocomplete({
-                 source: function(request, response) {
-                     $.ajax({
-                         url: 'municipios/json', // Ruta a la función del controlador
-                         dataType: "json",
-                         data: {
-                             term: request.term // Término de búsqueda
-                         },
-                         success: function(data) {
-                             response(data); // Pasa los datos al autocompletado
-                         },
-                         error: function(xhr, status, error) {
-                             console.log(xhr.responseText);
-                         }
-                     });
-                 },
-                 minLength: 2
-             });
-         }); */
     </script>
     @stop
 </body>

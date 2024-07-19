@@ -82,9 +82,32 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    $('#devolucion').DataTable({
+        paging: false,
+        scrollCollapse: true,
+        scrollY: '230px',
+        lengthChange: false,
+        "language": {
+            "lengthMenu": "Mostrar _MENU_ registros por página",
+            "zeroRecords": "Nada encontrado - lo siento",
+            "info": "Mostrando la página _PAGE_ de _PAGES_",
+            "infoEmpty": "No hay registros disponibles",
+            "infoFiltered": "(Filtrado de _MAX_ registros totales)",
+            "search": "Buscar:",
+            "paginate": {
+                "first": "Primero",
+                "last": "Ultimo",
+                "next": "Siguiente",
+                "previous": "Anterior"
+            }
+        }
+    });
     const btnCrearSede = document.getElementById('btnCrearSede');
     const btnCrearCorte = document.getElementById('btnCrearCorte');
     const btnCrearMunicipio = document.getElementById('btnCrearMunicipio');
+    const btnCrearCausal = document.getElementById('btnCrearCausal');
+
 
     btnCrearCorte.addEventListener('click', () => {
         CrearCorte();
@@ -97,30 +120,101 @@ document.addEventListener('DOMContentLoaded', () => {
     btnCrearSede.addEventListener('click', () => {
         CrearSede();
     });
-//--------------------------------------------------------------------------------------------
-$('#cortes').on('click', '.btn-success[data-corte-id]', function() {
-    const corteId = $(this).data('corte-id');
-    editarCorte(corteId);
- 
+
+    btnCrearCausal.addEventListener('click', () => {
+        CrearCausal();
+    });
+    //--------------------------------------------------------------------------------------------
+    $('#cortes').on('click', '.btn-success[data-corte-id]', function () {
+        const corteId = $(this).data('corte-id');
+        editarCorte(corteId);
+
+    });
+
+    $('#cortes').on('click', '.btn-primary[data-corte-id]', function () {
+        const corteId = $(this).data('corte-id');
+        detallesCorte(corteId);
+
+    });
+
+    $('#cortes').on('click', '.btn-secondary[data-corte-id]', function () {
+        const corteId = $(this).data('corte-id');
+        Graficos(corteId);
+
+    });
+
+    $('#municipios').on('click', '.btn-success[data-municipio-id]', function () {
+        const municipioId = $(this).data('municipio-id');
+        editarMunicipio(municipioId);
+    });
+
+    $('#devolucion').on('click', '.btn-success[data-causal-id]', function () {
+        const causalId = $(this).data('causal-id');
+        editarCausal(causalId);
+    });
 });
 
-$('#cortes').on('click', '.btn-primary[data-corte-id]', function() {
-    const corteId = $(this).data('corte-id');
-    detallesCorte(corteId);  
- 
-});
 
-$('#cortes').on('click', '.btn-secondary[data-corte-id]', function() {
-    const corteId = $(this).data('corte-id');
-    Graficos(corteId);  
- 
-});
+function CrearCausal() {
+    const campos = document.querySelectorAll('#CausalModal input');
+    campos.forEach(campo => campo.value = '');
+    $('#crearCausalModalLabel').text('Crear Causal');
+    $('#crearCausal').text('Crear');
+    $('#CausalModal').modal('show');
+    /* Validaciones inputs cortes */
 
-$('#municipios').on('click', '.btn-success[data-municipio-id]', function() {
-    const municipioId = $(this).data('municipio-id');
-    editarMunicipio(municipioId);
-});
-});
+    ValidarFormularioCausales();
+
+    const btnCrear = document.getElementById('crearCausal');
+
+    btnCrear.addEventListener('click', validarFormulario);
+    function validarFormulario() {
+      
+        // Obtener todos los campos del formulario
+        const camposFormulario = document.querySelectorAll('#CausalModal input');
+
+        // Validar si todos los campos están llenos
+        const todosLosCamposLlenos = Array.from(camposFormulario).every(campo => campo.value.trim() !== '');
+        if (todosLosCamposLlenos) {
+            EnviarServidorStore("Causal");
+            camposFormulario.forEach(campo => campo.value = '');
+        } else {
+            // Si algún campo está vacío, mostrar un mensaje de error
+            alert('Por favor, complete todos los campos.');
+        }
+    }
+
+}
+
+function editarCausal(id) {
+
+    $.ajax({
+        url: 'cortes_producction/' + id + '/editCausal', // Ruta para obtener los datos del corte
+        method: 'GET',
+        success: function (response) {
+            $('#crearCausalModalLabel').text('Guardar Cambios');
+            $('#crearCausal').text('Guardar Cambios');
+            $('#nombreCausal').val(response[0].nom_causal);
+            $('#CausalModal').modal('show');
+        }, error: function (xhr, status, error) {
+            console.error("Error al obtener los datos del corte.");
+        }
+    });
+    ValidarFormularioCausales();
+    const btnCrear = document.getElementById('crearCausal');
+    btnCrear.addEventListener('click', validarFormulario);
+    function validarFormulario() {
+        const camposFormulario = document.querySelectorAll('#CausalModal input');
+        const todosLosCamposLlenos = Array.from(camposFormulario).every(campo => campo.value.trim() !== '');
+        if (todosLosCamposLlenos) {
+            EnviarServidorUpdate("Causal", id);
+            camposFormulario.forEach(campo => campo.value = '');
+        } else {
+            alert('Por favor, complete todos los campos.');
+        }
+    }
+
+}
 
 function CrearCorte() {
     const campos = document.querySelectorAll('#CorteModal input');
@@ -149,20 +243,21 @@ function CrearCorte() {
         }
     }
 }
-function editarCorte(id){
+
+function editarCorte(id) {
 
     $.ajax({
         url: 'cortes_producction/' + id + '/editCorte', // Ruta para obtener los datos del corte
         method: 'GET',
-        success: function(response) {
+        success: function (response) {
             $('#crearCorteModalLabel').text('Editar Corte');
             $('#crear').text('Guardar Cambios');
             $('#nombre').val(response[0].nombre);
-            $('#fecha_inicio').val( response[0].fecha_inicio);
-            $('#fecha_fin').val( response[0].fecha_fin);
-            $('#meta').val( response[0].meta);
+            $('#fecha_inicio').val(response[0].fecha_inicio);
+            $('#fecha_fin').val(response[0].fecha_fin);
+            $('#meta').val(response[0].meta);
             $('#CorteModal').modal('show');
-        },error: function(xhr, status, error) {
+        }, error: function (xhr, status, error) {
             console.error("Error al obtener los datos del corte.");
         }
     });
@@ -187,14 +282,14 @@ function CrearMunicipio() {
     $('#crearSedeModalLabel').text('ingresar Municipio');
     $('#crearMunicipio').text('Crear');
     $('#MunicipioModal').modal('show');
-    
+
     ValidarFormularioMunicipios();
 
     const btnCrear = document.getElementById('crearMunicipio');
 
     btnCrear.addEventListener('click', validarFormulario);
 
-    function validarFormulario(){
+    function validarFormulario() {
         const camposFormulario = document.querySelectorAll('#MunicipioModal input,#MunicipioModal select');
         const todosLosCamposLlenos = Array.from(camposFormulario).every(campo => campo.value.trim() !== '');
         if (todosLosCamposLlenos) {
@@ -213,14 +308,14 @@ function editarMunicipio(id) {
     $.ajax({
         url: 'cortes_producction/' + id + '/editMunicipio', // Ruta para obtener los datos del municipio
         method: 'GET',
-        success: function(response) {
+        success: function (response) {
             $('#crearMunicipioModalLabel').text('Editar Municipio');
             $('#crear').text('Guardar Cambios');
             $('#nombreMunicipio').val(response[0].nombre);
             $('#sede').val(response[0].id_sede);
             $('#zona').val(response[0].id_zona);
             $('#MunicipioModal').modal('show');
-        },error: function(xhr, status, error) {
+        }, error: function (xhr, status, error) {
             console.error("Error al obtener los datos del municipio.");
         }
     });
@@ -244,9 +339,9 @@ function editarMunicipio(id) {
 function CrearSede() {
     $('#SedeModal').modal('show');
     const inputNombre = document.getElementById('nombreSede');
-    console.log(inputNombre);
+
     inputNombre.addEventListener('input', function () {
-        
+
         if (this.value.length > 20) {
             this.value = this.value.slice(0, 20);
         }
@@ -255,7 +350,7 @@ function CrearSede() {
     const btnCrear = document.getElementById('crearSede');
     btnCrear.addEventListener('click', validarFormulario);
 
-    function validarFormulario(){
+    function validarFormulario() {
         const camposFormulario = document.querySelectorAll('#SedeModal input');
         const todosLosCamposLlenos = Array.from(camposFormulario).every(campo => campo.value.trim() !== '');
         if (todosLosCamposLlenos) {
@@ -335,6 +430,16 @@ function ValidarFormularioMunicipios() {
     });
 }
 
+function ValidarFormularioCausales() {
+    const inputNombre = document.getElementById('nombreCausal');
+    inputNombre.addEventListener('input', function () {
+        if (this.value.length > 30) {
+            this.value = this.value.slice(0, 30);
+        }
+    });
+
+}
+
 function EnviarServidorStore(nombreTabla) {
     const datosFormulario = {};
     const token = document.querySelector('#token').value;
@@ -394,7 +499,7 @@ function EnviarServidorUpdate(nombreTabla, id) {
 }
 
 function detallesCorte(id) {
-   window.location.href = `produccion/detalles_corte/${id}`;
+    window.location.href = `produccion/detalles_corte/${id}`;
 }
 
 function Graficos(id) {
