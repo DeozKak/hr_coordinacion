@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 },
                 error: function (xhr, status, error) {
 
-
+                    console.log(xhr.responseText);
                     Swal.fire({
                         type: 'error',
                         title: 'Error',
@@ -1120,15 +1120,15 @@ async function cargarDatos(idCorteDetalles = null) {
     const filaPromedios = hot.countRows() - 2; // Penúltima fila (promedios)
     totalColspan = totalColspan + 7;
     colProm = totalColspan - 7;
+    const columnProm = [];
+    const columnSum = [];
     // Calcular promedios (considerando celdas vacías)
     for (let i = 0; i < colProm; i++) {
-        hot.updateSettings({
-            columnSummary: [
-                {
-                    destinationRow: hot.countRows() - 1, // Penúltima fila (promedios)
-                    destinationColumn: i + 2,
-                    sourceColumn: i + 2,
-                    type: 'custom',
+        columnProm.push({
+            destinationRow: filaPromedios,
+            destinationColumn: i + 2,
+            sourceColumn: i + 2,
+            type: 'custom',
                     customFunction: function (endpoint) {
                         let sum = 0;
                         let count = 0;
@@ -1136,7 +1136,7 @@ async function cargarDatos(idCorteDetalles = null) {
                         // Obtener el rango de filas
                         const fromRow = endpoint.ranges[0][0]; // Fila inicial
                         const toRow = endpoint.ranges[0][1];   // Fila final
-
+                        
                         for (let j = fromRow; j <= toRow; j++) {
                             let value = hot.getDataAtCell(j, i + 2);
                             if (!isNaN(value) && value !== null && value !== '') {
@@ -1146,28 +1146,33 @@ async function cargarDatos(idCorteDetalles = null) {
                         }
 
                         let promedio = count > 0 ? (sum / count).toFixed(2) : '';
-                        promedios.push(parseFloat(promedio) || 0);
+                       
+                        promedios.push(promedio);
                         return promedio;
                     }
-                }
-            ]
-        });
+    }); 
     }
+   
+     setTimeout(function() {
+        for (let i = 0; i < promedios.length; i++) {
+            hot.setDataAtCell(filaPromedios, i + 2, promedios[i]); 
+          }
+      }, 2000); 
     // Calcular sumas
-    for (let i = 0; i < totalColspan; i++) {
-        hot.updateSettings({
-            columnSummary: [
+     for (let i = 0; i < totalColspan; i++) {
+        
+        columnSum.push(
                 {
                     destinationRow: hot.countRows() - 2, // Última fila (sumas)
                     destinationColumn: i + 2,
                     sourceColumn: i + 2,
                     type: 'sum'
                 }
-            ]
-        });
-    }
-
-};
+            );
+       
+    }  
+    hot.updateSettings({columnSummary: columnSum});
+}
 //---------------------------------------------------------------------------------------------------//
 /* funcion para convertir respuesta JSON del servidor a un Array */
 function convertirJSONaArray2D(jsonData) {
@@ -1348,6 +1353,6 @@ setInterval(() => {
         console.error("Error al cargar datos:", error);
         // Puedes agregar aquí lógica adicional para manejar el error, como mostrar un mensaje al usuario.
     }
-}, 150000);
+}, 50000);
 
 

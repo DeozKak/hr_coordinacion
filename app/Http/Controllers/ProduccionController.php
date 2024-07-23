@@ -41,7 +41,7 @@ class ProduccionController extends Controller
         if ($corte === null && !$error) {
             $error = true;
             $warning = 'No hay corte activo';
-            return view('produccion.index', ['produccionInspector' => "produccionInspector", 'contratosCategoria' => "contratosCategoria", 'conteoContratosPorZona' =>" conteoContratosPorZona", 'corte' => $corte, 'warning' => $warning]);
+            return view('produccion.index', ['produccionInspector' => "produccionInspector", 'contratosCategoria' => "contratosCategoria", 'conteoContratosPorZona' => " conteoContratosPorZona", 'corte' => $corte, 'warning' => $warning]);
         }
         // sacar contratos del corte activo
         $contratosCorte = tbl_bitacora_contrato::where('FECHA', '>=', $corte->fecha_inicio)
@@ -92,7 +92,7 @@ class ProduccionController extends Controller
         $zonas = tbl_produccion_zona::all();
         $conteoContratosPorZona = array();
         $municipiosNoEncontrados = array();
-        
+
         foreach ($zonas as $zona) {
             $count = tbl_localidades_municipio::select('nombre')->where('id_zona', '=', $zona->id)->get();
             $contador = 0;
@@ -117,13 +117,11 @@ class ProduccionController extends Controller
             $municipiosNoEncontrados = $municipiosContratos->diff($municipiosLocalidades);
 
             if ($municipiosNoEncontrados->isEmpty()) {
-              
             } else {
-                
+
                 foreach ($municipiosNoEncontrados as $municipio) {
-                  
-                    $municipiosNoEncontrados = collect(array_unique($municipiosNoEncontrados->toArray())); 
-                
+
+                    $municipiosNoEncontrados = collect(array_unique($municipiosNoEncontrados->toArray()));
                 }
             }
             foreach ($count as $c) {
@@ -149,7 +147,7 @@ class ProduccionController extends Controller
         if ($error) {
             return view('produccion.index', ['produccionInspector' => $produccionInspector, 'contratosCategoria' => $contratosCategoria, 'conteoContratosPorZona' => $conteoContratosPorZona, 'corte' => $corte, 'warning' => $warning]);
         }
-        return view('produccion.index', compact('produccionInspector', 'contratosCategoria', 'conteoContratosPorZona', 'corte', 'warning','municipiosNoEncontrados'));
+        return view('produccion.index', compact('produccionInspector', 'contratosCategoria', 'conteoContratosPorZona', 'corte', 'warning', 'municipiosNoEncontrados'));
     }
 
     public function detallesCorte($id)
@@ -162,7 +160,7 @@ class ProduccionController extends Controller
 
     public function detalles()
     {
-       
+
         $municipios = tbl_localidades_municipio::all();
         if (session('id_corte')) {
             $corte = tbl_produccion_corte::find(session('id_corte'));
@@ -262,7 +260,7 @@ class ProduccionController extends Controller
                     if (CalendarioColombia::date($date->format('Y-m-d'))->isHoliday()) {
                         $diasFestivosRango[] = $date->format('Y-m-d');
                     }
-                }   
+                }
                 // Guardar los días festivos en el rango en caché por un tiempo determinado (por ejemplo, 24 horas)
                 Cache::put($cacheKeyRango, $diasFestivosRango, $duracionCorte);
             } else {
@@ -296,7 +294,7 @@ class ProduccionController extends Controller
                 ->select('4_RECINTOS', DB::raw('COUNT(*) as total_contratos'))
                 ->groupBy('4_RECINTOS')
                 ->get();
-
+                
             $matrices = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
                 ->where('state', '=', 1)
                 ->whereBetween('FECHA', [$corte->fecha_inicio, $corte->fecha_fin])
@@ -342,11 +340,14 @@ class ProduccionController extends Controller
             foreach ($contratosPorRecinto as $contrato_R) {
 
                 if ($contrato_R->{'4_RECINTOS'} != 'NO') {
-                    $contratos4recintos = $contratos4recintos + $contrato_R->{'4_RECINTOS'};
+                    $subtotal = 0;
+                    $subtotal = $contrato_R->total_contratos * $contrato_R->{'4_RECINTOS'};
+                    $contratos4recintos = $contratos4recintos + $subtotal;
                 }
             }
+           
             $contratos4recintos = $contratos4recintos / 4;
-
+            
             $contratos4recintosRedondeado = floor($contratos4recintos);
 
             if ($contratos4recintosRedondeado == intval($contratos4recintosRedondeado)) {
@@ -392,7 +393,8 @@ class ProduccionController extends Controller
             $datosInspector['diseños_especiales'] = $contadorDiseñosEspeciales;
             $datosInspector['4_recintos'] = $contratos4recintosRedondeado;
             $datosInspector['comerciales'] = $contadorComerciales;
-
+       
+            
             $datosInspector['total'] =
                 $datosInspector['comerciales'] +
                 $datosInspector['4_recintos'] +
@@ -463,19 +465,19 @@ class ProduccionController extends Controller
         $contadorDiasSabados = null;
         $sabadosdobles = array();
 
-      
-        
+
+
         // Generar las semanas en el rango del corte
         $semanas = [];
         for ($date = $fechaInicio->copy(); $date->lte($fechaFin); $date->addWeek()) {
             $inicioSemana = $date->copy()->startOfWeek();
             $finSemana = $date->copy()->endOfWeek();
-        
+
             // Ajustar la fecha de fin de semana si excede la fecha final
             if ($finSemana->gt($fechaFin)) {
                 $finSemana = $fechaFin->copy(); // Limitar al último día del rango
             }
-        
+
             $semanas[] = [
                 'inicio' => $inicioSemana->format('Y-m-d'),
                 'fin' => $finSemana->format('Y-m-d'),
@@ -483,7 +485,7 @@ class ProduccionController extends Controller
                 'festivos' => 0,
             ];
         }
-    
+
         $registro = array();
         foreach ($semanas as $index => $semana) {
             // Inicializar el total de contratos
@@ -531,38 +533,45 @@ class ProduccionController extends Controller
             }
 
             // Ajustar los límites de las condicionales si hay un festivo en la semana
-            $limiteContratos = $hayFestivoEnSemana ? 42 : 50;
-            $limiteContratosBajo = $hayFestivoEnSemana ? 40 : 48;
-            $limiteContratosMedio = $hayFestivoEnSemana ? 41 : 49;
+            $limiteContratos = $hayFestivoEnSemana ? 40 : 50;
+            $limiteContratosBajo = $hayFestivoEnSemana ? 38 : 48;
+            $limiteContratosMedio = $hayFestivoEnSemana ? 39 : 49;
             if ($contratosSabado->count() > 0) {
 
+                $fechaSabado = $contratosSabado->first()->fecha;
+                $esSabadoFestivo = in_array($fechaSabado, $diasFestivos);
+                
+                if (!$esSabadoFestivo) {
 
-                if ($totalContratos >= $limiteContratos) {
+                    if ($totalContratos >= $limiteContratos) {
 
 
-                    // Sumar los contratos del sábado
-                    $totalContratosSabado = $contratosSabado->sum('total_contratos');
-                    $contadorDiasSabados += $totalContratosSabado;
-                    try {
-                        $sabadosdobles[] = [
-                            'fecha' => $contratosSabado->first()->fecha,
-                            'cc_inspector' => $inspector->cedula
-                        ];
-                    } catch (\Exception $e) {
+                        // Sumar los contratos del sábado
+                        $totalContratosSabado = $contratosSabado->sum('total_contratos');
+                        $contadorDiasSabados += $totalContratosSabado;
+                        try {
+                            $sabadosdobles[] = [
+                                'fecha' => $contratosSabado->first()->fecha,
+                                'cc_inspector' => $inspector->cedula
+                            ];
+                        } catch (\Exception $e) {
+                        }
+                    } elseif ($totalContratos < $limiteContratos && $totalContratos >= $limiteContratosBajo) {
+
+                        // Sumar los contratos del sábado con ajustes
+                        $totalContratosSabado = $contratosSabado->sum('total_contratos');
+                        $totalContratosSabado = ($totalContratos === $limiteContratosMedio) ? $totalContratosSabado - 1 : $totalContratosSabado - 2;
+                        $contadorDiasSabados += $totalContratosSabado;
+                        try {
+                            $sabadosdobles[] = [
+                                'fecha' => $contratosSabado->first()->fecha,
+                                'cc_inspector' => $inspector->cedula
+                            ];
+                        } catch (\Exception $e) {
+                        }
                     }
-                } elseif ($totalContratos < $limiteContratos && $totalContratos >= $limiteContratosBajo) {
-
-                    // Sumar los contratos del sábado con ajustes
-                    $totalContratosSabado = $contratosSabado->sum('total_contratos');
-                    $totalContratosSabado = ($totalContratos === $limiteContratosMedio) ? $totalContratosSabado - 1 : $totalContratosSabado - 2;
-                    $contadorDiasSabados += $totalContratosSabado;
-                    try {
-                        $sabadosdobles[] = [
-                            'fecha' => $contratosSabado->first()->fecha,
-                            'cc_inspector' => $inspector->cedula
-                        ];
-                    } catch (\Exception $e) {
-                    }
+                }else{
+                
                 }
             }
             // Guardar el total de contratos en el array de semanas
@@ -572,6 +581,8 @@ class ProduccionController extends Controller
             // dd($contratosPorSemana, $contratosSabado, $totalContratos, $contadorDiasSabados);
         }
         // Descomentar para ver el resultado final
+        //dd($contadorDiasSabados,$sabadosdobles);
+        
         return [
             'contadorDiasSabados' => $contadorDiasSabados,
             'sabadosdobles' => $sabadosdobles
@@ -648,7 +659,7 @@ class ProduccionController extends Controller
         // Convertir la fecha a un formato adecuado (suponiendo dd-mm-yy)
         $fecha = Carbon::createFromFormat('d-m-y', $fechaString)->format('d-m-Y');
         $fechaDB = Carbon::createFromFormat('d-m-y', $fechaString)->format('Y-m-d');
-     
+
         // Proceder con la consulta
         $resultados = $this->consultarBitacora($fecha, $ccOperario);
         if ($resultados === null) {
@@ -675,14 +686,14 @@ class ProduccionController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => 'Error al insertar el contrato']);
         }
-          // Obtener los usuarios que deben recibir la notificación
-          $usuarios = User::role(['admin','Director','Residente'])->get();
-          $usuarioLog = Auth::user();
-  
-          // Enviar la notificación a cada usuario
-          foreach ($usuarios as $usuario) {
-              $usuario->notify(new Produccion($request->data[7], $usuarioLog->name,$fechaDB, $nomInspector));
-          }
+        // Obtener los usuarios que deben recibir la notificación
+        $usuarios = User::role(['admin', 'Director', 'Residente'])->get();
+        $usuarioLog = Auth::user();
+
+        // Enviar la notificación a cada usuario
+        foreach ($usuarios as $usuario) {
+            $usuario->notify(new Produccion($request->data[7], $usuarioLog->name, $fechaDB, $nomInspector));
+        }
         return response()->json(['ok' => 'Insertado correctamente.']);
     }
 
@@ -736,7 +747,7 @@ class ProduccionController extends Controller
 
     public function zonas(Request $request)
     {
-        
+
         if (session('id_corte') || $request->idCorteDetalles) {
             $idCorte = session('id_corte') ?? $request->idCorteDetalles;
             $corte = tbl_produccion_corte::find($idCorte);
