@@ -196,6 +196,9 @@ class ProduccionController extends Controller
                 ->first();
         }
         $diasIntermedios = $this->DiasIntermedios($corte);
+        if($diasIntermedios == null){
+            return response()->json(['error' => 'No hay corte activo']);
+        }
         $cantidad_dias = count($diasIntermedios);
 
         $fechaInicio = new DateTime($corte->fecha_inicio);
@@ -434,11 +437,15 @@ class ProduccionController extends Controller
         $meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
         $fechaActual = date('Y-m-d');
-
+      
+        if($corte != null){
         $fechaInicio = new DateTime($corte->fecha_inicio);
         $fechaFin = new DateTime($corte->fecha_fin);
         $fechaFin->modify('+1 day');
-
+        }else{
+            return null;
+        }
+        
         $interval = new DateInterval('P1D'); // Intervalo de 1 día
         $periodo = new DatePeriod($fechaInicio, $interval, $fechaFin);
 
@@ -760,6 +767,9 @@ class ProduccionController extends Controller
             $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
                 ->where('fecha_fin', '>=', $fecha_resta_un_dia)
                 ->first();
+        }
+        if($corte == null){
+            return response()->json(['error' => 'No hay corte activo']);
         }
         $diasIntermedios = $this->DiasIntermedios($corte);
 

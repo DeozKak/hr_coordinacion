@@ -63,6 +63,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 url: url, // Ruta al archivo PHP que realiza la consulta a la base de datos
                 type: 'GET',
                 success: function (response) {
+                    if(response.error){
+                        Swal.fire({
+                            type: 'warning',
+                            text: response.error
+                        });
+                        $('#loader').hide();
+                        $('#overlay').hide();
+                        return;
+                    }
                     resolve(response);
                 },
                 error: function (xhr, status, error) {
@@ -1353,6 +1362,6 @@ setInterval(() => {
         console.error("Error al cargar datos:", error);
         // Puedes agregar aquí lógica adicional para manejar el error, como mostrar un mensaje al usuario.
     }
-}, 50000);
+}, 150000);
 
 

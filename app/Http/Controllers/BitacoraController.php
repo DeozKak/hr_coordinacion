@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\DB;
 use App\Models\tbl_bitacoras_causal;
 use App\Notifications\devolucion;
-
+use App\Http\Controllers\AutoGuardadoController;
 
 
 class BitacoraController extends Controller
@@ -66,7 +66,7 @@ class BitacoraController extends Controller
 
             $excelFilePath = $rutaDestino;
 
-            return $this->procesarArchivoExcel($excelFilePath);
+            return $this->procesarArchivoExcel($excelFilePath, new AutoGuardadoController());
         }
 
         $supervisor = User::find($request->supervisor);
@@ -79,21 +79,19 @@ class BitacoraController extends Controller
 
         $excelFilePath = $rutaDestino;
 
-        return $this->procesarArchivoExcel($excelFilePath, $supervisor->name, $supervisor->id);
+        return $this->procesarArchivoExcel($excelFilePath, new AutoGuardadoController(),$supervisor->name, $supervisor->id, );
     }
 
-    public function procesarArchivoExcel($excelFilePath, $nom_super = null, $id_super = null)
+    public function procesarArchivoExcel($excelFilePath, AutoGuardadoController $Guardado ,$nom_super = null, $id_super = null, )
     {
 
-
-
-
         session(['nom_archivo' => basename($excelFilePath)]);
-
+       
         $validacionArchivo1 = str_replace(".xls", " ", basename($excelFilePath));
         $validacionArchivo2 = str_replace("4.08", "", $validacionArchivo1);
 
-        $exist = tbl_bitacora_archivo::where('NOMBRE_ARCHIVO', $validacionArchivo2)->exists();
+        $exist = $Guardado->buscar($validacionArchivo2);
+        
         if ($exist) {
             return redirect()->route('bitacora')->with('error', 'El archivo seleccionado ya ha sido procesado');
         }
@@ -937,7 +935,7 @@ class BitacoraController extends Controller
         $contrato->save();
  */
         // Obtener los usuarios que deben recibir la notificación
-        $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN'])->get();
+        $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN', 'Auxiliar_coordinacion'])->get();
         $usuarioLog = Auth::user();
 
         // Enviar la notificación a cada usuario
