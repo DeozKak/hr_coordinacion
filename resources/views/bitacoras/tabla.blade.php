@@ -90,25 +90,19 @@
                                 <table class="table table-striped table-bordered tbl_datos" style="<?= $index === 0 ? 'display: table' : 'display: none'; ?>" id="#<?= $nombre; ?>">
                                     <thead>
                                         <tr>
-                                            <?php foreach ($spreadsheet->getSheetNames() as $sheetName) : ?>
-                                                <?php
-                                                $sheet = $spreadsheet->getSheetByName($sheetName);
-                                                ?>
-                                                <?php foreach (['A', 'B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K', 'M', 'N', 'O'] as $columna) : ?>
-                                                    <?php if ($columna === 'I') {
-                                                        echo "<th>ORDEN TRABAJO</th>";
-                                                    } elseif ($columna === 'J') {
-                                                        echo "<th>ORDEN EXT</th>";
-                                                    } elseif ($columna === 'M') {
-                                                        echo "<th>RESULTADO CIERRE</th>";
-                                                    } else {
-                                                        echo "<th>" . $sheet->getCell($columna . '1')->getValue() . "</th>";
-                                                    }   ?>
-
-                                                <?php endforeach; ?>
-                                                <?php break; // Rompe el bucle después de la primera iteración 
-                                                ?>
-                                            <?php endforeach; ?>
+                                            <th>INSPECTOR</th>
+                                            <th>CC OPERARIO</th>
+                                            <th>MUNICIPIO</th>
+                                            <th>FECHA</th>
+                                            <th>N° ACTA</th>
+                                            <th>TIPO DE TRABAJO</th>
+                                            <th>CONTRATO</th>
+                                            <th>ORDEN TRABAJO</th>
+                                            <th>ORDEN EXT</th>
+                                            <th>CATEGORIA</th>
+                                            <th>RESULTADO CIERRE</th>
+                                            <th>HORA INICIO</th>
+                                            <th>HORA FINAL</th>
                                             <th>DURACION INSP</th>
                                             <th>4 RECINTOS O MAS</th>
                                             <th></th>
@@ -118,115 +112,93 @@
                                         </tr>
 
                                     </thead>
+
                                     <tbody>
-                                        <?php foreach ($spreadsheet->getSheetNames() as $sheetName) : ?>
-                                            <?php
-                                            $sheet = $spreadsheet->getSheetByName($sheetName);
+                                        @foreach ($response as $row)
+                                        @php
+                                        $vence = $row->vence;
+                                        $venceDate = DateTime::createFromFormat('d/m/Y', $vence);
+                                        if ($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m')) {
+                                        $vence = "60 meses";
+                                        } else {
+                                        $vence = "";
+                                        }
+                                        @endphp
+                                        <tr style='<?php
+                                                    echo ($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m')) ? "background-color: rgb(251,201,255);" : "";
+                                                    ?>'>
+                                            @php
+                                                $horaInicialObj = null;
+                                                $horaFinalObj = null;
+                                            @endphp
+
+                                            <td>{{$row->NOMBRE}}</td>
+                                            <td>{{$row->CC_OPERARIO}}</td>
+                                            <td>{{$row->MUNICIPIO}}</td>
+                                            <td>{{$row->FECHA}}</td>
+                                            <td>{{$row->No_ACTA}}</td>
+                                            <td>{{$row->TIPO_TRABAJO}}</td>
+                                            <td style='background-color: rgb(146, 208, 80);'>{{$row->CONTRATO}}</td>
+                                            <td>{{$row->ORDEN_TRABAJO}}</td>
+                                            <td>{{$row->ORDEN_EXT}}</td>
+                                            @if($row->CATEGORIA === 'COMERICAL')
+                                            <td style='background-color: rgb(255, 165, 0)'>{{$row->CATEGORIA}}</td>
+                                            @else
+                                            <td>{{$row->CATEGORIA}}</td>
+                                            @endif
+                                            <td>{{$row->RESULTADO_CIERRE}}</td>
+                                            <td>{{$row->HORA_INICIO}}</td>
+                                            <td>{{$row->HORA_FINAL}}</td>
+                                           
+                                            <?php // Verificar si la hora final es anterior a la hora inicial
+                                                $horaInicialObj  = DateTime::createFromFormat('H:i', $row->HORA_INICIO);
+                                                $horaFinalObj    = DateTime::createFromFormat('H:i', $row->HORA_FINAL);
+
+                                            if ($horaFinalObj < $horaInicialObj) {
+                                                // Sumar un día a la hora final
+                                                $horaFinalObj->add(new DateInterval('P1D'));
+                                            }
+
+                                            // Calcular la diferencia de tiempo
+                                            $duracion = $horaInicialObj->diff($horaFinalObj);
+
+                                            // Obtener la duración total en minutos
+                                            $duracionTotalMinutos = $duracion->h * 60 + $duracion->i;
+
+                                            // Formatear la duración en formato HH:MM
+                                            $duracionFormato = $duracion->format('%H:%I');
+
+                                            // Verificar si la duración es menor o igual a 20 minutos
+                                            if ($duracionTotalMinutos <= 20) {
+                                                echo "<td style='background-color: rgb(255, 165, 0)'>$duracionFormato</td>";
+                                            } else {
+                                                echo "<td>$duracionFormato</td>";
+                                            }
                                             ?>
-                                            <?php foreach ($sheet->getRowIterator() as $row) : ?>
-                                                <?php
-                                                $contrato = $sheet->getCell('H' . $row->getRowIndex())->getValue();
-                                                $nombreCelda = $sheet->getCell('A' . $row->getRowIndex())->getValue();
-                                                $vence = $sheet->getCell('Q' . $row->getRowIndex())->getValue();
-                                                $Cierre = $sheet->getCell('M' . $row->getRowIndex())->getValue();
-                                                $Cierre = ltrim($Cierre, '.');
-                                                $venceDate = DateTime::createFromFormat('d/m/Y', $vence);
-                                                if ($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m')) {
-                                                    $vence = "60 meses";
-                                                } else {
-                                                    $vence = "";
-                                                }
-                                                ?>
-                                                <?php if (strpos($contrato, ":") === 0 && $nombreCelda === $nombre && ($Cierre === "CERTIFICADA" || $Cierre === "CERTIFICADA CON NOVEDADES" || $Cierre === "INSPECCIONADA CON DEFECTO CRITICO VALLE" || $Cierre === "INSPECCIONADA CON DEFECTO NO CRITICO VALLE")) : ?>
-                                                    <tr style='<?php
-                                                                echo ($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m')) ? "background-color: rgb(251,201,255);" : "";
-                                                                ?>'>
-                                                        <?php $horaInicialObj = null;
-                                                        $horaFinalObj = null;
-                                                        foreach (['A', 'B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K', 'M', 'N', 'O'] as $columna) : ?>
-                                                            <?php
-                                                            $valorCelda = $sheet->getCell($columna . $row->getRowIndex())->getValue();
+                                            <td><input type="checkbox" value="" id="checkRecintos">
+                                                <input type="text" id="NroRecintos" size="1" style="text-align: center;" disabled>
+                                            </td>
+                                            <td>
+                                                <select class='form-select nombre-columna' style="width: 80px;">
+                                                    <option value="OK" selected>OK</option>
+                                                    <option value="DV">DV</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select class='form-select combo2 nombre-columna' style="width: 220px; display: none;">
+                                                    @foreach ($causales as $causal )
+                                                    <option value="{{$causal->nom_causal}}">{{$causal->nom_causal}}</option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                            <td>
+                                                {{$row->vence}}
+                                            </td>
+                                            <td>
+                                            </td>
+                                        </tr>
 
-                                                            if ($columna === 'M') {
-                                                                $valorCelda = ltrim($sheet->getCell($columna . $row->getRowIndex())->getValue(), '.');
-                                                            }
-                                                            if ($columna === 'H') {
-
-                                                                echo "<td style='background-color: rgb(146, 208, 80);'>" . $valorCelda . "</td>";
-                                                            } elseif ($columna === 'D') {
-                                                                $fechaNumeroNatural = $valorCelda;
-                                                                $fecha = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($fechaNumeroNatural);
-                                                                $valorCelda = $fecha->format('d-m-y');
-                                                                echo "<td>" . $valorCelda . "</td>";
-                                                            } elseif ($columna === 'K') {
-                                                                $categoria = $sheet->getCell('K' . $row->getRowIndex())->getValue();
-                                                                if ($categoria === "COMERCIAL") {
-                                                                    echo "<td style='background-color: rgb(255, 165, 0)'>" . $categoria . "</td>";
-                                                                } else {
-                                                                    echo "<td>" . $categoria . "</td>";
-                                                                }
-                                                            } else {
-                                                                echo "<td>" . $valorCelda . "</td>";
-                                                            }
-
-                                                            if ($columna === 'N') {
-                                                                $horaInicial = $sheet->getCell('N' . $row->getRowIndex())->getValue();
-                                                                $horaInicialObj  = DateTime::createFromFormat('H:i', $horaInicial);
-                                                            } elseif ($columna === 'O') {
-                                                                $horaFinal = $sheet->getCell('O' . $row->getRowIndex())->getValue();
-                                                                $horaFinalObj  = DateTime::createFromFormat('H:i', $horaFinal);
-                                                            }
-                                                            ?>
-                                                        <?php endforeach; ?>
-
-                                                        <?php // Verificar si la hora final es anterior a la hora inicial
-                                                        if ($horaFinalObj < $horaInicialObj) {
-                                                            // Sumar un día a la hora final
-                                                            $horaFinalObj->add(new DateInterval('P1D'));
-                                                        }
-
-                                                        // Calcular la diferencia de tiempo
-                                                        $duracion = $horaInicialObj->diff($horaFinalObj);
-
-                                                        // Obtener la duración total en minutos
-                                                        $duracionTotalMinutos = $duracion->h * 60 + $duracion->i;
-
-                                                        // Formatear la duración en formato HH:MM
-                                                        $duracionFormato = $duracion->format('%H:%I');
-
-                                                        // Verificar si la duración es menor o igual a 20 minutos
-                                                        if ($duracionTotalMinutos <= 20) {
-                                                            echo "<td style='background-color: rgb(255, 165, 0)'>$duracionFormato</td>";
-                                                        } else {
-                                                            echo "<td>$duracionFormato</td>";
-                                                        }
-                                                        ?>
-                                                        <td><input type="checkbox" value="" id="checkRecintos">
-                                                            <input type="text" id="NroRecintos" size="1" style="text-align: center;" disabled>
-                                                        </td>
-                                                        <td>
-                                                            <select class='form-select nombre-columna' style="width: 80px;">
-                                                                <option value="OK" selected>OK</option>
-                                                                <option value="DV">DV</option>
-                                                            </select>
-                                                        </td>
-                                                        <td>
-                                                            <select class='form-select combo2 nombre-columna' style="width: 220px; display: none;">
-                                                                @foreach ($causales as $causal )
-                                                                    <option value="{{$causal->nom_causal}}">{{$causal->nom_causal}}</option>
-                                                                @endforeach
-                                                            </select>
-                                                        </td>
-                                                        <td>
-                                                            <?php echo $vence; ?>
-                                                        </td>
-                                                        <td>
-                                                        </td>
-                                                    </tr>
-                                                <?php endif; ?>
-                                            <?php endforeach; ?>
-                                        <?php endforeach; ?>
-                                    </tbody>
+                                        @endforeach
                                 </table>
                             </div>
                         <?php endforeach; ?>
@@ -429,17 +401,18 @@
 
             });
 
-            const id_super = {!!json_encode($id_super) !!};
-          
+            const id_super = {
+                !!json_encode($id_super) !!
+            };
+
             if (id_super == null) {
 
-                document.getElementById('btnGuardar').click();// Habilitar el botón
-               
+                document.getElementById('btnGuardar').click(); // Habilitar el botón
+
             }
 
 
         });
-
     </script>
     @stop
 </body>

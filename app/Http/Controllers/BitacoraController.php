@@ -79,10 +79,10 @@ class BitacoraController extends Controller
 
         $excelFilePath = $rutaDestino;
 
-        return $this->procesarArchivoExcel($excelFilePath, new AutoGuardadoController(),$supervisor->name, $supervisor->id, );
+        return $this->procesarArchivoExcel($excelFilePath, new AutoGuardadoController(),$supervisor->name, $supervisor->id);
     }
 
-    public function procesarArchivoExcel($excelFilePath, AutoGuardadoController $Guardado ,$nom_super = null, $id_super = null, )
+    public function procesarArchivoExcel($excelFilePath, AutoGuardadoController $Guardado ,$nom_super = null, $id_super = null)
     {
 
         session(['nom_archivo' => basename($excelFilePath)]);
@@ -91,10 +91,11 @@ class BitacoraController extends Controller
         $validacionArchivo2 = str_replace("4.08", "", $validacionArchivo1);
 
         $exist = $Guardado->buscar($validacionArchivo2);
-        
+
         if ($exist) {
             return redirect()->route('bitacora')->with('error', 'El archivo seleccionado ya ha sido procesado');
         }
+
         session(['super' => $nom_super]);
         //consultas a la base de datos
         if ($nom_super === null || $id_super === null) {
@@ -116,7 +117,7 @@ class BitacoraController extends Controller
             $nombres[] = $inspector->apellidos . ' ' . $inspector->nombres;
             $ids[$inspector->cedula] = $inspector->id;
         }
-
+    
         session(['ids_inspectores' => $ids]);
         $id_inspector = 1118285465;
 
@@ -131,7 +132,13 @@ class BitacoraController extends Controller
 
         unlink($excelFilePath);
         $causales = tbl_bitacoras_causal::all();
-        return view('bitacoras.tabla', compact('nombres', 'spreadsheet', 'id_super', 'municipios', 'inspectores','causales'));
+
+        $response = $Guardado->guardar($spreadsheet,$nombres,$id_super,$inspectores);
+        if($response === null){
+            return redirect()->route('bitacora')->with('error', 'Error al generar la bitacora');
+        
+        }
+        return view('bitacoras.tabla', compact('nombres', 'spreadsheet', 'id_super', 'municipios', 'inspectores','causales','response'));
     }
 
     public function guardar_tabla(Request $request, User $super = null)
@@ -848,7 +855,7 @@ class BitacoraController extends Controller
 
     public function reportes()
     {
-        $bitacoras = tbl_bitacora_archivo::all()->map(function ($bitacora) {
+        $bitacoras = tbl_bitacora_archivo::where('finished','=','1')->get()->map(function ($bitacora) {
             $bitacora->fecha_creacion = $bitacora->created_at->format('Y-m-d');
             return $bitacora;
         });
