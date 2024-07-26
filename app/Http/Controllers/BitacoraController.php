@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\tbl_dv_insp;
+use App\Models\tbl_temp_contrato;
 use App\Models\User;
 use App\Models\tbl_insp_cali;
 use App\Models\tbl_bitacora_archivo;
@@ -32,11 +33,21 @@ class BitacoraController extends Controller
     public function ver()
     {
         $supervisores = Auth::user();
+        $id_user = $supervisores->id;
         if ($supervisores->hasRole('Supervisor')) {
             return view('bitacoras.generar', compact('supervisores'));
         }
         $supervisores = User::role('Supervisor')->get();
-        return view('bitacoras.generar', compact('supervisores'));
+
+        $temp = tbl_bitacora_archivo::where('id_usuario','=',$id_user)->where('finished','=',0)->first();
+        
+        if(!$temp){
+           
+            return view('bitacoras.generar', compact('supervisores'));
+        }
+        session()->flash('warning', 'Ya tienes una bitácora en proceso. ¿Deseas continuar?');
+        return view('bitacoras.generar', compact('supervisores','temp'));
+    
     }
 
     public function generar_bitacora(Request $request)
@@ -133,19 +144,22 @@ class BitacoraController extends Controller
         unlink($excelFilePath);
         $causales = tbl_bitacoras_causal::all();
 
-        $response = $Guardado->guardar($spreadsheet,$nombres,$id_super,$inspectores);
+        $response = $Guardado->guardar($spreadsheet, $nombres, $id_super);
+
+       
         if($response === null){
             return redirect()->route('bitacora')->with('error', 'Error al generar la bitacora');
         
         }
-        return view('bitacoras.tabla', compact('nombres', 'spreadsheet', 'id_super', 'municipios', 'inspectores','causales','response'));
+        return view('bitacoras.tabla', compact('nombres', 'id_super', 'municipios', 'inspectores','causales','response'));
     }
 
     public function guardar_tabla(Request $request, User $super = null)
     {
 
 
-
+       
+        
         //variables que obtienen datos del request
         $encabezados = $request->encabezado;
         $dataTable = $request->datos;
@@ -266,12 +280,12 @@ class BitacoraController extends Controller
                                 $ids_inspectores = session('ids_inspectores');
                                 $id_cedula = $ids_inspectores[$cedula_insp];
                                 $fecha = $hoja->getCell([4, $indiceFila])->getValue();
-                                $fecha_formateada = $this->conversion_fecha($fecha);
-
+                              
+                               
                                 $datos_array_OK[] = array(
                                     'cc_operario' => $hoja->getCell([2, $indiceFila])->getValue(),
                                     'municipio' => $hoja->getCell([3, $indiceFila])->getValue(),
-                                    'fecha_inspeccion' => $fecha_formateada,
+                                    'fecha_inspeccion' => $fecha,
                                     'no_acta' => $hoja->getCell([5, $indiceFila])->getValue(),
                                     'tipo_de_trabajo' => $hoja->getCell([6, $indiceFila])->getValue(),
                                     'contrato' => $hoja->getCell([7, $indiceFila])->getValue(),
@@ -303,14 +317,13 @@ class BitacoraController extends Controller
                             $ids_inspectores = session('ids_inspectores');
                             $id_cedula = $ids_inspectores[$cedula_insp];
                             $fecha = $hoja->getCell([4, $indiceFila])->getValue();
-                            $fecha_formateada = $this->conversion_fecha($fecha);
-
+                           
                             $datos_array[] = array(
                                 "supervisor" => $super->id,
                                 'inspector' => $id_cedula,
                                 'cc_operario' => $hoja->getCell([2, $indiceFila])->getValue(),
                                 'municipio' => $hoja->getCell([3, $indiceFila])->getValue(),
-                                'fecha_inspeccion' => $fecha_formateada,
+                                'fecha_inspeccion' => $fecha,
                                 'No_ACTA' => $hoja->getCell([5, $indiceFila])->getValue(),
                                 'tipo_de_trabajo' => $hoja->getCell([6, $indiceFila])->getValue(),
                                 'contrato' => $hoja->getCell([7, $indiceFila])->getValue(),
@@ -476,18 +489,18 @@ class BitacoraController extends Controller
         // Guardar el archivo Excel
         $writer->save(storage_path('app/uploads/') . $rutaArchivoFinal . ".xlsx");
 
-
+       
 
         $nombreArchivo = $rutaArchivoFinal . ".xlsx";
         if ($super !== null) {
 
             $usuario = Auth::user();
 
-            $bitacora = new tbl_bitacora_archivo();
-            $bitacora->id_usuario = $usuario->id;
-            $bitacora->NOMBRE_ARCHIVO = $rutaArchivoFinal;
-            $bitacora->ruta_archivo = 'storage/app/uploads/' . $nombreArchivo;
+            $bitacora = tbl_bitacora_archivo::where('id_usuario', $usuario->id)->where('finished','=',0)->first();
+           
+            $bitacora->finished = 1;
             $bitacora->save();
+           tbl_temp_contrato::where('id_bitacora', $bitacora->id)->delete();
 
             foreach ($datos_array_OK as $datos) {
                 try {
@@ -614,7 +627,7 @@ class BitacoraController extends Controller
         }
         Session::flash('success', 'Bitacora generada correctamente');
         return response()->json([
-            'ruta' => 'bitacora',
+            'ruta' => route('bitacora'),
             'nombre' => '../storage/app/uploads/' . $nombreArchivo
         ]);
     }

@@ -262,7 +262,7 @@ $(document).ready(function () {
                         $('#loader').hide();
                         $('#overlay').hide();
                         Swal.fire({
-                            type: 'warning',
+                            icon: 'warning',
                             title: 'Advertencia',
                             text: response.error,
                         });

@@ -26,5 +26,6 @@ class tbl_temp_contrato extends Model
         'VENCE',
         'id_bitacora',
         'id_usuario',
+        'id_super'
     ];
 }

@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\tbl_bitacoras_causal;
+use App\Models\tbl_localidades_municipio;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\tbl_bitacora_contrato;
+use App\Models\tbl_insp_cali;
 use App\Models\tbl_bitacora_archivo;
 use App\Models\tbl_temp_contrato;
 
@@ -19,22 +22,25 @@ class AutoGuardadoController extends Controller
         return $archivo;
     }
 
-    public function guardar($spreadsheet, $nombres, $id_super, $inspectores)
+    public function guardar($spreadsheet, $nombres, $super)
     {
-
         $rutaArchivo = str_replace(".xls", " ", session('nom_archivo'));
         $rutaArchivoFinal = str_replace("4.08", "", $rutaArchivo);
         $nombreArchivo = $rutaArchivoFinal . ".xlsx";
 
         $usuario = Auth::user();
+
         try {
-            $bitacora = new tbl_bitacora_archivo();
-            $bitacora->id_usuario = $usuario->id;
-            $bitacora->NOMBRE_ARCHIVO = $rutaArchivoFinal;
-            $bitacora->ruta_archivo = 'storage/app/uploads/' . $nombreArchivo;
-            $bitacora->save();
+            $bitacora = tbl_bitacora_archivo::where('id_usuario', $usuario->id)->where('finished','=',0)->first();
+            if(!$bitacora){
+                $bitacora = new tbl_bitacora_archivo();
+                $bitacora->id_usuario = $usuario->id;
+                $bitacora->NOMBRE_ARCHIVO = $rutaArchivoFinal;
+                $bitacora->ruta_archivo = 'storage/app/uploads/' . $nombreArchivo;
+                $bitacora->save();
+            }
         } catch (\Exception $e) {
-            return null;
+            throw $e;
         }
         $datos = [];
 
@@ -56,7 +62,7 @@ class AutoGuardadoController extends Controller
                     ) {
                         $filaDatos = []; // Array para almacenar datos de la fila
 
-                        foreach (['A','B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K', 'M', 'N', 'O', 'Q'] as $columna) {
+                        foreach (['A', 'B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K', 'M', 'N', 'O', 'Q'] as $columna) {
                             $valor = $sheet->getCell($columna . $row->getRowIndex())->getValue();
 
                             if ($columna === 'M') {
@@ -64,7 +70,7 @@ class AutoGuardadoController extends Controller
                             }
                             if ($columna === 'D' && is_numeric($valor)) {
                                 $fecha = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($valor);
-                                $valor = $fecha->format('d-m-y');
+                                $valor = $fecha->format('y-m-d');
                             }
 
                             // Formateo especial para vencimiento
@@ -82,36 +88,96 @@ class AutoGuardadoController extends Controller
                 }
             }
         }
-       
+
         try {
             foreach ($datos as $cc => $inspecciones) {
                 foreach ($inspecciones as $inspeccion) {
-                    tbl_temp_contrato::create([
-                        'NOMBRE' => $inspeccion['A'],
-                        'CC_OPERARIO' => $cc,
-                        'MUNICIPIO' => $inspeccion['C'],
-                        'FECHA' => $inspeccion['D'],
-                        'No_ACTA' => $inspeccion['E'],
-                        'TIPO_TRABAJO' => $inspeccion['G'],
-                        'CONTRATO' => $inspeccion['H'],
-                        'ORDEN_TRABAJO' => $inspeccion['I'],
-                        'ORDEN_EXT' => $inspeccion['J'],
-                        'CATEGORIA' => $inspeccion['K'],
-                        'RESULTADO_CIERRE' => $inspeccion['M'],
-                        'HORA_INICIO' => $inspeccion['N'],
-                        'HORA_FINAL' => $inspeccion['O'],
-                        'VENCE' => $inspeccion['Q'],
-                        'id_bitacora' => $bitacora->id,
-                        'id_usuario' => $usuario->id,
+                    $existe = tbl_temp_contrato::where('CONTRATO', $inspeccion['H'])
+                        ->where('ORDEN_TRABAJO', $inspeccion['I'])
+                        ->where('No_ACTA', $inspeccion['E'])
+                        ->where('TIPO_TRABAJO', $inspeccion['G'])
+                        ->exists();
+                    if (!$existe) {
 
-                    ]);
+
+                        tbl_temp_contrato::create([
+                            'NOMBRE' => $inspeccion['A'],
+                            'CC_OPERARIO' => $cc,
+                            'MUNICIPIO' => $inspeccion['C'],
+                            'FECHA' => $inspeccion['D'],
+                            'No_ACTA' => $inspeccion['E'],
+                            'TIPO_TRABAJO' => $inspeccion['G'],
+                            'CONTRATO' => $inspeccion['H'],
+                            'ORDEN_TRABAJO' => $inspeccion['I'],
+                            'ORDEN_EXT' => $inspeccion['J'],
+                            'CATEGORIA' => $inspeccion['K'],
+                            'RESULTADO_CIERRE' => $inspeccion['M'],
+                            'HORA_INICIO' => $inspeccion['N'],
+                            'HORA_FINAL' => $inspeccion['O'],
+                            'VENCE' => $inspeccion['Q'],
+                            'id_bitacora' => $bitacora->id,
+                            'id_usuario' => $usuario->id,
+                            'id_super' => $super
+
+                        ]);
+                    }
                 }
             }
-        $datosDB = tbl_temp_contrato::where('id_bitacora', $bitacora->id)->get();
+            $datosDB = tbl_temp_contrato::where('id_bitacora', $bitacora->id)->get();
+        
         } catch (\Exception $e) {
-            return null;
+          throw $e;
         }
-
         return $datosDB;
     }
+
+    public function Restaurar($id_bitacora)
+    {
+        try{
+        $archivo = tbl_bitacora_archivo::select('finished')->where('id', $id_bitacora)->first();
+
+        if ($archivo->finished === 1) {
+            return null;
+        }
+    }catch (\Exception $e) {
+        return redirect()->route('bitacora')->with('error', 'Error en el proceso');
+    }
+        $super = tbl_temp_contrato::select('id_super')->where('id_bitacora', $id_bitacora)->first();
+        $id_super = $super->id_super;
+        $inspectores = tbl_insp_cali::where('SUPERVISOR', $id_super)
+            ->where('state', 1)
+            ->orderBy('apellidos', 'asc')
+            ->get();
+
+        foreach ($inspectores as $inspector) {
+            $nombres[] = $inspector->apellidos . ' ' . $inspector->nombres;
+            $ids[$inspector->cedula] = $inspector->id;
+        }
+
+        session(['ids_inspectores' => $ids]);
+
+        $municipios = tbl_localidades_municipio::all();
+        $response = tbl_temp_contrato::where('id_bitacora', $id_bitacora)->get();
+        $causales = tbl_bitacoras_causal::all();
+
+        return view('bitacoras.tabla', compact('response', 'nombres', 'municipios', 'causales', 'id_super', 'inspectores'));
+    }
+
+    public function Borrar($id_bitacora)
+    {
+        try {
+            $contratos = tbl_temp_contrato::where('id_bitacora', $id_bitacora)->get();
+            foreach ($contratos as $contrato) {
+                $contrato->delete();
+            }
+            $archivo = tbl_bitacora_archivo::where('id', $id_bitacora)->first();
+            $archivo->delete();
+        } catch (\Exception $e) {
+            throw $e;
+        
+        }
+        return response()->json(['success' => 'Datos eliminados correctamente']);
+        
+    }
+
 }

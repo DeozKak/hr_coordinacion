@@ -110,49 +110,56 @@
                                             <th></th>
                                             <th></th>
                                         </tr>
-
+                                        @php
+                                        $datosFiltrados = array_filter($response->toArray(), function ($row) use ($nombre) {
+                                        return $row['NOMBRE'] === $nombre;
+                                        });
+                                     
+                                        @endphp
                                     </thead>
 
                                     <tbody>
-                                        @foreach ($response as $row)
+                                        @foreach ($datosFiltrados as $row)
                                         @php
-                                        $vence = $row->vence;
+                                        $vence = $row['vence'];
                                         $venceDate = DateTime::createFromFormat('d/m/Y', $vence);
                                         if ($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m')) {
                                         $vence = "60 meses";
+                                        
                                         } else {
                                         $vence = "";
                                         }
+                                       
                                         @endphp
                                         <tr style='<?php
                                                     echo ($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m')) ? "background-color: rgb(251,201,255);" : "";
                                                     ?>'>
                                             @php
-                                                $horaInicialObj = null;
-                                                $horaFinalObj = null;
+                                            $horaInicialObj = null;
+                                            $horaFinalObj = null;
                                             @endphp
 
-                                            <td>{{$row->NOMBRE}}</td>
-                                            <td>{{$row->CC_OPERARIO}}</td>
-                                            <td>{{$row->MUNICIPIO}}</td>
-                                            <td>{{$row->FECHA}}</td>
-                                            <td>{{$row->No_ACTA}}</td>
-                                            <td>{{$row->TIPO_TRABAJO}}</td>
-                                            <td style='background-color: rgb(146, 208, 80);'>{{$row->CONTRATO}}</td>
-                                            <td>{{$row->ORDEN_TRABAJO}}</td>
-                                            <td>{{$row->ORDEN_EXT}}</td>
-                                            @if($row->CATEGORIA === 'COMERICAL')
-                                            <td style='background-color: rgb(255, 165, 0)'>{{$row->CATEGORIA}}</td>
+                                            <td>{{$row['NOMBRE']}}</td>
+                                            <td>{{$row['CC_OPERARIO']}}</td>
+                                            <td>{{$row['MUNICIPIO']}}</td>
+                                            <td>{{$row['FECHA']}}</td>
+                                            <td>{{$row['No_ACTA']}}</td>
+                                            <td>{{$row['TIPO_TRABAJO']}}</td>
+                                            <td style='background-color: rgb(146, 208, 80);'>{{$row['CONTRATO']}}</td>
+                                            <td>{{$row['ORDEN_TRABAJO']}}</td>
+                                            <td>{{$row['ORDEN_EXT']}}</td>
+                                            @if($row['CATEGORIA'] === 'COMERICAL')
+                                            <td style='background-color: rgb(255, 165, 0)'>{{$row['CATEGORIA']}}</td>
                                             @else
-                                            <td>{{$row->CATEGORIA}}</td>
+                                            <td>{{$row['CATEGORIA']}}</td>
                                             @endif
-                                            <td>{{$row->RESULTADO_CIERRE}}</td>
-                                            <td>{{$row->HORA_INICIO}}</td>
-                                            <td>{{$row->HORA_FINAL}}</td>
-                                           
+                                            <td>{{$row['RESULTADO_CIERRE']}}</td>
+                                            <td>{{$row['HORA_INICIO']}}</td>
+                                            <td>{{$row['HORA_FINAL']}}</td>
+
                                             <?php // Verificar si la hora final es anterior a la hora inicial
-                                                $horaInicialObj  = DateTime::createFromFormat('H:i', $row->HORA_INICIO);
-                                                $horaFinalObj    = DateTime::createFromFormat('H:i', $row->HORA_FINAL);
+                                            $horaInicialObj  = DateTime::createFromFormat('H:i', $row['HORA_INICIO']);
+                                            $horaFinalObj    = DateTime::createFromFormat('H:i', $row['HORA_FINAL']);
 
                                             if ($horaFinalObj < $horaInicialObj) {
                                                 // Sumar un día a la hora final
@@ -192,7 +199,7 @@
                                                 </select>
                                             </td>
                                             <td>
-                                                {{$row->vence}}
+                                                {{$row['vence']}}
                                             </td>
                                             <td>
                                             </td>
@@ -325,7 +332,7 @@
 
         <div class="d-grid gap-2 d-md-flex justify-content-md">
             <div class="card-footer" style="margin-top: 10px; margin-bottom: 10px;">
-                <a class="btn btn-primary" href="javascript:history.go(-1)">Ir Atrás</a>
+                <a class="btn btn-primary" href="{{route('bitacora')}}">Ir Atrás</a>
                 <button class="btn btn-success" id="btnGuardar">Guardar</button>
             </div>
         </div>
@@ -347,7 +354,7 @@
                     $('#municipio-select').select2({
                         language: "es",
                         ajax: {
-                            url: 'municipios/json', // Ruta a la función del controlador
+                            url: "{{route('municipios.json')}}", // Ruta a la función del controlador
                             dataType: 'json',
                             delay: 250, // Retraso antes de realizar la búsqueda
                             data: function(params) {
@@ -376,7 +383,7 @@
                 $('#municipio-select').select2({
                     language: "es",
                     ajax: {
-                        url: 'municipios/json', // Ruta a la función del controlador
+                        url: "{{'municipios.json'}}", // Ruta a la función del controlador
                         dataType: 'json',
                         delay: 250, // Retraso antes de realizar la búsqueda
                         data: function(params) {
@@ -401,9 +408,7 @@
 
             });
 
-            const id_super = {
-                !!json_encode($id_super) !!
-            };
+            const id_super = {!!json_encode($id_super) !!};
 
             if (id_super == null) {
 
