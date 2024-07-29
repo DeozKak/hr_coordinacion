@@ -22,6 +22,7 @@
     <div id="loader" style="display: none;"></div>
     <div id="overlay" style="display: none;"></div>
     <input type="hidden" id="token" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" id="url_actualizar" name="route" value="{{ route('bitacoras.actualizar',['id' => ':id']) }}">
     <input type="hidden" id="url_guardar" name="route_guardar" value="{{ route('bitacoras.guardar_tabla',['super' => $id_super]) }}">
     <input type="hidden" id="url_borrar" name="route_borrar" value="{{ route('bitacoras.borrar_archivos') }}">
     <div class="shadow-container">
@@ -90,6 +91,7 @@
                                 <table class="table table-striped table-bordered tbl_datos" style="<?= $index === 0 ? 'display: table' : 'display: none'; ?>" id="#<?= $nombre; ?>">
                                     <thead>
                                         <tr>
+                                            <th>ID</th>
                                             <th>INSPECTOR</th>
                                             <th>CC OPERARIO</th>
                                             <th>MUNICIPIO</th>
@@ -114,7 +116,7 @@
                                         $datosFiltrados = array_filter($response->toArray(), function ($row) use ($nombre) {
                                         return $row['NOMBRE'] === $nombre;
                                         });
-                                     
+
                                         @endphp
                                     </thead>
 
@@ -125,11 +127,11 @@
                                         $venceDate = DateTime::createFromFormat('d/m/Y', $vence);
                                         if ($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m')) {
                                         $vence = "60 meses";
-                                        
+
                                         } else {
                                         $vence = "";
                                         }
-                                       
+
                                         @endphp
                                         <tr style='<?php
                                                     echo ($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m')) ? "background-color: rgb(251,201,255);" : "";
@@ -138,7 +140,7 @@
                                             $horaInicialObj = null;
                                             $horaFinalObj = null;
                                             @endphp
-
+                                            <td>{{$row['id']}}</td>
                                             <td>{{$row['NOMBRE']}}</td>
                                             <td>{{$row['CC_OPERARIO']}}</td>
                                             <td>{{$row['MUNICIPIO']}}</td>
@@ -182,19 +184,22 @@
                                                 echo "<td>$duracionFormato</td>";
                                             }
                                             ?>
-                                            <td><input type="checkbox" value="" id="checkRecintos">
-                                                <input type="text" id="NroRecintos" size="1" style="text-align: center;" disabled>
+                                            <td>
+                                                <input type="checkbox" value="" id="checkRecintos" class="recintosCheck" {{ $row['4_RECINTOS'] !== "NO"  ? 'checked' : '' }}>
+                                                <input type="text" id="NroRecintos" class="recintos" size="1" style="text-align: center;" value="{{ $row['4_RECINTOS'] !== "NO"  ? $row['4_RECINTOS'] : '' }}" disabled>
                                             </td>
                                             <td>
                                                 <select class='form-select nombre-columna' style="width: 80px;">
-                                                    <option value="OK" selected>OK</option>
-                                                    <option value="DV">DV</option>
+                                                    <option value="OK" {{ $row['ESTADO'] == 'OK' ? 'selected' : '' }}>OK</option>
+                                                    <option value="DV" {{ $row['ESTADO'] == 'DV' ? 'selected' : '' }}>DV</option>
                                                 </select>
                                             </td>
                                             <td>
-                                                <select class='form-select combo2 nombre-columna' style="width: 220px; display: none;">
-                                                    @foreach ($causales as $causal )
-                                                    <option value="{{$causal->nom_causal}}">{{$causal->nom_causal}}</option>
+                                                <select class='combo2' style="width: 220px; display: none;">
+                                                    @foreach ($causales as $causal)
+                                                    <option value="{{$causal->nom_causal}}" {{ $row['CAUSAL'] == $causal->nom_causal ? 'selected' : '' }}>
+                                                        {{$causal->nom_causal}}
+                                                    </option>
                                                     @endforeach
                                                 </select>
                                             </td>

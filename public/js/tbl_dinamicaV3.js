@@ -28,11 +28,11 @@ $(document).ready(function () {
         },
         "columnDefs": [
             {
-                "targets": [17], // 
+                "targets": [18], // 
                 "visible": false
             },
             {
-                "targets": [18], // 
+                "targets": [19], // 
                 "visible": false
             }
         ]
@@ -65,6 +65,11 @@ $(document).ready(function () {
         // Ejecutar la función contadores_dinamicos(id) para la tabla actual
         contadores_dinamicos(idTabla);
 
+
+        // Recorrer los select DENTRO de la tabla actual
+        $(this).find('select.form-select.nombre-columna').each(function () {
+            cambiarColor(this); // Pasamos el select específico que cambió
+        });
     });
 
     // Mostrar la tabla correspondiente cuando se hace clic en una pestaña
@@ -126,7 +131,7 @@ $(document).ready(function () {
         setTimeout(function () {
             let valoresSeleccionados = {};
             let datos = [];
-            const encabezado = ['INSPECTOR', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO  CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION', '4 RECINTOS O MAS'];
+            const encabezado = ['ID', 'INSPECTOR', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO  CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION', '4 RECINTOS O MAS'];
             $('.tbl_datos[id]').each(function (indexTabla) {
 
                 let idTabla = $(this).attr('id');
@@ -139,7 +144,7 @@ $(document).ready(function () {
 
                     indexSelect = indexSelect + 1;
 
-                    let checkbox = $(this.node()).find('td:eq(14) input').is(':checked');
+                    let checkbox = $(this.node()).find('td:eq(15) input').is(':checked');
 
                     if (checkbox) {
                         let recintos = $(this.node()).find('#NroRecintos').val();
@@ -157,9 +162,9 @@ $(document).ready(function () {
 
                     indexSelect = indexSelect + 1;
 
-                    let selectValueCombobox1 = $(this.node()).find('td:eq(15) select').val();
+                    let selectValueCombobox1 = $(this.node()).find('td:eq(16) select').val();
 
-                    let selectValueCombobox2 = $(this.node()).find('td:eq(16) select').val();
+                    let selectValueCombobox2 = $(this.node()).find('td:eq(17) select').val();
 
                     idSelect = $(this).attr('id') || 'select_' + indexTabla + '_' + indexSelect;
 
@@ -193,7 +198,7 @@ $(document).ready(function () {
                 element.forEach(function (value, index) {
 
                     const selectValueCombobox = valoresSeleccionados["select_" + contador_tabla + "_" + contador_combobox1];
-                    const valor_cierre = value[10];
+                    const valor_cierre = value[11];
 
                     // Verificar si la fila cumple con los criterios necesarios para contar
                     if (selectValueCombobox === 'OK') {
@@ -225,10 +230,10 @@ $(document).ready(function () {
                 indicadores.push({ certificadaCount, certificadaConNovedadesCount, inspeccionadaConDefectoCriticoCount, inspeccionadaConDefectoNoCriticoCount, totalCount });
                 contador_tabla = contador_tabla + 1;
             });
-    
+
             const csrfToken = $('#token').val();
             const url_guardar = $('#url_guardar').val();
-            const url_borrar = $('#url_borrar').val();          
+            const url_borrar = $('#url_borrar').val();
             // Realizar la petición AJAX
             $.ajax({
                 type: 'POST',
@@ -241,8 +246,8 @@ $(document).ready(function () {
                     _token: csrfToken
                 },
                 success: function (response) {
-                    
-                    if (response.nombre && idSuper === null){
+
+                    if (response.nombre && idSuper === null) {
                         window.location.href = response.nombre;
                         codigoHTML_tabla_indicadores = null;
                         valoresSeleccionados = null;
@@ -250,13 +255,13 @@ $(document).ready(function () {
                         $('#overlay').hide();
                     }
                     if (response.ruta) {
-                        setTimeout(function() {
+                        setTimeout(function () {
                             window.location.href = response.ruta;
                             codigoHTML_tabla_indicadores = null;
                             valoresSeleccionados = null;
                             $('#loader').hide();
                             $('#overlay').hide();
-                            }, 200);
+                        }, 200);
 
                     } else {
                         $('#loader').hide();
@@ -386,7 +391,7 @@ $(document).ready(function () {
     });
     //--------------------------------------------------------------------------------
 
-   
+
     //-------------------------------------------------------------------------------- 
 
 
@@ -558,6 +563,14 @@ document.addEventListener('DOMContentLoaded', function () {
     let check4Recintos = document.querySelectorAll('#checkRecintos');
 
     check4Recintos.forEach(function (check) {
+        if (check.checked) {
+            let fila = check.parentNode.parentNode;
+            fila.querySelector('#NroRecintos').disabled = false;
+        } else {
+            let fila = check.parentNode.parentNode;
+            fila.querySelector('#NroRecintos').disabled = true;
+            fila.querySelector('#NroRecintos').value = '';
+        }
 
         check.addEventListener('change', function () {
             if (check.checked) {
@@ -571,13 +584,61 @@ document.addEventListener('DOMContentLoaded', function () {
 
         });
     });
+      // eventos para autoguardado
+      let recintoscheck = document.querySelectorAll('.recintosCheck');
+    
+      recintoscheck.forEach(function (check) {
+        check.addEventListener('change', function () {
+              
+              let fila = check.parentNode.parentNode;
+              let celdas = fila.getElementsByTagName('td');
+              if (!check.checked) { // Verifica si el checkbox está desmarcado
+                enviarDatos(celdas[0].textContent, '4_RECINTOS', 'NO'); 
+                // O cualquier otra acción que quieras realizar
+              }
+          });
+      });
+
+    let recintos = document.querySelectorAll('.recintos');
+    
+    recintos.forEach(function (recinto) {
+        recinto.addEventListener('change', function () {
+            
+            let fila = recinto.parentNode.parentNode;
+            let celdas = fila.getElementsByTagName('td');
+     
+            enviarDatos(celdas[0].textContent, '4_RECINTOS' , recinto.value);
+
+        });
+    });
+
+  
+    let causales = document.querySelectorAll('.combo2');
+    
+
+    causales.forEach(function (causal) {
+        causal.addEventListener('change', function () {
+         
+            let fila = causal.parentNode.parentNode;
+            let celdas = fila.getElementsByTagName('td');
+     
+            enviarDatos(celdas[0].textContent, 'CAUSAL' , causal.value);
+
+           
+        });
+    });
 
     var comboBoxes = document.querySelectorAll('select.form-select.nombre-columna');
 
     comboBoxes.forEach(function (comboBox) {
         comboBox.addEventListener('change', function () {
+         
+            let id_pestaña = $('.btnav.active').attr('href');
 
-            var id_pestaña = $('.btnav.active').attr('href');
+            let fila = comboBox.parentNode.parentNode;
+            let celdas = fila.getElementsByTagName('td');
+     
+            enviarDatos(celdas[0].textContent, 'ESTADO' , comboBox.value);
 
             contadores_dinamicos(id_pestaña);
             cambiarColor(comboBox);
@@ -609,8 +670,8 @@ function contadores_dinamicos(nombre) {
     $('' + nombre_convertido + ' .tbl_datos').DataTable().rows().every(function () {
 
 
-        var selectValueCombobox = $(this.node()).find('td:eq(15) select').val();
-        var valor_cierre = $(this.node()).find('td:eq(10)').text();
+        var selectValueCombobox = $(this.node()).find('td:eq(16) select').val();
+        var valor_cierre = $(this.node()).find('td:eq(11)').text();
         /* console.log(selectValueCombobox); */
         // Verificar si la fila cumple con los criterios necesarios para contar
         if (selectValueCombobox === 'OK') {
@@ -668,7 +729,7 @@ function agregar_datos() {
     const cantidadRecintos = document.getElementById('NroRecintosP').value;
     const resultado_cierre = document.getElementById('resultado_cierre').value;
     const rechazo = document.getElementById('causal').value;
-    
+
 
     const [anio, mes, dia] = fecha.split('-').map(Number);
 
@@ -790,6 +851,8 @@ function cambiarColor(select) {
     // Verificar si se seleccionó 'DV' en el combobox
     if (valorSeleccionado === 'DV') {
         var celdas = fila.getElementsByTagName('td');
+        // Obtener el valor del primer <td>
+        var valorPrimerTd = celdas[0].textContent;
         // Iterar sobre las celdas de la fila
         for (var i = 0; i < celdas.length; i++) {
 
@@ -819,9 +882,12 @@ function cambiarColor(select) {
 
         segundoComboBox.value = '--SELECCIONE CAUSAL--';
         segundoComboBox.style.display = 'none';
-    } else {
+
+    } else if (valorSeleccionado === 'DV') {
+
         // Mostrar el segundo combobox
         segundoComboBox.style.display = 'block';
+
     }
 }
 
@@ -835,8 +901,8 @@ function validacionDatos(contrato, tabla) {
     let datosRepetidos = false;
     // Verificar si los datos ya existen en la tabla
     data.each(function (value, index) {
-        const contratoExistente = value[6]; // Índice de la columna del contrato en los datos existentes
-        const ordenExistente = value[7]; // Índice de la columna de la orden en los datos existentes
+        const contratoExistente = value[7]; // Índice de la columna del contrato en los datos existentes
+        const ordenExistente = value[8]; // Índice de la columna de la orden en los datos existentes
 
         if (contratoExistente === contratoNuevo) {
             datosRepetidos = true; // Salir del bucle each si se encuentran datos repetidos
@@ -847,6 +913,37 @@ function validacionDatos(contrato, tabla) {
     } else {
         return false;
     } // Si no se encontraron datos repetidos, retornar false
+}
+
+
+function enviarDatos(id, nom_campo, valor) {
+
+    const csrfToken = $('#token').val();
+    let url_actualizar = document.getElementById('url_actualizar').value;
+    url_actualizar = url_actualizar.replace(':id', id);
+    $.ajax({
+        type: 'POST',
+        url: url_actualizar,
+        data: {
+            campo: nom_campo,
+            valor: valor,
+            _token: csrfToken
+        },
+        success: function (response) {
+            console.log(response);
+        },
+        error: function (xhr, status, error) {
+            console.log(xhr.responseText);
+
+            $('#loader').hide();
+            $('#overlay').hide();
+            Swal.fire({
+                type: 'error',
+                title: 'Error',
+                text: error,
+            });
+        }
+    });
 }
 
 

@@ -31,8 +31,8 @@ class AutoGuardadoController extends Controller
         $usuario = Auth::user();
 
         try {
-            $bitacora = tbl_bitacora_archivo::where('id_usuario', $usuario->id)->where('finished','=',0)->first();
-            if(!$bitacora){
+            $bitacora = tbl_bitacora_archivo::where('id_usuario', $usuario->id)->where('finished', '=', 0)->first();
+            if (!$bitacora) {
                 $bitacora = new tbl_bitacora_archivo();
                 $bitacora->id_usuario = $usuario->id;
                 $bitacora->NOMBRE_ARCHIVO = $rutaArchivoFinal;
@@ -124,24 +124,23 @@ class AutoGuardadoController extends Controller
                 }
             }
             $datosDB = tbl_temp_contrato::where('id_bitacora', $bitacora->id)->get();
-        
         } catch (\Exception $e) {
-          throw $e;
+            throw $e;
         }
         return $datosDB;
     }
 
     public function Restaurar($id_bitacora)
     {
-        try{
-        $archivo = tbl_bitacora_archivo::select('finished')->where('id', $id_bitacora)->first();
+        try {
+            $archivo = tbl_bitacora_archivo::select('finished')->where('id', $id_bitacora)->first();
 
-        if ($archivo->finished === 1) {
-            return null;
+            if ($archivo->finished === 1) {
+                return null;
+            }
+        } catch (\Exception $e) {
+            return redirect()->route('bitacora')->with('error', 'Error en el proceso');
         }
-    }catch (\Exception $e) {
-        return redirect()->route('bitacora')->with('error', 'Error en el proceso');
-    }
         $super = tbl_temp_contrato::select('id_super')->where('id_bitacora', $id_bitacora)->first();
         $id_super = $super->id_super;
         $inspectores = tbl_insp_cali::where('SUPERVISOR', $id_super)
@@ -174,10 +173,24 @@ class AutoGuardadoController extends Controller
             $archivo->delete();
         } catch (\Exception $e) {
             throw $e;
-        
         }
         return response()->json(['success' => 'Datos eliminados correctamente']);
-        
     }
 
+    public function Actualizar($id, Request $request)
+    {
+
+        $campo = $request->campo;
+        $valor = $request->valor;
+
+        try {
+            $contrato = tbl_temp_contrato::find($id);
+
+            $contrato->$campo = $valor;
+            $contrato->save();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+        return response()->json(['success' => 'Datos actualizados correctamente']);
+    }
 }

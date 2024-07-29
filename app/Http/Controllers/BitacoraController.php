@@ -158,14 +158,13 @@ class BitacoraController extends Controller
     {
 
 
-       
-        
+   
         //variables que obtienen datos del request
         $encabezados = $request->encabezado;
         $dataTable = $request->datos;
         $indicadores = $request->indicadores;
         $valoresSeleccionados = $request->valoresSeleccionados;
-
+        
         $datos_array = array();
 
         // Crear una instancia de la clase Spreadsheet
@@ -176,9 +175,10 @@ class BitacoraController extends Controller
 
             $idTabla = "$indice";
 
-
-            $nombre_tabla = $tabla[0][0] ?? "Tabla $indice";
-
+            
+            
+            $nombre_tabla = $tabla[0][1] ?? "Tabla $indice";
+        
             $nombre_tabla = strlen($nombre_tabla) > 31 ? substr($nombre_tabla, 0, 31) : $nombre_tabla;
 
             // Crear una nueva hoja de cálculo para esta tabla
@@ -233,8 +233,8 @@ class BitacoraController extends Controller
 
                         $contenidoCelda = $celda;
                         // obtener datos complementarios 60 meses y rechazos
-                        $vence = $fila[17];
-                        $rechazo = $fila[18];
+                        $vence = $fila[18];
+                        $rechazo = $fila[19];
                         // Obtener el identificador único del combobox y checkbox
                         $idCheckbox = $indicador_checkbox;
                         $idCombobox1 = $indicador_combobox1;
@@ -244,7 +244,7 @@ class BitacoraController extends Controller
                         $claveCheckbox = "select_$idTabla" . "_$idCheckbox";
                         $clave = "select_$idTabla" . "_$idCombobox1";
                         $clave2 = "select_$idTabla" . "_$idCombobox2";
-                        if ($indiceColumna === 15 && isset($valoresSeleccionados[$claveCheckbox])) {
+                        if ($indiceColumna === 16 && isset($valoresSeleccionados[$claveCheckbox])) {
                             $contenidoCelda = $valoresSeleccionados[$claveCheckbox];
                             if ($contenidoCelda === "false") {
                                 $contenidoCelda = "NO";
@@ -268,43 +268,49 @@ class BitacoraController extends Controller
                             $validacion = 0;
                         }
                         // Verificar si existe un valor seleccionado para este combobox y esta tabla
-                        if ($indiceColumna === 16 && isset($valoresSeleccionados[$clave])) {
+                        if ($indiceColumna === 17 && isset($valoresSeleccionados[$clave])) {
                             // Usar el valor seleccionado en lugar del contenido de la celda
                             $contenidoCelda = $valoresSeleccionados[$clave];
                             $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoCelda);
                             if ($valoresSeleccionados[$clave] === "OK") {
-                                $celda_color = $hoja->getCell([7, $indiceFila]);
+                                $celda_color = $hoja->getCell([8, $indiceFila]);
                                 $celda_color->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('92D050');
-                                $cedula_insp = $hoja->getCell([2, $indiceFila])->getValue();
+                                $cedula_insp = $hoja->getCell([3, $indiceFila])->getValue();
+                             
                                 // guardar un array con todos los contratos en ok
                                 $ids_inspectores = session('ids_inspectores');
                                 $id_cedula = $ids_inspectores[$cedula_insp];
-                                $fecha = $hoja->getCell([4, $indiceFila])->getValue();
-                              
+                                $fecha = $hoja->getCell([5, $indiceFila])->getValue();
+                               if($hoja->getCell([16, $indiceFila])->getValue()===null){
+                                    $hoja->setCellValue([16, $indiceFila], "NO");
+                               }
                                
                                 $datos_array_OK[] = array(
-                                    'cc_operario' => $hoja->getCell([2, $indiceFila])->getValue(),
-                                    'municipio' => $hoja->getCell([3, $indiceFila])->getValue(),
+                                    'cc_operario' => $hoja->getCell([3, $indiceFila])->getValue(),
+                                    'municipio' => $hoja->getCell([4, $indiceFila])->getValue(),
                                     'fecha_inspeccion' => $fecha,
-                                    'no_acta' => $hoja->getCell([5, $indiceFila])->getValue(),
-                                    'tipo_de_trabajo' => $hoja->getCell([6, $indiceFila])->getValue(),
-                                    'contrato' => $hoja->getCell([7, $indiceFila])->getValue(),
-                                    'orden_de_trabajo' => $hoja->getCell([8, $indiceFila])->getValue(),
-                                    'orden_externa' => $hoja->getCell([9, $indiceFila])->getValue(),
-                                    'categoria' => $hoja->getCell([10, $indiceFila])->getValue(),
-                                    'resultado' => $hoja->getCell([11, $indiceFila])->getValue(),
-                                    'hora_inicio' => $hoja->getCell([12, $indiceFila])->getValue(),
-                                    'hora_fin' => $hoja->getCell([13, $indiceFila])->getValue(),
-                                    '4_recintos' => $hoja->getCell([15, $indiceFila])->getValue(),
+                                    'no_acta' => $hoja->getCell([6, $indiceFila])->getValue(),
+                                    'tipo_de_trabajo' => $hoja->getCell([7, $indiceFila])->getValue(),
+                                    'contrato' => $hoja->getCell([8, $indiceFila])->getValue(),
+                                    'orden_de_trabajo' => $hoja->getCell([9, $indiceFila])->getValue(),
+                                    'orden_externa' => $hoja->getCell([10, $indiceFila])->getValue(),
+                                    'categoria' => $hoja->getCell([11, $indiceFila])->getValue(),
+                                    'resultado' => $hoja->getCell([12, $indiceFila])->getValue(),
+                                    'hora_inicio' => $hoja->getCell([13, $indiceFila])->getValue(),
+                                    'hora_fin' => $hoja->getCell([14, $indiceFila])->getValue(),
+                                    '4_recintos' => $hoja->getCell([16, $indiceFila])->getValue(),
                                     'vence' => $vence,
                                     'rechazo' => $rechazo
                                 );
+                                
+                            
+                            
                             } else {
 
-                                $celda_color = $hoja->getCell([7, $indiceFila]);
+                                $celda_color = $hoja->getCell([8, $indiceFila]);
                                 $celda_color->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('FF0000');
                             }
-                        } elseif (array_key_exists($clave, $valoresSeleccionados) && $valoresSeleccionados[$clave] === "DV" && $indiceColumna === 17 && isset($valoresSeleccionados[$clave2])) {
+                        } elseif (array_key_exists($clave, $valoresSeleccionados) && $valoresSeleccionados[$clave] === "DV" && $indiceColumna === 18 && isset($valoresSeleccionados[$clave2])) {
                             if ($valoresSeleccionados[$clave2] === '--SELECCIONE CAUSAL--') {
                                 header('Content-Type: application/json');
                                 echo json_encode(['error' => 'Por favor, seleccione una causal para los contratos en estado de devolucion']);
@@ -313,36 +319,39 @@ class BitacoraController extends Controller
                             $contenidoCelda = $valoresSeleccionados[$clave2];
                             $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoCelda);
 
-                            $cedula_insp = $hoja->getCell([2, $indiceFila])->getValue();
+                            $cedula_insp = $hoja->getCell([3, $indiceFila])->getValue();
                             $ids_inspectores = session('ids_inspectores');
                             $id_cedula = $ids_inspectores[$cedula_insp];
-                            $fecha = $hoja->getCell([4, $indiceFila])->getValue();
-                           
+                            $fecha = $hoja->getCell([5, $indiceFila])->getValue();
+                            if($hoja->getCell([16, $indiceFila])->getValue()===null){
+                                $hoja->setCellValue([16, $indiceFila], "NO");
+                           }
+
                             $datos_array[] = array(
                                 "supervisor" => $super->id,
                                 'inspector' => $id_cedula,
-                                'cc_operario' => $hoja->getCell([2, $indiceFila])->getValue(),
-                                'municipio' => $hoja->getCell([3, $indiceFila])->getValue(),
+                                'cc_operario' => $hoja->getCell([3, $indiceFila])->getValue(),
+                                'municipio' => $hoja->getCell([4, $indiceFila])->getValue(),
                                 'fecha_inspeccion' => $fecha,
-                                'No_ACTA' => $hoja->getCell([5, $indiceFila])->getValue(),
-                                'tipo_de_trabajo' => $hoja->getCell([6, $indiceFila])->getValue(),
-                                'contrato' => $hoja->getCell([7, $indiceFila])->getValue(),
-                                'orden_de_trabajo' => $hoja->getCell([8, $indiceFila])->getValue(),
-                                'orden_externa' => $hoja->getCell([9, $indiceFila])->getValue(),
-                                'categoria' => $hoja->getCell([10, $indiceFila])->getValue(),
-                                'resultado' => $hoja->getCell([11, $indiceFila])->getValue(),
-                                'Hora_inicio' => $hoja->getCell([12, $indiceFila])->getValue(),
-                                'Hora_fin' => $hoja->getCell([13, $indiceFila])->getValue(),
-                                '4_recintos' => $hoja->getCell([15, $indiceFila])->getValue(),
+                                'No_ACTA' => $hoja->getCell([6, $indiceFila])->getValue(),
+                                'tipo_de_trabajo' => $hoja->getCell([7, $indiceFila])->getValue(),
+                                'contrato' => $hoja->getCell([8, $indiceFila])->getValue(),
+                                'orden_de_trabajo' => $hoja->getCell([9, $indiceFila])->getValue(),
+                                'orden_externa' => $hoja->getCell([10, $indiceFila])->getValue(),
+                                'categoria' => $hoja->getCell([11, $indiceFila])->getValue(),
+                                'resultado' => $hoja->getCell([12, $indiceFila])->getValue(),
+                                'Hora_inicio' => $hoja->getCell([13, $indiceFila])->getValue(),
+                                'Hora_fin' => $hoja->getCell([14, $indiceFila])->getValue(),
+                                '4_recintos' => $hoja->getCell([16, $indiceFila])->getValue(),
                                 'causal' => $contenidoCelda,
                                 'fecha_devolucion' => date('Y-m-d'),
                                 'vence' => $vence,
                                 'gestionado' => 0,
                                 'dias_sin_gestion' => 0
                             );
-                        } elseif ($indiceColumna === 17) {
+                        } elseif ($indiceColumna === 18) {
                             $hoja->setCellValue([$indiceColumna, $indiceFila], "");
-                        } elseif ($indiceColumna === 14) {
+                        } elseif ($indiceColumna === 15) {
                             if ($contenidoCelda < '00:20') {
                                 $celda = $hoja->getCell([$indiceColumna, $indiceFila]);
                                 $celdaExcel_OK = $hoja_OK->getCell([$indiceColumna, $indiceFila_ok]);
@@ -350,7 +359,9 @@ class BitacoraController extends Controller
                                 $celdaExcel_OK->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('FF8000');
                             }
                         } else {
-                            $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoCelda);
+                         
+                            $hoja->setCellValue([$indiceColumna, $indiceFila], "");
+                            $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoCelda); 
 
                             $celda = $hoja->getCell([$indiceColumna, $indiceFila]);
 
@@ -489,7 +500,7 @@ class BitacoraController extends Controller
         // Guardar el archivo Excel
         $writer->save(storage_path('app/uploads/') . $rutaArchivoFinal . ".xlsx");
 
-       
+             
 
         $nombreArchivo = $rutaArchivoFinal . ".xlsx";
         if ($super !== null) {
@@ -552,7 +563,7 @@ class BitacoraController extends Controller
                     $contrato->state = 1;
                     $contrato->save();
                 } catch (\Exception $e) {
-                    return response()->json(['error' => 'Error al guardar los datos en la base de datos']);
+                    return response()->json(['error' => 'Error al guardar los datos en la base de datos']);               
                 }
             }
 
