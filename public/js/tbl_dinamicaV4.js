@@ -584,7 +584,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         });
     });
-      // eventos para autoguardado
+      // EVENTOS PARA EL AUTOGUARDADO DE LOS DATOS
       let recintoscheck = document.querySelectorAll('.recintosCheck');
     
       recintoscheck.forEach(function (check) {
@@ -628,7 +628,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    var comboBoxes = document.querySelectorAll('select.form-select.nombre-columna');
+    let comboBoxes = document.querySelectorAll('select.form-select.nombre-columna');
 
     comboBoxes.forEach(function (comboBox) {
         comboBox.addEventListener('change', function () {
