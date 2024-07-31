@@ -19,7 +19,17 @@ class AutoGuardadoController extends Controller
         $archivo = tbl_bitacora_archivo::where('NOMBRE_ARCHIVO', $nombre)
             ->where('finished', '=', '1')->exists();
 
-        return $archivo;
+        if($archivo){
+            return response()->json(['error' => 'El archivo seleccionado ya ha sido procesado']);
+        
+        }
+
+        $proceso = tbl_bitacora_archivo::where('NOMBRE_ARCHIVO', $nombre)
+            ->where('finished', '=', '0')->exists();
+
+        if($proceso){
+            return  response()->json(['error' => 'El archivo seleccionado se encuentra en proceso por otro usuario']);
+        }
     }
 
     public function guardar($spreadsheet, $nombres, $super)

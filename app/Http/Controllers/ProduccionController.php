@@ -196,7 +196,7 @@ class ProduccionController extends Controller
                 ->first();
         }
         $diasIntermedios = $this->DiasIntermedios($corte);
-        if($diasIntermedios == null){
+        if ($diasIntermedios == null) {
             return response()->json(['error' => 'No hay corte activo']);
         }
         $cantidad_dias = count($diasIntermedios);
@@ -297,7 +297,7 @@ class ProduccionController extends Controller
                 ->select('4_RECINTOS', DB::raw('COUNT(*) as total_contratos'))
                 ->groupBy('4_RECINTOS')
                 ->get();
-                
+
             $matrices = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
                 ->where('state', '=', 1)
                 ->whereBetween('FECHA', [$corte->fecha_inicio, $corte->fecha_fin])
@@ -348,9 +348,9 @@ class ProduccionController extends Controller
                     $contratos4recintos = $contratos4recintos + $subtotal;
                 }
             }
-           
+
             $contratos4recintos = $contratos4recintos / 4;
-            
+
             $contratos4recintosRedondeado = floor($contratos4recintos);
 
             if ($contratos4recintosRedondeado == intval($contratos4recintosRedondeado)) {
@@ -396,8 +396,8 @@ class ProduccionController extends Controller
             $datosInspector['diseños_especiales'] = $contadorDiseñosEspeciales;
             $datosInspector['4_recintos'] = $contratos4recintosRedondeado;
             $datosInspector['comerciales'] = $contadorComerciales;
-       
-            
+
+
             $datosInspector['total'] =
                 $datosInspector['comerciales'] +
                 $datosInspector['4_recintos'] +
@@ -437,15 +437,15 @@ class ProduccionController extends Controller
         $meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
         $fechaActual = date('Y-m-d');
-      
-        if($corte != null){
-        $fechaInicio = new DateTime($corte->fecha_inicio);
-        $fechaFin = new DateTime($corte->fecha_fin);
-        $fechaFin->modify('+1 day');
-        }else{
+
+        if ($corte != null) {
+            $fechaInicio = new DateTime($corte->fecha_inicio);
+            $fechaFin = new DateTime($corte->fecha_fin);
+            $fechaFin->modify('+1 day');
+        } else {
             return null;
         }
-        
+
         $interval = new DateInterval('P1D'); // Intervalo de 1 día
         $periodo = new DatePeriod($fechaInicio, $interval, $fechaFin);
 
@@ -547,7 +547,7 @@ class ProduccionController extends Controller
 
                 $fechaSabado = $contratosSabado->first()->fecha;
                 $esSabadoFestivo = in_array($fechaSabado, $diasFestivos);
-                
+
                 if (!$esSabadoFestivo) {
 
                     if ($totalContratos >= $limiteContratos) {
@@ -568,28 +568,38 @@ class ProduccionController extends Controller
                         // Sumar los contratos del sábado con ajustes
                         $totalContratosSabado = $contratosSabado->sum('total_contratos');
                         $totalContratosSabado = ($totalContratos === $limiteContratosMedio) ? $totalContratosSabado - 1 : $totalContratosSabado - 2;
-                        $contadorDiasSabados += $totalContratosSabado;
-                        try {
-                            $sabadosdobles[] = [
-                                'fecha' => $contratosSabado->first()->fecha,
-                                'cc_inspector' => $inspector->cedula
-                            ];
-                        } catch (\Exception $e) {
+
+                        // Validación para evitar contar valores cero o negativos
+                        if ($totalContratosSabado > 0) {
+                            $contadorDiasSabados += $totalContratosSabado;
+                        }
+
+                        // Validación para el array de sábados dobles
+                        if ($totalContratosSabado > 0 && $contratosSabado->isNotEmpty()) { // <-- Nueva condición
+                            try {
+                                $sabadosdobles[] = [
+                                    'fecha' => $contratosSabado->first()->fecha,
+                                    'cc_inspector' => $inspector->cedula
+                                ];
+                            } catch (\Exception $e) {
+                                // Manejo de excepciones (opcional)
+                            }
                         }
                     }
-                }else{
-                
+                } else {
                 }
             }
             // Guardar el total de contratos en el array de semanas
             $semanas[$index]['contratos'] = $totalContratos;
 
             // Descomentar para depuración
-            // dd($contratosPorSemana, $contratosSabado, $totalContratos, $contadorDiasSabados);
+            /*  if ($inspector->cedula === '7691266') {
+                dd($totalContratosSabado);
+            } */
         }
         // Descomentar para ver el resultado final
         //dd($contadorDiasSabados,$sabadosdobles);
-        
+
         return [
             'contadorDiasSabados' => $contadorDiasSabados,
             'sabadosdobles' => $sabadosdobles
@@ -768,7 +778,7 @@ class ProduccionController extends Controller
                 ->where('fecha_fin', '>=', $fecha_resta_un_dia)
                 ->first();
         }
-        if($corte == null){
+        if ($corte == null) {
             return response()->json(['error' => 'No hay corte activo']);
         }
         $diasIntermedios = $this->DiasIntermedios($corte);

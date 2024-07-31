@@ -100,6 +100,7 @@
         });
     </script>
     @endif
+ 
     @if (session('warning'))
     <script>
         document.addEventListener('DOMContentLoaded', function() {

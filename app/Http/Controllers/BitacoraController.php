@@ -35,16 +35,30 @@ class BitacoraController extends Controller
         $supervisores = Auth::user();
         $id_user = $supervisores->id;
         if ($supervisores->hasRole('Supervisor')) {
-            return view('bitacoras.generar', compact('supervisores'));
+          
+            $temp = tbl_bitacora_archivo::where('id_usuario','=',$id_user)->where('finished','=',0)->first();
+        
+            
+            if(!$temp){
+               
+                return view('bitacoras.generar', compact('supervisores'));
+            }
+          
+           
+            session()->flash('warning', 'Ya tienes una bitácora en proceso. ¿Deseas continuar?');
+
+            return view('bitacoras.generar', compact('supervisores','temp'));
         }
         $supervisores = User::role('Supervisor')->get();
 
         $temp = tbl_bitacora_archivo::where('id_usuario','=',$id_user)->where('finished','=',0)->first();
-        
+       
         if(!$temp){
            
             return view('bitacoras.generar', compact('supervisores'));
         }
+      
+       
         session()->flash('warning', 'Ya tienes una bitácora en proceso. ¿Deseas continuar?');
         return view('bitacoras.generar', compact('supervisores','temp'));
     
@@ -102,9 +116,11 @@ class BitacoraController extends Controller
         $validacionArchivo2 = str_replace("4.08", "", $validacionArchivo1);
 
         $exist = $Guardado->buscar($validacionArchivo2);
-
+       
         if ($exist) {
-            return redirect()->route('bitacora')->with('error', 'El archivo seleccionado ya ha sido procesado');
+            $data = $exist->getData(true); // Obtener datos como array asociativo
+            $mensaje = $data['error'];
+            return redirect()->route('bitacora')->with('error', $mensaje);
         }
 
         session(['super' => $nom_super]);
@@ -145,9 +161,11 @@ class BitacoraController extends Controller
         $causales = tbl_bitacoras_causal::all();
 
         $response = $Guardado->guardar($spreadsheet, $nombres, $id_super);
-
+    
        
-        if($response === null){
+       
+        if($response->isEmpty()){
+            
             return redirect()->route('bitacora')->with('error', 'Error al generar la bitacora');
         
         }
@@ -638,7 +656,7 @@ class BitacoraController extends Controller
             $bitacora->delete();
 
         }
-        Session::flash('success', 'Bitacora generada correctamente');
+        session()->flash('success', 'Bitacora generada correctamente');
         return response()->json([
             'ruta' => route('bitacora'),
             'nombre' => '../storage/app/uploads/' . $nombreArchivo
