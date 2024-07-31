@@ -156,9 +156,6 @@ class BitacoraController extends Controller
 
     public function guardar_tabla(Request $request, User $super = null)
     {
-
-
-   
         //variables que obtienen datos del request
         $encabezados = $request->encabezado;
         $dataTable = $request->datos;
@@ -228,8 +225,6 @@ class BitacoraController extends Controller
                     $indiceColumna = 1;
 
                     foreach ($fila as $celda) {
-
-
 
                         $contenidoCelda = $celda;
                         // obtener datos complementarios 60 meses y rechazos
@@ -302,9 +297,7 @@ class BitacoraController extends Controller
                                     'vence' => $vence,
                                     'rechazo' => $rechazo
                                 );
-                                
-                            
-                            
+                                                                                      
                             } else {
 
                                 $celda_color = $hoja->getCell([8, $indiceFila]);
@@ -635,6 +628,15 @@ class BitacoraController extends Controller
             foreach ($usuarios as $usuario) {
                 $usuario->notify(new Bitacora($usuarioLog->name, $bitacora->id));
             }
+        }else{
+
+            $user = Auth::user();
+            $bitacora = tbl_bitacora_archivo::where('id_usuario', $user->id)->where('finished','=',0)->first();
+
+            tbl_temp_contrato::where('id_bitacora', $bitacora->id)->delete();
+
+            $bitacora->delete();
+
         }
         Session::flash('success', 'Bitacora generada correctamente');
         return response()->json([
@@ -717,7 +719,7 @@ class BitacoraController extends Controller
         $contadorVacias = 0;
         $contador4Recintos = 0;
         for ($i = 2; $i <= $highestRow; $i++) {
-            $categoria = $hoja_OK->getCell([10, $i])->getValue();
+            $categoria = $hoja_OK->getCell([11, $i])->getValue();
             if ($categoria === "COMERCIAL") {
                 $contadorComerciales++;
             } elseif ($categoria === "RESIDENCIAL") {
@@ -727,7 +729,7 @@ class BitacoraController extends Controller
             }
         }
         for ($i = 2; $i <= $highestRow; $i++) {
-            $recintos = $hoja_OK->getCell([15, $i])->getValue();
+            $recintos = $hoja_OK->getCell([16, $i])->getValue();
             if ($recintos === "SI") {
                 $contador4Recintos++;
             }

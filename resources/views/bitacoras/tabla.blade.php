@@ -23,6 +23,7 @@
     <div id="overlay" style="display: none;"></div>
     <input type="hidden" id="token" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" id="url_actualizar" name="route" value="{{ route('bitacoras.actualizar',['id' => ':id']) }}">
+    <input type="hidden" id="url_agregar" name="route_agregar" value="{{ route('bitacoras.agregar') }}">
     <input type="hidden" id="url_guardar" name="route_guardar" value="{{ route('bitacoras.guardar_tabla',['super' => $id_super]) }}">
     <input type="hidden" id="url_borrar" name="route_borrar" value="{{ route('bitacoras.borrar_archivos') }}">
     <div class="shadow-container">
@@ -119,22 +120,10 @@
 
                                         @endphp
                                     </thead>
-
                                     <tbody>
                                         @foreach ($datosFiltrados as $row)
-                                        @php
-                                        $vence = $row['vence'];
-                                        $venceDate = DateTime::createFromFormat('d/m/Y', $vence);
-                                        if ($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m')) {
-                                        $vence = "60 meses";
-
-                                        } else {
-                                        $vence = "";
-                                        }
-
-                                        @endphp
                                         <tr style='<?php
-                                                    echo ($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m')) ? "background-color: rgb(251,201,255);" : "";
+                                                    echo ($row['vence'] === "60 meses") ? "background-color: rgb(251,201,255);" : "";
                                                     ?>'>
                                             @php
                                             $horaInicialObj = null;
@@ -156,32 +145,36 @@
                                             <td>{{$row['CATEGORIA']}}</td>
                                             @endif
                                             <td>{{$row['RESULTADO_CIERRE']}}</td>
-                                            <td>{{$row['HORA_INICIO']}}</td>
-                                            <td>{{$row['HORA_FINAL']}}</td>
+                                            <td>{{ $row['HORA_INICIO'] ?? '' }}</td>
+                                            <td>{{ $row['HORA_FINAL'] ?? '' }}</td>
 
                                             <?php // Verificar si la hora final es anterior a la hora inicial
-                                            $horaInicialObj  = DateTime::createFromFormat('H:i', $row['HORA_INICIO']);
-                                            $horaFinalObj    = DateTime::createFromFormat('H:i', $row['HORA_FINAL']);
+                                            if (isset($row['HORA_INICIO']) && isset($row['HORA_FINAL'])) {
+                                                $horaInicialObj  = DateTime::createFromFormat('H:i', $row['HORA_INICIO']);
+                                                $horaFinalObj    = DateTime::createFromFormat('H:i', $row['HORA_FINAL']);
 
-                                            if ($horaFinalObj < $horaInicialObj) {
-                                                // Sumar un día a la hora final
-                                                $horaFinalObj->add(new DateInterval('P1D'));
-                                            }
+                                                if ($horaFinalObj < $horaInicialObj) {
+                                                    // Sumar un día a la hora final
+                                                    $horaFinalObj->add(new DateInterval('P1D'));
+                                                }
 
-                                            // Calcular la diferencia de tiempo
-                                            $duracion = $horaInicialObj->diff($horaFinalObj);
+                                                // Calcular la diferencia de tiempo
+                                                $duracion = $horaInicialObj->diff($horaFinalObj);
 
-                                            // Obtener la duración total en minutos
-                                            $duracionTotalMinutos = $duracion->h * 60 + $duracion->i;
+                                                // Obtener la duración total en minutos
+                                                $duracionTotalMinutos = $duracion->h * 60 + $duracion->i;
 
-                                            // Formatear la duración en formato HH:MM
-                                            $duracionFormato = $duracion->format('%H:%I');
+                                                // Formatear la duración en formato HH:MM
+                                                $duracionFormato = $duracion->format('%H:%I');
 
-                                            // Verificar si la duración es menor o igual a 20 minutos
-                                            if ($duracionTotalMinutos <= 20) {
-                                                echo "<td style='background-color: rgb(255, 165, 0)'>$duracionFormato</td>";
-                                            } else {
-                                                echo "<td>$duracionFormato</td>";
+                                                // Verificar si la duración es menor o igual a 20 minutos
+                                                if ($duracionTotalMinutos <= 20) {
+                                                    echo "<td style='background-color: rgb(255, 165, 0)'>$duracionFormato</td>";
+                                                } else {
+                                                    echo "<td>$duracionFormato</td>";
+                                                }
+                                            }else {
+                                                echo "<td> </td>";
                                             }
                                             ?>
                                             <td>
@@ -209,7 +202,6 @@
                                             <td>
                                             </td>
                                         </tr>
-
                                         @endforeach
                                 </table>
                             </div>
@@ -344,6 +336,9 @@
 
 
     </div>
+    @php
+    $datos = $response->toArray();
+    @endphp
     @section('js')
     <!--  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script> -->
@@ -351,7 +346,13 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/es.js"></script>
     <script>
+        const id_bitacora = "{{ $datos[0]['id_bitacora'] }}";
+        const super_id = "{{ $datos[0]['id_super'] }}";
+
+        const causalesData = {!! json_encode($causales) !!};
         $(document).ready(function() {
+
+
             $('#ventanaEmergente').on('shown.bs.modal', function() {
                 select2();
 

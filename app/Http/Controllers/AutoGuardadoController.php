@@ -29,7 +29,7 @@ class AutoGuardadoController extends Controller
         $nombreArchivo = $rutaArchivoFinal . ".xlsx";
 
         $usuario = Auth::user();
-
+      
         try {
             $bitacora = tbl_bitacora_archivo::where('id_usuario', $usuario->id)->where('finished', '=', 0)->first();
             if (!$bitacora) {
@@ -117,8 +117,7 @@ class AutoGuardadoController extends Controller
                             'VENCE' => $inspeccion['Q'],
                             'id_bitacora' => $bitacora->id,
                             'id_usuario' => $usuario->id,
-                            'id_super' => $super
-
+                            'id_super' => $super ?? 1 
                         ]);
                     }
                 }
@@ -192,5 +191,38 @@ class AutoGuardadoController extends Controller
             throw $e;
         }
         return response()->json(['success' => 'Datos actualizados correctamente']);
+    }
+
+    public function Agregar(Request $request)
+    {
+        $user = Auth::user();
+
+        $datos = $request->datos;
+        try {
+            if ($datos['cantidadRecintos'] === null) {
+                $datos['cantidadRecintos'] = "NO";
+            }
+
+            $contrato = new tbl_temp_contrato();
+            $contrato->NOMBRE = $datos['nombre'];
+            $contrato->CC_OPERARIO = $datos['cedula'];
+            $contrato->MUNICIPIO = $datos['municipio'];
+            $contrato->FECHA = $datos['fecha'];
+            $contrato->No_ACTA = $datos['acta'];
+            $contrato->TIPO_TRABAJO = $datos['tipoTrabajo'];
+            $contrato->CONTRATO = $datos['contrato'];
+            $contrato->CATEGORIA = $datos['categoria'];
+            $contrato->{'4_RECINTOS'} = $datos['cantidadRecintos'];
+            $contrato->RESULTADO_CIERRE = $datos['resultadoCierre'];
+            $contrato->CAUSAL_RECHAZO = $datos['rechazo'];
+            $contrato->id_bitacora = $datos['id_bitacora'];
+            $contrato->id_super = $datos['id_super'];
+            $contrato->id_usuario = $user->id;
+            $contrato->save();
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al guardar los datos']);
+        }
+
+        return response()->json(['id' => $contrato->id]);
     }
 }

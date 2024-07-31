@@ -63,6 +63,7 @@ Route::middleware('web')->group(function () {
         Route::get('bitacora/restaurar/{id}', [AutoGuardadoController::class, 'Restaurar'])->name('bitacoras.restaurar')->middleware(CheckPermission::class . ':generar_bitacoras');
         Route::post('bitacora/borrar/{id}', [AutoGuardadoController::class, 'Borrar'])->name('bitacoras.borrar')->middleware(CheckPermission::class . ':generar_bitacoras');
         Route::post('bitacora/actualizar/{id}', [AutoGuardadoController::class, 'Actualizar'])->name('bitacoras.actualizar')->middleware(CheckPermission::class . ':generar_bitacoras');
+        Route::post('bitacora/agregar', [AutoGuardadoController::class, 'Agregar'])->name('bitacoras.agregar')->middleware(CheckPermission::class . ':generar_bitacoras');
         Route::get('bitacoras/buscar_por_contrato', [BitacoraController::class, 'buscarPorContrato'])->name('bitacoras.buscar_por_contrato')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('municipios/json', [BitacoraController::class, 'getMunicipiosJson'])->name('municipios.json')->middleware(CheckPermission::class . ':ver_bitacoras');
         //Rutas para inspectores-----------------------------------------------------------------------------------------------------------------
