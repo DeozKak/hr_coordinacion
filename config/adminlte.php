@@ -544,7 +544,7 @@ return [
                     'text' => 'Programar',
                     'url' => '/programacion',
                     'icon' => 'far fa-circle',
-                    'can' => ['generar_programacion','ver_programacion'],
+                    'can' => ['generar_programacion'],
                     'label_color' => 'success',
                 ],
                 [

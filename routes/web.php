@@ -118,5 +118,7 @@ Route::middleware('web')->group(function () {
 
     //Rutas Programación
     Route::get('/programacion', [ProgramacionController::class, 'index'])->name('programacion.index');
+    Route::get('/programacion/create', [ProgramacionController::class, 'create'])->name('programacion.create');
+    Route::post('/programacion/base', [ProgramacionController::class, 'base'])->name('programacion.base');
 });
 
