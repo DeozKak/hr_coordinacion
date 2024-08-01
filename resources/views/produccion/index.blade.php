@@ -78,6 +78,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <script>
     let stackedBar;
+    const meta = @json($corte->meta ?? []); 
+
+    
         const canva = document.querySelector('#inspeccionesDiarias').getContext('2d');
         const labels = {!!json_encode($produccionInspector) !!};
         Chart.register(ChartDataLabels);
@@ -106,7 +109,7 @@
                                 type: 'line',
                                 mode: 'horizontal',
                                 scaleID: 'y',
-                                value: 180, // Valor de la línea de meta
+                                value: meta, // Valor de la línea de meta
                                 borderColor: 'rgba(75, 192, 192, 1)',
                                 borderWidth: 2,
                                 label: {
@@ -250,7 +253,7 @@
                                 type: 'line',
                                 mode: 'horizontal',
                                 scaleID: 'y',
-                                value: 180, // Valor de la línea de meta
+                                value: meta, // Valor de la línea de meta
                                 borderColor: 'rgba(75, 192, 192, 1)',
                                 borderWidth: 2,
                                 label: {

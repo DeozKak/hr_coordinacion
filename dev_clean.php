@@ -7,7 +7,6 @@ $conn = connect();
 clean_data($conn);
 
 
-
 function connect()
 {
 
@@ -29,10 +28,8 @@ function connect()
 }
 
 
-
 function clean_data($conn)
 {
-
     $sql = "UPDATE tbl_dv_insp
     SET ACTIVADO = 0
     WHERE ACTIVADO = 1 AND GESTIONADO = 1;";

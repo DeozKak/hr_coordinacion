@@ -318,7 +318,7 @@ return [
             'dropdown_flabel' => 'todas las notificaciones',
             'update_cfg' => [
                 'url' => 'notifications/get',
-                'period' => 15,
+                'period' => 75,
             ],
         ],
 
@@ -716,7 +716,7 @@ return [
                 [
                     'type' => 'js',
                     'asset' => true,
-                    'location' => '//cdn.jsdelivr.net/npm/sweetalert2@8',
+                    'location' => '//cdn.jsdelivr.net/npm/sweetalert2@11',
                 ],
             ],
         ],

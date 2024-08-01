@@ -12,12 +12,14 @@ use App\Http\Controllers\BitacoraController;
 use App\Http\Controllers\InspectorController;
 use App\Http\Controllers\CorteProduccionController;
 use App\Http\Controllers\NotificationsController;
+use App\Http\Controllers\AutoGuardadoController;
 use Illuminate\Http\Request;
 
 
 Route::get('/', function () {
     return redirect()->route('home');
 });
+
 Route::middleware('web')->group(function () {
 
     Route::middleware('throttle:60,1')->group(function () {
@@ -58,6 +60,10 @@ Route::middleware('web')->group(function () {
         Route::get('bitacora/consultar_reporte/{id_bitacora}', [BitacoraController::class, 'consultaReporte'])->name('bitacoras.consulta_reporte')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('bitacora/consultar_indicadores/{id_bitacora}', [BitacoraController::class, 'ConsultaIndicadores'])->name('bitacoras.Consulta_indicadores')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::post('bitacora/devoluciones/actualizar/{id}', [BitacoraController::class, 'actualizar_devolucion'])->name('bitacoras.actualizar_devolucion')->middleware(CheckPermission::class . ':mod_devoluciones');
+        Route::get('bitacora/restaurar/{id}', [AutoGuardadoController::class, 'Restaurar'])->name('bitacoras.restaurar')->middleware(CheckPermission::class . ':generar_bitacoras');
+        Route::post('bitacora/borrar/{id}', [AutoGuardadoController::class, 'Borrar'])->name('bitacoras.borrar')->middleware(CheckPermission::class . ':generar_bitacoras');
+        Route::post('bitacora/actualizar/{id}', [AutoGuardadoController::class, 'Actualizar'])->name('bitacoras.actualizar')->middleware(CheckPermission::class . ':generar_bitacoras');
+        Route::post('bitacora/agregar', [AutoGuardadoController::class, 'Agregar'])->name('bitacoras.agregar')->middleware(CheckPermission::class . ':generar_bitacoras');
         Route::get('bitacoras/buscar_por_contrato', [BitacoraController::class, 'buscarPorContrato'])->name('bitacoras.buscar_por_contrato')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('municipios/json', [BitacoraController::class, 'getMunicipiosJson'])->name('municipios.json')->middleware(CheckPermission::class . ':ver_bitacoras');
         //Rutas para inspectores-----------------------------------------------------------------------------------------------------------------

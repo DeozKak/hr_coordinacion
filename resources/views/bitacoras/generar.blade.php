@@ -11,8 +11,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!--     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
- -->    <link rel="stylesheet" href="{{asset('css/bitacoras/generar.css')}}">
+    <!--     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+ -->
+    <link rel="stylesheet" href="{{asset('css/bitacoras/generar.css')}}">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <title>Subir Archivos</title>
 </head>
@@ -80,12 +81,12 @@
             Swal.fire({
                 title: "Error",
                 text: "{{session('error')}}",
-                type: "error"
+                icon: "error"
             });
         });
     </script>
     @php
-        session()->forget('error');
+    session()->forget('error');
     @endphp
     @endif
     @if(session('success'))
@@ -94,7 +95,64 @@
             Swal.fire({
                 title: "Éxito",
                 text: "{{session('success')}}",
-                type: "success"
+                icon: "success"
+            });
+        });
+    </script>
+    @endif
+ 
+    @if (session('warning'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                title: "{{session('warning')}}",
+                showDenyButton: true,
+                showCancelButton: false,
+                allowOutsideClick: false,
+                confirmButtonText: "Si",
+                denyButtonText: "No",
+            }).then((result) => {
+
+                if (result.value) {
+                    window.location.href = "{{route('bitacoras.restaurar',['id'=> $temp])}}";
+                }
+                if (result.isDenied) {
+                    swal.fire({
+                        icon: "warning",
+                        title: "Se perderán los cambios!",
+                        allowOutsideClick: false,
+                        showDenyButton: true,
+                        confirmButtonText: "Quiero generar una bitacora nueva",
+                        denyButtonText: "Mantener cambios",
+                    }).then((result) => {
+
+                        if (result.isConfirmed) {
+                            $.ajax({
+                                type: "POST",
+                                dataType: "json",
+                                data: {
+                                    _token: "{{ csrf_token() }}"
+                                },
+                                url: "{{route('bitacoras.borrar',['id'=> $temp])}}",
+                                success: function(response) {
+                                    console.log(response);
+                                },
+                                error: function(xhr, error, status) {
+
+                                    console.log(xhr.responseText);
+
+                                }
+
+                            });
+                        }
+                        if (result.isDenied) {
+                            window.location.href = "{{route('bitacoras.restaurar',['id'=> $temp])}}";
+                        }
+                    });
+
+
+                }
+
             });
         });
     </script>

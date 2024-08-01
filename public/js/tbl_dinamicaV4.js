@@ -28,11 +28,11 @@ $(document).ready(function () {
         },
         "columnDefs": [
             {
-                "targets": [17], // 
+                "targets": [18], // 
                 "visible": false
             },
             {
-                "targets": [18], // 
+                "targets": [19], // 
                 "visible": false
             }
         ]
@@ -65,6 +65,11 @@ $(document).ready(function () {
         // Ejecutar la función contadores_dinamicos(id) para la tabla actual
         contadores_dinamicos(idTabla);
 
+
+        // Recorrer los select DENTRO de la tabla actual
+        $(this).find('select.form-select.nombre-columna').each(function () {
+            cambiarColor(this); // Pasamos el select específico que cambió
+        });
     });
 
     // Mostrar la tabla correspondiente cuando se hace clic en una pestaña
@@ -126,7 +131,7 @@ $(document).ready(function () {
         setTimeout(function () {
             let valoresSeleccionados = {};
             let datos = [];
-            const encabezado = ['INSPECTOR', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO  CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION', '4 RECINTOS O MAS'];
+            const encabezado = ['ID', 'INSPECTOR', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO  CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION', '4 RECINTOS O MAS'];
             $('.tbl_datos[id]').each(function (indexTabla) {
 
                 let idTabla = $(this).attr('id');
@@ -139,7 +144,7 @@ $(document).ready(function () {
 
                     indexSelect = indexSelect + 1;
 
-                    let checkbox = $(this.node()).find('td:eq(14) input').is(':checked');
+                    let checkbox = $(this.node()).find('td:eq(15) input').is(':checked');
 
                     if (checkbox) {
                         let recintos = $(this.node()).find('#NroRecintos').val();
@@ -157,9 +162,9 @@ $(document).ready(function () {
 
                     indexSelect = indexSelect + 1;
 
-                    let selectValueCombobox1 = $(this.node()).find('td:eq(15) select').val();
+                    let selectValueCombobox1 = $(this.node()).find('td:eq(16) select').val();
 
-                    let selectValueCombobox2 = $(this.node()).find('td:eq(16) select').val();
+                    let selectValueCombobox2 = $(this.node()).find('td:eq(17) select').val();
 
                     idSelect = $(this).attr('id') || 'select_' + indexTabla + '_' + indexSelect;
 
@@ -193,7 +198,7 @@ $(document).ready(function () {
                 element.forEach(function (value, index) {
 
                     const selectValueCombobox = valoresSeleccionados["select_" + contador_tabla + "_" + contador_combobox1];
-                    const valor_cierre = value[10];
+                    const valor_cierre = value[11];
 
                     // Verificar si la fila cumple con los criterios necesarios para contar
                     if (selectValueCombobox === 'OK') {
@@ -225,10 +230,10 @@ $(document).ready(function () {
                 indicadores.push({ certificadaCount, certificadaConNovedadesCount, inspeccionadaConDefectoCriticoCount, inspeccionadaConDefectoNoCriticoCount, totalCount });
                 contador_tabla = contador_tabla + 1;
             });
-    
+
             const csrfToken = $('#token').val();
             const url_guardar = $('#url_guardar').val();
-            const url_borrar = $('#url_borrar').val();          
+            const url_borrar = $('#url_borrar').val();
             // Realizar la petición AJAX
             $.ajax({
                 type: 'POST',
@@ -241,8 +246,8 @@ $(document).ready(function () {
                     _token: csrfToken
                 },
                 success: function (response) {
-                    
-                    if (response.nombre && idSuper === null){
+
+                    if (response.nombre && idSuper === null) {
                         window.location.href = response.nombre;
                         codigoHTML_tabla_indicadores = null;
                         valoresSeleccionados = null;
@@ -250,19 +255,19 @@ $(document).ready(function () {
                         $('#overlay').hide();
                     }
                     if (response.ruta) {
-                        setTimeout(function() {
+                        setTimeout(function () {
                             window.location.href = response.ruta;
                             codigoHTML_tabla_indicadores = null;
                             valoresSeleccionados = null;
                             $('#loader').hide();
                             $('#overlay').hide();
-                            }, 200);
+                        }, 200);
 
                     } else {
                         $('#loader').hide();
                         $('#overlay').hide();
                         Swal.fire({
-                            type: 'warning',
+                            icon: 'warning',
                             title: 'Advertencia',
                             text: response.error,
                         });
@@ -386,7 +391,7 @@ $(document).ready(function () {
     });
     //--------------------------------------------------------------------------------
 
-   
+
     //-------------------------------------------------------------------------------- 
 
 
@@ -472,36 +477,39 @@ $(document).ready(function () {
         if (formularioValido) {
 
             const nombre_insp = agregar_datos();
-            if (nombre_insp) {
-                $('#ventanaEmergente').modal('hide');
+            setTimeout(() => {
 
-                campos.forEach(campo => {
-                    campo.value = campo.getAttribute('value') || '';
-                    switch (campo.id) {
-                        case 'causal':
-                            campo.classList.remove('campo-invalido');
-                            break;
-                        case 'devolucion':
-                            campo.value = 'OK';
-                            break;
-                        case 'recintos':
-                            campo.value = 'NO';
-                            break;
-                    }
 
-                });
-                contadores_dinamicos('#' + nombre_insp);
+                if (nombre_insp) {
+                    $('#ventanaEmergente').modal('hide');
 
-                Swal.fire({
-                    position: "top-end",
-                    type: "success",
-                    title: "Inspeccion agregada correctamente",
-                    showConfirmButton: false,
-                    toast: true,
-                    timer: 3000
-                });
-            }
+                    campos.forEach(campo => {
+                        campo.value = campo.getAttribute('value') || '';
+                        switch (campo.id) {
+                            case 'causal':
+                                campo.classList.remove('campo-invalido');
+                                break;
+                            case 'devolucion':
+                                campo.value = 'OK';
+                                break;
+                            case 'recintos':
+                                campo.value = 'NO';
+                                break;
+                        }
 
+                    });
+                    contadores_dinamicos('#' + nombre_insp);
+
+                    Swal.fire({
+                        position: "top-end",
+                        icon: "success",
+                        title: "Inspeccion agregada correctamente",
+                        showConfirmButton: false,
+                        toast: true,
+                        timer: 3000
+                    });
+                }
+            }, 500);
         } else {
             window.scrollTo({
                 top: 0,
@@ -558,6 +566,14 @@ document.addEventListener('DOMContentLoaded', function () {
     let check4Recintos = document.querySelectorAll('#checkRecintos');
 
     check4Recintos.forEach(function (check) {
+        if (check.checked) {
+            let fila = check.parentNode.parentNode;
+            fila.querySelector('#NroRecintos').disabled = false;
+        } else {
+            let fila = check.parentNode.parentNode;
+            fila.querySelector('#NroRecintos').disabled = true;
+            fila.querySelector('#NroRecintos').value = '';
+        }
 
         check.addEventListener('change', function () {
             if (check.checked) {
@@ -571,19 +587,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         });
     });
-
-    var comboBoxes = document.querySelectorAll('select.form-select.nombre-columna');
-
-    comboBoxes.forEach(function (comboBox) {
-        comboBox.addEventListener('change', function () {
-
-            var id_pestaña = $('.btnav.active').attr('href');
-
-            contadores_dinamicos(id_pestaña);
-            cambiarColor(comboBox);
-        });
-    });
-
+    eventos();
 });
 
 function contadores_dinamicos(nombre) {
@@ -609,9 +613,9 @@ function contadores_dinamicos(nombre) {
     $('' + nombre_convertido + ' .tbl_datos').DataTable().rows().every(function () {
 
 
-        var selectValueCombobox = $(this.node()).find('td:eq(15) select').val();
-        var valor_cierre = $(this.node()).find('td:eq(10)').text();
-        /* console.log(selectValueCombobox); */
+        var selectValueCombobox = $(this.node()).find('td:eq(16) select').val();
+        var valor_cierre = $(this.node()).find('td:eq(11)').text();
+
         // Verificar si la fila cumple con los criterios necesarios para contar
         if (selectValueCombobox === 'OK') {
 
@@ -668,7 +672,6 @@ function agregar_datos() {
     const cantidadRecintos = document.getElementById('NroRecintosP').value;
     const resultado_cierre = document.getElementById('resultado_cierre').value;
     const rechazo = document.getElementById('causal').value;
-    
 
     const [anio, mes, dia] = fecha.split('-').map(Number);
 
@@ -691,67 +694,98 @@ function agregar_datos() {
 
     if (validador === false) {
         // Crear una nueva fila y celdas para agregar los valores
+        const array = {
+            nombre: nombre_insp,
+            cedula: cedulaInsp,
+            municipio: municipio,
+            fecha: fecha,
+            acta: acta,
+            tipoTrabajo: tipo_trabajo,
+            contrato: contrato,
+            categoria: categoria,
+            cantidadRecintos: cantidadRecintos,
+            resultadoCierre: resultado_cierre,
+            rechazo: rechazo,
+            id_bitacora: id_bitacora,
+            id_super: super_id
+        };
+        // Uso de la función asíncrona:
+        async function obtenerId() {
+            try {
+                const id = await enviarDatosPapel(array);
+                tabla.DataTable().row.add([
+                    id,
+                    nombre_insp,
+                    cedulaInsp,
+                    municipio,
+                    fecha,
+                    acta,
+                    tipo_trabajo,
+                    contrato,
+                    orden,
+                    tipo_trabajo === 'RP 12161' ? orden : '',
+                    categoria,
+                    resultado_cierre,
+                    hora_inicio,
+                    hora_final,
+                    duracion,
+                    '<input type="checkbox" id="checkRecintos" class="recintosCheck" ' + (recintos === 'SI' ? 'checked' : '') + '>' + '<input type="text" id="NroRecintos"  class="recintos" size="1" value="' + cantidadRecintos + '" style="text-align: center;"' + (recintos === 'SI' ? '' : 'disabled') + '>',
+                    (devolucion === 'OK' ? '<select class="form-select nombre-columna" style="width: 80px;"><option value="OK" selected>OK</option><option value="DV">DV</option></select>' : '<select class="form-select nombre-columna" style="width: 80px;"><option value="OK">OK</option><option value="DV" selected>DV</option></select>'),
+                    '<select class="combo2" style="width: 220px; display: none;">' +
+                    causalesData.map(causal => 
+                        `<option value="${causal.nom_causal}">${causal.nom_causal}</option>`
+                    ).join('') +
+                '</select>',
+                    "",
+                    rechazo,
 
-        const datos = tabla.DataTable().row.add([
-            nombre_insp,
-            cedulaInsp,
-            municipio,
-            fechaFormateada,
-            acta,
-            tipo_trabajo,
-            contrato,
-            orden,
-            tipo_trabajo === 'RP 12161' ? orden : '',
-            categoria,
-            resultado_cierre,
-            hora_inicio,
-            hora_final,
-            duracion,
-            '<input type="checkbox" id="checkRecintos" ' + (recintos === 'SI' ? 'checked' : '') + '>' + '<input type="text" id="NroRecintos" size="1" value="' + cantidadRecintos + '" style="text-align: center;"' + (recintos === 'SI' ? '' : 'disabled') + '>',
-            (devolucion === 'OK' ? '<select class="form-select nombre-columna" style="width: 80px;"><option value="OK" selected>OK</option><option value="DV">DV</option></select>' : '<select class="form-select nombre-columna" style="width: 80px;"><option value="OK">OK</option><option value="DV" selected>DV</option></select>'),
-            '<select class="form-select combo2 nombre-columna" style="width: 220px; display: none;"><option value="--SELECCIONE CAUSAL--" selected>--SELECCIONE CAUSAL--</option><option value="CONTRATO ERRADO">CONTRATO ERRADO</option><option value="NUMERO DE CUOTAS">NUMERO DE CUOTAS</option><option value="FALTA CARTA">FALTA CARTA</option><option value="FALTA INFORMACIÓN">FALTA INFORMACIÓN</option><option value="INFORMACION ERRADA">INFORMACION ERRADA</option><option value="ORDEN YA REGISTRADA">ORDEN YA REGISTRADA</option></select>',
-            "",
-            rechazo,
-
-        ]).draw().data();
-
-
-        const ultimoSelect = tabla.find('select.form-select.nombre-columna').filter(function () {
-            return !$(this).hasClass('combo2');
-        }).last();
-
-        cambiarColor(ultimoSelect[0]);
-        $('table.tbl_datos').on('change', 'input#checkRecintos', function () {
-
-            const check = $(this); // Obtener el checkbox actual
-
-            if (check.prop('checked')) {
-                let fila = check.closest('tr'); // Obtener la fila actual
-                fila.find('#NroRecintos').prop('disabled', false); // Habilitar el campo de entrada
-            } else {
-                let fila = check.closest('tr'); // Obtener la fila actual
-                fila.find('#NroRecintos').prop('disabled', true).val(''); // Deshabilitar el campo de entrada y limpiar su valor
+                ]).draw().data();
+            } catch (error) {
+                console.error(error);
             }
-        });
+        }
+        obtenerId();
+        setTimeout(function () {
+            const ultimoSelect = tabla.find('select.form-select.nombre-columna').filter(function () {
+                return !$(this).hasClass('combo2');
+            }).last();
+            eventosNuevos(ultimoSelect[0],'ESTADO');
+            cambiarColor(ultimoSelect[0]);
 
-        $('table.tbl_datos').on('change', 'select.form-select.nombre-columna', function () {
-            var id_pestaña = $('.btnav.active').attr('href');
-            contadores_dinamicos(id_pestaña);
-            cambiarColor(this);
-        });
+            const selectCausal = tabla.find('select.combo2').last();
+            eventosNuevos(selectCausal[0],'CAUSAL');
+            
+            const recintos = tabla.find('input.recintos').last();
+            eventosNuevos(recintos[0],'4_RECINTOS');
 
-        // Función para validar los datos ingresados en la tabla
-        const inputrecintos = document.querySelectorAll('#NroRecintos');
+            const checkRecintos = tabla.find('input.recintosCheck').last();
+            eventosNuevos(checkRecintos[0],'RECINTOS');
 
-        // Permitir solo números
-        inputrecintos.forEach(input => {
-            input.addEventListener('input', function () {
-                this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3);
+            $('table.tbl_datos').on('change', 'input#checkRecintos', function () {
+
+                const check = $(this); // Obtener el checkbox actual
+
+                if (check.prop('checked')) {
+                    let fila = check.closest('tr'); // Obtener la fila actual
+                    fila.find('#NroRecintos').prop('disabled', false); // Habilitar el campo de entrada
+                } else {
+                    let fila = check.closest('tr'); // Obtener la fila actual
+                    fila.find('#NroRecintos').prop('disabled', true).val(''); // Deshabilitar el campo de entrada y limpiar su valor
+                }
             });
-        });
+           
+            // Función para validar los datos ingresados en la tabla
+            const inputrecintos = document.querySelectorAll('#NroRecintos');
 
+            // Permitir solo números
+            inputrecintos.forEach(input => {
+                input.addEventListener('input', function () {
+                    this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3);
+                });
+            });
+
+        }, 500);
         return nombre_insp;
-
     } else {
         alert('El contrato y la orden de trabajo ya se encuentran registrados en la bitacora. Por favor, verifique los datos ingresados.');
     }
@@ -786,10 +820,11 @@ function cambiarColor(select) {
     var fila = select.parentNode.parentNode;
 
     var valorSeleccionado = select.value;
-
+    let celdas = fila.getElementsByTagName('td');
     // Verificar si se seleccionó 'DV' en el combobox
     if (valorSeleccionado === 'DV') {
-        var celdas = fila.getElementsByTagName('td');
+        /*  var celdas = fila.getElementsByTagName('td'); */
+
         // Iterar sobre las celdas de la fila
         for (var i = 0; i < celdas.length; i++) {
 
@@ -799,12 +834,16 @@ function cambiarColor(select) {
             }
         }
     } else if (valorSeleccionado === 'OK') {
-        var celdas = fila.getElementsByTagName('td');
+
+        /*  let celdas = fila.getElementsByTagName('td'); */
         // Iterar sobre las celdas de la fila
-        for (var i = 0; i < celdas.length; i++) {
+
+        for (let i = 0; i < celdas.length; i++) {
 
             if (celdas[i].textContent.includes(':')) {
-                celdas[i].style.backgroundColor = 'rgb(146, 208, 80)'; // Cambiar el color de fondo a Verde
+
+                celdas[i].style.backgroundColor = 'rgb(146, 208, 80)';
+                // Cambiar el color de fondo a Verde
                 break;
             }
         }
@@ -819,9 +858,12 @@ function cambiarColor(select) {
 
         segundoComboBox.value = '--SELECCIONE CAUSAL--';
         segundoComboBox.style.display = 'none';
-    } else {
+
+    } else if (valorSeleccionado === 'DV') {
+
         // Mostrar el segundo combobox
         segundoComboBox.style.display = 'block';
+
     }
 }
 
@@ -835,8 +877,8 @@ function validacionDatos(contrato, tabla) {
     let datosRepetidos = false;
     // Verificar si los datos ya existen en la tabla
     data.each(function (value, index) {
-        const contratoExistente = value[6]; // Índice de la columna del contrato en los datos existentes
-        const ordenExistente = value[7]; // Índice de la columna de la orden en los datos existentes
+        const contratoExistente = value[7]; // Índice de la columna del contrato en los datos existentes
+        const ordenExistente = value[8]; // Índice de la columna de la orden en los datos existentes
 
         if (contratoExistente === contratoNuevo) {
             datosRepetidos = true; // Salir del bucle each si se encuentran datos repetidos
@@ -847,6 +889,183 @@ function validacionDatos(contrato, tabla) {
     } else {
         return false;
     } // Si no se encontraron datos repetidos, retornar false
+}
+
+
+function enviarDatos(id, nom_campo, valor) {
+
+    const csrfToken = $('#token').val();
+    let url_actualizar = document.getElementById('url_actualizar').value;
+    url_actualizar = url_actualizar.replace(':id', id);
+    $.ajax({
+        type: 'POST',
+        url: url_actualizar,
+        data: {
+            campo: nom_campo,
+            valor: valor,
+            _token: csrfToken
+        },
+        success: function (response) {
+            console.log(response);
+        },
+        error: function (xhr, status, error) {
+            console.log(xhr.responseText);
+
+            $('#loader').hide();
+            $('#overlay').hide();
+            Swal.fire({
+                type: 'error',
+                title: 'Error',
+                text: error,
+            });
+        }
+    });
+}
+
+async function enviarDatosPapel(array) {
+    const csrfToken = document.getElementById('token').value;
+    const url_agregar = document.getElementById('url_agregar').value;
+
+    try {
+        const response = await $.ajax({
+            type: 'POST',
+            url: url_agregar,
+            data: {
+                datos: array,
+                _token: csrfToken
+            }
+        });
+
+        if (response.id) {
+            return response.id;
+        } else {
+            throw new Error('Error en la respuesta del servidor');
+        }
+    } catch (error) {
+        // Manejar errores de la solicitud AJAX aquí
+        console.error(error);
+        $('#loader').hide();
+        $('#overlay').hide();
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message
+        });
+        throw error;
+    }
+}
+
+function eventos() {
+    // EVENTOS PARA EL AUTOGUARDADO DE LOS DATOS
+    let recintoscheck = document.querySelectorAll('.recintosCheck');
+
+    recintoscheck.forEach(function (check) {
+        check.addEventListener('change', function () {
+
+            let fila = check.parentNode.parentNode;
+            let celdas = fila.getElementsByTagName('td');
+            if (!check.checked) { // Verifica si el checkbox está desmarcado
+                enviarDatos(celdas[0].textContent, '4_RECINTOS', 'NO');
+
+            }
+        });
+    });
+
+    let recintos = document.querySelectorAll('.recintos');
+
+    recintos.forEach(function (recinto) {
+        recinto.addEventListener('change', function () {
+
+            let fila = recinto.parentNode.parentNode;
+            let celdas = fila.getElementsByTagName('td');
+
+            enviarDatos(celdas[0].textContent, '4_RECINTOS', recinto.value);
+
+        });
+    });
+
+
+    let causales = document.querySelectorAll('.combo2');
+
+
+    causales.forEach(function (causal) {
+        causal.addEventListener('change', function () {
+
+            let fila = causal.parentNode.parentNode;
+            let celdas = fila.getElementsByTagName('td');
+
+            enviarDatos(celdas[0].textContent, 'CAUSAL', causal.value);
+
+
+        });
+    });
+
+    let comboBoxes = document.querySelectorAll('select.form-select.nombre-columna');
+
+    comboBoxes.forEach(function (comboBox) {
+        comboBox.addEventListener('change', function () {
+
+            let id_pestaña = $('.btnav.active').attr('href');
+
+            let fila = comboBox.parentNode.parentNode;
+            let celdas = fila.getElementsByTagName('td');
+
+            enviarDatos(celdas[0].textContent, 'ESTADO', comboBox.value);
+
+            contadores_dinamicos(id_pestaña);
+            cambiarColor(comboBox);
+        });
+    });
+
+}
+
+function eventosNuevos(select, campo) {
+
+    switch (campo) {
+        case 'RECINTOS':
+            select.addEventListener('change', function () {
+                let fila = select.parentNode.parentNode;
+                let celdas = fila.getElementsByTagName('td');
+
+                if (!select.checked) { // Verifica si el checkbox está desmarcado
+                    enviarDatos(celdas[0].textContent, '4_RECINTOS', 'NO');
+    
+                }
+
+            });
+            break;
+        case '4_RECINTOS':
+            select.addEventListener('change', function () {
+                let fila = select.parentNode.parentNode;
+                let celdas = fila.getElementsByTagName('td');
+
+                enviarDatos(celdas[0].textContent, '4_RECINTOS', select.value);
+
+            });
+            break;
+        case 'CAUSAL':
+            select.addEventListener('change', function () {
+                let fila = select.parentNode.parentNode;
+                let celdas = fila.getElementsByTagName('td');
+
+                enviarDatos(celdas[0].textContent, 'CAUSAL', select.value);
+
+            });
+            break;
+        case 'ESTADO':
+            select.addEventListener('change', function () {
+                let id_pestaña = $('.btnav.active').attr('href');
+                contadores_dinamicos(id_pestaña);
+                cambiarColor(this);
+                let fila = select.parentNode.parentNode;
+                let celdas = fila.getElementsByTagName('td');
+        
+                enviarDatos(celdas[0].textContent, 'ESTADO', select.value);
+        
+            });
+            break;
+    }
+   
 }
 
 
