@@ -21,8 +21,6 @@ use App\Models\tbl_localidades_municipio;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\DB;
 use App\Models\tbl_bitacoras_causal;
 use App\Notifications\devolucion;
 use App\Http\Controllers\AutoGuardadoController;
@@ -269,9 +267,19 @@ class BitacoraController extends Controller
                         }
                         if (array_key_exists($clave, $valoresSeleccionados) && $valoresSeleccionados[$clave] === "OK") {
                             $validacion = 0;
+                            // copiado del campo 60 meses a la hoja OK
+                            if($indiceColumna === 19){
+                                $hoja_OK->setCellValue([16, $indiceFila_ok], $contenidoCelda);
+                               
+                                $celda_color = $hoja_OK->getCell([7, $indiceFila_ok]);
+
+                                $celda_color->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('92D050');
+                            }
+                            
                             if ($indiceColumna < 16) {
 
                                 $hoja_OK->setCellValue([$indiceColumna, $indiceFila_ok], $contenidoCelda);
+                               
                                 $celda_color = $hoja_OK->getCell([7, $indiceFila_ok]);
 
                                 $celda_color->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('92D050');
@@ -388,7 +396,7 @@ class BitacoraController extends Controller
                                     break;
                             }
                         }
-
+                   
                         // Incrementar el índice de columna
                         $indiceColumna++;
                     }
@@ -406,10 +414,10 @@ class BitacoraController extends Controller
                 }
             }
 
-            $hoja_OK->setCellValue([17, 2], "Comerciales");
-            $hoja_OK->setCellValue([17, 3], "Residenciales");
-            $hoja_OK->setCellValue([17, 4], "Vacias");
-            $hoja_OK->setCellValue([17, 5], "4 recintos o mas");
+            $hoja_OK->setCellValue([19, 2], "Comerciales");
+            $hoja_OK->setCellValue([19, 3], "Residenciales");
+            $hoja_OK->setCellValue([19, 4], "Vacias");
+            $hoja_OK->setCellValue([19, 5], "4 recintos o mas");
 
             $this->contadoresHojaOK($hoja_OK);
 
@@ -753,10 +761,10 @@ class BitacoraController extends Controller
             }
         }
 
-        $hoja_OK->setCellValue([18, 2], $contadorComerciales);
-        $hoja_OK->setCellValue([18, 3], $contadorResidenciales);
-        $hoja_OK->setCellValue([18, 4], $contadorVacias);
-        $hoja_OK->setCellValue([18, 5], $contador4Recintos);
+        $hoja_OK->setCellValue([20, 2], $contadorComerciales);
+        $hoja_OK->setCellValue([20, 3], $contadorResidenciales);
+        $hoja_OK->setCellValue([20, 4], $contadorVacias);
+        $hoja_OK->setCellValue([20, 5], $contador4Recintos);
     }
 
     public function devoluciones()
