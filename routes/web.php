@@ -24,7 +24,7 @@ Route::middleware('web')->group(function () {
     Route::middleware('throttle:60,1')->group(function () {
         Auth::routes();
     });
-    
+
     Route::middleware('auth')->group(function () {
         Route::get('/home', [HomeController::class, 'index'])->name('home');
 
@@ -40,7 +40,7 @@ Route::middleware('web')->group(function () {
         Route::post('/store', [AsignadasController::class, 'store'])->name('cargues.store')->middleware(CheckPermission::class . ':cargue_tareas');
 
         //Rutas Gestion--------------------------------------------------------------------------------------------------------------------------
-        
+
         Route::get('/gestion/coordinacion', [CoordinacionController::class, 'coordinacion'])->name('coordinacion')->middleware(CheckPermission::class . ':ver_coordinacion_RP');
         Route::get('/gestion/getdataCoordinacionRP', [CoordinacionController::class, 'getdataCoordinacionRP'])->name('getdataCoordinacionRP')->middleware(CheckPermission::class . ':ver_coordinacion_RP');
         Route::post('/gestion/filterData', [CoordinacionController::class, 'filterData'])->name('filterData')->middleware(CheckPermission::class . ':ver_coordinacion_RP');
@@ -50,7 +50,7 @@ Route::middleware('web')->group(function () {
         Route::post('/generar_bitacora', [BitacoraController::class, 'generar_bitacora'])->name('bitacoras.generar')->middleware(CheckPermission::class . ':generar_bitacoras');
         Route::post('/guardar_tabla/{super?}', [BitacoraController::class, 'guardar_tabla'])->name('bitacoras.guardar_tabla')->middleware(CheckPermission::class . ':generar_bitacoras');
         Route::post('/borrar_archivos', [BitacoraController::class, 'borrar_archivos'])->name('bitacoras.borrar_archivos')->middleware(CheckPermission::class . ':generar_bitacoras');
-        Route::get('/storage/app/uploads/{file}',[BitacoraController::class, 'download'])->name('bitacoras.download')->middleware(CheckPermission::class . ':ver_bitacoras');
+        Route::get('/storage/app/uploads/{file}', [BitacoraController::class, 'download'])->name('bitacoras.download')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('/bitacora/devoluciones', [BitacoraController::class, 'devoluciones'])->name('bitacora.devoluciones')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::post('/bitacora/exportar_devoluciones', [BitacoraController::class, 'exportar_tabla_devoluciones'])->name('bitacora.exportar_devoluciones')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('/bitacora/reportes', [BitacoraController::class, 'reportes'])->name('bitacoras.reportes')->middleware(CheckPermission::class . ':ver_bitacoras');
@@ -62,7 +62,7 @@ Route::middleware('web')->group(function () {
         Route::get('bitacoras/buscar_por_contrato', [BitacoraController::class, 'buscarPorContrato'])->name('bitacoras.buscar_por_contrato')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('municipios/json', [BitacoraController::class, 'getMunicipiosJson'])->name('municipios.json')->middleware(CheckPermission::class . ':ver_bitacoras');
         //Rutas para inspectores-----------------------------------------------------------------------------------------------------------------
-        
+
         Route::get('/inspectores', [InspectorController::class, 'index'])->name('inspectores.index')->middleware(CheckPermission::class . ':gestion_inspectores');
         Route::get('/inspectores/create', [InspectorController::class, 'create'])->name('inspectores.create')->middleware(CheckPermission::class . ':gestion_inspectores');
         Route::post('/inspectores/store', [InspectorController::class, 'store'])->name('inspectores.store')->middleware(CheckPermission::class . ':gestion_inspectores');
@@ -110,15 +110,16 @@ Route::middleware('web')->group(function () {
         Route::put('/cortes_produccion/{id}/updateCorte', [CorteProduccionController::class, 'updateCorte'])->name('cortes_produccion.updateCorte')->middleware(CheckPermission::class . ':ver_residente');
         Route::get('/cortes_producction/{id}/editMunicipio', [CorteProduccionController::class, 'editMunicipio'])->name('cortes_produccion.editMunicipio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
         Route::put('/cortes_produccion/{id}/updateMunicipio', [CorteProduccionController::class, 'updateMunicipio'])->name('cortes_produccion.updateMunicipio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
+
+        //Rutas para notificaciones
+        Route::get('notifications/get', [NotificationsController::class, 'getNotificationsData'])->name('notifications.get');
+        Route::get('notifications/markAsRead', [NotificationsController::class, 'markAsRead'])->name('notifications.markAsRead');
+        Route::get('notifications', [NotificationsController::class, 'index'])->name('notifications.index');
+
+        //Rutas Programación
+        Route::get('/programacion', [ProgramacionController::class, 'index'])->name('programacion.index');
+        Route::get('/programacion/create', [ProgramacionController::class, 'create'])->name('programacion.create');
+        Route::post('/programacion/base', [ProgramacionController::class, 'base'])->name('programacion.base');
+        Route::get('/programacion/busqueda/{contrato}', [ProgramacionController::class, 'busqueda'])->name('programacion.busqueda');
     });
-    //Rutas para notificaciones
-    Route::get('notifications/get', [NotificationsController::class, 'getNotificationsData'])->name('notifications.get');
-    Route::get('notifications/markAsRead', [NotificationsController::class, 'markAsRead'])->name('notifications.markAsRead');
-    Route::get('notifications', [NotificationsController::class, 'index'])->name('notifications.index');
-
-    //Rutas Programación
-    Route::get('/programacion', [ProgramacionController::class, 'index'])->name('programacion.index');
-    Route::get('/programacion/create', [ProgramacionController::class, 'create'])->name('programacion.create');
-    Route::post('/programacion/base', [ProgramacionController::class, 'base'])->name('programacion.base');
 });
-

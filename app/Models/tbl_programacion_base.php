@@ -10,4 +10,8 @@ class tbl_programacion_base extends Model
     use HasFactory;
 
     protected $table = 'tbl_programacion_base';
+
+    public static $rules = [
+        'NUMERO_ORDEN' => 'unique:tbl_programacion_base',
+    ]; // Reglas de validación para campos únicos
 }

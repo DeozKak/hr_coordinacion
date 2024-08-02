@@ -75,10 +75,12 @@
                             @csrf
                             <div class="mb-3">
                                 <label for="archivo" class="form-label">Archivo:</label>
-                                <input type="file" class="form-control @error('archivo') is-invalid @enderror" id="archivo" name="archivo">
-                                @error('archivo')
-                               
-                                @enderror
+                                <input type="file" class="form-control" id="archivo" name="archivo">
+                                <br>
+                                <div id="loader" style="display: none;">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
                             </div>
                             <button type="submit" class="btn btn-primary">Subir</button>
                         </form>

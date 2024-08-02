@@ -7,7 +7,7 @@
 @stop
 
 @section('content')
-
+<input type="hidden" name="busqueda" id="busqueda" value="{{ route('programacion.busqueda',['contrato' => ':id']) }}">
 <div class="container">
     <div class="row">
         <div class="col-md-12">
