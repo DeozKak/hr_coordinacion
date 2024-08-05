@@ -7,6 +7,11 @@
 @stop
 
 @section('content')
+<style>
+    .htCenter {
+  text-align: center;
+}
+</style>
 <input type="hidden" name="busqueda" id="busqueda" value="{{ route('programacion.busqueda',['contrato' => ':id']) }}">
 <div class="container">
     <div class="row">
@@ -20,6 +25,7 @@
                     <br>
                     <div id="tabla_programacion"></div>
                    
+                    <a href="{{ route('programacion.index') }}" title="Regresar"><button class="btn btn-success btn-sm"> Guardar</button></a>
 
                 </div>
 
@@ -30,6 +36,12 @@
 </div>
 
 @section('js')
+<script>
+    const tecnicos = @json($tecnicos->toArray());
+    const nombresTecnicos = tecnicos.map(tecnico => tecnico.apellidos+' '+tecnico.nombres);
+    const user =  @json($user->toArray());
+   
+</script>
 <script src="{{ asset('js/programacion.js') }}" type="text/javascript"></script>
 @stop
 @stop

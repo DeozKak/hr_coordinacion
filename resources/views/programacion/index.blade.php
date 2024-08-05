@@ -19,7 +19,7 @@
                     <div class="card-header">Programación</div>
                     <div class="card-body">
                         <a href="{{ route('programacion.create') }}" class="btn btn-success btn-sm" title="Add New Programacion">
-                            <i class="fa fa-plus" aria-hidden="true"></i> Agregar Nuevo Programación </a>
+                            <i class="fa fa-plus" aria-hidden="true"></i> Generar nueva Tabla </a>
 
                         <button id="openModalBtn" class="btn btn-primary btn-sm" title="Add New Programacion"> Añadir a Base </button>
 
@@ -45,8 +45,9 @@
                                 </tr>
                             </thead>
                             <tbody>
+                            @foreach ($datos as $dato)
                                 <tr>
-                                    @foreach ($datos as $dato)
+                                   
 
                                     <td>{{$dato->id}}</td>
                                     <td>{{$dato->nombre}}</td>
@@ -55,8 +56,9 @@
                                         <button type="button" class="btn btn-warning">Editar</button>
                                     </td>
 
-                                    @endforeach
+                                 
                                 </tr>
+                                @endforeach
                             </tbody>
                         </table>
                     </div>
@@ -67,7 +69,7 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="addProgramacionModalLabel">Añadir Programación</h5>
+                        <h5 class="modal-title" id="addProgramacionModalLabel">Añadir a Base</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -101,7 +103,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         Swal.fire({
             position: "top-end",
-            type: "success",
+            icon: "success",
             title: "{{ session('success') }}",
             showConfirmButton: false,
             toast: true,
@@ -110,5 +112,72 @@
     });
 </script>
 @endif
+@if (session('error'))
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        Swal.fire({
+            title: "Error",
+            text: "{{session('error')}}",
+            icon: "error"
+        });
+    });
+</script>
+@endif
+@if (session('warning'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                title: "{{session('warning')}}",
+                showDenyButton: true,
+                showCancelButton: false,
+                allowOutsideClick: false,
+                confirmButtonText: "Si",
+                denyButtonText: "No",
+            }).then((result) => {
+
+                if (result.value) {
+                    window.location.href = "";
+                }
+                if (result.isDenied) {
+                    swal.fire({
+                        icon: "warning",
+                        title: "Se perderán los cambios!",
+                        allowOutsideClick: false,
+                        showDenyButton: true,
+                        confirmButtonText: "Quiero generar una bitacora nueva",
+                        denyButtonText: "Mantener cambios",
+                    }).then((result) => {
+
+                        if (result.isConfirmed) {
+                            $.ajax({
+                                type: "POST",
+                                dataType: "json",
+                                data: {
+                                    _token: "{{ csrf_token() }}"
+                                },
+                                url: "",
+                                success: function(response) {
+                                    console.log(response);
+                                },
+                                error: function(xhr, error, status) {
+
+                                    console.log(xhr.responseText);
+
+                                }
+
+                            });
+                        }
+                        if (result.isDenied) {
+                            window.location.href = "";
+                        }
+                    });
+
+
+                }
+
+            });
+        });
+    </script>
+    @endif
 @stop
 @endsection
