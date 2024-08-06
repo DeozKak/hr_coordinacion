@@ -4,12 +4,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-    headers = ['CONTRATO', 'TIPO DE OBRA', 'FECHA', 'CELULAR', 'NOMBRE USUARIO', 'ORDEN DE TRABAJO', 'DIRECCION', 'BARRIO', 'CIUDAD',
-        'ACTIVA', 'SUSPENSION', 'CATEGORIA', 'FECHA AGENDAMIENTO', 'OBSERVACIONES', 'PORQUE SE PROGRAMO', 'TECNICO', 'HORA INICIO', 'HORA FINAL'
-    ]
+   
     H_tabla = new Handsontable(tabla, {
         readOnly: false,
         columns: [
+            { data: 'ID', title: 'ID', readOnly: true, },
             {
                 data: 'CONTRATO',
                 title: 'CONTRATO',
@@ -93,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (value == '' || value == null) {
                         // Borrar el contenido de la fila
                         const numCols = H_tabla.countCols(); // Obtener el número de columnas
-                        for (let col = 1; col < numCols; col++) {
+                        for (let col = 2; col < numCols; col++) {
                             H_tabla.setDataAtCell(row, col, ''); // Establecer cada celda en vacío
                         }
                         return;
@@ -109,15 +108,15 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (typeof response === 'object') {
 
                                 const columnMap = {
-                                    ID_TIPO_TRABAJO: 1,
-                                    NOMBRE: 4,
-                                    NUMERO_ORDEN: 5,
-                                    DIRECCION: 6,
-                                    BARRIO: 7,
-                                    DESC_LOCALIDAD: 8,
-                                    DESC_ESTADO_PROD: 9,
-                                    ACTIVA: 10,
-                                    NOM_CATE: 11,
+                                    ID_TIPO_TRABAJO: 2,
+                                    NOMBRE: 5,
+                                    NUMERO_ORDEN: 6,
+                                    DIRECCION: 7,
+                                    BARRIO: 8,
+                                    DESC_LOCALIDAD: 9,
+                                    DESC_ESTADO_PROD: 10,
+                                    ACTIVA: 11,
+                                    NOM_CATE: 12,
                                 };
 
                                 const porqueSeProgramoIndex = H_tabla.propToCol('PORQUE SE PROGRAMO'); // Obtener el índice de la columna
@@ -150,16 +149,17 @@ document.addEventListener('DOMContentLoaded', () => {
                                 // Borrar el contenido de la fila
                                 const numCols = H_tabla.countCols(); // Obtener el número de columnas
                                 for (let col = 1; col < numCols; col++) {
-                                    H_tabla.setDataAtCell(row, col, ''); // Establecer cada celda en vacío
+                                    H_tabla.setDataAtCell(row, col, ''); 
                                 }
                                 console.error("La respuesta del servidor no es un objeto válido:", response);
                             }
+                            guardarProgramacion(row);
                         }, error: function (xhr, status, error) {
                             // Borrar el contenido de la fila
                             alert('No se encontró registro con el contrato ingresado');
                             const numCols = H_tabla.countCols(); // Obtener el número de columnas
                             for (let col = 1; col < numCols; col++) {
-                                H_tabla.setDataAtCell(row, col, ''); // Establecer cada celda en vacío
+                                H_tabla.setDataAtCell(row, col, ''); 
                             }
                             console.log(xhr.responseText);
                         }
@@ -172,3 +172,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 });
+
+function guardarProgramacion(row) {
+
+    const token = document.getElementById('token').value;
+    const url = document.getElementById('url_store').value;
+    let rowData = H_tabla.getDataAtRow(row);
+    
+    $.ajax({
+        url: url,
+        type: 'POST',
+        data: { 
+            data: rowData,
+            _token: token
+         },
+        success: function (response) {
+            alert('Datos guardados correctamente');
+        }, error: function (xhr, status, error) {
+            console.log(xhr.responseText);
+        }
+    });
+
+}

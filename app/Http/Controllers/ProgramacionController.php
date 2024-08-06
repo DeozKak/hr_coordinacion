@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\tbl_programacion_usuario;
 use App\Models\tbl_programacion_base;
 use App\Models\tbl_insp_cali;
+use App\Models\tbl_programacion_contrato;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
@@ -234,4 +235,36 @@ class ProgramacionController extends Controller
             return response()->json(['errors' => 'No se encontraron registros'], 422);
         }
     }
+
+    public function store(Request $request){
+
+        $data = $request->data;
+       
+
+        $programacion = new tbl_programacion_contrato();
+
+        $programacion->CONTRATO = $request->data[1];
+        $programacion->TIPO_TRABAJO = $request->data[2];
+        $programacion->FECHA = $request->data[3];
+        $programacion->CELULAR = $request->data[4];
+        $programacion->NOMBRE_USUARIO = $request->data[5];
+        $programacion->ORDEN_TRABAJO = $request->data[6];
+        $programacion->DIRECCION = $request->data[7];
+        $programacion->BARRIO = $request->data[8];
+        $programacion->CIUDAD = $request->data[9];
+        $programacion->ACTIVA = $request->data[10];
+        $programacion->SUSPENDIDO = $request->data[11];
+        $programacion->CATEGORIA = $request->data[12];
+        $programacion->FECHA_AGENDAMIENTO = $request->data[13];
+        $programacion->OBSERVACIONES = $request->data[14];
+        $programacion->PORQUE_PROGRAMO = $request->data[15];
+        $programacion->TECNICO = $request->data[16];
+        $programacion->HORA_INICIO = $request->data[17];
+        $programacion->HORA_FINAL = $request->data[18];
+        $programacion->id_programacion = $request->id_programacion;
+
+        return redirect()->route('programacion.index')->with('success', 'Tabla de programación creada exitosamente');
+    }
+
+    
 }

@@ -12,6 +12,8 @@
   text-align: center;
 }
 </style>
+<input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
+<input type="hidden" name="url_base" id="url_store" value="{{ route('programacion.store') }}">
 <input type="hidden" name="busqueda" id="busqueda" value="{{ route('programacion.busqueda',['contrato' => ':id']) }}">
 <div class="container">
     <div class="row">
