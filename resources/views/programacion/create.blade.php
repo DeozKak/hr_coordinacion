@@ -13,8 +13,9 @@
 }
 </style>
 <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
-<input type="hidden" name="url_base" id="url_store" value="{{ route('programacion.store') }}">
+<input type="hidden" name="url_store" id="url_store" value="{{ route('programacion.store') }}">
 <input type="hidden" name="busqueda" id="busqueda" value="{{ route('programacion.busqueda',['contrato' => ':id']) }}">
+<input type="hidden" name="url_destroy" id="url_destroy" value="{{ route('programacion.destroy') }}">
 <div class="container">
     <div class="row">
         <div class="col-md-12">
@@ -36,12 +37,13 @@
         </div>
     </div>
 </div>
-
+@dd($tabla)
 @section('js')
 <script>
     const tecnicos = @json($tecnicos->toArray());
     const nombresTecnicos = tecnicos.map(tecnico => tecnico.apellidos+' '+tecnico.nombres);
     const user =  @json($user->toArray());
+    const tabla_id = "{{ $programacion->id }}"
    
 </script>
 <script src="{{ asset('js/programacion.js') }}" type="text/javascript"></script>

@@ -122,5 +122,7 @@ Route::middleware('web')->group(function () {
         Route::post('/programacion/base', [ProgramacionController::class, 'base'])->name('programacion.base');
         Route::get('/programacion/busqueda/{contrato}', [ProgramacionController::class, 'busqueda'])->name('programacion.busqueda');
         Route::post('/programacion/store', [ProgramacionController::class, 'store'])->name('programacion.store');
+        Route::delete('/programacion/delete', [ProgramacionController::class, 'destroy'])->name('programacion.destroy');
+        Route::get('/programacion/show/{id}', [ProgramacionController::class, 'show'])->name('programacion.show');
     });
 });

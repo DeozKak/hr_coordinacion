@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-   
+
     H_tabla = new Handsontable(tabla, {
         readOnly: false,
         columns: [
@@ -90,8 +90,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     let id = H_tabla.getDataAtRow(row)[0];
                     let url = document.getElementById('busqueda').value;
                     if (value == '' || value == null) {
+                        borrarFilaBD(row);
                         // Borrar el contenido de la fila
-                        const numCols = H_tabla.countCols(); // Obtener el número de columnas
+                        const numCols = H_tabla.countCols();
+                        H_tabla.setDataAtCell(row, 0, '');
                         for (let col = 2; col < numCols; col++) {
                             H_tabla.setDataAtCell(row, col, ''); // Establecer cada celda en vacío
                         }
@@ -103,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         url: url_busqueda,
                         type: 'GET',
                         success: function (response) {
-                            console.log(response);
+                           
                             // Asegurarse de que la respuesta es un objeto
                             if (typeof response === 'object') {
 
@@ -127,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                         if (key === 'DESC_ESTADO_PROD') {
                                             const estado = response[key].toLowerCase();
                                             H_tabla.setDataAtCell(row, columnMap[key], estado === 'activo' ? 'Si' : 'No');
-                                            console.log(estado);
+                                           
 
                                             if (estado === 'suspendido') {
                                                 H_tabla.setDataAtCell(row, columnMap['ACTIVA'], 'Si');
@@ -140,26 +142,31 @@ document.addEventListener('DOMContentLoaded', () => {
                                         }
                                     }
                                 }
-
-
-                                H_tabla.alter('insert_row_above', H_tabla.countRows() + 1);
-
+                               
+                              guardarProgramacion(row);
+                              
+                           
+                               
+                          
+                          
                             } else {
                                 alert('No se encontró registro con el contrato ingresado');
                                 // Borrar el contenido de la fila
                                 const numCols = H_tabla.countCols(); // Obtener el número de columnas
-                                for (let col = 1; col < numCols; col++) {
-                                    H_tabla.setDataAtCell(row, col, ''); 
+                                H_tabla.setDataAtCell(row, 0, '');
+                                for (let col = 2; col < numCols; col++) {
+                                    H_tabla.setDataAtCell(row, col, '');
                                 }
                                 console.error("La respuesta del servidor no es un objeto válido:", response);
                             }
-                            guardarProgramacion(row);
+
                         }, error: function (xhr, status, error) {
                             // Borrar el contenido de la fila
                             alert('No se encontró registro con el contrato ingresado');
                             const numCols = H_tabla.countCols(); // Obtener el número de columnas
+                            H_tabla.setDataAtCell(row, 0, '');
                             for (let col = 1; col < numCols; col++) {
-                                H_tabla.setDataAtCell(row, col, ''); 
+                                H_tabla.setDataAtCell(row, col, '');
                             }
                             console.log(xhr.responseText);
                         }
@@ -178,19 +185,67 @@ function guardarProgramacion(row) {
     const token = document.getElementById('token').value;
     const url = document.getElementById('url_store').value;
     let rowData = H_tabla.getDataAtRow(row);
-    
+ 
+    if (rowData[0] === null || rowData[0] === '') {
+
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: {
+                data: rowData,
+                tabla: tabla_id,
+                _token: token
+            },
+            success: function (response) {
+
+                if (response.error) {
+                   console.log(response.error);
+                   const numCols = H_tabla.countCols(); // Obtener el número de columnas
+                   H_tabla.setDataAtCell(row, 0, '');
+                   for (let col = 2; col < numCols; col++) {
+                       H_tabla.setDataAtCell(row, col, '');
+                   }
+                   H_tabla.setDataAtCell(row, 1, '');
+                   alert(response.error);
+                }
+                if (response.id) {
+                    H_tabla.setDataAtCell(row, 0, response.id);
+                    H_tabla.alter('insert_row_above', H_tabla.countRows() + 1);
+                }
+               
+            
+            }, error: function (xhr, status, error) {
+                console.log(xhr.responseText);
+            }
+        });
+    }
+
+}
+
+function borrarFilaBD(row) {
+    const token = document.getElementById('token').value;
+    const url = document.getElementById('url_destroy').value;
+    let rowData = H_tabla.getDataAtRow(row);
+  
+    if (rowData[0] === null || rowData[0] === '') {
+        return;
+    }
     $.ajax({
         url: url,
-        type: 'POST',
-        data: { 
-            data: rowData,
+        type: 'DELETE',
+        data: {
+            data: rowData[0],
             _token: token
-         },
+        },
         success: function (response) {
-            alert('Datos guardados correctamente');
+           
+            if (response.id) {
+                H_tabla.setDataAtCell(row, 0, null);
+            }
+            alert('Datos eliminados correctamente');
         }, error: function (xhr, status, error) {
             console.log(xhr.responseText);
         }
     });
-
 }

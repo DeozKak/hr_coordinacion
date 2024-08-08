@@ -136,7 +136,7 @@
             }).then((result) => {
 
                 if (result.value) {
-                    window.location.href = "";
+                    window.location.href = "{{ route('programacion.show',['id' => $temp->id]) }}";
                 }
                 if (result.isDenied) {
                     swal.fire({
