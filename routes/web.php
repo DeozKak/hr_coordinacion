@@ -110,19 +110,23 @@ Route::middleware('web')->group(function () {
         Route::put('/cortes_produccion/{id}/updateCorte', [CorteProduccionController::class, 'updateCorte'])->name('cortes_produccion.updateCorte')->middleware(CheckPermission::class . ':ver_residente');
         Route::get('/cortes_producction/{id}/editMunicipio', [CorteProduccionController::class, 'editMunicipio'])->name('cortes_produccion.editMunicipio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
         Route::put('/cortes_produccion/{id}/updateMunicipio', [CorteProduccionController::class, 'updateMunicipio'])->name('cortes_produccion.updateMunicipio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
-
+        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         //Rutas para notificaciones
         Route::get('notifications/get', [NotificationsController::class, 'getNotificationsData'])->name('notifications.get');
         Route::get('notifications/markAsRead', [NotificationsController::class, 'markAsRead'])->name('notifications.markAsRead');
         Route::get('notifications', [NotificationsController::class, 'index'])->name('notifications.index');
-
+        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        
         //Rutas Programación
-        Route::get('/programacion', [ProgramacionController::class, 'index'])->name('programacion.index');
-        Route::get('/programacion/create', [ProgramacionController::class, 'create'])->name('programacion.create');
-        Route::post('/programacion/base', [ProgramacionController::class, 'base'])->name('programacion.base');
-        Route::get('/programacion/busqueda/{contrato}', [ProgramacionController::class, 'busqueda'])->name('programacion.busqueda');
-        Route::post('/programacion/store', [ProgramacionController::class, 'store'])->name('programacion.store');
-        Route::delete('/programacion/delete', [ProgramacionController::class, 'destroy'])->name('programacion.destroy');
-        Route::get('/programacion/show/{id}', [ProgramacionController::class, 'show'])->name('programacion.show');
+        Route::get('/programacion', [ProgramacionController::class, 'index'])->name('programacion.index')->middleware(CheckPermission::class . ':generar_programacion');
+        Route::get('/programacion/create', [ProgramacionController::class, 'create'])->name('programacion.create')->middleware(CheckPermission::class . ':generar_programacion');
+        Route::post('/programacion/base', [ProgramacionController::class, 'base'])->name('programacion.base')->middleware(CheckPermission::class . ':generar_programacion');
+        Route::get('/programacion/busqueda/{contrato}', [ProgramacionController::class, 'busqueda'])->name('programacion.busqueda')->middleware(CheckPermission::class . ':generar_programacion');
+        Route::post('/programacion/store', [ProgramacionController::class, 'store'])->name('programacion.store')->middleware(CheckPermission::class . ':generar_programacion');
+        Route::delete('/programacion/delete', [ProgramacionController::class, 'destroy'])->name('programacion.destroy')->middleware(CheckPermission::class . ':generar_programacion');
+        Route::get('/programacion/show/{id}', [ProgramacionController::class, 'show'])->name('programacion.show')->middleware(CheckPermission::class . ':generar_programacion');
+        Route::put('/programacion/update/{id}', [ProgramacionController::class, 'update'])->name('programacion.update')->middleware(CheckPermission::class . ':generar_programacion');
+        Route::delete('/programacion/erase/{id}', [ProgramacionController::class, 'erase'])->name('programacion.erase')->middleware(CheckPermission::class . ':generar_programacion');
+        Route::post('/programacion/finish/{id}', [ProgramacionController::class, 'finish'])->name('programacion.finish')->middleware(CheckPermission::class . ':generar_programacion');
     });
 });

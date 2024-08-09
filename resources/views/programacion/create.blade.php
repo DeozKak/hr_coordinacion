@@ -16,28 +16,27 @@
 <input type="hidden" name="url_store" id="url_store" value="{{ route('programacion.store') }}">
 <input type="hidden" name="busqueda" id="busqueda" value="{{ route('programacion.busqueda',['contrato' => ':id']) }}">
 <input type="hidden" name="url_destroy" id="url_destroy" value="{{ route('programacion.destroy') }}">
+<input type="hidden" name="url_update" id="url_update" value="{{ route('programacion.update',['id' => ':id']) }}">
+<input type="hidden" name="url_finish" id="url_finish" value="{{ route('programacion.finish',['id' => ':id']) }}">
 <div class="container">
     <div class="row">
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">Crear</div>
                 <div class="card-body">
-                    <a href="{{ route('programacion.index') }}" title="Regresar"><button class="btn btn-warning btn-sm"><i class="fa fa-arrow-left" aria-hidden="true"></i> Regresar</button></a>
-                    
+                    <a href="{{ route('programacion.index') }}" title="Regresar"><button class="btn btn-warning btn-sm"><i class="fa fa-arrow-left" aria-hidden="true"></i> Regresar</button></a>       
                     <br>
                     <br>
                     <div id="tabla_programacion"></div>
-                   
-                    <a href="{{ route('programacion.index') }}" title="Regresar"><button class="btn btn-success btn-sm"> Guardar</button></a>
-
+                    <button id="btnGuardar" class="btn btn-success btn-sm">Guardar</button>
                 </div>
-
-
             </div>
         </div>
     </div>
 </div>
-@dd($tabla)
+@php
+    $tabla = isset($tabla) ? $tabla : []; // Si $tabla no está definida, se asigna un array vacío
+@endphp
 @section('js')
 <script>
     const tecnicos = @json($tecnicos->toArray());
@@ -45,6 +44,8 @@
     const user =  @json($user->toArray());
     const tabla_id = "{{ $programacion->id }}"
    
+    const tabla_data = @json($tabla);
+
 </script>
 <script src="{{ asset('js/programacion.js') }}" type="text/javascript"></script>
 @stop

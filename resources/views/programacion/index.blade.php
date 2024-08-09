@@ -150,12 +150,12 @@
 
                         if (result.isConfirmed) {
                             $.ajax({
-                                type: "POST",
+                                type: "DELETE",
                                 dataType: "json",
                                 data: {
                                     _token: "{{ csrf_token() }}"
                                 },
-                                url: "",
+                                url: "{{ route('programacion.erase', ['id' => $temp->id]) }}",
                                 success: function(response) {
                                     console.log(response);
                                 },
@@ -168,7 +168,7 @@
                             });
                         }
                         if (result.isDenied) {
-                            window.location.href = "";
+                            window.location.href = "{{ route('programacion.show',['id' => $temp->id]) }}";
                         }
                     });
 

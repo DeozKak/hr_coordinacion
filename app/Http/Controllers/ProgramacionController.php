@@ -18,10 +18,8 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
-
 class ProgramacionController extends Controller
 {
-
     public function index()
     {
         $datos = tbl_programacion_usuario::where('finished', 1)->with('usuario')->get();
@@ -222,7 +220,6 @@ class ProgramacionController extends Controller
         }
     }
 
-    // Función auxiliar para insertar un lote y verificar duplicados
     private function insertarLoteConVerificacionDuplicados($registros)
     {
         $numerosOrden = array_column($registros, 'NUMERO_ORDEN');
@@ -261,7 +258,7 @@ class ProgramacionController extends Controller
     {
 
         $data = $request->data;
-
+        
         $exist = tbl_programacion_contrato::where('CONTRATO', $request->data[1])
             ->where('ORDEN_TRABAJO', $request->data[6])
             ->where('TIPO_TRABAJO', $request->data[2])
@@ -301,6 +298,23 @@ class ProgramacionController extends Controller
         return response()->json(['message' => 'Registro guardado correctamente', 'id' => $programacion->id]);
     }
 
+    public function update ($id, Request $request){
+
+        try{
+        $programacion = tbl_programacion_contrato::find($id);
+
+        $campo = $request->propiedad;
+
+        $programacion->$campo = $request->valor;
+        $programacion->save();
+
+        return response()->json(['message' => 'Registro actualizado correctamente']);
+        }catch(QueryException $e){
+            return response()->json(['error' => $e]);
+        }
+    
+    }
+
     public function destroy(Request $resquest)
     {
 
@@ -313,4 +327,25 @@ class ProgramacionController extends Controller
         }
         return response()->json(['message' => 'Registro eliminado correctamente']);
     }
+
+    public function erase($id)
+    {
+        $programacion = tbl_programacion_usuario::find($id);
+        $contratos = tbl_programacion_contrato::where('id_programacion', $id)->get();
+        $contratos->each->delete();
+        $programacion->delete();
+
+        return response()->json(['message' => 'Programación eliminada correctamente']);
+    }
+
+    public function finish($id)
+    {
+        $programacion = tbl_programacion_usuario::find($id);
+        $programacion->finished = 1;
+        $programacion->save();
+
+        return response()->json(['message' => 'Programación finalizada correctamente']);
+    }
+
+
 }
