@@ -7,6 +7,7 @@ use App\Models\tbl_programacion_base;
 use App\Models\tbl_insp_cali;
 use App\Models\tbl_programacion_contrato;
 use Carbon\Carbon;
+use DateTime;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -14,23 +15,27 @@ use Dotenv\Exception\ValidationException;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
+
 
 class ProgramacionController extends Controller
 {
     public function index()
     {
-        $datos = tbl_programacion_usuario::where('finished', 1)->with('usuario')->get();
-        $temp = tbl_programacion_usuario::where('finished', 0)->where('id_usuario', Auth::id())->first();
 
+        if (Auth::user()->haspermissionTo('ver_programacion')) {
+            $datos = tbl_programacion_usuario::where('finished', 1)->with('usuario')->get();
+            $temp = tbl_programacion_usuario::where('finished', 0)->where('id_usuario', Auth::id())->first();
+        } else {
+            $datos = tbl_programacion_usuario::where('finished', 1)->where('id_usuario', Auth::id())->with('usuario')->get();
+            $temp = tbl_programacion_usuario::where('finished', 0)->where('id_usuario', Auth::id())->first();
+        }
 
         if (!is_null($temp)) {
             session()->flash('warning', 'Ya tienes una tabla de programación en curso ¿Deseas continuar?');
 
-            return view('programacion.index', compact('datos','temp'));
-       
+            return view('programacion.index', compact('datos', 'temp'));
         }
 
         return view('programacion.index', compact('datos'));
@@ -48,39 +53,42 @@ class ProgramacionController extends Controller
             $programacion->save();
 
             $tecnicos = tbl_insp_cali::select('apellidos', 'nombres')
-            ->where('state', 1)
-            ->orderBy('apellidos') // Ordenar por apellidos ascendente
-            ->get();
+                ->where('state', 1)
+                ->orderBy('apellidos') // Ordenar por apellidos ascendente
+                ->get();
 
-        $user = Auth::user();
+            $user = Auth::user();
 
-        return view('programacion.create', compact('tecnicos', 'user', 'programacion'));
-
-        }else{
+            return view('programacion.create', compact('tecnicos', 'user', 'programacion'));
+        } else {
             $tecnicos = tbl_insp_cali::select('apellidos', 'nombres')
-            ->where('state', 1)
-            ->orderBy('apellidos') // Ordenar por apellidos ascendente
-            ->get();
+                ->where('state', 1)
+                ->orderBy('apellidos') // Ordenar por apellidos ascendente
+                ->get();
 
-        $user = Auth::user();
+            $user = Auth::user();
 
-        return view('programacion.create', compact('tecnicos', 'user', 'programacion'));
+            return view('programacion.create', compact('tecnicos', 'user', 'programacion'));
         }
     }
 
-    public function show ($id)
+    public function show($id)
     {
         $programacion = tbl_programacion_usuario::find($id);
         $tabla = tbl_programacion_contrato::where('id_programacion', $id)->get();
-     
+
+        $programacion->finished = 0;
+        $programacion->save();
+
+
         $user = Auth::user();
 
         $tecnicos = tbl_insp_cali::select('apellidos', 'nombres')
-        ->where('state', 1)
-        ->orderBy('apellidos') // Ordenar por apellidos ascendente
-        ->get();
+            ->where('state', 1)
+            ->orderBy('apellidos') // Ordenar por apellidos ascendente
+            ->get();
 
-        return view('programacion.create', compact('tecnicos', 'user', 'programacion','tabla'));
+        return view('programacion.create', compact('tecnicos', 'user', 'programacion', 'tabla'));
     }
 
     public function base(Request $request)
@@ -258,7 +266,7 @@ class ProgramacionController extends Controller
     {
 
         $data = $request->data;
-        
+
         $exist = tbl_programacion_contrato::where('CONTRATO', $request->data[1])
             ->where('ORDEN_TRABAJO', $request->data[6])
             ->where('TIPO_TRABAJO', $request->data[2])
@@ -298,21 +306,21 @@ class ProgramacionController extends Controller
         return response()->json(['message' => 'Registro guardado correctamente', 'id' => $programacion->id]);
     }
 
-    public function update ($id, Request $request){
+    public function update($id, Request $request)
+    {
 
-        try{
-        $programacion = tbl_programacion_contrato::find($id);
+        try {
+            $programacion = tbl_programacion_contrato::find($id);
 
-        $campo = $request->propiedad;
+            $campo = $request->propiedad;
 
-        $programacion->$campo = $request->valor;
-        $programacion->save();
+            $programacion->$campo = $request->valor;
+            $programacion->save();
 
-        return response()->json(['message' => 'Registro actualizado correctamente']);
-        }catch(QueryException $e){
+            return response()->json(['message' => 'Registro actualizado correctamente']);
+        } catch (QueryException $e) {
             return response()->json(['error' => $e]);
         }
-    
     }
 
     public function destroy(Request $resquest)
@@ -340,12 +348,98 @@ class ProgramacionController extends Controller
 
     public function finish($id)
     {
-        $programacion = tbl_programacion_usuario::find($id);
-        $programacion->finished = 1;
-        $programacion->save();
+        try {
+            $programacion = tbl_programacion_usuario::find($id);
+            $programacion->finished = 1;
+            $programacion->save();
 
-        return response()->json(['message' => 'Programación finalizada correctamente']);
+            $programadas = tbl_programacion_contrato::where('id_programacion', $id)->get();
+
+            foreach ($programadas as $programada) {
+
+                if($programada->CELULAR == null || $programada->CELULAR == '' || $programada->mensaje == 1){  
+                    continue;
+                }
+                // Establecer la zona horaria a Colombia
+                date_default_timezone_set('America/Bogota');
+                
+                $horaActual = date('H'); // Obtener la hora actual en formato de 24 horas
+
+                if ($horaActual >= 5 && $horaActual < 12) {
+                    $saludo = "Buenos días";
+                } elseif ($horaActual >= 12 && $horaActual < 19) {
+                    $saludo = "Buenas tardes";
+                } else {
+                    $saludo = "Buenas noches";
+                }
+
+                // Convertir la cadena de fecha a un objeto Carbon
+                $fecha_carbon = Carbon::createFromFormat('Y-m-d', $programada->FECHA_AGENDAMIENTO);
+
+                // Formatear la fecha en español
+                // locale es importante para obtener los nombres de los meses en español
+                $fecha_formateada = $fecha_carbon->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
+
+                $bodyData = [
+                    'typing_time' => 0,
+                    'to' => '57' . $programada->CELULAR,
+                    'body' => $saludo . ', Sr./Sra. ' . $programada->NOMBRE_USUARIO . '. 👋' .
+                        'Le informamos que la inspección de la red de gas en su predio está programada para el día ' . $fecha_formateada . '  entre las ' . $programada->HORA_INICIO . ' a ' . $programada->HORA_FINAL . '.  El inspector a cargo será ' . $programada->TECNICO . '. 👷‍♂️' .
+                        'Agradecemos su atención y colaboración. 🙏'
+                ];
+
+                $client = new Client();
+                $response = $client->request('POST', 'https://gate.whapi.cloud/messages/text', [
+                    'json' => $bodyData,
+                    'headers' => [
+                        'accept' => 'application/json',
+                        'authorization' => 'Bearer bGBktWXeKxgX1syNGKtT8al4rfZHRemt',
+                        'content-type' => 'application/json',
+                    ],
+                ]);
+
+                $programada->mensaje = 1;
+                $programada->save();
+            
+            }
+        } catch (QueryException $e) {
+            return response()->json(['error' => $e]);
+        }
+        session()->flash('success', 'Programación finalizada correctamente');
+        return response()->json(['ok' => 'Programación finalizada correctamente']);
     }
 
+    public function detalles()
+    {
 
+        return view('programacion.ver');
+    }
+
+    public function agendamiento(Request $request)
+    {
+
+        $request->validate([
+            'fecha' => 'required',
+        ]);
+
+        $fecha = $request->fecha;
+
+        $columnasTabla = Schema::getColumnListing('tbl_programacion_contratos'); // Obtener todas las columnas de la tabla
+
+        $columnasAExcluir = ['updated_at', 'created_at']; // Columnas que deseas excluir
+        $columnasAIncluir = array_diff($columnasTabla, $columnasAExcluir); // Calcula las columnas a incluir
+
+        $busqueda = tbl_programacion_contrato::where('FECHA_AGENDAMIENTO', $fecha)
+            ->whereHas('state', function ($query) {
+                $query->where('finished', 1);
+            })
+            ->select($columnasAIncluir)
+            ->get();
+
+
+        return response()->json([
+            'data' => $busqueda,
+            'columnas' => $columnasAIncluir
+        ]);
+    }
 }

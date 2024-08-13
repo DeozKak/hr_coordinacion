@@ -544,14 +544,14 @@ return [
                     'text' => 'Programar',
                     'url' => '/programacion',
                     'icon' => 'far fa-circle',
-                    'can' => ['generar_programacion'],
+                    'can' => ['generar_programacion','ver_programacion'],
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Ver Programación',
-                    'url' => '/Programacion/detalles',
+                    'url' => '/programacion/detalles',
                     'icon' => 'far fa-circle',
-                    'can' => ['generar_programacion','ver_programacion'],
+                    'can' => ['ver_programacion'],
                     'label_color' => 'success',
                 ],
             ]

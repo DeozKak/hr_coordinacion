@@ -3,7 +3,7 @@
 @section('title', 'Programación')
 
 @section('content_header')
-<h1>Crear</h1>
+<h1>{{$programacion->nombre}}</h1>
 @stop
 
 @section('content')
@@ -13,6 +13,7 @@
 }
 </style>
 <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
+<input type="hidden" name="url_index" id="url_index" value="{{ route('programacion.index') }}">
 <input type="hidden" name="url_store" id="url_store" value="{{ route('programacion.store') }}">
 <input type="hidden" name="busqueda" id="busqueda" value="{{ route('programacion.busqueda',['contrato' => ':id']) }}">
 <input type="hidden" name="url_destroy" id="url_destroy" value="{{ route('programacion.destroy') }}">
@@ -22,13 +23,16 @@
     <div class="row">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header">Crear</div>
+                <div class="card-header">Tabla</div>
                 <div class="card-body">
                     <a href="{{ route('programacion.index') }}" title="Regresar"><button class="btn btn-warning btn-sm"><i class="fa fa-arrow-left" aria-hidden="true"></i> Regresar</button></a>       
                     <br>
                     <br>
                     <div id="tabla_programacion"></div>
+                    <br>
+                    @if($programacion->finished == 0)
                     <button id="btnGuardar" class="btn btn-success btn-sm">Guardar</button>
+                    @endif
                 </div>
             </div>
         </div>

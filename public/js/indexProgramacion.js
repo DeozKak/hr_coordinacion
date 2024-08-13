@@ -1,5 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    $('#programacion').DataTable({
+        "language": {
+            "lengthMenu": "Mostrar _MENU_ registros por página",
+            "zeroRecords": "Nada encontrado - lo siento",
+            "info": "Mostrando la página _PAGE_ de _PAGES_",
+            "infoEmpty": "No hay registros disponibles",
+            "infoFiltered": "(Filtrado de _MAX_ registros totales)",
+            "search": "Buscar:",
+            "paginate": {
+                "first": "Primero",
+                "last": "Ultimo",
+                "next": "Siguiente",
+                "previous": "Anterior"
+            }
+        }
+    });
+
     const openModalBtn = document.getElementById('openModalBtn');
     const addProgramacionModal = document.getElementById('addProgramacionModal');
     const modal = new bootstrap.Modal(addProgramacionModal);
@@ -7,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModalBtn = document.querySelector('.btn-close'); // Selecciona el botón de cierre
 
     closeModalBtn.addEventListener('click', function () {
-        modal.hide(); // Cierra el modal
+        modal.hide();
     });
 
     openModalBtn.addEventListener('click', function () {

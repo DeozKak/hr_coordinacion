@@ -151,9 +151,9 @@ $(document).ready(function () {
             },
             success: function (response) {
                
-                var nombreArchivo = response.nombreArchivo;
+                let nombreArchivo = response.nombreArchivo;
                 if (nombreArchivo !== undefined) {
-                    var urlDescarga = 'Controlador/Archivos/' + nombreArchivo;
+                    let urlDescarga = 'Controlador/Archivos/' + nombreArchivo;
                     window.location.href = urlDescarga;
                     $('#loader').hide();
                     $('#overlay').hide();

@@ -318,26 +318,62 @@ function borrarFilaBD(row) {
 
 document.getElementById('btnGuardar').addEventListener('click', function () {
 
+    if (!validarFilasCompletas()) {
+        alert("Por favor, complete todas las filas antes de guardar.");
+        return; // Detener el envío de la solicitud AJAX si hay filas incompletas
+    }
+
+    const url_index = document.getElementById('url_index').value;
     const token = document.getElementById('token').value;
     const url_finish = document.getElementById('url_finish').value;
     const url = url_finish.replace(':id', tabla_id);
-    
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: {
-                    _token: token
-                },
-                success: function (response) {
-                    if (response.error) {
-                        console.log(response.error);
-                        alert(response.error);
-                    }
-                }, error: function (xhr, status, error) {
-                    console.log(xhr.responseText);
-                }
-            });
-       
-    
+
+    $.ajax({
+        url: url,
+        type: 'POST',
+        data: {
+            _token: token
+        },
+        success: function (response) {
+            if (response.ok) {
+                window.location.href = url_index;
+            }
+            if (response.error) {
+                alert(response.error);
+            }
+        }, error: function (xhr, status, error) {
+            console.log(xhr.responseText);
+        }
+    });
+
 
 });
+
+// Función para validar que todas las filas estén llenas (ignorando filas vacías)
+function validarFilasCompletas() {
+    const data = H_tabla.getData();
+    let hayFilasConDatos = false;
+
+    for (let i = 0; i < data.length; i++) {
+        const fila = data[i];
+        let filaTieneDatos = false;
+
+        for (let j = 0; j < fila.length; j++) {
+            if (fila[j] !== '' && fila[j] !== null && fila[j] !== undefined) {
+                filaTieneDatos = true;
+                hayFilasConDatos = true;
+                break;
+            }
+        }
+
+        if (filaTieneDatos) {
+            for (let j = 0; j < fila.length; j++) {
+                if (fila[j] === '' || fila[j] === null || fila[j] === undefined) {
+                    return false;
+                }
+            }
+        }
+    }
+
+    return hayFilasConDatos;
+}

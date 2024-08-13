@@ -19,23 +19,14 @@
                     <div class="card-header">Programación</div>
                     <div class="card-body">
                         <a href="{{ route('programacion.create') }}" class="btn btn-success btn-sm" title="Add New Programacion">
-                            <i class="fa fa-plus" aria-hidden="true"></i> Generar nueva Tabla </a>
-
+                            <i class="fa fa-plus" aria-hidden="true"></i> Generar nueva Tabla 
+                        </a>
+                        @haspermission('ver_programacion')
                         <button id="openModalBtn" class="btn btn-primary btn-sm" title="Add New Programacion"> Añadir a Base </button>
-
-                        <form method="GET" action="{{ url('/programacion') }}" accept-charset="UTF-8" class="form-inline my-2 my-lg-0 float-right" role="search">
-                            <div class="input-group">
-                                <input type="text" class="form-control" name="search" placeholder="Buscar...">
-                                <span class="input-group-append">
-                                    <button class="btn btn-secondary" type="submit">
-                                        <i class="fa fa-search"></i>
-                                    </button>
-                                </span>
-                            </div>
-                        </form>
+                        @endhaspermission
                         <br>
                         <br>
-                        <table class="table table-striped table-bordered">
+                        <table id="programacion" class="table table-striped table-bordered">
                             <thead>
                                 <tr>
                                     <th>ID</th>
@@ -45,18 +36,16 @@
                                 </tr>
                             </thead>
                             <tbody>
-                            @foreach ($datos as $dato)
+                                @foreach ($datos as $dato)
                                 <tr>
-                                   
-
                                     <td>{{$dato->id}}</td>
                                     <td>{{$dato->nombre}}</td>
                                     <td>{{$dato->usuario->name}}</td>
                                     <td>
-                                        <button type="button" class="btn btn-warning">Editar</button>
+                                        <a href="{{ route('programacion.show', $dato->id) }}" title="show">
+                                            <button type="button" class="btn btn-warning">Editar</button>
+                                        </a>
                                     </td>
-
-                                 
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -124,60 +113,58 @@
 </script>
 @endif
 @if (session('warning'))
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            Swal.fire({
-                title: "{{session('warning')}}",
-                showDenyButton: true,
-                showCancelButton: false,
-                allowOutsideClick: false,
-                confirmButtonText: "Si",
-                denyButtonText: "No",
-            }).then((result) => {
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        Swal.fire({
+            title: "{{session('warning')}}",
+            showDenyButton: true,
+            showCancelButton: false,
+            allowOutsideClick: false,
+            confirmButtonText: "Si",
+            denyButtonText: "No",
+        }).then((result) => {
 
-                if (result.value) {
-                    window.location.href = "{{ route('programacion.show',['id' => $temp->id]) }}";
-                }
-                if (result.isDenied) {
-                    swal.fire({
-                        icon: "warning",
-                        title: "Se perderán los cambios!",
-                        allowOutsideClick: false,
-                        showDenyButton: true,
-                        confirmButtonText: "Quiero generar una bitacora nueva",
-                        denyButtonText: "Mantener cambios",
-                    }).then((result) => {
+            if (result.value) {
+                window.location.href = "{{ route('programacion.show',['id' => $temp->id]) }}";
+            }
+            if (result.isDenied) {
+                swal.fire({
+                    icon: "warning",
+                    title: "Se perderán los cambios!",
+                    allowOutsideClick: false,
+                    showDenyButton: true,
+                    confirmButtonText: "Quiero generar una tabla nueva",
+                    denyButtonText: "Mantener cambios",
+                }).then((result) => {
 
-                        if (result.isConfirmed) {
-                            $.ajax({
-                                type: "DELETE",
-                                dataType: "json",
-                                data: {
-                                    _token: "{{ csrf_token() }}"
-                                },
-                                url: "{{ route('programacion.erase', ['id' => $temp->id]) }}",
-                                success: function(response) {
-                                    console.log(response);
-                                },
-                                error: function(xhr, error, status) {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            type: "DELETE",
+                            dataType: "json",
+                            data: {
+                                _token: "{{ csrf_token() }}"
+                            },
+                            url: "{{ route('programacion.erase', ['id' => $temp->id]) }}",
+                            success: function(response) {
+                                console.log(response);
+                            },
+                            error: function(xhr, error, status) {
 
-                                    console.log(xhr.responseText);
+                                console.log(xhr.responseText);
 
-                                }
+                            }
 
-                            });
-                        }
-                        if (result.isDenied) {
-                            window.location.href = "{{ route('programacion.show',['id' => $temp->id]) }}";
-                        }
-                    });
+                        });
+                    }
+                    if (result.isDenied) {
+                        window.location.href = "{{ route('programacion.show',['id' => $temp->id]) }}";
+                    }
+                });
+            }
 
-
-                }
-
-            });
         });
-    </script>
-    @endif
+    });
+</script>
+@endif
 @stop
 @endsection
