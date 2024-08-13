@@ -46,7 +46,6 @@ class ProduccionController extends Controller
         // sacar contratos del corte activo
         $contratosCorte = tbl_bitacora_contrato::where('FECHA', '>=', $corte->fecha_inicio)
             ->where('FECHA', '<=', $corte->fecha_fin)->where('state', '=', 1)
-
             ->get();
 
         if (count($contratosCorte->toArray()) === 0 && !$error) {
@@ -532,11 +531,10 @@ class ProduccionController extends Controller
 
             // Verificar cada contrato por día y excluir días festivos
             foreach ($contratosPorSemana as $contrato) {
-                $esFestivo = in_array($contrato->fecha, $diasFestivos);
-
-                if (!$esFestivo) {
+               /*  $esFestivo = in_array($contrato->fecha, $diasFestivos); 
+                if (!$esFestivo) { */
                     $totalContratos += $contrato->total_contratos;
-                }
+               /*  } */
             }
 
             // Ajustar los límites de las condicionales si hay un festivo en la semana
@@ -551,7 +549,6 @@ class ProduccionController extends Controller
                 if (!$esSabadoFestivo) {
 
                     if ($totalContratos >= $limiteContratos) {
-
 
                         // Sumar los contratos del sábado
                         $totalContratosSabado = $contratosSabado->sum('total_contratos');
