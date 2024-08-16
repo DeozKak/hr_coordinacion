@@ -12,6 +12,7 @@
 <body>
     <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
     <input type="hidden" name="url_base" id="url_base" value="{{ route('programacion.base') }}">
+    <input type="hidden" name="url_masivo" id="url_masivo" value="{{ route('programacion.masivos') }}">
     <div class="container">
         <div class="row">
             <div class="col-md-12">
@@ -19,10 +20,11 @@
                     <div class="card-header">Programación</div>
                     <div class="card-body">
                         <a href="{{ route('programacion.create') }}" class="btn btn-success btn-sm" title="Add New Programacion">
-                            <i class="fa fa-plus" aria-hidden="true"></i> Generar nueva Tabla 
+                            <i class="fa fa-plus" aria-hidden="true"></i> Generar nueva Tabla
                         </a>
                         @haspermission('ver_programacion')
                         <button id="openModalBtn" class="btn btn-primary btn-sm" title="Add New Programacion"> Añadir a Base </button>
+                        <button id="openMasivoBtn" class="btn btn-primary btn-sm" title="Add New Programacion"> Cargar Prioridades </button>
                         @endhaspermission
                         <br>
                         <br>
@@ -54,6 +56,7 @@
                 </div>
             </div>
         </div>
+        <!-- Modal base -->
         <div class="modal fade" id="addProgramacionModal" tabindex="-1" aria-labelledby="addProgramacionModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -79,9 +82,37 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal programación prioridades -->
+
+        <div class="modal fade" id="addMasivoModal" tabindex="-1" aria-labelledby="addMasivoModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addMasivoModalLabel">Cargar Prioridades</h5>
+                        <button type="button" class="btn-close masivoModal" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="#" id="masivoForm" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            <div class="form-group">
+                                <label for="archivo">Selecciona un archivo:</label>
+
+                                <input class="form-control mb-3" type="file" name="archivo" id="archivo">
+                               
+                                <div id="loaderMasivo" style="display: none;">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                
+                            </div>
+                            <button class="btn btn-primary" type="submit">Cargar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
-
 </body>
 @section('js')
 <script src="{{ asset('js/indexProgramacion.js') }}" type="text/javascript"></script>

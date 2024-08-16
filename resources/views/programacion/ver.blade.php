@@ -42,22 +42,31 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="card-title text-center mb-3">Seleccionar Fecha de agendamiento</h4>
-        
-                        <br>
-                        <div class="form-group">
-                            <input type="date" class="form-control" id="fecha" name="fecha" required>
-                        </div>
+                    <h4 class="card-title text-center mb-3">Fecha de agendamiento</h4>
+                    <br>
 
-                        <div class="text-center">
-                            <button type="submit" id="btnBuscar" class="btn btn-success">Buscar</button>
-                        </div>
+                    <div class="form-group">
+                        <input type="date" class="form-control" id="fechaInicio" name="fechaInicio" required>
+                    </div>
 
-              
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="rangoFechas" name="rangoFechas">
+                        <label class="form-check-label" for="rangoFechas">
+                            Seleccionar un rango de fechas
+                        </label>
+                    </div>
+
+                    <div class="form-group" id="fechaFinContainer" style="display: none;">
+                        <input type="date" class="form-control" id="fechaFin" name="fechaFin">
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" id="btnBuscar" class="btn btn-success">Buscar</button>
+                    </div>
                 </div>
             </div>
         </div>
-         <div class="col-md-12 mt-6"> 
+        <div class="col-md-12 mt-6"> 
             <div class="card"> 
                 <div class="card-body">
                     <h4 class="card-title text-center mb-3">Resultados de la Búsqueda</h4>
@@ -71,5 +80,17 @@
 
 @section('js')
 <script src="{{ asset('js/verProgramacion.js') }}"></script>
+<script>
+    const rangoFechasCheckbox = document.getElementById('rangoFechas');
+    const fechaFinContainer = document.getElementById('fechaFinContainer');
+
+    rangoFechasCheckbox.addEventListener('change', () => {
+        if (rangoFechasCheckbox.checked) {
+            fechaFinContainer.style.display = 'block';
+        } else {
+            fechaFinContainer.style.display = 'none';
+        }
+    });
+</script>
 @stop
 @endsection

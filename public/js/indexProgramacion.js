@@ -16,7 +16,75 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+    // codigo de modal masivo
+    const openMasivo = document.getElementById('openMasivoBtn');
+    const addMasivoModal = document.getElementById('addMasivoModal');
+    const modalMasivo = new bootstrap.Modal(addMasivoModal);
 
+    const closeModalMasivoBtn = document.querySelector('.masivoModal'); // Selecciona el botón de cierre
+  
+    closeModalMasivoBtn.addEventListener('click', function () {
+        modalMasivo.hide();
+    });
+
+    openMasivo.addEventListener('click', function () {
+        modalMasivo.show();
+    });
+
+    const masivoform = document.getElementById('masivoForm');
+    const errorContainerMasivo = document.createElement('div'); // Contenedor para mensajes de error
+    const loaderMasivo = document.getElementById('loaderMasivo');
+
+    masivoform.addEventListener('submit', function (event) {
+
+        event.preventDefault();
+        loaderMasivo.style.display = 'block'; // Mostrar animación de carga
+        // Limpiar mensajes de error anteriores antes de enviar el formulario
+
+        
+        const formData = new FormData(this);
+        const url = document.getElementById('url_masivo').value; // Ruta Laravel para procesar el formulario
+
+
+        $.ajax({
+            type: 'POST',
+            url: url,
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                // Manejo de la respuesta exitosa (opcional)
+                Swal.fire({
+                    position: "top-end",
+                    icon: "success",
+                    title: response.message,
+                    showConfirmButton: false,
+                    toast: true,
+                    timer: 4000
+                });
+                errorContainerMasivo.innerHTML = '';
+                errorContainerMasivo.classList.remove('alert', 'alert-danger');
+                modalMasivo.hide();
+            },
+            error: function (xhr, status, error) {
+                if (xhr.status === 422) {
+                   
+                    const errors = xhr.responseJSON.errors;
+                    showValidationErrors(errors,addMasivoModal,errorContainerMasivo); // Mostrar errores en el modal
+                } else {
+                    console.error(xhr.responseText); // Mostrar errores en la consola
+
+                }
+            },
+            complete: function () {
+                loaderMasivo.style.display = 'none';
+               
+                masivoform.reset(); // Limpiar el formulario
+            }
+        });
+    });
+
+    // cofigo de modal base
     const openModalBtn = document.getElementById('openModalBtn');
     const addProgramacionModal = document.getElementById('addProgramacionModal');
     const modal = new bootstrap.Modal(addProgramacionModal);
@@ -34,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const programacionForm = document.getElementById('programacionForm');
     const errorContainer = document.createElement('div'); // Contenedor para mensajes de error
     const loader = document.getElementById('loader');
+
     programacionForm.addEventListener('submit', function (event) {
        
       
@@ -56,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Manejo de la respuesta exitosa (opcional)
                 Swal.fire({
                     position: "top-end",
-                    type: "success",
+                    icon: "success",
                     title: response.message,
                     showConfirmButton: false,
                     toast: true,
@@ -70,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (xhr.status === 422) {
                    
                     const errors = xhr.responseJSON.errors;
-                    showValidationErrors(errors); // Mostrar errores en el modal
+                    showValidationErrors(errors,addProgramacionModal,errorContainer); // Mostrar errores en el modal
                 } else {
                     console.error(xhr.responseText); // Mostrar errores en la consola
 
@@ -83,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
-    function showValidationErrors(errors) {
+    function showValidationErrors(errors,addmodal,errorContainer) {
         errorContainer.innerHTML = ''; // Limpiar mensajes anteriores
         errorContainer.classList.add('alert', 'alert-danger');
 
@@ -103,7 +172,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Agregar el contenedor de errores al modal
-        const modalBody = addProgramacionModal.querySelector('.modal-body');
+        const modalBody = addmodal.querySelector('.modal-body');
         modalBody.prepend(errorContainer);
     }
+
+    
 });

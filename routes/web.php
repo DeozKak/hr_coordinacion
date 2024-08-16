@@ -130,5 +130,6 @@ Route::middleware('web')->group(function () {
         Route::post('/programacion/finish/{id}', [ProgramacionController::class, 'finish'])->name('programacion.finish')->middleware(CheckPermission::class . ':generar_programacion');
         Route::get('/programacion/detalles', [ProgramacionController::class, 'detalles'])->name('programacion.detalles')->middleware(CheckPermission::class . ':ver_programacion');
         Route::post('programacion/agendamiento', [ProgramacionController::class, 'agendamiento'])->name('programacion.agendamiento')->middleware(CheckPermission::class . ':ver_programacion');
+        Route::post('programacion/masivos', [ProgramacionController::class, 'masivos'])->name('programacion.masivos')->middleware(CheckPermission::class . ':ver_programacion');
     });
 });

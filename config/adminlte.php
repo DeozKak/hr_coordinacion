@@ -554,6 +554,7 @@ return [
                     'can' => ['ver_programacion'],
                     'label_color' => 'success',
                 ],
+                
             ]
         ],
         /*  [

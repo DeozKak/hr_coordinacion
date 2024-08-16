@@ -12,6 +12,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Dotenv\Exception\ValidationException;
+use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -357,12 +358,12 @@ class ProgramacionController extends Controller
 
             foreach ($programadas as $programada) {
 
-                if($programada->CELULAR == null || $programada->CELULAR == '' || $programada->mensaje == 1){  
+                if ($programada->CELULAR == null || $programada->CELULAR == '' || $programada->mensaje == 1) {
                     continue;
                 }
                 // Establecer la zona horaria a Colombia
                 date_default_timezone_set('America/Bogota');
-                
+
                 $horaActual = date('H'); // Obtener la hora actual en formato de 24 horas
 
                 if ($horaActual >= 5 && $horaActual < 12) {
@@ -400,7 +401,6 @@ class ProgramacionController extends Controller
 
                 $programada->mensaje = 1;
                 $programada->save();
-            
             }
         } catch (QueryException $e) {
             return response()->json(['error' => $e]);
@@ -419,27 +419,231 @@ class ProgramacionController extends Controller
     {
 
         $request->validate([
-            'fecha' => 'required',
+            'fechaInicio' => 'required|date',
+            'fechaFin' => 'nullable|date|after_or_equal:fechaInicio',
         ]);
 
-        $fecha = $request->fecha;
+        $fecha_inicio = $request->fechaInicio;
+        $fecha_fin = $request->fechaFin;
 
-        $columnasTabla = Schema::getColumnListing('tbl_programacion_contratos'); // Obtener todas las columnas de la tabla
+        $columnasTabla = Schema::getColumnListing('tbl_programacion_contratos');
+        $columnasAExcluir = ['updated_at', 'created_at'];
+        $columnasAIncluir = array_diff($columnasTabla, $columnasAExcluir);
 
-        $columnasAExcluir = ['updated_at', 'created_at']; // Columnas que deseas excluir
-        $columnasAIncluir = array_diff($columnasTabla, $columnasAExcluir); // Calcula las columnas a incluir
-
-        $busqueda = tbl_programacion_contrato::where('FECHA_AGENDAMIENTO', $fecha)
+        $busqueda = tbl_programacion_contrato::where('FECHA_AGENDAMIENTO', '>=', $fecha_inicio)
             ->whereHas('state', function ($query) {
                 $query->where('finished', 1);
             })
-            ->select($columnasAIncluir)
-            ->get();
+            ->select($columnasAIncluir);
 
+        if ($fecha_fin) {
+            $busqueda->where('FECHA_AGENDAMIENTO', '<=', $fecha_fin);
+        }
+
+        $busqueda = $busqueda->get();
 
         return response()->json([
             'data' => $busqueda,
             'columnas' => $columnasAIncluir
         ]);
+    }
+
+    public function masivos(Request $request)
+    {
+
+        $request->validate([
+            'archivo' => 'required|file|mimes:xls,xlsx',
+        ], [
+            'archivo.required' => 'El campo archivo es obligatorio.',
+            'archivo.file' => 'El valor debe ser un archivo.',
+            'archivo.mimes' => 'El archivo debe ser de tipo XLS o XLSX.',
+        ]);
+
+        $archivo = $request->file('archivo');
+        $spreadsheet = IOFactory::load($archivo);
+        $worksheet = $spreadsheet->getActiveSheet();
+
+        $indicador = $this->validacionMasivas($worksheet);
+
+
+        if (!$indicador) {
+            return response()->json(['errors' => 'El archivo no cumple los criterios requeridos'], 422);
+        }
+
+        $datos = $this->Extdatos($worksheet);
+        $indicador = $this->notificacion($datos);
+
+
+        if ($datos !== [] && $indicador == true) {
+            return response()->json(['message' => 'Archivo subido exitosamente']);
+        } else {
+            return response()->json(['errors' => 'Error al subir el archivo'], 422);
+        }
+    }
+
+
+    private function validacionMasivas($worksheet)
+    {
+        $indicador = true;
+        foreach (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'] as $columna) {
+            switch ($columna) {
+                case 'A':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Orden externa") ? true : false;
+                    break;
+                case 'B':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Contrato") ? true : false;
+                    break;
+                case 'C':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Medidor") ? true : false;
+                    break;
+                case 'D':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Nombre") ? true : false;
+                    break;
+                case 'E':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Localidad") ? true : false;
+                    break;
+                case 'F':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Barrio") ? true : false;
+                    break;
+                case 'G':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Dirección") ? true : false;
+                    break;
+                case 'H':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Observación externa") ? true : false;
+                    break;
+                case 'I':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Nombre inspector") ? true : false;
+                    break;
+            }
+        }
+        return $indicador;
+    }
+
+    private function Extdatos($worksheet): array
+    {
+        $data = [];
+
+        try {
+            foreach ($worksheet->getRowIterator() as $row) {
+                if ($row->getRowIndex() === 1) {
+                    continue; // Saltar la primera fila (encabezados)
+                }
+                $rowData = [];
+                foreach (['B', 'C', 'D', 'E', 'F', 'G', 'H'] as $columna) {
+                    $valorCelda = $worksheet->getCell($columna . $row->getRowIndex())->getValue();
+
+                    switch ($columna) {
+                        case 'B':
+                            $rowData["Contrato"] = $valorCelda;
+                            break;
+                        case 'C':
+                            $rowData["Medidor"] = $valorCelda;
+                            break;
+                        case 'D':
+                            $rowData["Nombre"] = $valorCelda;
+                            break;
+                        case 'E':
+                            $rowData["Localidad"] = $valorCelda;
+                            break;
+                        case 'F':
+                            $rowData["Barrio"] = $valorCelda;
+                            break;
+                        case 'G':
+                            $rowData["Dirección"] = $valorCelda;
+                            break;
+                        case 'H':
+                            $rowData["Observación externa"] = $valorCelda;
+                            break;
+                    }
+                }
+                $data[] = $rowData;
+            }
+            return $data;
+        } catch (Exception $e) {
+            Log::error("Error al insertar datos: " . $e->getMessage()); // Registrar el error para depuración
+            return [];
+        }
+    }
+
+    private function notificacion($datos)
+    {
+        foreach ($datos as $dato) {
+
+            $observacion = $dato['Observación externa'];
+
+            // Utilizamos una expresión regular para buscar números de celular
+            preg_match_all('/\b3\d{9}\b/', $observacion, $coincidencias);
+
+            // Si se encontraron coincidencias, las mostramos o las almacenamos
+            if (!empty($coincidencias[0])) {
+                foreach ($coincidencias[0] as $numeroCelular) {
+                    
+                    // Establecer la zona horaria a Colombia
+                    date_default_timezone_set('America/Bogota');
+
+                    $horaActual = date('H'); // Obtener la hora actual en formato de 24 horas
+
+                    if ($horaActual >= 5 && $horaActual < 12) {
+                        $saludo = "Buenos días";
+                    } elseif ($horaActual >= 12 && $horaActual < 19) {
+                        $saludo = "Buenas tardes";
+                    } else {
+                        $saludo = "Buenas noches";
+                    }
+
+                    $bodyData = [
+                        'typing_time' => 0,
+                        'to' => '57'.$numeroCelular,
+                        'body' => $saludo . ',
+
+E&C Ingeniería de Gases de Occidente solicita programar la inspección de revisión periódica de la red de gas ubicada en el predio con los siguientes datos:
+
+* Contrato: ' . $dato['Contrato'] . '
+* Dirección: ' . $dato['Dirección'] . ' | ' . $dato['Localidad'] . '
+* A nombre de: ' . $dato['Nombre'] . '
+* Medidor: ' . $dato['Medidor'] . '
+
+Agradecemos su colaboración para coordinar esta inspección a la brevedad posible.'
+                    ];
+
+                    $client = new Client();
+
+                    $response = $client->request('POST', 'https://gate.whapi.cloud/contacts', [
+                        'json' => [ // Usamos 'json' en lugar de 'body' para enviar datos JSON
+                            'blocking' => 'no_wait',
+                            'force_check' => false,
+                            'contacts' => ['+57'.$numeroCelular] // Lista de números a verificar
+                        ],
+                        'headers' => [
+                            'accept' => 'application/json',
+                            'authorization' => 'Bearer bGBktWXeKxgX1syNGKtT8al4rfZHRemt',
+                            'content-type' => 'application/json',
+                        ],
+                    ]);
+
+                    $data = json_decode($response->getBody(), true);
+                    
+                    if($data['contacts'][0]['status'] === 'invalid'){
+                        continue;
+                    }
+
+                    $response = $client->request('POST', 'https://gate.whapi.cloud/messages/text', [
+                        'json' => $bodyData,
+                        'headers' => [
+                            'accept' => 'application/json',
+                            'authorization' => 'Bearer bGBktWXeKxgX1syNGKtT8al4rfZHRemt',
+                            'content-type' => 'application/json',
+                        ],
+                    ]);
+                    if ($response->getStatusCode() === 200) {           
+                        break; 
+                    }else{
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    
     }
 }
