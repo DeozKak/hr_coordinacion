@@ -45,7 +45,10 @@ document.addEventListener('DOMContentLoaded', function() {
             success: function(response) {
                 hot = new Handsontable(document.getElementById('buscador'), {
                     data: response.data, 
-                    colHeaders: response.columnas, 
+                    colHeaders: response.columnas,
+                    contextMenu: true, 
+                    filters: true,
+                    dropdownMenu: true,
                     rowHeaders: true,
                     readOnly: true,
                     height: '300px',
