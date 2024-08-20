@@ -69,8 +69,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 type: 'time',
                 timeFormat: 'hh:mm:ss a',
                 correctFormat: true,
-                defaultDate: '08:00:00', // Hora inicial por defecto (opcional)
-                readOnly: true,
+                defaultDate: '07:59:00 a.m.',
+                readOnly: true, // Permitimos la edición para el combobox
+                editor: 'select', // Usamos el editor 'select' para el combobox
+                selectOptions: ['07:59:00 a.m.', '01:59:00 p.m.'], // Opciones predefinidas
             },
             {
                 data: 'HORA_FINAL',
@@ -78,8 +80,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 type: 'time',
                 timeFormat: 'hh:mm:ss a',
                 correctFormat: true,
-                defaultDate: '17:00:00',
-                readOnly: true,
+                defaultDate: '04:59:00 p.m.',
+                readOnly: true, // Permitimos la edición para el combobox
+                editor: 'select', // Usamos el editor 'select' para el combobox
+                selectOptions: ['11:59:00 a.m.', '04:59:00 p.m.'], // Opciones predefinidas
             }
         ],
         data: tabla_data,
@@ -319,32 +323,32 @@ function borrarFilaBD(row) {
 document.getElementById('btnGuardar').addEventListener('click', function () {
 
     if (!validarFilasCompletas()) {
-        alert("Por favor, complete todas las filas antes de guardar.");
+        alert("hay campos incompletos o horas incorrectas");
         return; // Detener el envío de la solicitud AJAX si hay filas incompletas
     }
 
-    const url_index = document.getElementById('url_index').value;
-    const token = document.getElementById('token').value;
-    const url_finish = document.getElementById('url_finish').value;
-    const url = url_finish.replace(':id', tabla_id);
-
-    $.ajax({
-        url: url,
-        type: 'POST',
-        data: {
-            _token: token
-        },
-        success: function (response) {
-            if (response.ok) {
-                window.location.href = url_index;
-            }
-            if (response.error) {
-                alert(response.error);
-            }
-        }, error: function (xhr, status, error) {
-            console.log(xhr.responseText);
-        }
-    });
+     const url_index = document.getElementById('url_index').value;
+     const token = document.getElementById('token').value;
+     const url_finish = document.getElementById('url_finish').value;
+     const url = url_finish.replace(':id', tabla_id);
+ 
+     $.ajax({
+         url: url,
+         type: 'POST',
+         data: {
+             _token: token
+         },
+         success: function (response) {
+             if (response.ok) {
+                 window.location.href = url_index;
+             }
+             if (response.error) {
+                 alert(response.error);
+             }
+         }, error: function (xhr, status, error) {
+             console.log(xhr.responseText);
+         }
+     });
 
 
 });
@@ -353,7 +357,7 @@ document.getElementById('btnGuardar').addEventListener('click', function () {
 function validarFilasCompletas() {
     const data = H_tabla.getData();
     let hayFilasConDatos = false;
-
+    console.log(data);
     for (let i = 0; i < data.length; i++) {
         const fila = data[i];
         let filaTieneDatos = false;
@@ -371,6 +375,11 @@ function validarFilasCompletas() {
                 if (fila[j] === '' || fila[j] === null || fila[j] === undefined) {
                     return false;
                 }
+            }
+
+            // Nueva validación para las horas
+            if (fila[17] === '01:59:00 p.m.' && fila[18] === '11:59:00 a.m.') {
+                return false; 
             }
         }
     }

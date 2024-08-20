@@ -18,6 +18,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Csv;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 
 class ProgramacionController extends Controller
@@ -53,7 +56,7 @@ class ProgramacionController extends Controller
             $programacion->id_usuario = Auth::id();
             $programacion->save();
 
-            $tecnicos = tbl_insp_cali::select('apellidos', 'nombres')
+            $tecnicos = tbl_insp_cali::select('id', 'apellidos', 'nombres')
                 ->where('state', 1)
                 ->orderBy('apellidos') // Ordenar por apellidos ascendente
                 ->get();
@@ -62,7 +65,7 @@ class ProgramacionController extends Controller
 
             return view('programacion.create', compact('tecnicos', 'user', 'programacion'));
         } else {
-            $tecnicos = tbl_insp_cali::select('apellidos', 'nombres')
+            $tecnicos = tbl_insp_cali::select('id', 'apellidos', 'nombres')
                 ->where('state', 1)
                 ->orderBy('apellidos') // Ordenar por apellidos ascendente
                 ->get();
@@ -84,7 +87,7 @@ class ProgramacionController extends Controller
 
         $user = Auth::user();
 
-        $tecnicos = tbl_insp_cali::select('apellidos', 'nombres')
+        $tecnicos = tbl_insp_cali::select('id', 'apellidos', 'nombres')
             ->where('state', 1)
             ->orderBy('apellidos') // Ordenar por apellidos ascendente
             ->get();
@@ -381,11 +384,16 @@ class ProgramacionController extends Controller
                 // locale es importante para obtener los nombres de los meses en español
                 $fecha_formateada = $fecha_carbon->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
 
+                //quitar numero al tecnico
+
+                $tecnico = $programada->TECNICO;
+                $tecnico_sin_numero = substr($tecnico, strpos($tecnico, ". ") + 2);
+
                 $bodyData = [
                     'typing_time' => 0,
                     'to' => '57' . $programada->CELULAR,
                     'body' => $saludo . ', Sr./Sra. ' . $programada->NOMBRE_USUARIO . '. 👋' .
-                        'Le informamos que la inspección de la red de gas en su predio está programada para el día ' . $fecha_formateada . '  entre las ' . $programada->HORA_INICIO . ' a ' . $programada->HORA_FINAL . '.  El inspector a cargo será ' . $programada->TECNICO . '. 👷‍♂️' .
+                        'Le informamos que la inspección de la red de gas en su predio está programada para el día ' . $fecha_formateada . '  entre las ' . $programada->HORA_INICIO . ' a ' . $programada->HORA_FINAL . '  La persona encargada de realizar la inspección será ' . $tecnico_sin_numero . '. 👷‍♂️' .
                         'Agradecemos su atención y colaboración. 🙏'
                 ];
 
@@ -425,19 +433,28 @@ class ProgramacionController extends Controller
 
         $fecha_inicio = $request->fechaInicio;
         $fecha_fin = $request->fechaFin;
+        if ($fecha_fin === null) {
 
-        $columnasTabla = Schema::getColumnListing('tbl_programacion_contratos');
-        $columnasAExcluir = ['updated_at', 'created_at'];
-        $columnasAIncluir = array_diff($columnasTabla, $columnasAExcluir);
+            $columnasTabla = Schema::getColumnListing('tbl_programacion_contratos');
+            $columnasAExcluir = ['updated_at', 'created_at'];
+            $columnasAIncluir = array_diff($columnasTabla, $columnasAExcluir);
 
-        $busqueda = tbl_programacion_contrato::where('FECHA_AGENDAMIENTO', '>=', $fecha_inicio)
-            ->whereHas('state', function ($query) {
-                $query->where('finished', 1);
-            })
-            ->select($columnasAIncluir);
+            $busqueda = tbl_programacion_contrato::where('FECHA_AGENDAMIENTO', '=', $fecha_inicio)
+                ->whereHas('state', function ($query) {
+                    $query->where('finished', 1);
+                })
+                ->select($columnasAIncluir);
+        } else {
+            $columnasTabla = Schema::getColumnListing('tbl_programacion_contratos');
+            $columnasAExcluir = ['updated_at', 'created_at'];
+            $columnasAIncluir = array_diff($columnasTabla, $columnasAExcluir);
 
-        if ($fecha_fin) {
-            $busqueda->where('FECHA_AGENDAMIENTO', '<=', $fecha_fin);
+            $busqueda = tbl_programacion_contrato::where('FECHA_AGENDAMIENTO', '>=', $fecha_inicio)
+                ->where('FECHA_AGENDAMIENTO', '<=', $fecha_fin)
+                ->whereHas('state', function ($query) {
+                    $query->where('finished', 1);
+                })
+                ->select($columnasAIncluir);
         }
 
         $busqueda = $busqueda->get();
@@ -446,6 +463,127 @@ class ProgramacionController extends Controller
             'data' => $busqueda,
             'columnas' => $columnasAIncluir
         ]);
+    }
+
+    public function exportar(Request $request)
+    {
+
+        $data = $request->data;
+
+
+
+        // Ignoramos el token ya que no es relevante para el CSV
+        $rows = [];
+
+        foreach ($data as $item) {
+            //sacar id del tecnico
+            preg_match('/^(\d+)\./', $item[16], $matches);
+            $numero = $matches[1];
+
+            //sacar cedula del tecnico para la plantilla
+            $cc_operario = tbl_insp_cali::select('cedula')
+                ->where('id', $numero)
+                ->first();
+
+            //tipo de obra para GDW
+            switch ($item[2]) {
+                case '10444':
+                    $tipo_trabajo = 37166;
+                    break;
+                case '12161':
+                    $tipo_trabajo = 35699;
+                    break;
+                case '12162':
+                    $tipo_trabajo = 35698;
+                    break;
+                case '12163':
+                    $tipo_trabajo = 35701;
+                    break;
+                case '12164':
+                    $tipo_trabajo = 35700;
+                    break;
+                case '12166':
+                    $tipo_trabajo = 37179;
+                    break;
+                default:
+                    $tipo_trabajo = "TIPO TAREA NO EXISTE";
+                    break;
+            }
+
+            $fecha_original = $item[13];
+            $hora_inicio = $item[17];
+            $hora_final = $item[18];
+
+
+            // Combinar fecha y hora en un formato que PHP pueda entender
+            $fecha_hora_combinada_inicio = $fecha_original . ' ' . $hora_inicio;
+            $fecha_hora_combinada_final = $fecha_original . ' ' . $hora_final;
+
+
+            // Crear un objeto DateTime a partir de la fecha y hora combinada
+            $objeto_fecha_inicio = DateTime::createFromFormat('Y-m-d h:i:s A', $fecha_hora_combinada_inicio);
+            $objeto_fecha_final = DateTime::createFromFormat('Y-m-d h:i:s A', $fecha_hora_combinada_final);
+
+
+            // Formatear la fecha en el formato deseado "d/m/Y h:i:s a"
+            $fecha_formateada_inicio = $objeto_fecha_inicio->format('d/m/Y h:i:s a');
+            $fecha_formateada_final = $objeto_fecha_final->format('d/m/Y h:i:s a');
+
+
+            // Asegurarse de que la configuración regional esté en español para "a. m." y "p. m."
+            setlocale(LC_TIME, 'es_ES.UTF-8');
+
+            $rows[] = [
+                ":" . $item[1],
+                $item[7],
+                $fecha_formateada_inicio,
+                $fecha_formateada_final,
+                'INSP-VALLE',
+                $cc_operario->cedula,
+                $tipo_trabajo,
+                '1680',
+                $item[14],
+                '',
+                '',
+                ''
+            ];
+        }
+
+        // Crear una nueva hoja de cálculo
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Agregar los encabezados (opcional, pero recomendado)
+        $headers = [
+            'Nro contrato',
+            'Direccion',
+            'fecha Visita',
+            'fecha Fin programado',
+            'Grupo',
+            'Nro Operario',
+            'Id Tipo de Tarea',
+            'Id Prioridad',
+            'Detalle',
+            'Nro de tarea interno',
+            'Codigo del bien (opcional)'
+        ];
+        $sheet->fromArray($headers, NULL, 'A1');
+
+        // Agregar los datos a la hoja
+        $sheet->fromArray($rows, NULL, 'A2');
+
+        // Crear el writer CSV
+        $writer = new Csv($spreadsheet);
+
+        // Establecer la configuración regional para el separador decimal (opcional)
+        $writer->setDelimiter(';'); // Usar punto y coma como separador
+        $writer->setEnclosure('');  // No usar ningún enclosure
+
+        $writer->save(storage_path('app/uploads/') . 'archivo' . ".csv");
+        // Generar la URL de descarga
+
+        // Puedes retornar la URL o usarla como necesites
+        return response()->json(['url' => '../storage/app/uploads/archivo.csv']);
     }
 
     public function masivos(Request $request)
@@ -480,7 +618,6 @@ class ProgramacionController extends Controller
             return response()->json(['errors' => 'Error al subir el archivo'], 422);
         }
     }
-
 
     private function validacionMasivas($worksheet)
     {
@@ -577,7 +714,7 @@ class ProgramacionController extends Controller
             // Si se encontraron coincidencias, las mostramos o las almacenamos
             if (!empty($coincidencias[0])) {
                 foreach ($coincidencias[0] as $numeroCelular) {
-                    
+
                     // Establecer la zona horaria a Colombia
                     date_default_timezone_set('America/Bogota');
 
@@ -593,7 +730,7 @@ class ProgramacionController extends Controller
 
                     $bodyData = [
                         'typing_time' => 0,
-                        'to' => '57'.$numeroCelular,
+                        'to' => '57' . $numeroCelular,
                         'body' => $saludo . ',
 
 E&C Ingeniería de Gases de Occidente solicita programar la inspección de revisión periódica de la red de gas ubicada en el predio con los siguientes datos:
@@ -612,7 +749,7 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
                         'json' => [ // Usamos 'json' en lugar de 'body' para enviar datos JSON
                             'blocking' => 'no_wait',
                             'force_check' => false,
-                            'contacts' => ['+57'.$numeroCelular] // Lista de números a verificar
+                            'contacts' => ['+57' . $numeroCelular] // Lista de números a verificar
                         ],
                         'headers' => [
                             'accept' => 'application/json',
@@ -622,8 +759,8 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
                     ]);
 
                     $data = json_decode($response->getBody(), true);
-                    
-                    if($data['contacts'][0]['status'] === 'invalid'){
+
+                    if ($data['contacts'][0]['status'] === 'invalid') {
                         continue;
                     }
 
@@ -635,15 +772,14 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
                             'content-type' => 'application/json',
                         ],
                     ]);
-                    if ($response->getStatusCode() === 200) {           
-                        break; 
-                    }else{
+                    if ($response->getStatusCode() === 200) {
+                        break;
+                    } else {
                         return false;
                     }
                 }
             }
         }
         return true;
-    
     }
 }

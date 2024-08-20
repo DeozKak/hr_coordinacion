@@ -37,6 +37,7 @@
 </style>
 <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
 <input type="hidden" name="url_busqueda" id="url_busqueda" value="{{ route('programacion.agendamiento') }}">
+<input type="hidden" name="url_exportar" id="url_exportar" value="{{ route('programacion.exportar') }}">
 <div class="container mt-6">
     <div class="row justify-content-center">
         <div class="col-md-6">
@@ -70,6 +71,7 @@
             <div class="card"> 
                 <div class="card-body">
                     <h4 class="card-title text-center mb-3">Resultados de la Búsqueda</h4>
+                    <button id="btnExportar" class="btn btn-success float-right">Exportar a plantilla GDW</button>
                     <br>
                     <div id="buscador" class="mt-4"></div>
                 </div>

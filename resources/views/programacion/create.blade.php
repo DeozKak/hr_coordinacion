@@ -44,7 +44,7 @@
 @section('js')
 <script>
     const tecnicos = @json($tecnicos->toArray());
-    const nombresTecnicos = tecnicos.map(tecnico => tecnico.apellidos+' '+tecnico.nombres);
+    const nombresTecnicos = tecnicos.map(tecnico => tecnico.id+'. ' +tecnico.apellidos+' '+tecnico.nombres);
     const user =  @json($user->toArray());
     const tabla_id = "{{ $programacion->id }}"
    
