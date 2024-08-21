@@ -389,7 +389,7 @@ class ProgramacionController extends Controller
                 $tecnico = $programada->TECNICO;
                 $tecnico_sin_numero = substr($tecnico, strpos($tecnico, ". ") + 2);
 
-                $bodyData = [
+               /*  $bodyData = [
                     'typing_time' => 0,
                     'to' => '57' . $programada->CELULAR,
                     'body' => $saludo . ', Sr./Sra. ' . $programada->NOMBRE_USUARIO . '. 👋' .
@@ -405,7 +405,7 @@ class ProgramacionController extends Controller
                         'authorization' => 'Bearer bGBktWXeKxgX1syNGKtT8al4rfZHRemt',
                         'content-type' => 'application/json',
                     ],
-                ]);
+                ]); */
 
                 $programada->mensaje = 1;
                 $programada->save();

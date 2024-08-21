@@ -17,7 +17,7 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="card">
-                    <div class="card-header">Programación</div>
+                 
                     <div class="card-body">
                         <a href="{{ route('programacion.create') }}" class="btn btn-success btn-sm" title="Add New Programacion">
                             <i class="fa fa-plus" aria-hidden="true"></i> Generar nueva Tabla
