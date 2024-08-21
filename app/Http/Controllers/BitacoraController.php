@@ -961,7 +961,7 @@ class BitacoraController extends Controller
         $devolucion->GESTIONADO = 1;
         $devolucion->FECHA_GESTION = date('Y-m-d');
         $devolucion->save();
-        $exist = tbl_bitacora_contrato::where('CONTRATO', $devolucion->CONTRATO)->where('ORDEN_TRABAJO', $devolucion->ORDEN_TRABAJO)->exists();
+       /*  $exist = tbl_bitacora_contrato::where('CONTRATO', $devolucion->CONTRATO)->where('ORDEN_TRABAJO', $devolucion->ORDEN_TRABAJO)->exists();
         if ($exist) {
             // Obtener los usuarios que deben recibir la notificación
             $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN'])->get();
@@ -971,7 +971,7 @@ class BitacoraController extends Controller
                 $usuario->notify(new Mod_Devolucion($usuarioLog->name, $devolucion->CONTRATO, $devolucion->id_bitacora));
             }
             return redirect()->route('bitacora.devoluciones');
-        }
+        } */
 
         /*  $contrato = new tbl_bitacora_contrato();
         $contrato->CC_OPERARIO = $devolucion->CC_OPERARIO;
@@ -993,14 +993,14 @@ class BitacoraController extends Controller
         $contrato->state = 1;
         $contrato->save();
  */
-        // Obtener los usuarios que deben recibir la notificación
+      /*   // Obtener los usuarios que deben recibir la notificación
         $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN', 'Auxiliar_coordinacion'])->get();
         $usuarioLog = Auth::user();
 
         // Enviar la notificación a cada usuario
         foreach ($usuarios as $usuario) {
             $usuario->notify(new Mod_Devolucion($usuarioLog->name, $devolucion->CONTRATO, $devolucion->id_bitacora));
-        }
+        } */
         return redirect()->route('bitacora.devoluciones');
     }
 

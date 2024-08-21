@@ -91,7 +91,7 @@
                                         <td>{{$dato->DIAS_SIN_GESTION}} </td>
                                         @endif
                                         @haspermission('mod_devoluciones')
-                                        @if ($dato->GESTIONADO === 0)
+                                        @if ($dato->GESTIONADO === 0 && $dato->CAUSAL === "ORDEN YA REGISTRADA")
                                         <td>
                                             <form action="{{route('bitacoras.actualizar_devolucion',['id' => $dato->id])}}" method="POST">
                                                 @csrf
