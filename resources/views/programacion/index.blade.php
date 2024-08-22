@@ -44,8 +44,11 @@
                                     <td>{{$dato->nombre}}</td>
                                     <td>{{$dato->usuario->name}}</td>
                                     <td>
-                                        <a href="{{ route('programacion.show', $dato->id) }}" title="show">
+                                        <a href="{{ route('programacion.show', $dato->id)}}'?action=edit" title="show">
                                             <button type="button" class="btn btn-warning">Editar</button>
+                                        </a>
+                                        <a href="{{ route('programacion.show', $dato->id)}}'?action=view" title="show">
+                                            <button type="button" class="btn btn-success">Ver</button>
                                         </a>
                                     </td>
                                 </tr>
@@ -156,7 +159,7 @@
         }).then((result) => {
 
             if (result.value) {
-                window.location.href = "{{ route('programacion.show',['id' => $temp->id]) }}";
+                window.location.href = "{{ route('programacion.show',['id' => $temp->id]) }}?action=edit";
             }
             if (result.isDenied) {
                 swal.fire({
@@ -175,7 +178,7 @@
                             data: {
                                 _token: "{{ csrf_token() }}"
                             },
-                            url: "{{ route('programacion.erase', ['id' => $temp->id]) }}",
+                            url: "{{ route('programacion.erase', ['id' => $temp->id]) }}?action=edit",
                             success: function(response) {
                                 console.log(response);
                             },

@@ -6,6 +6,8 @@ use App\Models\tbl_programacion_usuario;
 use App\Models\tbl_programacion_base;
 use App\Models\tbl_insp_cali;
 use App\Models\tbl_programacion_contrato;
+use App\Models\User;
+use App\Notifications\Programada;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Database\QueryException;
@@ -76,23 +78,38 @@ class ProgramacionController extends Controller
         }
     }
 
-    public function show($id)
+    public function show(Request $request,$id)
     {
+        $action = $request->query('action');
+        
+       
+        
         $programacion = tbl_programacion_usuario::find($id);
         $tabla = tbl_programacion_contrato::where('id_programacion', $id)->get();
 
+        if($action === 'edit'){
         $programacion->finished = 0;
         $programacion->save();
+        }
 
+        $user = User::find($programacion->id_usuario);
 
-        $user = Auth::user();
+        
 
         $tecnicos = tbl_insp_cali::select('id', 'apellidos', 'nombres')
             ->where('state', 1)
             ->orderBy('apellidos') // Ordenar por apellidos ascendente
             ->get();
-
-        return view('programacion.create', compact('tecnicos', 'user', 'programacion', 'tabla'));
+       
+        if($action === 'view'){
+          
+            $view = true;
+            return view('programacion.create', compact('tecnicos', 'user', 'programacion', 'tabla','view','user'));
+        
+        }
+        if($action === 'edit'){
+            return view('programacion.create', compact('tecnicos', 'user', 'programacion', 'tabla','user'));
+        }
     }
 
     public function base(Request $request)
@@ -270,7 +287,7 @@ class ProgramacionController extends Controller
     {
 
         $data = $request->data;
-
+     
         $exist = tbl_programacion_contrato::where('CONTRATO', $request->data[1])
             ->where('ORDEN_TRABAJO', $request->data[6])
             ->where('TIPO_TRABAJO', $request->data[2])
@@ -356,9 +373,19 @@ class ProgramacionController extends Controller
             $programacion = tbl_programacion_usuario::find($id);
             $programacion->finished = 1;
             $programacion->save();
-
+            $user = User::find($programacion->id_usuario);
             $programadas = tbl_programacion_contrato::where('id_programacion', $id)->get();
 
+            if($programacion->mensaje == 0){
+
+                $programacion->mensaje = 1;
+                $programacion->save();
+                $usuarios = User::role(['admin', 'PQRS', 'Coordinador_RP', 'Coordinador_RN'])->where('state', 1)->get();
+                foreach ($usuarios as $usuario) {
+                    $usuario->notify(new Programada($user->name, $programacion->id));
+                }
+            }
+            
             foreach ($programadas as $programada) {
 
                 if ($programada->CELULAR == null || $programada->CELULAR == '' || $programada->mensaje == 1) {
@@ -409,6 +436,8 @@ class ProgramacionController extends Controller
 
                 $programada->mensaje = 1;
                 $programada->save();
+
+              
             }
         } catch (QueryException $e) {
             return response()->json(['error' => $e]);

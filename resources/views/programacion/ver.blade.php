@@ -83,6 +83,7 @@
 @section('js')
 <script src="{{ asset('js/verProgramacion.js') }}"></script>
 <script>
+    
     const rangoFechasCheckbox = document.getElementById('rangoFechas');
     const fechaFinContainer = document.getElementById('fechaFinContainer');
 

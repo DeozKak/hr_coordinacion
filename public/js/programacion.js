@@ -1,4 +1,4 @@
-let columnasEditables = ['FECHA', 'CELULAR', 'FECHA_AGENDAMIENTO', 'OBSERVACIONES', 'TECNICO', 'HORA_INICIO', 'HORA_FINAL'];
+let columnasEditables = ['CELULAR', 'FECHA_AGENDAMIENTO', 'OBSERVACIONES', 'TECNICO', 'HORA_INICIO', 'HORA_FINAL'];
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -7,12 +7,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     H_tabla = new Handsontable(tabla, {
-        readOnly: false,
+
         columns: [
             { data: 'id', title: 'ID', readOnly: true, },
             {
                 data: 'CONTRATO',
                 title: 'CONTRATO',
+                validator: function (value, callback) {
+                    let soloNumerosRegex = /^[0-9]+$/;
+                    if (value === "" || value === null || soloNumerosRegex.test(value)) {
+                        callback(true);
+                    } else {
+                        alert('Por favor, ingrese solo números en el campo CONTRATO.');
+                        callback(false);
+                    }
+                },
 
             },
             { data: 'TIPO_TRABAJO', title: 'TIPO DE OBRA', readOnly: true, }, // Ajustado al nombre en tu respuesta
@@ -23,7 +32,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 defaultDate: new Date(),
                 readOnly: true,
             },
-            { data: 'CELULAR', title: 'CELULAR', readOnly: true, },
+            {
+                data: 'CELULAR', title: 'CELULAR', readOnly: true, validator: function (value, callback) {
+                    let soloNumerosRegex = /^[0-9]+$/;
+                    if ((value === "" || value === null || soloNumerosRegex.test(value)) && 
+                    (value === "" || value === null || value.length === 10)){
+                        callback(true);
+                    } else {
+                        alert('Por favor, ingrese solo números en el campo CELULAR y asegúrese de que tenga 10 dígitos.');
+                        callback(false);
+                    }
+                },
+            },
             { data: 'NOMBRE_USUARIO', title: 'NOMBRE USUARIO', readOnly: true, }, // Ajustado al nombre en tu respuesta
             { data: 'ORDEN_TRABAJO', title: 'ORDEN DE TRABAJO', readOnly: true, }, // Ajustado al nombre en tu respuesta
             { data: 'DIRECCION', title: 'DIRECCION', readOnly: true, },
@@ -33,11 +53,15 @@ document.addEventListener('DOMContentLoaded', () => {
             { data: 'SUSPENDIDO', title: 'SUSPENSION', readOnly: true, },
             { data: 'CATEGORIA', title: 'CATEGORIA', readOnly: true, }, // Ajustado al nombre en tu respuesta
             {
-                data: 'FECHA_AGENDAMIENTO', title: 'FECHA AGENDAMIENTO', type: 'date',    // Desplegable de fechas
-                dateFormat: 'YYYY-MM-DD', // Formato de fecha (ajusta si es necesario)
-                correctFormat: true,       // Corrección automática de formato
-                defaultDate: new Date(),
+                data: 'FECHA_AGENDAMIENTO',
+                title: 'FECHA AGENDAMIENTO',
+                type: 'date',
+                dateFormat: 'YYYY-MM-DD',
+                correctFormat: true,
                 readOnly: true,
+                datePickerConfig: {
+                    minDate: new Date(), // Esto establece la fecha mínima como el día de inicio del corte 
+                },
             },
             {
                 data: 'OBSERVACIONES', // O la columna que deseas ajustar
@@ -86,6 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectOptions: ['11:59:00 a.m.', '04:59:00 p.m.'], // Opciones predefinidas
             }
         ],
+
         data: tabla_data,
         rowHeaders: true,
         filters: true,
@@ -95,10 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (source === 'edit' || source == 'CopyPaste.paste' || source == 'Autofill.fill') {
                 if (changes[0][1] === 'CONTRATO') {
                     let row = changes[0][0];
-
                     let value = changes[0][3];
-
-
                     let url = document.getElementById('busqueda').value;
                     if (value == '' || value == null) {
                         borrarFilaBD(row);
@@ -112,10 +134,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     const url_busqueda = url.replace(":id", value);
 
-
-                    columnasEditables.forEach(colEditable => {
-                        H_tabla.getCellMeta(row, H_tabla.propToCol(colEditable)).readOnly = false;
-                    });
+                    if (view === "") {
+                        columnasEditables.forEach(colEditable => {
+                            H_tabla.getCellMeta(row, H_tabla.propToCol(colEditable)).readOnly = false;
+                        });
+                    }
 
                     $.ajax({
                         url: url_busqueda,
@@ -136,8 +159,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                     ACTIVA: 11,
                                     NOM_CATE: 12,
                                 };
+                                H_tabla.setDataAtCell(row, 3, formatearFecha(new Date())); // Establecer la fecha actual
+                                H_tabla.setDataAtCell(row, 15, user.name); // Colocar Nombre de usuario
 
-                                H_tabla.setDataAtCell(row, 15, user.name);
                                 // Actualizar celdas en Handsontable
                                 for (const key in columnMap) {
                                     if (response.hasOwnProperty(key)) {
@@ -160,9 +184,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                         }
                                     }
                                 }
-
-                                guardarProgramacion(row);
-
+                                setTimeout(() => {
+                                    guardarProgramacion(row);
+                                }, 200);
 
                             } else {
                                 alert('No se encontró registro con el contrato ingresado');
@@ -190,7 +214,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         },
+        readOnly: view,
     });
+
+    function formatearFecha(fecha) {
+        const year = fecha.getFullYear();
+        const month = String(fecha.getMonth() + 1).padStart(2, '0'); // Los meses van de 0 a 11
+        const day = String(fecha.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
 
     H_tabla.addHook('afterChange', function (cambios, origen) {
         if (origen === 'edit' || origen === 'edit' || origen == 'CopyPaste.paste' || origen == 'Autofill.fill') {
@@ -203,9 +235,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
-
-    ajustarReadOnlyDespuesDeCargarDatos();
-
+    //validacion de vista o editar
+    if (view === "") {
+        ajustarReadOnlyDespuesDeCargarDatos();
+    }
     H_tabla.alter('insert_row_above', H_tabla.countRows() + 1);
     H_tabla.alter('insert_row_above', H_tabla.countRows() + 1);
 
@@ -319,40 +352,40 @@ function borrarFilaBD(row) {
         }
     });
 }
+if (view === "") {
+    document.getElementById('btnGuardar').addEventListener('click', function () {
 
-document.getElementById('btnGuardar').addEventListener('click', function () {
+        if (!validarFilasCompletas()) {
+            alert("hay campos incompletos o horas incorrectas");
+            return; // Detener el envío de la solicitud AJAX si hay filas incompletas
+        }
 
-    if (!validarFilasCompletas()) {
-        alert("hay campos incompletos o horas incorrectas");
-        return; // Detener el envío de la solicitud AJAX si hay filas incompletas
-    }
+        const url_index = document.getElementById('url_index').value;
+        const token = document.getElementById('token').value;
+        const url_finish = document.getElementById('url_finish').value;
+        const url = url_finish.replace(':id', tabla_id);
 
-     const url_index = document.getElementById('url_index').value;
-     const token = document.getElementById('token').value;
-     const url_finish = document.getElementById('url_finish').value;
-     const url = url_finish.replace(':id', tabla_id);
- 
-     $.ajax({
-         url: url,
-         type: 'POST',
-         data: {
-             _token: token
-         },
-         success: function (response) {
-             if (response.ok) {
-                 window.location.href = url_index;
-             }
-             if (response.error) {
-                 alert(response.error);
-             }
-         }, error: function (xhr, status, error) {
-             console.log(xhr.responseText);
-         }
-     });
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: {
+                _token: token
+            },
+            success: function (response) {
+                if (response.ok) {
+                    window.location.href = url_index;
+                }
+                if (response.error) {
+                    alert(response.error);
+                }
+            }, error: function (xhr, status, error) {
+                console.log(xhr.responseText);
+            }
+        });
 
 
-});
-
+    });
+}
 // Función para validar que todas las filas estén llenas (ignorando filas vacías)
 function validarFilasCompletas() {
     const data = H_tabla.getData();
@@ -379,7 +412,7 @@ function validarFilasCompletas() {
 
             // Nueva validación para las horas
             if (fila[17] === '01:59:00 p.m.' && fila[18] === '11:59:00 a.m.') {
-                return false; 
+                return false;
             }
         }
     }

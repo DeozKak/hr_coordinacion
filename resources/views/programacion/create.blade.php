@@ -3,7 +3,7 @@
 @section('title', 'Programación')
 
 @section('content_header')
-<h1>{{$programacion->nombre}}</h1>
+<h1>{{$programacion->nombre}} {{$user->name}}</h1>
 @stop
 
 @section('content')
@@ -42,7 +42,12 @@
     $tabla = isset($tabla) ? $tabla : []; // Si $tabla no está definida, se asigna un array vacío
 @endphp
 @section('js')
+
 <script>
+         const view = "{{ $view ?? false }}";
+</script>
+
+<script>   
     const tecnicos = @json($tecnicos->toArray());
     const nombresTecnicos = tecnicos.map(tecnico => tecnico.id+'. ' +tecnico.apellidos+' '+tecnico.nombres);
     const user =  @json($user->toArray());
