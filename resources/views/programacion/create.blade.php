@@ -19,9 +19,9 @@
 <input type="hidden" name="url_destroy" id="url_destroy" value="{{ route('programacion.destroy') }}">
 <input type="hidden" name="url_update" id="url_update" value="{{ route('programacion.update',['id' => ':id']) }}">
 <input type="hidden" name="url_finish" id="url_finish" value="{{ route('programacion.finish',['id' => ':id']) }}">
-<div class="container">
+<div>
     <div class="row">
-        <div class="col-md-12">
+        <div class="col-xl-12">
             <div class="card">
                 <div class="card-header">Tabla</div>
                 <div class="card-body">

@@ -17,7 +17,7 @@
                     <tr>
                         <td class="card-body">
                             <p style="line-height: 1.6;">
-                              
+                              Se ha actualizado la tabla de agendamiento.
                             </p>
 
                             <p>

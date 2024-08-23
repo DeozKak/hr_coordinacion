@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalMasivo.hide();
             },
             error: function (xhr, status, error) {
+               
                 if (xhr.status === 422) {
                    
                     const errors = xhr.responseJSON.errors;
@@ -136,8 +137,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 modal.hide();
             },
             error: function (xhr, status, error) {
+                console.log(xhr.responseText);
                 if (xhr.status === 422) {
-                   
                     const errors = xhr.responseJSON.errors;
                     showValidationErrors(errors,addProgramacionModal,errorContainer); // Mostrar errores en el modal
                 } else {

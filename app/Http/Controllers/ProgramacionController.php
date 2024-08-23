@@ -78,37 +78,36 @@ class ProgramacionController extends Controller
         }
     }
 
-    public function show(Request $request,$id)
+    public function show(Request $request, $id)
     {
         $action = $request->query('action');
-        
-       
-        
+
+
+
         $programacion = tbl_programacion_usuario::find($id);
         $tabla = tbl_programacion_contrato::where('id_programacion', $id)->get();
 
-        if($action === 'edit'){
-        $programacion->finished = 0;
-        $programacion->save();
+        if ($action === 'edit') {
+            $programacion->finished = 0;
+            $programacion->save();
         }
 
         $user = User::find($programacion->id_usuario);
 
-        
+
 
         $tecnicos = tbl_insp_cali::select('id', 'apellidos', 'nombres')
             ->where('state', 1)
             ->orderBy('apellidos') // Ordenar por apellidos ascendente
             ->get();
-       
-        if($action === 'view'){
-          
+
+        if ($action === 'view') {
+
             $view = true;
-            return view('programacion.create', compact('tecnicos', 'user', 'programacion', 'tabla','view','user'));
-        
+            return view('programacion.create', compact('tecnicos', 'user', 'programacion', 'tabla', 'view', 'user'));
         }
-        if($action === 'edit'){
-            return view('programacion.create', compact('tecnicos', 'user', 'programacion', 'tabla','user'));
+        if ($action === 'edit') {
+            return view('programacion.create', compact('tecnicos', 'user', 'programacion', 'tabla', 'user'));
         }
     }
 
@@ -148,7 +147,7 @@ class ProgramacionController extends Controller
     public function validacion($worksheet)
     {
         $indicador = true;
-        foreach (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'] as $columna) {
+        foreach (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'] as $columna) {
             switch ($columna) {
                 case 'A':
                     $indicador = ($worksheet->getCell($columna . '1')->getValue() === "NUMERO_ORDEN") ? true : false;
@@ -177,6 +176,18 @@ class ProgramacionController extends Controller
                 case 'I':
                     $indicador = ($worksheet->getCell($columna . '1')->getValue() === "ID_TIPO_TRABAJO") ? true : false;
                     break;
+                case 'J':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Código Técnico") ? true : false;
+                    break;
+                case 'K':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Fecha asignación") ? true : false;
+                    break;
+                case 'L':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Estado recepción") ? true : false;
+                    break;
+                case 'M':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Fecha recepción") ? true : false;
+                    break;
             }
         }
         return $indicador;
@@ -188,14 +199,15 @@ class ProgramacionController extends Controller
         $tamañoLote = 2000; // Puedes ajustar el tamaño del lote según tus necesidades
 
         DB::beginTransaction(); // Iniciar una transacción
-
+        dd($worksheet->getRowIterator());
+        
         try {
             foreach ($worksheet->getRowIterator() as $row) {
                 if ($row->getRowIndex() === 1) {
                     continue; // Saltar la primera fila (encabezados)
                 }
                 $rowData = [];
-                foreach (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'] as $columna) {
+                foreach (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'] as $columna) {
                     $valorCelda = $worksheet->getCell($columna . $row->getRowIndex())->getValue();
 
                     switch ($columna) {
@@ -226,6 +238,18 @@ class ProgramacionController extends Controller
                         case 'I':
                             $rowData["ID_TIPO_TRABAJO"] = $valorCelda;
                             break;
+                        case 'J':
+                            $rowData["ID_TECNICO"] = $valorCelda;       
+                            break;
+                        case 'K':
+                            $rowData["FECHA_ASIGNACION"] = $valorCelda;       
+                            break;
+                        case 'L':
+                            $rowData["ESTADO_RECEPCION"] = $valorCelda;      
+                            break;
+                        case 'M':
+                            $rowData["FECHA_RECEPCION"] = $valorCelda;     
+                            break;
                     }
                 }
                 $registros[] = $rowData;
@@ -243,6 +267,7 @@ class ProgramacionController extends Controller
             DB::commit(); // Confirmar la transacción si todo tiene éxito
             return true;
         } catch (QueryException $e) {
+            throw $e; // Relanzar la excepción para que el controlador pueda manejarla
             DB::rollback(); // Revertir la transacción si ocurre un error
             Log::error("Error al insertar datos: " . $e->getMessage()); // Registrar el error para depuración
             return false;
@@ -287,7 +312,7 @@ class ProgramacionController extends Controller
     {
 
         $data = $request->data;
-     
+
         $exist = tbl_programacion_contrato::where('CONTRATO', $request->data[1])
             ->where('ORDEN_TRABAJO', $request->data[6])
             ->where('TIPO_TRABAJO', $request->data[2])
@@ -376,7 +401,7 @@ class ProgramacionController extends Controller
             $user = User::find($programacion->id_usuario);
             $programadas = tbl_programacion_contrato::where('id_programacion', $id)->get();
 
-            if($programacion->mensaje == 0){
+            if ($programacion->mensaje == 0) {
 
                 $programacion->mensaje = 1;
                 $programacion->save();
@@ -385,7 +410,7 @@ class ProgramacionController extends Controller
                     $usuario->notify(new Programada($user->name, $programacion->id));
                 }
             }
-            
+
             foreach ($programadas as $programada) {
 
                 if ($programada->CELULAR == null || $programada->CELULAR == '' || $programada->mensaje == 1) {
@@ -416,7 +441,7 @@ class ProgramacionController extends Controller
                 $tecnico = $programada->TECNICO;
                 $tecnico_sin_numero = substr($tecnico, strpos($tecnico, ". ") + 2);
 
-               /*  $bodyData = [
+                /*  $bodyData = [
                     'typing_time' => 0,
                     'to' => '57' . $programada->CELULAR,
                     'body' => $saludo . ', Sr./Sra. ' . $programada->NOMBRE_USUARIO . '. 👋' .
@@ -436,8 +461,6 @@ class ProgramacionController extends Controller
 
                 $programada->mensaje = 1;
                 $programada->save();
-
-              
             }
         } catch (QueryException $e) {
             return response()->json(['error' => $e]);
