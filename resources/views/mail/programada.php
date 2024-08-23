@@ -11,7 +11,7 @@
                 <table class="card" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #fff; border: 1px solid rgba(0,0,0,.125); border-radius: .25rem; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075); margin: 20px auto; padding: 20px;">
                     <tr>
                         <td class="card-header" style="background-color: #f0f0f0; padding: 10px; border-bottom: 1px solid rgba(0,0,0,.125);">
-                            <h1 styolor: #333le="c;"></h1>
+                            <h1 styolor: #333le="c;"><?php echo($user)?> Generó tabla <?php echo($archivo->nombre)?></h1>
                         </td>
                     </tr>
                     <tr>

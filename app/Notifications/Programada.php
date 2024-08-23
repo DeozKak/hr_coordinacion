@@ -43,7 +43,7 @@ class Programada extends Notification
         $archivo = tbl_programacion_usuario::where('id',$this->programacion)->first();
         
         return (new MailMessage)
-        ->subject( 'Tabla '.$archivo->nombre. '| Generada')
+        ->subject('Tabla '.$archivo->nombre. ' | Generada')
         ->view('mail.programada', [
             'user' => $this->user,
             'archivo' => $archivo,
