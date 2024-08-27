@@ -88,8 +88,13 @@ class ProgramacionController extends Controller
         $tabla = tbl_programacion_contrato::where('id_programacion', $id)->get();
 
         if ($action === 'edit') {
-            $programacion->finished = 0;
-            $programacion->save();
+            if(auth()->user()->haspermissionTo('ver_programacion')){
+                $programacion->finished = 0;
+                $programacion->save();
+            }else{
+                session()->flash('error', 'Acción no autorizada.');
+                return redirect()->route('programacion.index');
+            }
         }
 
         $user = User::find($programacion->id_usuario);
@@ -140,6 +145,7 @@ class ProgramacionController extends Controller
                 return response()->json(['errors' => 'Error al subir el archivo'], 422);
             }
         } catch (ValidationException $e) {
+            Log::error($e);
             return response()->json(['errors' => $e], 422);
         }
     }
@@ -199,16 +205,22 @@ class ProgramacionController extends Controller
         $tamañoLote = 2000; // Puedes ajustar el tamaño del lote según tus necesidades
 
         DB::beginTransaction(); // Iniciar una transacción
-        dd($worksheet->getRowIterator());
-        
+
+
         try {
             foreach ($worksheet->getRowIterator() as $row) {
                 if ($row->getRowIndex() === 1) {
                     continue; // Saltar la primera fila (encabezados)
                 }
                 $rowData = [];
+                $filaVacia = true;
                 foreach (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'] as $columna) {
                     $valorCelda = $worksheet->getCell($columna . $row->getRowIndex())->getValue();
+
+                    // Verificar si la celda tiene algún valor
+                    if (!empty($valorCelda)) {
+                        $filaVacia = false; // La fila no está vacía si al menos una celda tiene valor
+                    }
 
                     switch ($columna) {
                         case 'A':
@@ -239,19 +251,36 @@ class ProgramacionController extends Controller
                             $rowData["ID_TIPO_TRABAJO"] = $valorCelda;
                             break;
                         case 'J':
-                            $rowData["ID_TECNICO"] = $valorCelda;       
+                            $rowData["ID_TECNICO"] = $valorCelda;
                             break;
                         case 'K':
-                            $rowData["FECHA_ASIGNACION"] = $valorCelda;       
+                            if ($valorCelda !== null) { // Verificar si la celda tiene un valor
+                                $excelTimestamp = $valorCelda;
+                                $fechaAsignacion = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($excelTimestamp);
+                                $rowData["FECHA_ASIGNACION"] = $fechaAsignacion->format('Y-m-d');
+                            } else {
+                                $rowData["FECHA_ASIGNACION"] = null; // O cualquier otro valor predeterminado que desees
+                            }
                             break;
                         case 'L':
-                            $rowData["ESTADO_RECEPCION"] = $valorCelda;      
+                            $rowData["ESTADO_RECEPCION"] = $valorCelda;
                             break;
                         case 'M':
-                            $rowData["FECHA_RECEPCION"] = $valorCelda;     
+                            if ($valorCelda !== null) { // Verificar si la celda tiene un valor
+                                $excelTimestamp = $valorCelda;
+                                $fechaAsignacion = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($excelTimestamp);
+                                $rowData["FECHA_RECEPCION"] = $fechaAsignacion->format('Y-m-d');
+                            } else {
+                                $rowData["FECHA_RECEPCION"] = null; // O cualquier otro valor predeterminado que desees
+                            }
                             break;
                     }
                 }
+
+                if ($filaVacia) {
+                    continue; // Saltar la fila si está vacía
+                }
+
                 $registros[] = $rowData;
 
                 if (count($registros) >= $tamañoLote) {
@@ -267,7 +296,6 @@ class ProgramacionController extends Controller
             DB::commit(); // Confirmar la transacción si todo tiene éxito
             return true;
         } catch (QueryException $e) {
-            throw $e; // Relanzar la excepción para que el controlador pueda manejarla
             DB::rollback(); // Revertir la transacción si ocurre un error
             Log::error("Error al insertar datos: " . $e->getMessage()); // Registrar el error para depuración
             return false;
@@ -301,7 +329,17 @@ class ProgramacionController extends Controller
 
         $datos = tbl_programacion_base::where('CONTRATO', $contrato)->first();
 
+        if ($datos->ESTADO_RECEPCION == '1' || $datos->ESTADO_RECEPCION == '2') {
+            return response()->json(['errors' => 'El contrato ya ha sido ejecutado']);
+        }
+
         if ($datos) {
+            $id_inspector = $datos->ID_TECNICO;
+
+            $inspector = tbl_insp_cali::where('id', $datos->ID_TECNICO)->first();
+
+            // Modificar la propiedad ID_TECNICO con el resultado de la consulta
+            $datos->ID_TECNICO = $id_inspector . '. ' . $inspector->apellidos . ' ' . $inspector->nombres;
             return response()->json($datos);
         } else {
             return response()->json(['errors' => 'No se encontraron registros'], 422);
@@ -345,9 +383,10 @@ class ProgramacionController extends Controller
             $programacion->id_programacion = $request->tabla;
             $programacion->save();
         } catch (QueryException $e) {
+            log::error($e);
+            
             return response()->json(['error' => $e]);
         }
-
 
         return response()->json(['message' => 'Registro guardado correctamente', 'id' => $programacion->id]);
     }
@@ -363,10 +402,12 @@ class ProgramacionController extends Controller
             $programacion->$campo = $request->valor;
             $programacion->save();
 
-            return response()->json(['message' => 'Registro actualizado correctamente']);
+           
         } catch (QueryException $e) {
+            Log::error($e);
             return response()->json(['error' => $e]);
         }
+        return response()->json(['message' => 'Registro actualizado correctamente']);
     }
 
     public function destroy(Request $resquest)
@@ -376,7 +417,9 @@ class ProgramacionController extends Controller
             $id = $resquest->data;
             $programacion = tbl_programacion_contrato::find($id);
             $programacion->delete();
+           
         } catch (QueryException $e) {
+            Log::error($e);
             return response()->json(['error' => $e]);
         }
         return response()->json(['message' => 'Registro eliminado correctamente']);
@@ -463,6 +506,8 @@ class ProgramacionController extends Controller
                 $programada->save();
             }
         } catch (QueryException $e) {
+            Log::error($e);
+           
             return response()->json(['error' => $e]);
         }
         session()->flash('success', 'Programación finalizada correctamente');
@@ -483,6 +528,7 @@ class ProgramacionController extends Controller
             'fechaFin' => 'nullable|date|after_or_equal:fechaInicio',
         ]);
 
+        try{
         $fecha_inicio = $request->fechaInicio;
         $fecha_fin = $request->fechaFin;
         if ($fecha_fin === null) {
@@ -491,30 +537,51 @@ class ProgramacionController extends Controller
             $columnasAExcluir = ['updated_at', 'created_at'];
             $columnasAIncluir = array_diff($columnasTabla, $columnasAExcluir);
 
-            $busqueda = tbl_programacion_contrato::where('FECHA_AGENDAMIENTO', '=', $fecha_inicio)
-                ->whereHas('state', function ($query) {
-                    $query->where('finished', 1);
-                })
-                ->select($columnasAIncluir);
+            $busqueda = DB::table('tbl_programacion_contratos AS pc') // Alias para tbl_programacion_contratos
+            ->join('tbl_programacion_base AS pb', 'pc.CONTRATO', '=', 'pb.CONTRATO') 
+            ->join('tbl_programacion_usuarios AS pu', 'pc.id_programacion', '=', 'pu.id') 
+            ->where('pc.FECHA_AGENDAMIENTO', '=', $fecha_inicio)
+            ->where('pu.finished', 1)
+            ->whereNull('pb.ESTADO_RECEPCION')
+            ->select(
+                'pc.id','pc.CONTRATO','pc.TIPO_TRABAJO','pc.FECHA','pc.CELULAR','pc.NOMBRE_USUARIO',
+                'pc.ORDEN_TRABAJO','pc.DIRECCION','pc.BARRIO','pc.CIUDAD','pc.ACTIVA','pc.SUSPENDIDO',
+                'pc.CATEGORIA','pc.FECHA_AGENDAMIENTO','pc.OBSERVACIONES','pc.PORQUE_PROGRAMO','pc.TECNICO',
+                'pc.HORA_INICIO','pc.HORA_FINAL',
+            );
         } else {
             $columnasTabla = Schema::getColumnListing('tbl_programacion_contratos');
             $columnasAExcluir = ['updated_at', 'created_at'];
             $columnasAIncluir = array_diff($columnasTabla, $columnasAExcluir);
 
-            $busqueda = tbl_programacion_contrato::where('FECHA_AGENDAMIENTO', '>=', $fecha_inicio)
-                ->where('FECHA_AGENDAMIENTO', '<=', $fecha_fin)
-                ->whereHas('state', function ($query) {
-                    $query->where('finished', 1);
-                })
-                ->select($columnasAIncluir);
+            $busqueda = DB::table('tbl_programacion_contratos AS pc') // Alias para tbl_programacion_contratos
+            ->join('tbl_programacion_base AS pb', 'pc.CONTRATO', '=', 'pb.CONTRATO') 
+            ->join('tbl_programacion_usuarios AS pu', 'pc.id_programacion', '=', 'pu.id') 
+            ->where('FECHA_AGENDAMIENTO', '>=', $fecha_inicio) 
+            ->where('FECHA_AGENDAMIENTO', '<=', $fecha_fin)
+            ->where('pu.finished', 1)
+            ->whereNull('pb.ESTADO_RECEPCION')
+            ->select(
+                'pc.id','pc.CONTRATO','pc.TIPO_TRABAJO','pc.FECHA','pc.CELULAR','pc.NOMBRE_USUARIO',
+                'pc.ORDEN_TRABAJO','pc.DIRECCION','pc.BARRIO','pc.CIUDAD','pc.ACTIVA','pc.SUSPENDIDO',
+                'pc.CATEGORIA','pc.FECHA_AGENDAMIENTO','pc.OBSERVACIONES','pc.PORQUE_PROGRAMO','pc.TECNICO',
+                'pc.HORA_INICIO','pc.HORA_FINAL',
+            );
         }
 
         $busqueda = $busqueda->get();
-
         return response()->json([
             'data' => $busqueda,
             'columnas' => $columnasAIncluir
         ]);
+
+        }catch(Exception $e){
+            log::error($e);
+            
+            return response()->json(['error' => $e], 422);
+        
+        }
+       
     }
 
     public function exportar(Request $request)
@@ -661,10 +728,11 @@ class ProgramacionController extends Controller
         }
 
         $datos = $this->Extdatos($worksheet);
-        $indicador = $this->notificacion($datos);
+        //$indicador = $this->notificacion($datos);
 
 
-        if ($datos !== [] && $indicador == true) {
+        if ($datos !== false) {
+            session()->flash('success', 'Archivo subido exitosamente');
             return response()->json(['message' => 'Archivo subido exitosamente']);
         } else {
             return response()->json(['errors' => 'Error al subir el archivo'], 422);
@@ -674,83 +742,175 @@ class ProgramacionController extends Controller
     private function validacionMasivas($worksheet)
     {
         $indicador = true;
-        foreach (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'] as $columna) {
+        foreach (['F', 'D', 'E', 'K', 'J', 'S', 'T', 'H', 'G', 'I', 'C', 'N', 'P', 'B'] as $columna) {
             switch ($columna) {
-                case 'A':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Orden externa") ? true : false;
-                    break;
-                case 'B':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Contrato") ? true : false;
-                    break;
-                case 'C':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Medidor") ? true : false;
+                case 'F':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Codigo de Instalacion") ? true : false;
                     break;
                 case 'D':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Nombre") ? true : false;
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Tipo de trabajo") ? true : false;
                     break;
                 case 'E':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Localidad") ? true : false;
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Fecha de ejecucion") ? true : false;
                     break;
-                case 'F':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Barrio") ? true : false;
+                case 'K':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Telefono de Contacto1") ? true : false;
                     break;
-                case 'G':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Dirección") ? true : false;
+                case 'J':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Nombre Usuario") ? true : false;
+                    break;
+                case 'S':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "ORDE MASIVA") ? true : false;
+                    break;
+                case 'T':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Orden externa") ? true : false;
                     break;
                 case 'H':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Observación externa") ? true : false;
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Direccion") ? true : false;
+                    break;
+                case 'G':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Sector Operativo") ? true : false;
                     break;
                 case 'I':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Nombre inspector") ? true : false;
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Municipio") ? true : false;
+                    break;
+                case 'C':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Categoria") ? true : false;
+                    break;
+                case 'N':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Fecha de Agendamiento") ? true : false;
+                    break;
+                case 'P':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Observacion de Agendamiento") ? true : false;
+                    break;
+                case 'B':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Inspector") ? true : false;
                     break;
             }
         }
         return $indicador;
     }
 
-    private function Extdatos($worksheet): array
+    private function Extdatos($worksheet): bool
     {
-        $data = [];
+        $tabla = new tbl_programacion_usuario;
+        $tabla->nombre = "Programación tecnicos " . Carbon::now()->format('Y-m-d');
+        $tabla->id_usuario = Auth::id();
+        $tabla->finished = 1;
+        $tabla->mensaje = 1;
+        $tabla->save();
 
         try {
             foreach ($worksheet->getRowIterator() as $row) {
                 if ($row->getRowIndex() === 1) {
                     continue; // Saltar la primera fila (encabezados)
                 }
-                $rowData = [];
-                foreach (['B', 'C', 'D', 'E', 'F', 'G', 'H'] as $columna) {
+                $valor_filtro = $worksheet->getCell('N' . $row->getRowIndex())->getValue();
+                $tipo_trabajo = $worksheet->getCell('D' . $row->getRowIndex())->getValue();
+                $orden_masiva = $worksheet->getCell('S' . $row->getRowIndex())->getValue();
+                if ($valor_filtro === "" || $valor_filtro === null || $tipo_trabajo === null || $orden_masiva === null) {
+                    continue;
+                }
+                $programada = new tbl_programacion_contrato;
+
+                $programada->ACTIVA = "Si";
+                $programada->SUSPENDIDO = "No";
+                $programada->PORQUE_PROGRAMO = "TECNICO MOVILIDAD";
+                $programada->id_programacion = $tabla->id;
+                $programada->mensaje = 1;
+
+                if ($worksheet->getCell('O' . $row->getRowIndex())->getValue() === "MAÑANA") {
+                    $programada->HORA_INICIO = "07:59:00 a.m.";
+                    $programada->HORA_FINAL = "11:59:00 a.m.";
+                }
+                if ($worksheet->getCell('O' . $row->getRowIndex())->getValue() === " TARDE") {
+                    $programada->HORA_INICIO = "01:59:00 p.m.";
+                    $programada->HORA_FINAL = "04:59:00 p.m.";
+                }
+                if ($worksheet->getCell('O' . $row->getRowIndex())->getValue() === " TRANSCURSO DEL DIA") {
+                    $programada->HORA_INICIO = "07:59:00 a.m.";
+                    $programada->HORA_FINAL = "04:59:00 p.m.";
+                }
+
+                foreach (['F', 'D', 'E', 'K', 'J', 'S', 'H', 'G', 'I', 'C', 'N', 'P', 'B'] as $columna) {
+
                     $valorCelda = $worksheet->getCell($columna . $row->getRowIndex())->getValue();
 
                     switch ($columna) {
-                        case 'B':
-                            $rowData["Contrato"] = $valorCelda;
-                            break;
-                        case 'C':
-                            $rowData["Medidor"] = $valorCelda;
+                        case 'F':
+                            $contrato = str_replace(":", "", $valorCelda);
+                            $programada->CONTRATO = $contrato;
                             break;
                         case 'D':
-                            $rowData["Nombre"] = $valorCelda;
+                            $programada->TIPO_TRABAJO = $valorCelda;
                             break;
                         case 'E':
-                            $rowData["Localidad"] = $valorCelda;
+                            $excelTimestamp = $valorCelda;
+                            $fecha = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($excelTimestamp);
+                            $programada->FECHA = $fecha->format('Y-m-d');
                             break;
-                        case 'F':
-                            $rowData["Barrio"] = $valorCelda;
+                        case 'K':
+                            $programada->CELULAR = $valorCelda;
                             break;
-                        case 'G':
-                            $rowData["Dirección"] = $valorCelda;
+                        case 'J':
+                            $programada->NOMBRE_USUARIO = $valorCelda;
+                            break;
+                        case 'S':
+                            $valor_orden = $worksheet->getCell('T' . $row->getRowIndex())->getValue();
+                            if ($valor_orden <> "" || $valor_orden <> null) {
+                                $programada->ORDEN_TRABAJO = $worksheet->getCell('T' . $row->getRowIndex())->getValue();
+                            } else {
+                                $programada->ORDEN_TRABAJO = $valorCelda;
+                            }
                             break;
                         case 'H':
-                            $rowData["Observación externa"] = $valorCelda;
+                            $programada->DIRECCION = $valorCelda;
+                            break;
+                        case 'G':
+                            $programada->BARRIO = $valorCelda;
+                            break;
+                        case 'I':
+                            $programada->CIUDAD = $valorCelda;
+                            break;
+                        case 'C':
+                            $programada->CATEGORIA = $valorCelda;
+                            break;
+                        case 'N':
+                            $excelTimestamp = $valorCelda; // Supongamos que $valorCelda es "28/08/24 "
+
+                            // Elimina espacios en blanco y analiza la fecha con el formato específico
+                            $dateTime = DateTime::createFromFormat('d/m/y', trim($excelTimestamp));
+
+                            $excelTimestamp = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($dateTime);
+                            $fechaAsignacion = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($excelTimestamp);
+
+                            $programada->FECHA_AGENDAMIENTO = $fechaAsignacion->format('Y-m-d');
+                            break;
+                        case 'P':
+                            $jornada = $worksheet->getCell('O' . $row->getRowIndex())->getValue();
+                            $programada->OBSERVACIONES = "JORNADA: " . $jornada . " OBSERVACIONES: " . $valorCelda;
+                            break;
+                        case 'B':
+                            $resultados = tbl_insp_cali::whereRaw("CONCAT(apellidos, ' ', nombres) = ?", [$valorCelda])
+                                ->first();
+                            $programada->TECNICO = $resultados->id . ". " . $valorCelda;
                             break;
                     }
                 }
-                $data[] = $rowData;
+                $exist = tbl_programacion_contrato::where('CONTRATO', $programada->CONTRATO)
+                    ->where('ORDEN_TRABAJO', $programada->ORDEN_TRABAJO)
+                    ->where('TIPO_TRABAJO', $programada->TIPO_TRABAJO)
+                    ->exists();
+                    if($exist){
+                        continue;
+                    }
+                $programada->save();
             }
-            return $data;
+            return true;
         } catch (Exception $e) {
+            $tabla->delete();
             Log::error("Error al insertar datos: " . $e->getMessage()); // Registrar el error para depuración
-            return [];
+            return false;
         }
     }
 

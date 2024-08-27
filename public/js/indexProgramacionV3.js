@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     $('#programacion').DataTable({
+        scrollX: false,
+        scrollY: true,
         "language": {
             "lengthMenu": "Mostrar _MENU_ registros por página",
             "zeroRecords": "Nada encontrado - lo siento",
@@ -54,17 +56,10 @@ document.addEventListener('DOMContentLoaded', () => {
             contentType: false,
             success: function (response) {
                 // Manejo de la respuesta exitosa (opcional)
-                Swal.fire({
-                    position: "top-end",
-                    icon: "success",
-                    title: response.message,
-                    showConfirmButton: false,
-                    toast: true,
-                    timer: 4000
-                });
                 errorContainerMasivo.innerHTML = '';
                 errorContainerMasivo.classList.remove('alert', 'alert-danger');
                 modalMasivo.hide();
+                location.reload(); 
             },
             error: function (xhr, status, error) {
                

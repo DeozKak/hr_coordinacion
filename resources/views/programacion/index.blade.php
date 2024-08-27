@@ -14,47 +14,52 @@
     <input type="hidden" name="url_base" id="url_base" value="{{ route('programacion.base') }}">
     <input type="hidden" name="url_masivo" id="url_masivo" value="{{ route('programacion.masivos') }}">
     <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                 
-                    <div class="card-body">
-                        <a href="{{ route('programacion.create') }}" class="btn btn-success btn-sm" title="Add New Programacion">
-                            <i class="fa fa-plus" aria-hidden="true"></i> Generar nueva Tabla
-                        </a>
-                        @haspermission('ver_programacion')
-                        <button id="openModalBtn" class="btn btn-primary btn-sm" title="Add New Programacion"> Añadir a Base </button>
-                        <button id="openMasivoBtn" class="btn btn-primary btn-sm" title="Add New Programacion"> Cargar Prioridades </button>
-                        @endhaspermission
-                        <br>
-                        <br>
-                        <table id="programacion" class="table table-striped table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>nombre</th>
-                                    <th>Usuario</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($datos as $dato)
-                                <tr>
-                                    <td>{{$dato->id}}</td>
-                                    <td>{{$dato->nombre}}</td>
-                                    <td>{{$dato->usuario->name}}</td>
-                                    <td>
-                                        <a href="{{ route('programacion.show', $dato->id)}}'?action=edit" title="show">
-                                            <button type="button" class="btn btn-warning">Editar</button>
-                                        </a>
-                                        <a href="{{ route('programacion.show', $dato->id)}}'?action=view" title="show">
-                                            <button type="button" class="btn btn-success">Ver</button>
-                                        </a>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+        <div class="row justify-content-center">
+            <div class="col-lg-12">
+                <div class="col-md-12 table-responsive" style="padding: 15px;">
+                    <div class="card">
+
+                        <div class="card-body">
+                            <a href="{{ route('programacion.create') }}" class="btn btn-success btn-sm" title="Add New Programacion">
+                                <i class="fa fa-plus" aria-hidden="true"></i> Generar nueva Tabla
+                            </a>
+                            @haspermission('ver_programacion')
+                            <button id="openModalBtn" class="btn btn-primary btn-sm" title="Add New Programacion"> Añadir a Base </button>
+                            <button id="openMasivoBtn" class="btn btn-primary btn-sm" title="Add New Programacion"> Programadas Tecnicos </button>
+                            @endhaspermission
+                            <br>
+                            <br>
+
+                            <table id="programacion" class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>nombre</th>
+                                        <th>Usuario</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($datos as $dato)
+                                    <tr>
+                                        <td>{{$dato->id}}</td>
+                                        <td>{{$dato->nombre}}</td>
+                                        <td>{{$dato->usuario->name}}</td>
+                                        <td>
+                                            @haspermission('ver_programacion')
+                                            <a href="{{ route('programacion.show', $dato->id)}}'?action=edit" title="show">
+                                                <button type="button" class="btn btn-warning">Editar</button>
+                                            </a>
+                                            @endhaspermission
+                                            <a href="{{ route('programacion.show', $dato->id)}}'?action=view" title="show">
+                                                <button type="button" class="btn btn-success">Ver</button>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -92,7 +97,7 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="addMasivoModalLabel">Cargar Prioridades</h5>
+                        <h5 class="modal-title" id="addMasivoModalLabel">Programadas tecnicos</h5>
                         <button type="button" class="btn-close masivoModal" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -102,12 +107,12 @@
                                 <label for="archivo">Selecciona un archivo:</label>
 
                                 <input class="form-control mb-3" type="file" name="archivo" id="archivo">
-                               
+
                                 <div id="loaderMasivo" style="display: none;">
                                     <div class="spinner-border text-primary" role="status"></div>
                                     <span class="visually-hidden">Cargando...</span>
                                 </div>
-                                
+
                             </div>
                             <button class="btn btn-primary" type="submit">Cargar</button>
                         </form>
@@ -118,7 +123,7 @@
     </div>
 </body>
 @section('js')
-<script src="{{ asset('js/indexProgramacion.js') }}" type="text/javascript"></script>
+<script src="{{ asset('js/indexProgramacionV3.js') }}" type="text/javascript"></script>
 
 
 @if (session('success'))
@@ -139,9 +144,9 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         Swal.fire({
+            icon: "error",
             title: "Error",
             text: "{{session('error')}}",
-            icon: "error"
         });
     });
 </script>

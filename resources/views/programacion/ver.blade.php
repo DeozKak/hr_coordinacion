@@ -81,7 +81,7 @@
 </div>
 
 @section('js')
-<script src="{{ asset('js/verProgramacion.js') }}"></script>
+<script src="{{ asset('js/verProgramacionV3.js') }}"></script>
 <script>
     
     const rangoFechasCheckbox = document.getElementById('rangoFechas');

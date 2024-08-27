@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     dropdownMenu: true,
                     rowHeaders: true,
                     readOnly: true,
-                    height: '300px',
+                    height: '450px',
                     hiddenColumns: {
                         columns: [0,19,20],
                     },
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 data: hot.getData()
             },
             success: function(response) {
-                console.log(response);
+              
                 window.location.href = response.url;
             },
             error: function(xhr, status, error) {

@@ -1,10 +1,16 @@
-let columnasEditables = ['CELULAR', 'FECHA_AGENDAMIENTO', 'OBSERVACIONES', 'TECNICO', 'HORA_INICIO', 'HORA_FINAL'];
+let columnasEditables;
+
+if(ver_programacion === "true"){
+    columnasEditables = ['TECNICO','CELULAR', 'FECHA_AGENDAMIENTO', 'OBSERVACIONES', 'HORA_INICIO', 'HORA_FINAL'];
+}else{
+    columnasEditables = ['CELULAR', 'FECHA_AGENDAMIENTO', 'OBSERVACIONES', 'HORA_INICIO', 'HORA_FINAL'];
+}
 
 document.addEventListener('DOMContentLoaded', () => {
 
     tabla = document.querySelector('#tabla_programacion');
 
-
+   
 
     H_tabla = new Handsontable(tabla, {
 
@@ -114,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         data: tabla_data,
         rowHeaders: true,
         filters: true,
-        height: '300px',
+        height: '450px',
         licenseKey: 'non-commercial-and-evaluation',
         afterChange: function (changes, source) {
             if (source === 'edit' || source == 'CopyPaste.paste' || source == 'Autofill.fill') {
@@ -144,7 +150,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         url: url_busqueda,
                         type: 'GET',
                         success: function (response) {
-
+                            if (response.errors) {
+                                alert(response.errors);
+                                H_tabla.setDataAtCell(row, 1, '');
+                                return;
+                            }
                             // Asegurarse de que la respuesta es un objeto
                             if (typeof response === 'object') {
 
@@ -158,6 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     DESC_ESTADO_PROD: 10,
                                     ACTIVA: 11,
                                     NOM_CATE: 12,
+                                    ID_TECNICO: 16,
                                 };
                                 H_tabla.setDataAtCell(row, 3, formatearFecha(new Date())); // Establecer la fecha actual
                                 H_tabla.setDataAtCell(row, 15, user.name); // Colocar Nombre de usuario
@@ -275,7 +286,7 @@ function guardarProgramacion(row) {
             },
             success: function (response) {
                 if (response.error) {
-                    console.log(response.error);
+                    
                     const numCols = H_tabla.countCols(); // Obtener el número de columnas
                     H_tabla.setDataAtCell(row, 0, '');
                     for (let col = 2; col < numCols; col++) {
@@ -354,13 +365,16 @@ function borrarFilaBD(row) {
 }
 if (view === "") {
     document.getElementById('btnGuardar').addEventListener('click', function () {
-
+        $('#loader').show();
+        $('#overlay').show();
         if (!validarFilasCompletas()) {
+            $('#loader').hide();
+            $('#overlay').hide(); 
             alert("hay campos incompletos o horas incorrectas");
             return; // Detener el envío de la solicitud AJAX si hay filas incompletas
         }
 
-        const url_index = document.getElementById('url_index').value;
+        const url_index = document.getElementById('url_index').value; 
         const token = document.getElementById('token').value;
         const url_finish = document.getElementById('url_finish').value;
         const url = url_finish.replace(':id', tabla_id);
@@ -372,6 +386,8 @@ if (view === "") {
                 _token: token
             },
             success: function (response) {
+                $('#loader').hide();
+                $('#overlay').hide();
                 if (response.ok) {
                     window.location.href = url_index;
                 }
@@ -379,6 +395,8 @@ if (view === "") {
                     alert(response.error);
                 }
             }, error: function (xhr, status, error) {
+                $('#loader').hide();
+                $('#overlay').hide();
                 console.log(xhr.responseText);
             }
         });
@@ -390,7 +408,7 @@ if (view === "") {
 function validarFilasCompletas() {
     const data = H_tabla.getData();
     let hayFilasConDatos = false;
-    console.log(data);
+    
     for (let i = 0; i < data.length; i++) {
         const fila = data[i];
         let filaTieneDatos = false;
