@@ -88,10 +88,10 @@ class ProgramacionController extends Controller
         $tabla = tbl_programacion_contrato::where('id_programacion', $id)->get();
 
         if ($action === 'edit') {
-            if(auth()->user()->haspermissionTo('ver_programacion')){
+            if (auth()->user()->haspermissionTo('ver_programacion')) {
                 $programacion->finished = 0;
                 $programacion->save();
-            }else{
+            } else {
                 session()->flash('error', 'Acción no autorizada.');
                 return redirect()->route('programacion.index');
             }
@@ -204,8 +204,9 @@ class ProgramacionController extends Controller
         $registros = []; // Array para almacenar los registros en lotes
         $tamañoLote = 2000; // Puedes ajustar el tamaño del lote según tus necesidades
 
-        DB::beginTransaction(); // Iniciar una transacción
+        tbl_programacion_base::truncate();
 
+        DB::beginTransaction(); // Iniciar una transacción
 
         try {
             foreach ($worksheet->getRowIterator() as $row) {
@@ -304,16 +305,8 @@ class ProgramacionController extends Controller
 
     private function insertarLoteConVerificacionDuplicados($registros)
     {
-        $numerosOrden = array_column($registros, 'NUMERO_ORDEN');
-        $ordenesExistentes = tbl_programacion_base::whereIn('NUMERO_ORDEN', $numerosOrden)->pluck('NUMERO_ORDEN')->toArray();
-
-        $registrosAInsertar = array_filter($registros, function ($registro) use ($ordenesExistentes) {
-            return !in_array($registro['NUMERO_ORDEN'], $ordenesExistentes);
-        });
-
-        if (!empty($registrosAInsertar)) {
-            tbl_programacion_base::insert($registrosAInsertar);
-        }
+        // Insertar los nuevos registros
+        tbl_programacion_base::insert($registros);
     }
 
     public function busqueda($contrato)
@@ -384,7 +377,7 @@ class ProgramacionController extends Controller
             $programacion->save();
         } catch (QueryException $e) {
             log::error($e);
-            
+
             return response()->json(['error' => $e]);
         }
 
@@ -401,8 +394,6 @@ class ProgramacionController extends Controller
 
             $programacion->$campo = $request->valor;
             $programacion->save();
-
-           
         } catch (QueryException $e) {
             Log::error($e);
             return response()->json(['error' => $e]);
@@ -417,7 +408,6 @@ class ProgramacionController extends Controller
             $id = $resquest->data;
             $programacion = tbl_programacion_contrato::find($id);
             $programacion->delete();
-           
         } catch (QueryException $e) {
             Log::error($e);
             return response()->json(['error' => $e]);
@@ -507,7 +497,7 @@ class ProgramacionController extends Controller
             }
         } catch (QueryException $e) {
             Log::error($e);
-           
+
             return response()->json(['error' => $e]);
         }
         session()->flash('success', 'Programación finalizada correctamente');
@@ -528,73 +518,158 @@ class ProgramacionController extends Controller
             'fechaFin' => 'nullable|date|after_or_equal:fechaInicio',
         ]);
 
-        try{
-        $fecha_inicio = $request->fechaInicio;
-        $fecha_fin = $request->fechaFin;
-        if ($fecha_fin === null) {
+        try {
+            $fecha_inicio = $request->fechaInicio;
+            $fecha_fin = $request->fechaFin;
+            if ($fecha_fin === null) {
 
-            $columnasTabla = Schema::getColumnListing('tbl_programacion_contratos');
-            $columnasAExcluir = ['updated_at', 'created_at'];
-            $columnasAIncluir = array_diff($columnasTabla, $columnasAExcluir);
+                $columnasTabla = Schema::getColumnListing('tbl_programacion_contratos');
+                $columnasAExcluir = ['updated_at', 'created_at'];
+                $columnasAIncluir = array_diff($columnasTabla, $columnasAExcluir);
 
-            $busqueda = DB::table('tbl_programacion_contratos AS pc') // Alias para tbl_programacion_contratos
-            ->join('tbl_programacion_base AS pb', 'pc.CONTRATO', '=', 'pb.CONTRATO') 
-            ->join('tbl_programacion_usuarios AS pu', 'pc.id_programacion', '=', 'pu.id') 
-            ->where('pc.FECHA_AGENDAMIENTO', '=', $fecha_inicio)
-            ->where('pu.finished', 1)
-            ->whereNull('pb.ESTADO_RECEPCION')
-            ->select(
-                'pc.id','pc.CONTRATO','pc.TIPO_TRABAJO','pc.FECHA','pc.CELULAR','pc.NOMBRE_USUARIO',
-                'pc.ORDEN_TRABAJO','pc.DIRECCION','pc.BARRIO','pc.CIUDAD','pc.ACTIVA','pc.SUSPENDIDO',
-                'pc.CATEGORIA','pc.FECHA_AGENDAMIENTO','pc.OBSERVACIONES','pc.PORQUE_PROGRAMO','pc.TECNICO',
-                'pc.HORA_INICIO','pc.HORA_FINAL',
-            );
-        } else {
-            $columnasTabla = Schema::getColumnListing('tbl_programacion_contratos');
-            $columnasAExcluir = ['updated_at', 'created_at'];
-            $columnasAIncluir = array_diff($columnasTabla, $columnasAExcluir);
+                $busqueda = DB::table('tbl_programacion_contratos AS pc') // Alias para tbl_programacion_contratos
+                    ->join('tbl_programacion_base AS pb', 'pc.CONTRATO', '=', 'pb.CONTRATO')
+                    ->join('tbl_programacion_usuarios AS pu', 'pc.id_programacion', '=', 'pu.id')
+                    ->where('pc.FECHA_AGENDAMIENTO', '=', $fecha_inicio)
+                    ->where('pu.finished', 1)
+                    ->whereNull('pb.ESTADO_RECEPCION')
+                    ->select(
+                        'pc.id',
+                        'pc.CONTRATO',
+                        'pc.TIPO_TRABAJO',
+                        'pc.FECHA',
+                        'pc.CELULAR',
+                        'pc.NOMBRE_USUARIO',
+                        'pc.ORDEN_TRABAJO',
+                        'pc.DIRECCION',
+                        'pc.BARRIO',
+                        'pc.CIUDAD',
+                        'pc.ACTIVA',
+                        'pc.SUSPENDIDO',
+                        'pc.CATEGORIA',
+                        'pc.FECHA_AGENDAMIENTO',
+                        'pc.OBSERVACIONES',
+                        'pc.PORQUE_PROGRAMO',
+                        'pc.TECNICO',
+                        'pc.HORA_INICIO',
+                        'pc.HORA_FINAL',
+                    );
 
-            $busqueda = DB::table('tbl_programacion_contratos AS pc') // Alias para tbl_programacion_contratos
-            ->join('tbl_programacion_base AS pb', 'pc.CONTRATO', '=', 'pb.CONTRATO') 
-            ->join('tbl_programacion_usuarios AS pu', 'pc.id_programacion', '=', 'pu.id') 
-            ->where('FECHA_AGENDAMIENTO', '>=', $fecha_inicio) 
-            ->where('FECHA_AGENDAMIENTO', '<=', $fecha_fin)
-            ->where('pu.finished', 1)
-            ->whereNull('pb.ESTADO_RECEPCION')
-            ->select(
-                'pc.id','pc.CONTRATO','pc.TIPO_TRABAJO','pc.FECHA','pc.CELULAR','pc.NOMBRE_USUARIO',
-                'pc.ORDEN_TRABAJO','pc.DIRECCION','pc.BARRIO','pc.CIUDAD','pc.ACTIVA','pc.SUSPENDIDO',
-                'pc.CATEGORIA','pc.FECHA_AGENDAMIENTO','pc.OBSERVACIONES','pc.PORQUE_PROGRAMO','pc.TECNICO',
-                'pc.HORA_INICIO','pc.HORA_FINAL',
-            );
-        }
+                $plantilla = DB::table('tbl_programacion_contratos')
+                    ->where('FECHA_AGENDAMIENTO', '=', $fecha_inicio)
+                    ->where('plantilla', 1)
+                    ->select(
+                        'id',
+                        'CONTRATO',
+                        'TIPO_TRABAJO',
+                        'FECHA',
+                        'CELULAR',
+                        'NOMBRE_USUARIO',
+                        'ORDEN_TRABAJO',
+                        'DIRECCION',
+                        'BARRIO',
+                        'CIUDAD',
+                        'ACTIVA',
+                        'SUSPENDIDO',
+                        'CATEGORIA',
+                        'FECHA_AGENDAMIENTO',
+                        'OBSERVACIONES',
+                        'PORQUE_PROGRAMO',
+                        'TECNICO',
+                        'HORA_INICIO',
+                        'HORA_FINAL',
+                    );
+            } else {
+                $columnasTabla = Schema::getColumnListing('tbl_programacion_contratos');
+                $columnasAExcluir = ['updated_at', 'created_at'];
+                $columnasAIncluir = array_diff($columnasTabla, $columnasAExcluir);
 
-        $busqueda = $busqueda->get();
-        return response()->json([
-            'data' => $busqueda,
-            'columnas' => $columnasAIncluir
-        ]);
+                $busqueda = DB::table('tbl_programacion_contratos AS pc') // Alias para tbl_programacion_contratos
+                    ->join('tbl_programacion_base AS pb', 'pc.CONTRATO', '=', 'pb.CONTRATO')
+                    ->join('tbl_programacion_usuarios AS pu', 'pc.id_programacion', '=', 'pu.id')
+                    ->where('FECHA_AGENDAMIENTO', '>=', $fecha_inicio)
+                    ->where('FECHA_AGENDAMIENTO', '<=', $fecha_fin)
+                    ->where('pu.finished', 1)
+                    ->whereNull('pb.ESTADO_RECEPCION')
+                    ->select(
+                        'pc.id',
+                        'pc.CONTRATO',
+                        'pc.TIPO_TRABAJO',
+                        'pc.FECHA',
+                        'pc.CELULAR',
+                        'pc.NOMBRE_USUARIO',
+                        'pc.ORDEN_TRABAJO',
+                        'pc.DIRECCION',
+                        'pc.BARRIO',
+                        'pc.CIUDAD',
+                        'pc.ACTIVA',
+                        'pc.SUSPENDIDO',
+                        'pc.CATEGORIA',
+                        'pc.FECHA_AGENDAMIENTO',
+                        'pc.OBSERVACIONES',
+                        'pc.PORQUE_PROGRAMO',
+                        'pc.TECNICO',
+                        'pc.HORA_INICIO',
+                        'pc.HORA_FINAL',
+                    );
 
-        }catch(Exception $e){
+                    $plantilla = DB::table('tbl_programacion_contratos')
+                    ->where('FECHA_AGENDAMIENTO', '>=', $fecha_inicio)
+                    ->where('FECHA_AGENDAMIENTO', '<=', $fecha_fin)
+                    ->where('plantilla', 1)
+                    ->select(
+                        'id',
+                        'CONTRATO',
+                        'TIPO_TRABAJO',
+                        'FECHA',
+                        'CELULAR',
+                        'NOMBRE_USUARIO',
+                        'ORDEN_TRABAJO',
+                        'DIRECCION',
+                        'BARRIO',
+                        'CIUDAD',
+                        'ACTIVA',
+                        'SUSPENDIDO',
+                        'CATEGORIA',
+                        'FECHA_AGENDAMIENTO',
+                        'OBSERVACIONES',
+                        'PORQUE_PROGRAMO',
+                        'TECNICO',
+                        'HORA_INICIO',
+                        'HORA_FINAL',
+                    );
+            }
+
+            $plantilla = $plantilla->get();
+            $busqueda = $busqueda->get();
+
+            foreach ($plantilla as $registro) {
+                $busqueda->push($registro);
+            }
+
+           
+            return response()->json([
+                'data' => $busqueda,
+                'columnas' => $columnasAIncluir
+            ]);
+        } catch (Exception $e) {
             log::error($e);
-            
             return response()->json(['error' => $e], 422);
-        
         }
-       
     }
 
     public function exportar(Request $request)
     {
 
         $data = $request->data;
-
-
-
+              
         // Ignoramos el token ya que no es relevante para el CSV
         $rows = [];
 
         foreach ($data as $item) {
+            if($item[6] == "N/A" || $item[6] == null){
+                continue;
+            }
             //sacar id del tecnico
             preg_match('/^(\d+)\./', $item[16], $matches);
             $numero = $matches[1];
@@ -876,7 +951,7 @@ class ProgramacionController extends Controller
                             $programada->CATEGORIA = $valorCelda;
                             break;
                         case 'N':
-                            $excelTimestamp = $valorCelda; // Supongamos que $valorCelda es "28/08/24 "
+                            $excelTimestamp = $valorCelda; // Supongamos que $valorCelda es "28/08/24"
 
                             // Elimina espacios en blanco y analiza la fecha con el formato específico
                             $dateTime = DateTime::createFromFormat('d/m/y', trim($excelTimestamp));
@@ -897,13 +972,13 @@ class ProgramacionController extends Controller
                             break;
                     }
                 }
-                $exist = tbl_programacion_contrato::where('CONTRATO', $programada->CONTRATO)
+                /* $exist = tbl_programacion_contrato::where('CONTRATO', $programada->CONTRATO)
                     ->where('ORDEN_TRABAJO', $programada->ORDEN_TRABAJO)
                     ->where('TIPO_TRABAJO', $programada->TIPO_TRABAJO)
                     ->exists();
-                    if($exist){
-                        continue;
-                    }
+                if ($exist) {
+                    continue;
+                } */
                 $programada->save();
             }
             return true;
