@@ -172,5 +172,46 @@ document.addEventListener('DOMContentLoaded', () => {
         modalBody.prepend(errorContainer);
     }
 
+
+    $('#buscadorContrato').on('input', function() {
+        let contrato = $(this).val();
+        buscarBitacorasPorContrato(contrato);
+    });
+
+    function buscarBitacorasPorContrato(contrato) {
+        if (contrato.trim() === '') {
+            $('#resultadosBusqueda').empty(); // Limpiar la lista de resultados
+            return; // Salir de la función si está vacío
+        }
+        const url = document.getElementById('url_buscar').value; // Ruta Laravel para buscar bitácoras
+        $.ajax({
+            url: url, // Ruta a tu nueva función en el controlador
+            type: 'GET',
+            data: {
+                contrato: contrato
+            },
+            success: function(response) {
+                
+                let listaHtml = '<ul>';
+                response.forEach(programadas => {
+                    listaHtml += `<li data-id="${programadas.id}">${programadas.nombre} ${programadas.usuario} (ID: ${programadas.id})</li>`;
+                });
+                listaHtml += '</ul>';
+                $('#resultadosBusqueda').html(listaHtml);
+
+                // Evento de clic para cada elemento de la lista
+                $('.lista-resultados li').click(function() {
+                    const idProgramacion = $(this).data('id');
+                    let elementoUrl = document.getElementById('url_ver'); 
+                    let url = elementoUrl.value.replace(':id', idProgramacion); 
+                    window.location.href = url;
+                });
+            },
+            error: function(xhr, status, error) {
+                console.log(xhr.responseText);
+            }
+        });
+    }
+
     
 });

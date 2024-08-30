@@ -255,8 +255,8 @@ class ProgramacionController extends Controller
                             $rowData["ID_TECNICO"] = $valorCelda;
                             break;
                         case 'K':
-                            if ($valorCelda !== null) { // Verificar si la celda tiene un valor
-                                $excelTimestamp = $valorCelda;
+                            if ($valorCelda !== null || $valorCelda !== "0") { // Verificar si la celda tiene un valor
+                                $excelTimestamp = (float) $valorCelda;
                                 $fechaAsignacion = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($excelTimestamp);
                                 $rowData["FECHA_ASIGNACION"] = $fechaAsignacion->format('Y-m-d');
                             } else {
@@ -267,8 +267,8 @@ class ProgramacionController extends Controller
                             $rowData["ESTADO_RECEPCION"] = $valorCelda;
                             break;
                         case 'M':
-                            if ($valorCelda !== null) { // Verificar si la celda tiene un valor
-                                $excelTimestamp = $valorCelda;
+                            if ($valorCelda !== null || $valorCelda !== "0") { // Verificar si la celda tiene un valor
+                                $excelTimestamp = (float) $valorCelda;
                                 $fechaAsignacion = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($excelTimestamp);
                                 $rowData["FECHA_RECEPCION"] = $fechaAsignacion->format('Y-m-d');
                             } else {
@@ -297,6 +297,8 @@ class ProgramacionController extends Controller
             DB::commit(); // Confirmar la transacción si todo tiene éxito
             return true;
         } catch (QueryException $e) {
+            throw $e;
+
             DB::rollback(); // Revertir la transacción si ocurre un error
             Log::error("Error al insertar datos: " . $e->getMessage()); // Registrar el error para depuración
             return false;
@@ -532,7 +534,7 @@ class ProgramacionController extends Controller
                     ->join('tbl_programacion_usuarios AS pu', 'pc.id_programacion', '=', 'pu.id')
                     ->where('pc.FECHA_AGENDAMIENTO', '=', $fecha_inicio)
                     ->where('pu.finished', 1)
-                    ->whereNull('pb.ESTADO_RECEPCION')
+                    ->where('pb.ESTADO_RECEPCION', '=', 0)
                     ->select(
                         'pc.id',
                         'pc.CONTRATO',
@@ -590,7 +592,8 @@ class ProgramacionController extends Controller
                     ->where('FECHA_AGENDAMIENTO', '>=', $fecha_inicio)
                     ->where('FECHA_AGENDAMIENTO', '<=', $fecha_fin)
                     ->where('pu.finished', 1)
-                    ->whereNull('pb.ESTADO_RECEPCION')
+                    ->where('pb.ESTADO_RECEPCION', '=', 0)
+                    ->orWhereNull('pb.ESTADO_RECEPCION')
                     ->select(
                         'pc.id',
                         'pc.CONTRATO',
@@ -613,7 +616,7 @@ class ProgramacionController extends Controller
                         'pc.HORA_FINAL',
                     );
 
-                    $plantilla = DB::table('tbl_programacion_contratos')
+                $plantilla = DB::table('tbl_programacion_contratos')
                     ->where('FECHA_AGENDAMIENTO', '>=', $fecha_inicio)
                     ->where('FECHA_AGENDAMIENTO', '<=', $fecha_fin)
                     ->where('plantilla', 1)
@@ -647,7 +650,7 @@ class ProgramacionController extends Controller
                 $busqueda->push($registro);
             }
 
-           
+
             return response()->json([
                 'data' => $busqueda,
                 'columnas' => $columnasAIncluir
@@ -662,12 +665,12 @@ class ProgramacionController extends Controller
     {
 
         $data = $request->data;
-              
+
         // Ignoramos el token ya que no es relevante para el CSV
         $rows = [];
 
         foreach ($data as $item) {
-            if($item[6] == "N/A" || $item[6] == null){
+            if ($item[6] == "N/A" || $item[6] == null) {
                 continue;
             }
             //sacar id del tecnico
@@ -1068,5 +1071,35 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
             }
         }
         return true;
+    }
+
+    public function buscarPorContrato(Request $request){
+
+        $contrato = $request->input('contrato');
+        $array = array();
+
+        try{
+        $programadas = tbl_programacion_usuario::whereIn(
+            'id',
+            tbl_programacion_contrato::select('id_programacion')
+                ->where('CONTRATO', 'LIKE', '%' . $contrato . '%')
+        )->get();
+
+        foreach ($programadas as $programada) {
+            $usuario = User::find($programada->id_usuario);
+
+            $array[] = [
+                'id' => $programada->id,
+                'nombre' => $programada->nombre,
+                'usuario' => $usuario->name,
+            ];
+        
+        }
+    }catch (Exception $e) {
+        Log::error($e);
+        return response()->json(['error' => $e], 422);
+
+    }
+        return response()->json($array);
     }
 }

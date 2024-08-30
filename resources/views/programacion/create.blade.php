@@ -8,19 +8,20 @@
 
 @section('content')
 <style>
-    .htCenter {
-  text-align: center;
-}
-@keyframes spin {
+  .htCenter {
+    text-align: center;
+  }
+
+  @keyframes spin {
     0% {
       transform: rotate(0deg);
     }
-  
+
     100% {
       transform: rotate(360deg);
     }
   }
-  
+
   #loader {
     border: 16px solid rgba(0, 0, 0, 0.1);
     /* Borde transparente */
@@ -44,7 +45,7 @@
     z-index: 9999;
     /* Asegurar que esté sobre otros elementos */
   }
-  
+
   /* Estilo adicional para oscurecer el fondo */
   #overlay {
     position: fixed;
@@ -68,42 +69,58 @@
 <input type="hidden" name="url_update" id="url_update" value="{{ route('programacion.update',['id' => ':id']) }}">
 <input type="hidden" name="url_finish" id="url_finish" value="{{ route('programacion.finish',['id' => ':id']) }}">
 <div>
-    <div class="row">
-        <div class="col-xl-12">
-            <div class="card">
-                <div class="card-header">Tabla</div>
-                <div class="card-body">
-                    <a href="{{ route('programacion.index') }}" title="Regresar"><button class="btn btn-warning btn-sm"><i class="fa fa-arrow-left" aria-hidden="true"></i> Regresar</button></a>       
-                    <br>
-                    <br>
-                    <div id="tabla_programacion"></div>
-                    <br>
-                    @if($programacion->finished == 0)
-                    <button id="btnGuardar" class="btn btn-success btn-sm">Guardar</button>
-                    @endif
-                </div>
-            </div>
+  <div class="row">
+    <div class="col-xl-12">
+      <div class="card">
+        <div class="card-header">Tabla</div>
+        <div class="card-body">
+          <a href="{{ route('programacion.index') }}" title="Regresar"><button class="btn btn-warning btn-sm"><i class="fa fa-arrow-left" aria-hidden="true"></i> Regresar</button></a>
+          <button id="btnPlantilla" class="btn btn-primary btn-sm">Añadir en Plantilla</button>
+          <br>
+          <br>
+          <div id="tabla_programacion"></div>
+          <br>
+          @if($programacion->finished == 0)
+          <button id="btnGuardar" class="btn btn-success btn-sm">Guardar</button>
+          @endif
         </div>
+      </div>
     </div>
+  </div>
 </div>
+
+<!-- Modal base -->
+<div class="modal fade" id="addPlantilla" tabindex="-1" aria-labelledby="addPlantillaModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addPlantillaModalLabel">Programacion en plantilla</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+          <div id="tabla_plantilla"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 @php
-    $tabla = isset($tabla) ? $tabla : []; // Si $tabla no está definida, se asigna un array vacío
+$tabla = isset($tabla) ? $tabla : []; // Si $tabla no está definida, se asigna un array vacío
 @endphp
 @section('js')
 
 <script>
-         const view = "{{ $view ?? false }}";
+  const view = "{{ $view ?? false }}";
 </script>
 
-<script>   
-    const tecnicos = @json($tecnicos->toArray());
-    const nombresTecnicos = tecnicos.map(tecnico => tecnico.id+'. ' +tecnico.apellidos+' '+tecnico.nombres);
-    const user =  @json($user->toArray());
-    const tabla_id = "{{ $programacion->id }}"
-    const ver_programacion = "{{ $user->can('ver_programacion') ? 'true' : 'false' }}"; 
-    
-    const tabla_data = @json($tabla);
+<script>
+  const tecnicos = @json($tecnicos -> toArray());
+  const nombresTecnicos = tecnicos.map(tecnico => tecnico.id + '. ' + tecnico.apellidos + ' ' + tecnico.nombres);
+  const user = @json($user -> toArray());
+  const tabla_id = "{{ $programacion->id }}"
+  const ver_programacion = "{{ $user->can('ver_programacion') ? 'true' : 'false' }}";
 
+  const tabla_data = @json($tabla);
 </script>
 <script src="{{ asset('js/programacionV3.js') }}" type="text/javascript"></script>
 @stop

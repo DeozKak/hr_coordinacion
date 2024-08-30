@@ -10,7 +10,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tabla = document.querySelector('#tabla_programacion');
 
-   
+    // codigo de modal masivo
+    const openPlantilla = document.getElementById('btnPlantilla');    
+    const plantilaModal = document.getElementById('addPlantilla');
+    const modalPlantilla = new bootstrap.Modal(plantilaModal);
+
+    const closeModalMasivoBtn = document.querySelector('.btn-close'); // Selecciona el botón de cierre
+  
+    closeModalMasivoBtn.addEventListener('click', function () {
+        modalPlantilla.hide();
+    });
+
+    openPlantilla.addEventListener('click', function () {
+        modalPlantilla.show();
+    });
 
     H_tabla = new Handsontable(tabla, {
 
@@ -437,3 +450,4 @@ function validarFilasCompletas() {
 
     return hayFilasConDatos;
 }
+

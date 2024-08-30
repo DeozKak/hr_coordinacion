@@ -8,11 +8,42 @@
 
 
 @section('content')
+<style>
+     
+        /* En tu archivo CSS (por ejemplo, Reportes.css) */
+        .lista-resultados {
+            max-height: 200px;
+            /* Ajusta la altura máxima según tus necesidades */
+            overflow-y: auto;
+            /* Habilita el scroll vertical */
+        }
+
+        .lista-resultados ul {
+            list-style: none;
+            /* Elimina los puntos de la lista */
+            padding: 0;
+            margin: 0;
+        }
+
+        .lista-resultados li {
+            padding: 8px;
+            cursor: pointer;
+            /* Cambia el cursor a una mano para indicar que es seleccionable */
+        }
+
+        .lista-resultados li:hover {
+            background-color: #f5f5f5;
+            /* Cambia el color de fondo al pasar el mouse por encima */
+        }
+    
+</style>
 
 <body>
     <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
     <input type="hidden" name="url_base" id="url_base" value="{{ route('programacion.base') }}">
     <input type="hidden" name="url_masivo" id="url_masivo" value="{{ route('programacion.masivos') }}">
+    <input type="hidden" name="url_buscar" id="url_buscar" value="{{ route('programacion.buscar_por_contrato') }}">
+    <input type="hidden" name="url_ver" id="url_ver" value="{{ route('programacion.show', ['id' => ':id'])}}'?action=view">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-12">
@@ -24,10 +55,19 @@
                                 <i class="fa fa-plus" aria-hidden="true"></i> Generar nueva Tabla
                             </a>
                             @haspermission('ver_programacion')
+
                             <button id="openModalBtn" class="btn btn-primary btn-sm" title="Add New Programacion"> Añadir a Base </button>
                             <button id="openMasivoBtn" class="btn btn-primary btn-sm" title="Add New Programacion"> Programadas Tecnicos </button>
-                            @endhaspermission
                             <br>
+                            <br>
+                            <div class="form-group">
+                                <input type="text" class="form-control" id="buscadorContrato" placeholder="Buscar contrato...">
+                            </div>
+
+                            <div id="resultadosBusqueda" class="lista-resultados">
+                            </div>
+                            @endhaspermission
+                           
                             <br>
 
                             <table id="programacion" class="table table-striped table-bordered">
@@ -123,7 +163,7 @@
     </div>
 </body>
 @section('js')
-<script src="{{ asset('js/indexProgramacionV3.js') }}" type="text/javascript"></script>
+<script src="{{ asset('js/indexProgramacionV3-1.js') }}" type="text/javascript"></script>
 
 
 @if (session('success'))
