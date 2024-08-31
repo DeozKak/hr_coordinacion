@@ -137,10 +137,13 @@ class BitacoraController extends Controller
 
         $nombres = array();
         $ids = array();
-
+        $cc = array();
+        
         foreach ($inspectores as $inspector) {
             $nombres[] = $inspector->apellidos . ' ' . $inspector->nombres;
             $ids[$inspector->cedula] = $inspector->id;
+            $cc[] = $inspector->cedula;
+        
         }
     
         session(['ids_inspectores' => $ids]);
@@ -158,15 +161,14 @@ class BitacoraController extends Controller
         unlink($excelFilePath);
         $causales = tbl_bitacoras_causal::all();
 
-        $response = $Guardado->guardar($spreadsheet, $nombres, $id_super);
-    
-       
-       
+        $response = $Guardado->guardar($spreadsheet, $nombres, $id_super, $cc);
+        
         if($response->isEmpty()){
             
             return redirect()->route('bitacora')->with('error', 'Error al generar la bitacora');
         
         }
+        
         return view('bitacoras.tabla', compact('nombres', 'id_super', 'municipios', 'inspectores','causales','response'));
     }
 

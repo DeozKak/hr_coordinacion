@@ -32,7 +32,7 @@ class AutoGuardadoController extends Controller
         }
     }
 
-    public function guardar($spreadsheet, $nombres, $super)
+    public function guardar($spreadsheet, $nombres, $super, $cc)
     {
         $rutaArchivo = str_replace(".xls", " ", session('nom_archivo'));
         $rutaArchivoFinal = str_replace("4.08", "", $rutaArchivo);
@@ -53,28 +53,33 @@ class AutoGuardadoController extends Controller
             throw $e;
         }
         $datos = [];
-
-        foreach ($nombres as $nombre) {
+     
+        foreach ($cc as $c) {
             foreach ($spreadsheet->getSheetNames() as $sheetName) {
                 $sheet = $spreadsheet->getSheetByName($sheetName);
                 foreach ($sheet->getRowIterator() as $row) {
+                    if($row->getRowIndex() === 1) continue;
+                    
                     $contrato = $sheet->getCell('H' . $row->getRowIndex())->getValue();
-                    $nombreCelda = $sheet->getCell('A' . $row->getRowIndex())->getValue();
-                    $cc = $sheet->getCell('B' . $row->getRowIndex())->getValue(); // Índice potencial
+                    $nombreCelda = $sheet->getCell('B' . $row->getRowIndex())->getValue();
+                    $cc_operario = $sheet->getCell('B' . $row->getRowIndex())->getValue(); // Índice potencial
                     $vence = $sheet->getCell('Q' . $row->getRowIndex())->getValue();
                     $cierre = ltrim($sheet->getCell('M' . $row->getRowIndex())->getValue(), '.');
-
+                    $cedula = (float) $c;
+               
                     // Verificar condiciones de filtrado
                     if (
                         strpos($contrato, ":") === 0 &&
-                        $nombreCelda === $nombre &&
+                        $nombreCelda === $cedula &&
                         in_array($cierre, ["CERTIFICADA", "CERTIFICADA CON NOVEDADES", "INSPECCIONADA CON DEFECTO CRITICO VALLE", "INSPECCIONADA CON DEFECTO NO CRITICO VALLE"])
                     ) {
                         $filaDatos = []; // Array para almacenar datos de la fila
-
+                        
                         foreach (['A', 'B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K', 'M', 'N', 'O', 'Q'] as $columna) {
                             $valor = $sheet->getCell($columna . $row->getRowIndex())->getValue();
-
+                            if($columna === 'A'){
+                                $valor = trim($valor);
+                            }
                             if ($columna === 'M') {
                                 $valor = ltrim($sheet->getCell($columna . $row->getRowIndex())->getValue(), '.');
                             }
@@ -93,7 +98,7 @@ class AutoGuardadoController extends Controller
                         }
 
                         // Usar el valor de la columna 'B' como índice
-                        $datos[$cc][] = $filaDatos;
+                        $datos[$cc_operario][] = $filaDatos;
                     }
                 }
             }
@@ -109,7 +114,7 @@ class AutoGuardadoController extends Controller
                         ->exists();
                     if (!$existe) {
 
-
+                            
                         tbl_temp_contrato::create([
                             'NOMBRE' => $inspeccion['A'],
                             'CC_OPERARIO' => $cc,
