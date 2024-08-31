@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tabla = document.querySelector('#tabla_programacion');
 
-    // codigo de modal masivo
+    // codigo de modal de plantilla
     const openPlantilla = document.getElementById('btnPlantilla');    
     const plantilaModal = document.getElementById('addPlantilla');
     const modalPlantilla = new bootstrap.Modal(plantilaModal);
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     openPlantilla.addEventListener('click', function () {
         modalPlantilla.show();
     });
-
+//--------------------------------------------------------------------------------
     H_tabla = new Handsontable(tabla, {
 
         columns: [
@@ -451,3 +451,4 @@ function validarFilasCompletas() {
     return hayFilasConDatos;
 }
 
+const nombre = document.getElementById('nombre')

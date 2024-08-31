@@ -91,17 +91,113 @@
 
 <!-- Modal base -->
 <div class="modal fade" id="addPlantilla" tabindex="-1" aria-labelledby="addPlantillaModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="addPlantillaModalLabel">Programacion en plantilla</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-          <div id="tabla_plantilla"></div>
+        <div class="row">
+          <div class="col-md-6">
+        
+            <label for="contrato">Contrato</label>
+            <input type="text" class="form-control" name="contrato" id="contrato">
+            
+          </div>
+          <br>
+          <div class="col-md-6">
+          <label for="tipo_trabajo">Tipo de Trabajo</label>
+            <select class="form-control" name="tipo_trabajo" id="tipo_trabajo">
+              <option value="">Seleccione Tipo de Trabajo</option>
+              <option value="FI-29 revisión periódica línea matriz">FI-29 revisión periódica línea matriz</option>
+              <option value="RP 10444">RP 10444</option>
+              <option value="RP 12161">RP 12161</option>
+              <option value="RN 12162">RN 12162</option>
+              <option value="SA 12163">SA 12163</option>
+              <option value="SA 12164">SA 12164</option>
+            </select>
+           
+          </div>
+        </div>
+        <br>
+        <div class="row">
+          <div class="col-md-6">
+            <label for="fecha">Fecha:</label>
+            <input type="date" class="form-control" name="fecha" id="fecha" placeholder="dd-mm-yy">
+          </div>
+
+          <br>
+
+          <div class="col-md-6">
+            <label for="celular">Celular</label>
+            <input type="text" class="form-control" name="celular" id="N°acta">
+          </div>
+        </div>
+        <br>
+        <div class="row">
+          <div class="col-md-6">
+            <label for="causal">Nombre Usuario</label>
+            <input type="text" class="form-control" name="nombre_usuario" id="causal">
+          </div>
+
+          <br>
+          <div class="col-md-6">
+          <label for="orden_trabajo">Orden de Trabajo</label>
+            <input type="text" class="form-control" id="orden_trabajo" style="text-align: center;">
+          </div>
+        </div>
+        <br>
+        <div class="row">
+          <div class="col-md-6">
+          <label for="direccion">Dirección</label>
+            <input type="text" class="form-control" id="direccion" style="text-align: center;">
+
+          </div>
+          <br>
+          <div class="col-md-6 matriz-des1">
+            <label for="categoria">Categoria</label>
+            <select class="form-control" name="categoria" id="categoria">
+              <option value="">Seleccione categoria</option>
+              <option value="RESIDENCIAL">RESIDENCIAL</option>
+              <option value="COMERCIAL">COMERCIAL</option>
+            </select>
+          </div>
+        </div>
+        <br>
+        <div class="row">
+          <div class="col-md-6">
+            <label for="recintos">4 Recintos o mas</label>
+            <select class="form-control" name="recintos" id="recintos">
+              <option value="NO" selected>NO</option>
+              <option value="SI">SI</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="cantidad_recintos">Cantidad de recintos</label>
+            <input type="text" class="form-control" id="NroRecintosP" style="text-align: center;" disabled>
+          </div>
+        </div>
+        <br>
+        <div class="row">
+          <div class="col-md-6">
+          <label for="municipio">Municipio:</label>
+          <select class="form-control select2" name="municipio" id="municipio-select"></select>
+          <label for="nombre">Inspector:</label>
+            <select class="form-control" name="nombre" id="nombre">
+              <option value="">Seleccione Inspector</option>
+              @foreach ($tecnicos as $inspector)
+              <option value="{{$inspector->cedula}}" data-nombres="{{$inspector->apellidos}} {{$inspector->nombres}}">{{$inspector->apellidos}} {{$inspector->nombres}}</option>
+              @endforeach
+            </select>
+            
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
+</div>
 </div>
 
 @php
