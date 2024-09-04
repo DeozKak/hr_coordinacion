@@ -11,8 +11,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const fechaAgendamientoInput = document.getElementById('fecha_agendamiento');
     usuario_programado.value = user.name;
 
-    
-   
+
+
     // Obtener la fecha actual en formato YYYY-MM-DD
     const hoy = new Date();
     const year = hoy.getFullYear();
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const day2 = hoy.getDate().toString().padStart(2, '0');
     const fechaFormateada2 = `${year2}-${month2}-${day2}`;
     // Asignar la fecha de mañana como valor mínimo del input
-  fechaAgendamientoInput.min = fechaFormateada2;
+    fechaAgendamientoInput.min = fechaFormateada2;
 
     nombre_usuario.addEventListener('input', function () {
         this.value = this.value.replace(/[^a-zA-Z ]/g, '').slice(0, 50);
@@ -52,10 +52,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Capturamos los valores de los campos de entrada de texto
         formData.contrato = document.getElementById('contrato').value;
-        formData.celular = document.getElementById('celular').value; // Asumiendo que 'N°acta' es el ID correcto para el celular
+        formData.celular = document.getElementById('celular').value;
         formData.nombre_usuario = document.getElementById('nombre_usuario').value;
         formData.orden_trabajo = document.getElementById('orden_trabajo').value;
         formData.direccion = document.getElementById('direccion').value;
+        formData.barrio = document.getElementById('barrio').value;
         formData.observaciones = document.getElementById('observaciones').value;
         formData.usuario_programado = document.getElementById('usuario_programado').value;
 
@@ -65,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Capturamos el valor de la fecha
         formData.fecha = document.getElementById('fecha').value;
 
-        // Capturamos el valor del select para el municipio (necesitarás ajustar esto si usas una librería específica para el select)
+        // Capturamos el valor del select para el municipio 
         formData.municipio = document.getElementById('municipio-select').value;
 
         // Capturamos el estado (activo o suspendido)
@@ -84,7 +85,28 @@ document.addEventListener('DOMContentLoaded', function () {
         formData.hora_inicio = document.getElementById('hora_inicio').value;
         formData.hora_fin = document.getElementById('hora_fin').value;
 
-        // Ahora puedes hacer algo con los datos, como enviarlos a un servidor usando AJAX
-        console.log(formData); // Imprimimos los datos en la consola por ahora
+        // Validación de campos obligatorios
+        const camposObligatorios = ['contrato', 'celular', 'nombre_usuario', 'direccion','barrio', 'tipo_trabajo', 'fecha','municipio-select','categoria','fecha_agendamiento','observaciones','tecnico','hora_inicio','hora_fin'];
+
+        let hayCamposVacios = false; // Variable para controlar si hay campos vacíos
+
+        for (const campo of camposObligatorios) {
+            const elementoCampo = document.getElementById(campo); // Obtenemos el elemento del campo
+           
+            if (!formData[campo]) {
+                elementoCampo.classList.add('campo-invalido'); // Añadimos la clase 'error' para resaltar en rojo
+                hayCamposVacios = true;
+            } else {
+                elementoCampo.classList.remove('campo-invalido'); // Removemos la clase si el campo se llena posteriormente
+            }
+        }
+
+        if (hayCamposVacios) {
+            alert('Por favor, complete todos los campos obligatorios.');
+            return; // Detenemos el envío del formulario
+        }
+
+        // Si todos los campos están completos, puedes continuar con el envío del formulario
+        console.log(formData);
     });
 });

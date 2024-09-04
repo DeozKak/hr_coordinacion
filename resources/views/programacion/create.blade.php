@@ -7,61 +7,7 @@
 @stop
 
 @section('content')
-<style>
-  .htCenter {
-    text-align: center;
-  }
-
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-
-  #loader {
-    border: 16px solid rgba(0, 0, 0, 0.1);
-    /* Borde transparente */
-    border-top: 16px solid #3498db;
-    /* Azul */
-    border-radius: 50%;
-    width: 120px;
-    height: 120px;
-    animation: spin 2s linear infinite;
-    /* Animación de rotación */
-    position: fixed;
-    /* Fijar posición */
-    top: 50%;
-    /* Posición vertical en el centro */
-    left: 50%;
-    /* Posición horizontal en el centro */
-    margin-top: -60px;
-    /* Centrar verticalmente */
-    margin-left: -60px;
-    /* Centrar horizontalmente */
-    z-index: 9999;
-    /* Asegurar que esté sobre otros elementos */
-  }
-
-  /* Estilo adicional para oscurecer el fondo */
-  #overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    /* Fondo semi-transparente */
-    z-index: 9998;
-    /* Debajo del loader */
-  }
-  .select2-container {
-    width: 100% !important;
-}
-</style>
+<link rel="stylesheet" href="{{ asset('css/programacion/create.css') }}">
 <div id="loader" style="display: none;"></div>
 <div id="overlay" style="display: none;"></div>
 <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
@@ -160,7 +106,7 @@
           <br>
           <div class="col-md-6">
             <label for="direccion">Barrio</label>
-            <input type="text" class="form-control" id="direccion" style="text-align: center;">
+            <input type="text" class="form-control" id="barrio" style="text-align: center;">
           </div>
         </div>
         <br>
