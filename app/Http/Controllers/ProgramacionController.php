@@ -986,7 +986,7 @@ class ProgramacionController extends Controller
             }
             return true;
         } catch (Exception $e) {
-            $tabla->delete();
+            //$tabla->delete();
             Log::error("Error al insertar datos: " . $e->getMessage()); // Registrar el error para depuración
             return false;
         }

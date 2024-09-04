@@ -22,7 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     openPlantilla.addEventListener('click', function () {
-        modalPlantilla.show();
+        $('#addPlantilla').modal({
+            show: true,
+            focus: false
+        });
     });
 //--------------------------------------------------------------------------------
     H_tabla = new Handsontable(tabla, {
@@ -451,4 +454,4 @@ function validarFilasCompletas() {
     return hayFilasConDatos;
 }
 
-const nombre = document.getElementById('nombre')
+
