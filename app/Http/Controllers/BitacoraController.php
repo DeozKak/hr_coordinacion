@@ -137,13 +137,11 @@ class BitacoraController extends Controller
 
         $nombres = array();
         $ids = array();
-        $cc = array();
+        
         
         foreach ($inspectores as $inspector) {
             $nombres[] = $inspector->apellidos . ' ' . $inspector->nombres;
             $ids[$inspector->cedula] = $inspector->id;
-            $cc[] = $inspector->cedula;
-        
         }
     
         session(['ids_inspectores' => $ids]);
@@ -161,7 +159,8 @@ class BitacoraController extends Controller
         unlink($excelFilePath);
         $causales = tbl_bitacoras_causal::all();
 
-        $response = $Guardado->guardar($spreadsheet, $nombres, $id_super, $cc);
+        $response = $Guardado->guardar($spreadsheet, $nombres, $id_super);
+       
         
         if($response->isEmpty()){
             
