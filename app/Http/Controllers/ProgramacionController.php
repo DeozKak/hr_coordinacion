@@ -1102,4 +1102,41 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
     }
         return response()->json($array);
     }
+
+    public function PlantillaStore(Request $request){
+     
+        try {
+            $programacion = new tbl_programacion_contrato();
+            $programacion->CONTRATO = $request->data['CONTRATO'];
+            $programacion->TIPO_TRABAJO = $request->data['TIPO_TRABAJO'];
+            $programacion->FECHA = $request->data['FECHA'];
+            $programacion->CELULAR = $request->data['CELULAR'];
+            $programacion->NOMBRE_USUARIO = $request->data['NOMBRE_USUARIO'];
+            $programacion->ORDEN_TRABAJO = $request->data['ORDEN_TRABAJO'];
+            $programacion->DIRECCION = $request->data['DIRECCION'];
+            $programacion->BARRIO = $request->data['BARRIO'];
+            $programacion->CIUDAD = $request->data['CIUDAD'];
+            $programacion->ACTIVA = $request->data['ACTIVA'];
+            $programacion->SUSPENDIDO = $request->data['SUSPENDIDO'];
+            $programacion->CATEGORIA = $request->data['CATEGORIA'];
+            $programacion->FECHA_AGENDAMIENTO = $request->data['FECHA_AGENDAMIENTO'];
+            $programacion->OBSERVACIONES = $request->data['OBSERVACIONES'];
+            $programacion->PORQUE_PROGRAMO = $request->data['PORQUE_PROGRAMO'];
+            $programacion->TECNICO = $request->data['TECNICO'];
+            $programacion->HORA_INICIO = $request->data['HORA_INICIO'];
+            $programacion->HORA_FINAL = $request->data['HORA_FINAL'];
+            $programacion->id_programacion = $request->tabla;
+            $programacion->plantilla = 1;
+            $programacion->save();
+        } catch (QueryException $e) {
+
+            log::error($e);
+            return response()->json(['error' => $e]);
+
+        }
+        return response()->json(['message' => 'Registro guardado correctamente','id' => $programacion->id],200);
+    }
+
+
+    
 }

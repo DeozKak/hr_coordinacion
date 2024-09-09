@@ -1,15 +1,20 @@
+
+const url_plantilla = document.getElementById('url_plantilla').value;
+const columns = ['id', 'CONTRATO', 'TIPO_TRABAJO', 'FECHA', 'CELULAR', 'NOMBRE_USUARIO', 'ORDEN_TRABAJO', 'DIRECCION', 'BARRIO', 'CIUDAD', 'ACTIVA',
+    'SUSPENDIDO', 'CATEGORIA', 'FECHA_AGENDAMIENTO', 'OBSERVACIONES', 'PORQUE_PROGRAMO', 'TECNICO', 'HORA_INICIO', 'HORA_FINAL'
+];
 // Esperamos a que el documento esté completamente cargado
 document.addEventListener('DOMContentLoaded', function () {
     // Obtenemos el botón "Agregar"
     const agregarButton = document.getElementById('agregar');
-    const nombre_usuario = document.getElementById('nombre_usuario');
-    const contratoInput = document.getElementById('contrato');
-    const celularInput = document.getElementById('celular');
-    const orden_trabajo = document.getElementById('orden_trabajo');
-    const fechaInput = document.getElementById('fecha');
-    const usuario_programado = document.getElementById('usuario_programado');
-    const fechaAgendamientoInput = document.getElementById('fecha_agendamiento');
-    usuario_programado.value = user.name;
+    const NOMBRE_USUARIO = document.getElementById('NOMBRE_USUARIO');
+    const CONTRATOInput = document.getElementById('CONTRATO');
+    const CELULARInput = document.getElementById('CELULAR');
+    const ORDEN_TRABAJO = document.getElementById('ORDEN_TRABAJO');
+    const fechaInput = document.getElementById('FECHA');
+    const PORQUE_PROGRAMO = document.getElementById('PORQUE_PROGRAMO');
+    const fechaAgendamientoInput = document.getElementById('FECHA_AGENDAMIENTO');
+    PORQUE_PROGRAMO.value = user.name;
 
 
 
@@ -30,18 +35,18 @@ document.addEventListener('DOMContentLoaded', function () {
     // Asignar la fecha de mañana como valor mínimo del input
     fechaAgendamientoInput.min = fechaFormateada2;
 
-    nombre_usuario.addEventListener('input', function () {
+    NOMBRE_USUARIO.addEventListener('input', function () {
         this.value = this.value.replace(/[^a-zA-Z ]/g, '').slice(0, 50);
     });
-    contratoInput.addEventListener('input', function () {
+    CONTRATOInput.addEventListener('input', function () {
         this.value = this.value.replace(/[^0-9]/g, '').slice(0, 15);
     });
 
-    celularInput.addEventListener('input', function () {
+    CELULARInput.addEventListener('input', function () {
         this.value = this.value.replace(/[^0-9 ]/g, '').slice(0, 21);
     });
 
-    orden_trabajo.addEventListener('input', function () {
+    ORDEN_TRABAJO.addEventListener('input', function () {
         this.value = this.value.replace(/[^0-9]/g, '').slice(0, 18);
     });
 
@@ -51,49 +56,64 @@ document.addEventListener('DOMContentLoaded', function () {
         const formData = {};
 
         // Capturamos los valores de los campos de entrada de texto
-        formData.contrato = document.getElementById('contrato').value;
-        formData.celular = document.getElementById('celular').value;
-        formData.nombre_usuario = document.getElementById('nombre_usuario').value;
-        formData.orden_trabajo = document.getElementById('orden_trabajo').value;
-        formData.direccion = document.getElementById('direccion').value;
-        formData.barrio = document.getElementById('barrio').value;
-        formData.observaciones = document.getElementById('observaciones').value;
-        formData.usuario_programado = document.getElementById('usuario_programado').value;
+
+        formData.CONTRATO = document.getElementById('CONTRATO').value;
+        formData.CELULAR = document.getElementById('CELULAR').value;
+        formData.NOMBRE_USUARIO = document.getElementById('NOMBRE_USUARIO').value;
+
+        if (document.getElementById('ORDEN_TRABAJO').value == '') {
+            document.getElementById('ORDEN_TRABAJO').value = 'N/A';
+            formData.ORDEN_TRABAJO = 'N/A';
+        } else {
+            formData.ORDEN_TRABAJO = document.getElementById('ORDEN_TRABAJO').value;
+        }
+
+        formData.DIRECCION = document.getElementById('DIRECCION').value;
+        formData.BARRIO = document.getElementById('BARRIO').value;
+        formData.OBSERVACIONES = document.getElementById('OBSERVACIONES').value;
+        formData.PORQUE_PROGRAMO = document.getElementById('PORQUE_PROGRAMO').value;
 
         // Capturamos el valor del select para el tipo de trabajo
-        formData.tipo_trabajo = document.getElementById('tipo_trabajo').value;
+        formData.TIPO_TRABAJO = document.getElementById('TIPO_TRABAJO').value;
 
         // Capturamos el valor de la fecha
-        formData.fecha = document.getElementById('fecha').value;
+        formData.FECHA = document.getElementById('FECHA').value;
 
         // Capturamos el valor del select para el municipio 
-        formData.municipio = document.getElementById('municipio-select').value;
+        formData.CIUDAD = document.getElementById('CIUDAD').value;
 
         // Capturamos el estado (activo o suspendido)
-        formData.estado = document.querySelector('input[name="estado"]:checked').value;
+        if (document.querySelector('input[name="estado"]:checked').value === 'activo') {
+            formData.ACTIVA = 'Si';
+            formData.SUSPENDIDO = 'No';
+        } else {
+            formData.ACTIVA = 'No';
+            formData.SUSPENDIDO = 'Si';
+        }
 
         // Capturamos el valor del select para la categoría
-        formData.categoria = document.getElementById('categoria').value;
+        formData.CATEGORIA = document.getElementById('CATEGORIA').value;
 
         // Capturamos el valor de la fecha de agendamiento
-        formData.fecha_agendamiento = document.getElementById('fecha_agendamiento').value;
+        formData.FECHA_AGENDAMIENTO = document.getElementById('FECHA_AGENDAMIENTO').value;
 
         // Capturamos el valor del select para el inspector
-        formData.inspector = document.getElementById('tecnico').value;
+        formData.TECNICO = document.getElementById('TECNICO').value;
 
         // Capturamos las horas de inicio y fin
-        formData.hora_inicio = document.getElementById('hora_inicio').value;
-        formData.hora_fin = document.getElementById('hora_fin').value;
+        formData.HORA_INICIO = document.getElementById('HORA_INICIO').value;
+        formData.HORA_FINAL = document.getElementById('HORA_FINAL').value;
 
         // Validación de campos obligatorios
-        const camposObligatorios = ['contrato', 'celular', 'nombre_usuario', 'direccion','barrio', 'tipo_trabajo', 'fecha','municipio-select','categoria','fecha_agendamiento','observaciones','tecnico','hora_inicio','hora_fin'];
+        const camposObligatorios = ['CONTRATO', 'CELULAR', 'NOMBRE_USUARIO', 'DIRECCION', 'BARRIO', 'TIPO_TRABAJO', 'CIUDAD', 'FECHA_AGENDAMIENTO', 'CATEGORIA', 'OBSERVACIONES', 'TECNICO', 'HORA_INICIO', 'HORA_FINAL'];
 
         let hayCamposVacios = false; // Variable para controlar si hay campos vacíos
 
         for (const campo of camposObligatorios) {
             const elementoCampo = document.getElementById(campo); // Obtenemos el elemento del campo
-           
+
             if (!formData[campo]) {
+
                 elementoCampo.classList.add('campo-invalido'); // Añadimos la clase 'error' para resaltar en rojo
                 hayCamposVacios = true;
             } else {
@@ -102,11 +122,101 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (hayCamposVacios) {
-            alert('Por favor, complete todos los campos obligatorios.');
+            Swal.fire({
+                position: "top-end",
+                icon: "warning",
+                title: "Por favor complete todos los campos",
+                showConfirmButton: false,
+                toast: true,
+                timer: 4000
+            });
             return; // Detenemos el envío del formulario
         }
 
         // Si todos los campos están completos, puedes continuar con el envío del formulario
-        console.log(formData);
+        enviarServidor(formData);
     });
+
+
+    function enviarServidor(data) {
+
+        const token = document.getElementById('token').value;
+        $.ajax({
+            url: url_plantilla,
+            type: 'POST',
+            data: {
+                _token: token,
+                data: data,
+                tabla: tabla_id
+            },
+            success: function (response) {
+                $('#addPlantilla').modal('hide');
+                Swal.fire({
+                    position: "top-end",
+                    icon: "success",
+                    title: "Registro exitoso",
+                    showConfirmButton: false,
+                    toast: true,
+                    timer: 4000
+                });
+                data.id = response.id;
+                let lastRowWithData = H_tabla.countRows() - 1;
+
+                // Iterar desde la última fila hacia arriba hasta encontrar una fila con datos
+                while (lastRowWithData >= 0) {
+                    let rowData = H_tabla.getDataAtRow(lastRowWithData);
+
+                    // Verificar si la fila tiene datos (puedes ajustar esta condición según tus necesidades)
+                    if (rowData.some(cell => cell !== null && cell !== '')) {
+                        break; // Salir del bucle cuando se encuentra una fila con datos
+                    }
+
+                    lastRowWithData--;
+                }
+                
+                // Obtener el número total de filas existentes
+                let rowCount = H_tabla.countRows();
+
+                // Insertar una nueva fila al final
+                H_tabla.alter('insert_row_above', rowCount);
+
+                // Obtener las propiedades (columnas) de tu Handsontable
+                const columnProperties = H_tabla.getColHeader();
+
+                // Crear un array de cambios para setDataAtRowProp
+                const changes = columnProperties.map((prop, index) => {
+                    return [lastRowWithData + 1, columns[index], data[columns[index]]];
+                });
+
+                // Establecer los datos en la nueva fila
+                H_tabla.setDataAtRowProp(changes);
+                limpiarCampos();
+
+            }, error: function (xhr, status, error) {
+                Swal.fire({
+                    position: "top-end",
+                    icon: "error",
+                    title: "Error al registrar",
+                    showConfirmButton: false,
+                    toast: true,
+                    timer: 4000
+                });
+                console.error("Error en la petición AJAX:");
+                console.log("Código de estado:", xhr.status);
+                console.log("Descripción:", xhr.statusText);
+                console.log("Respuesta del servidor:", xhr.responseText);
+            }
+        });
+
+    }
+
+    function limpiarCampos() {
+        const columnsB = ['CONTRATO', 'CELULAR', 'NOMBRE_USUARIO', 'ORDEN_TRABAJO', 'DIRECCION', 'BARRIO'
+            , 'OBSERVACIONES', 'HORA_INICIO', 'HORA_FINAL', 'FECHA_AGENDAMIENTO'
+        ];
+        columnsB.forEach(id => document.getElementById(id).value = '');
+        const columnsS = ['TIPO_TRABAJO', 'CIUDAD', 'CATEGORIA', 'TECNICO']
+        columnsS.forEach(id => document.getElementById(id).selectedIndex = 0);
+        $('#CIUDAD').val('').trigger('change');
+    }
 });

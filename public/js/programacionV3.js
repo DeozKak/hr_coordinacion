@@ -1,5 +1,5 @@
 let columnasEditables;
-
+let H_tabla;
 if(ver_programacion === "true"){
     columnasEditables = ['TECNICO','CELULAR', 'FECHA_AGENDAMIENTO', 'OBSERVACIONES', 'HORA_INICIO', 'HORA_FINAL'];
 }else{
