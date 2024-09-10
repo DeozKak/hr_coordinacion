@@ -20,13 +20,14 @@ document.addEventListener('DOMContentLoaded', () => {
     closeModalMasivoBtn.addEventListener('click', function () {
         modalPlantilla.hide();
     });
-
+    if(view === false){
     openPlantilla.addEventListener('click', function () {
         $('#addPlantilla').modal({
             show: true,
             focus: false
         });
     });
+}
 //--------------------------------------------------------------------------------
     H_tabla = new Handsontable(tabla, {
 

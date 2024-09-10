@@ -26,7 +26,9 @@
         <div class="card-header">Tabla</div>
         <div class="card-body">
           <a href="{{ route('programacion.index') }}" title="Regresar"><button class="btn btn-warning btn-sm"><i class="fa fa-arrow-left" aria-hidden="true"></i> Regresar</button></a>
+          @if($programacion->finished == 0)
           <button id="btnPlantilla" class="btn btn-primary btn-sm">Añadir en Plantilla</button>
+          @endif
           <br>
           <br>
           <div id="tabla_programacion"></div>
@@ -242,7 +244,7 @@ $tabla = isset($tabla) ? $tabla : []; // Si $tabla no está definida, se asigna 
     minimumInputLength: 2 // Mínimo de caracteres para iniciar la búsqueda
   });
 </script>
-<script src="{{ asset('js/programacionV3.js') }}" type="text/javascript"></script>
+<script src="{{ asset('js/programacionV4-1.js') }}" type="text/javascript"></script>
 <script src="{{ asset('js/formPlantilla.js') }}" type="text/javascript"></script>
 @stop
 @stop
