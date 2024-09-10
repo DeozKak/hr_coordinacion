@@ -955,12 +955,13 @@ class BitacoraController extends Controller
         ]);
     }
 
-    public function actualizar_devolucion($id)
+    public function actualizar_devolucion(Request $request,$id)
     {
-
+   
         $devolucion = tbl_dv_insp::find($id);
         $devolucion->GESTIONADO = 1;
         $devolucion->FECHA_GESTION = date('Y-m-d');
+        $devolucion->OBSERVACION_GESTION = $request->observacion;
         $devolucion->save();
        /*  $exist = tbl_bitacora_contrato::where('CONTRATO', $devolucion->CONTRATO)->where('ORDEN_TRABAJO', $devolucion->ORDEN_TRABAJO)->exists();
         if ($exist) {
