@@ -13,6 +13,7 @@ use App\Http\Controllers\InspectorController;
 use App\Http\Controllers\CorteProduccionController;
 use App\Http\Controllers\NotificationsController;
 use App\Http\Controllers\AutoGuardadoController;
+use App\Http\Controllers\NominaController;
 use Illuminate\Http\Request;
 
 
@@ -25,7 +26,7 @@ Route::middleware('web')->group(function () {
     Route::middleware('throttle:60,1')->group(function () {
         Auth::routes();
     });
-    
+
     Route::middleware('auth')->group(function () {
         Route::get('/home', [HomeController::class, 'index'])->name('home');
 
@@ -41,7 +42,7 @@ Route::middleware('web')->group(function () {
         Route::post('/store', [AsignadasController::class, 'store'])->name('cargues.store')->middleware(CheckPermission::class . ':cargue_tareas');
 
         //Rutas Gestion--------------------------------------------------------------------------------------------------------------------------
-        
+
         Route::get('/gestion/coordinacion', [CoordinacionController::class, 'coordinacion'])->name('coordinacion')->middleware(CheckPermission::class . ':ver_coordinacion_RP');
         Route::get('/gestion/getdataCoordinacionRP', [CoordinacionController::class, 'getdataCoordinacionRP'])->name('getdataCoordinacionRP')->middleware(CheckPermission::class . ':ver_coordinacion_RP');
         Route::post('/gestion/filterData', [CoordinacionController::class, 'filterData'])->name('filterData')->middleware(CheckPermission::class . ':ver_coordinacion_RP');
@@ -67,7 +68,7 @@ Route::middleware('web')->group(function () {
         Route::get('bitacoras/buscar_por_contrato', [BitacoraController::class, 'buscarPorContrato'])->name('bitacoras.buscar_por_contrato')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('municipios/json', [BitacoraController::class, 'getMunicipiosJson'])->name('municipios.json')->middleware(CheckPermission::class . ':ver_bitacoras');
         //Rutas para inspectores-----------------------------------------------------------------------------------------------------------------
-        
+
         Route::get('/inspectores', [InspectorController::class, 'index'])->name('inspectores.index')->middleware(CheckPermission::class . ':gestion_inspectores');
         Route::get('/inspectores/create', [InspectorController::class, 'create'])->name('inspectores.create')->middleware(CheckPermission::class . ':gestion_inspectores');
         Route::post('/inspectores/store', [InspectorController::class, 'store'])->name('inspectores.store')->middleware(CheckPermission::class . ':gestion_inspectores');
@@ -115,6 +116,25 @@ Route::middleware('web')->group(function () {
         Route::put('/cortes_produccion/{id}/updateCorte', [CorteProduccionController::class, 'updateCorte'])->name('cortes_produccion.updateCorte')->middleware(CheckPermission::class . ':ver_residente');
         Route::get('/cortes_producction/{id}/editMunicipio', [CorteProduccionController::class, 'editMunicipio'])->name('cortes_produccion.editMunicipio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
         Route::put('/cortes_produccion/{id}/updateMunicipio', [CorteProduccionController::class, 'updateMunicipio'])->name('cortes_produccion.updateMunicipio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
+
+        //Rutas Nomina
+        Route::get('/nomina', [NominaController::class, 'diario'])->name('nomina.index')->middleware(CheckPermission::class . ':gestion_nomina');
+        Route::get('/nomina/todos', [NominaController::class, 'showAll'])->name('nomina.todos');
+        Route::get('/nomina/enero', [NominaController::class, 'showEnero'])->name('nomina.enero');
+        Route::get('/nomina/febrero', [NominaController::class, 'showFebrero'])->name('nomina.febrero');
+        Route::get('/nomina/marzo', [NominaController::class, 'showMarzo'])->name('nomina.marzo');
+        Route::get('/nomina/abril', [NominaController::class, 'showAbril'])->name('nomina.abril');
+        Route::get('/nomina/mayo', [NominaController::class, 'showMayo'])->name('nomina.mayo');
+        Route::get('/nomina/junio', [NominaController::class, 'showJunio'])->name('nomina.junio');
+        Route::get('/nomina/julio', [NominaController::class, 'showJulio'])->name('nomina.julio');
+        Route::get('/nomina/agosto', [NominaController::class, 'showAgosto'])->name('nomina.agosto');
+        Route::get('/nomina/septiembre', [NominaController::class, 'showSeptiembre'])->name('nomina.septiembre');
+        Route::get('/nomina/octubre', [NominaController::class, 'showOctubre'])->name('nomina.octubre');
+        Route::get('/nomina/noviembre', [NominaController::class, 'showNoviembre'])->name('nomina.noviembre');
+        Route::get('/nomina/diciembre', [NominaController::class, 'showDiciembre'])->name('nomina.diciembre');
+        Route::get('/nomina/{mes}', [NominaController::class, 'showMes'])->name('nomina.mes');
+        Route::get('/nomina/editar', [NominaController::class, 'editar'])->name('nomina.editar');
+
     });
     //Rutas para notificaciones
     Route::get('notifications/get', [NotificationsController::class, 'getNotificationsData'])->name('notifications.get');

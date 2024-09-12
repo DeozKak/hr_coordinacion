@@ -322,7 +322,7 @@ return [
             ],
         ],
 
-       
+
 
         // Sidebar items:
         [
@@ -429,12 +429,6 @@ return [
                     'label_color' => 'success',
                 ],
                 [
-                    'text' => 'Nómina',
-                    'url' => 'nomina',
-                    'icon' => 'far fa-circle',
-                    'label_color' => 'success',
-                ],
-                [
                     'text' => 'Indicadores',
                     'url' => 'indicadores',
                     'icon' => 'far fa-circle',
@@ -528,6 +522,23 @@ return [
                     'url' => '/produccion/detalles',
                     'icon' => 'fas fa-circle',
                     'can' => ['ver_residente','ver_produccion'],
+                    'label_color' => 'success',
+                ],
+            ]
+        ],
+
+        ['header' => 'Nomina', 'can' => ['gestion_nomina'],],
+
+        [
+            'text' => 'Nomina',
+            'can' => ['gestion_nomina'],
+            'icon' => 'fas fa-money-check-alt',
+            'submenu' => [
+                [
+                    'text' => 'Ver Nomina',
+                    'url' => 'nomina',
+                    'icon' => 'far fa-circle',
+                    'can' => 'gestion_nomina',
                     'label_color' => 'success',
                 ],
             ]
