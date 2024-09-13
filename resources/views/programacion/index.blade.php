@@ -197,10 +197,11 @@
         Swal.fire({
             title: "{{session('warning')}}",
             showDenyButton: true,
-            showCancelButton: false,
+            showCancelButton: true, 
             allowOutsideClick: false,
             confirmButtonText: "Si",
             denyButtonText: "No",
+            cancelButtonText: "Cancelar",
         }).then((result) => {
 
             if (result.value) {
@@ -236,7 +237,7 @@
                         });
                     }
                     if (result.isDenied) {
-                        window.location.href = "{{ route('programacion.show',['id' => $temp->id]) }}";
+                        window.location.href = "{{ route('programacion.show',['id' => $temp->id]) }}?action=edit";
                     }
                 });
             }

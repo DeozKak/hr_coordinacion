@@ -205,8 +205,9 @@ $tabla = isset($tabla) ? $tabla : []; // Si $tabla no está definida, se asigna 
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/es.js"></script>
+
 <script>
-  const view = "{{ $view ?? false }}";
+  const view = "{{$view ?? false }}";
 </script>
 
 <script>

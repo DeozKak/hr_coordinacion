@@ -20,7 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
     closeModalMasivoBtn.addEventListener('click', function () {
         modalPlantilla.hide();
     });
-    if(view === false){
+  
+    if(!view){
     openPlantilla.addEventListener('click', function () {
         $('#addPlantilla').modal({
             show: true,

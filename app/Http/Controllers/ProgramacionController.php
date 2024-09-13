@@ -50,6 +50,7 @@ class ProgramacionController extends Controller
     public function create()
     {
         $programacion = tbl_programacion_usuario::where('finished', 0)->where('id_usuario', Auth::id())->first();
+       
         if (is_null($programacion)) {
             $fechaActual = Carbon::now();
             $soloFecha = $fechaActual->format('Y-m-d');
@@ -67,14 +68,15 @@ class ProgramacionController extends Controller
 
             return view('programacion.create', compact('tecnicos', 'user', 'programacion'));
         } else {
-            $tecnicos = tbl_insp_cali::select('id', 'apellidos', 'nombres')
+            return $this->index();
+           /*  $tecnicos = tbl_insp_cali::select('id', 'apellidos', 'nombres')
                 ->where('state', 1)
                 ->orderBy('apellidos') // Ordenar por apellidos ascendente
                 ->get();
 
-            $user = Auth::user();
+            $user = Auth::user(); */
 
-            return view('programacion.create', compact('tecnicos', 'user', 'programacion'));
+           
         }
     }
 
@@ -82,13 +84,11 @@ class ProgramacionController extends Controller
     {
         $action = $request->query('action');
 
-
-
         $programacion = tbl_programacion_usuario::find($id);
-        $tabla = tbl_programacion_contrato::where('id_programacion', $id)->get();
+        $tabla = tbl_programacion_contrato::where( 'id_programacion', $id)->get();
 
         if ($action === 'edit') {
-            if (auth()->user()->haspermissionTo('ver_programacion')) {
+            if (auth()->user()->haspermissionTo('generar_programacion')) {
                 $programacion->finished = 0;
                 $programacion->save();
             } else {
@@ -112,12 +112,14 @@ class ProgramacionController extends Controller
             return view('programacion.create', compact('tecnicos', 'user', 'programacion', 'tabla', 'view', 'user'));
         }
         if ($action === 'edit') {
+        
             return view('programacion.create', compact('tecnicos', 'user', 'programacion', 'tabla', 'user'));
         }
     }
 
     public function base(Request $request)
     {
+
         try {
             $request->validate([
                 'archivo' => 'required|file|mimes:xls,xlsx',
@@ -138,7 +140,6 @@ class ProgramacionController extends Controller
 
             $valor = $this->insercion($worksheet);
 
-
             if ($valor === true) {
                 return response()->json(['message' => 'Archivo subido exitosamente']);
             } else {
@@ -149,6 +150,7 @@ class ProgramacionController extends Controller
             return response()->json(['errors' => $e], 422);
         }
     }
+
 
     public function validacion($worksheet)
     {
