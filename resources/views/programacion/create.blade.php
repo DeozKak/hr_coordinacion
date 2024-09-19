@@ -64,11 +64,11 @@
             <select class="form-control" name="tipo_trabajo" id="TIPO_TRABAJO">
               <option value="">Seleccione Tipo de Trabajo</option>
               <option value="FI-29 revisión periódica línea matriz">FI-29 revisión periódica línea matriz</option>
-              <option value="RP 10444">RP 10444</option>
-              <option value="RP 12161">RP 12161</option>
-              <option value="RN 12162">RN 12162</option>
-              <option value="SA 12163">SA 12163</option>
-              <option value="SA 12164">SA 12164</option>
+              <option value="10444">RP 10444</option>
+              <option value="12161">RP 12161</option>
+              <option value="12162">RN 12162</option>
+              <option value="12163">SA 12163</option>
+              <option value="12164">SA 12164</option>
             </select>
 
           </div>
@@ -79,9 +79,7 @@
             <label for="fecha">Fecha:</label>
             <input type="date" class="form-control" name="fecha" id="FECHA" placeholder="dd-mm-yy" readonly>
           </div>
-
           <br>
-
           <div class="col-md-6">
             <label for="celular">Celular</label>
             <input type="text" class="form-control" name="celular" id="CELULAR">
@@ -105,11 +103,10 @@
           <div class="col-md-6">
             <label for="direccion">Dirección</label>
             <input type="text" class="form-control" id="DIRECCION" style="text-align: center;">
-
           </div>
           <br>
           <div class="col-md-6">
-            <label for="direccion">Barrio</label>
+            <label for="barrio">Barrio</label>
             <input type="text" class="form-control" id="BARRIO" style="text-align: center;">
           </div>
         </div>
@@ -205,7 +202,6 @@ $tabla = isset($tabla) ? $tabla : []; // Si $tabla no está definida, se asigna 
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/es.js"></script>
-
 <script>
   const view = "{{$view ?? false }}";
 </script>
@@ -216,7 +212,7 @@ $tabla = isset($tabla) ? $tabla : []; // Si $tabla no está definida, se asigna 
   const nombresTecnicos = tecnicos.map(tecnico => tecnico.id + '. ' + tecnico.apellidos + ' ' + tecnico.nombres);
   const user = @json($user -> toArray());
   const tabla_id = "{{ $programacion->id }}"
-  const ver_programacion = "{{ $user->can('ver_programacion') ? 'true' : 'false' }}";
+  const ver_programacion = "{{ Auth::user()->can('ver_programacion') ? 'true' : 'false' }}";
 
   const tabla_data = @json($tabla);
   $('#CIUDAD').select2({
@@ -245,7 +241,7 @@ $tabla = isset($tabla) ? $tabla : []; // Si $tabla no está definida, se asigna 
     minimumInputLength: 2 // Mínimo de caracteres para iniciar la búsqueda
   });
 </script>
-<script src="{{ asset('js/programacionV4-1.js') }}" type="text/javascript"></script>
+<script src="{{ asset('js/programacionV4-2.js') }}" type="text/javascript"></script>
 <script src="{{ asset('js/formPlantilla.js') }}" type="text/javascript"></script>
 @stop
 @stop

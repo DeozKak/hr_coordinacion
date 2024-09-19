@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 }
                                 console.error("La respuesta del servidor no es un objeto válido:", response);
                             }
-
+                            
                         }, error: function (xhr, status, error) {
                             // Borrar el contenido de la fila
                             alert('No se encontró registro con el contrato ingresado');

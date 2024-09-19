@@ -478,14 +478,13 @@ class ProgramacionController extends Controller
                 $tecnico = $programada->TECNICO;
                 $tecnico_sin_numero = substr($tecnico, strpos($tecnico, ". ") + 2);
 
-                /*  $bodyData = [
+                 $bodyData = [
                     'typing_time' => 0,
                     'to' => '57' . $programada->CELULAR,
                     'body' => $saludo . ', Sr./Sra. ' . $programada->NOMBRE_USUARIO . '. 👋' .
                         'Le informamos que la inspección de la red de gas en su predio está programada para el día ' . $fecha_formateada . '  entre las ' . $programada->HORA_INICIO . ' a ' . $programada->HORA_FINAL . '  La persona encargada de realizar la inspección será ' . $tecnico_sin_numero . '. 👷‍♂️' .
                         'Agradecemos su atención y colaboración. 🙏'
                 ];
-
                 $client = new Client();
                 $response = $client->request('POST', 'https://gate.whapi.cloud/messages/text', [
                     'json' => $bodyData,
@@ -494,14 +493,12 @@ class ProgramacionController extends Controller
                         'authorization' => 'Bearer bGBktWXeKxgX1syNGKtT8al4rfZHRemt',
                         'content-type' => 'application/json',
                     ],
-                ]); */
-
+                ]);
                 $programada->mensaje = 1;
                 $programada->save();
             }
         } catch (QueryException $e) {
             Log::error($e);
-
             return response()->json(['error' => $e]);
         }
         session()->flash('success', 'Programación finalizada correctamente');
@@ -510,13 +507,12 @@ class ProgramacionController extends Controller
 
     public function detalles()
     {
-
         return view('programacion.ver');
     }
 
     public function agendamiento(Request $request)
     {
-
+     
         $request->validate([
             'fechaInicio' => 'required|date',
             'fechaFin' => 'nullable|date|after_or_equal:fechaInicio',
@@ -536,7 +532,7 @@ class ProgramacionController extends Controller
                     ->join('tbl_programacion_usuarios AS pu', 'pc.id_programacion', '=', 'pu.id')
                     ->where('pc.FECHA_AGENDAMIENTO', '=', $fecha_inicio)
                     ->where('pu.finished', 1)
-                    ->where('pb.ESTADO_RECEPCION', '=', 0)
+                    ->where( 'pb.ESTADO_RECEPCION', '=', 0)
                     ->select(
                         'pc.id',
                         'pc.CONTRATO',

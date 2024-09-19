@@ -60,7 +60,6 @@
                                         @haspermission('mod_devoluciones')
                                         <th>Acciones</th>
                                         @endhaspermission
-
                                     </tr>
                                 </thead>
                                 <tbody>
