@@ -351,10 +351,12 @@ class ProgramacionController extends Controller
         $exist = tbl_programacion_contrato::where('CONTRATO', $request->data[1])
             ->where('ORDEN_TRABAJO', $request->data[6])
             ->where('TIPO_TRABAJO', $request->data[2])
-            ->exists();
-
+            ->first();
         if ($exist) {
-            return response()->json(['error' => 'Ya existe una programación con estos datos']);
+            return response()->json(['exist' => 'Ya existe una programación con estos datos',
+                                    'id' => $exist->id,
+                                    'usuario' => $exist->PORQUE_PROGRAMO,
+                                    'agendamiento' => $exist->FECHA_AGENDAMIENTO]);
         }
 
         try {
@@ -405,11 +407,11 @@ class ProgramacionController extends Controller
         return response()->json(['message' => 'Registro actualizado correctamente']);
     }
 
-    public function destroy(Request $resquest)
+    public function destroy(Request $request)
     {
-
+       
         try {
-            $id = $resquest->data;
+            $id = $request->data;
             $programacion = tbl_programacion_contrato::find($id);
             $programacion->delete();
         } catch (QueryException $e) {

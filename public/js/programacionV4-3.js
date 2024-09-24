@@ -1,8 +1,8 @@
 let columnasEditables;
 let H_tabla;
-if(ver_programacion === "true"){
-    columnasEditables = ['TECNICO','CELULAR', 'FECHA_AGENDAMIENTO', 'OBSERVACIONES', 'HORA_INICIO', 'HORA_FINAL'];
-}else{
+if (ver_programacion === "true") {
+    columnasEditables = ['TECNICO', 'CELULAR', 'FECHA_AGENDAMIENTO', 'OBSERVACIONES', 'HORA_INICIO', 'HORA_FINAL'];
+} else {
     columnasEditables = ['CELULAR', 'FECHA_AGENDAMIENTO', 'OBSERVACIONES', 'HORA_INICIO', 'HORA_FINAL'];
 }
 
@@ -11,25 +11,25 @@ document.addEventListener('DOMContentLoaded', () => {
     tabla = document.querySelector('#tabla_programacion');
 
     // codigo de modal de plantilla
-    const openPlantilla = document.getElementById('btnPlantilla');    
+    const openPlantilla = document.getElementById('btnPlantilla');
     const plantilaModal = document.getElementById('addPlantilla');
     const modalPlantilla = new bootstrap.Modal(plantilaModal);
 
     const closeModalMasivoBtn = document.querySelector('.btn-close'); // Selecciona el botón de cierre
-  
+
     closeModalMasivoBtn.addEventListener('click', function () {
         modalPlantilla.hide();
     });
-  
-    if(!view){
-    openPlantilla.addEventListener('click', function () {
-        $('#addPlantilla').modal({
-            show: true,
-            focus: false
+
+    if (!view) {
+        openPlantilla.addEventListener('click', function () {
+            $('#addPlantilla').modal({
+                show: true,
+                focus: false
+            });
         });
-    });
-}
-//--------------------------------------------------------------------------------
+    }
+    //--------------------------------------------------------------------------------
     H_tabla = new Handsontable(tabla, {
 
         columns: [
@@ -59,8 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
             {
                 data: 'CELULAR', title: 'CELULAR', readOnly: true, validator: function (value, callback) {
                     let soloNumerosRegex = /^[0-9]+$/;
-                    if ((value === "" || value === null || soloNumerosRegex.test(value)) && 
-                    (value === "" || value === null || value.length === 10)){
+                    if ((value === "" || value === null || soloNumerosRegex.test(value)) &&
+                        (value === "" || value === null || value.length === 10)) {
                         callback(true);
                     } else {
                         alert('Por favor, ingrese solo números en el campo CELULAR y asegúrese de que tenga 10 dígitos.');
@@ -156,6 +156,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                         return;
                     }
+                    const datosColumna = H_tabla.getDataAtCol(1);
+                    let existe = false;
+
+                    for (let i = 0; i < datosColumna.length; i++) {
+                        if (i !== row && datosColumna[i] === value) { // Excluir la fila que se está editando
+                            existe = true;
+                            break;
+                        }
+                    }
+
+                    if (existe) {
+                        alert('El contrato ya esta programado en la misma tabla');
+                        H_tabla.setDataAtCell(row, 1, '');
+                        return;
+                    }
                     const url_busqueda = url.replace(":id", value);
 
                     if (view === "") {
@@ -163,7 +178,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             H_tabla.getCellMeta(row, H_tabla.propToCol(colEditable)).readOnly = false;
                         });
                     }
-
                     $.ajax({
                         url: url_busqueda,
                         type: 'GET',
@@ -227,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 }
                                 console.error("La respuesta del servidor no es un objeto válido:", response);
                             }
-                            
+
                         }, error: function (xhr, status, error) {
                             // Borrar el contenido de la fila
                             alert('No se encontró registro con el contrato ingresado');
@@ -288,6 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function guardarProgramacion(row) {
 
+    const rowRef = row;
     const token = document.getElementById('token').value;
     const url = document.getElementById('url_store').value;
     let rowData = H_tabla.getDataAtRow(row);
@@ -303,15 +318,63 @@ function guardarProgramacion(row) {
                 _token: token
             },
             success: function (response) {
-                if (response.error) {
-                    
-                    const numCols = H_tabla.countCols(); // Obtener el número de columnas
-                    H_tabla.setDataAtCell(row, 0, '');
-                    for (let col = 2; col < numCols; col++) {
-                        H_tabla.setDataAtCell(row, col, '');
-                    }
-                    H_tabla.setDataAtCell(row, 1, '');
-                    alert(response.error);
+                if (response.exist) {
+                    const id = response.id;
+                    Swal.fire({
+                        title: "Este contrato ya tiene una programacion para el " + response.agendamiento + " por " + response.usuario + ", ¿desea reprogramar?",
+                        showDenyButton: true,
+                        showCancelButton: false,
+                        allowOutsideClick: false,
+                        confirmButtonText: "Si",
+                        denyButtonText: "No",
+                        cancelButtonText: "Cancelar",
+                    }).then((result) => {
+                        if (result.value) {
+                            const url = document.getElementById('url_destroy').value;
+                            $.ajax({
+                                url: url,
+                                type: 'DELETE',
+                                data: {
+                                    data: id,
+                                    _token: token
+                                },
+                                success: function (response) {
+                                    if (response.message) {
+                                        let contrato = H_tabla.getDataAtCell(row, 1);
+                                        const numCols = H_tabla.countCols(); // Obtener el número de columnas
+                                        H_tabla.setDataAtCell(row, 0, '');
+                                        for (let col = 2; col < numCols; col++) {
+                                            H_tabla.setDataAtCell(row, col, '');
+                                        }
+                                        H_tabla.setDataAtCell(row, 1, '');
+                                        H_tabla.setDataAtCell(row, 1, contrato);
+                                    }
+                                }, error: function (error) {
+                                    console.log(error);
+                                }
+                            })
+
+                        }
+
+                        if (response.error) {
+                            const numCols = H_tabla.countCols(); // Obtener el número de columnas
+                            H_tabla.setDataAtCell(row, 0, '');
+                            for (let col = 2; col < numCols; col++) {
+                                H_tabla.setDataAtCell(row, col, '');
+                            }
+                            H_tabla.setDataAtCell(row, 1, '');
+                            alert(response.error);
+                        }
+
+                        if (result.isDenied) {
+                            const numCols = H_tabla.countCols(); // Obtener el número de columnas
+                            H_tabla.setDataAtCell(row, 0, '');
+                            for (let col = 2; col < numCols; col++) {
+                                H_tabla.setDataAtCell(row, col, '');
+                            }
+                            H_tabla.setDataAtCell(row, 1, '');
+                        }
+                    })
                 }
                 if (response.id) {
                     H_tabla.setDataAtCell(row, 0, response.id);
@@ -387,12 +450,12 @@ if (view === "") {
         $('#overlay').show();
         if (!validarFilasCompletas()) {
             $('#loader').hide();
-            $('#overlay').hide(); 
+            $('#overlay').hide();
             alert("hay campos incompletos o horas incorrectas");
             return; // Detener el envío de la solicitud AJAX si hay filas incompletas
         }
 
-        const url_index = document.getElementById('url_index').value; 
+        const url_index = document.getElementById('url_index').value;
         const token = document.getElementById('token').value;
         const url_finish = document.getElementById('url_finish').value;
         const url = url_finish.replace(':id', tabla_id);
@@ -426,7 +489,7 @@ if (view === "") {
 function validarFilasCompletas() {
     const data = H_tabla.getData();
     let hayFilasConDatos = false;
-    
+
     for (let i = 0; i < data.length; i++) {
         const fila = data[i];
         let filaTieneDatos = false;

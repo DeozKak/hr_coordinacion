@@ -241,7 +241,7 @@ $tabla = isset($tabla) ? $tabla : []; // Si $tabla no está definida, se asigna 
     minimumInputLength: 2 // Mínimo de caracteres para iniciar la búsqueda
   });
 </script>
-<script src="{{ asset('js/programacionV4-2.js') }}" type="text/javascript"></script>
+<script src="{{ asset('js/programacionV4-3.js') }}" type="text/javascript"></script>
 <script src="{{ asset('js/formPlantilla.js') }}" type="text/javascript"></script>
 @stop
 @stop
