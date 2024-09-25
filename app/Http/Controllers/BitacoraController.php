@@ -547,7 +547,11 @@ class BitacoraController extends Controller
 
                     if ($datos['categoria'] === null) {
                         $consultaMovilidad = Movilidad::select('AttrCategoria')->where('NroSitio', $datos['contrato'])->where('IdTarea', $datos['no_acta'])->first();
-                        $datos['categoria'] = $consultaMovilidad->AttrCategoria;
+                    
+                        if (!is_null($consultaMovilidad) && $consultaMovilidad->AttrCategoria !== null) {
+                            $datos['categoria'] = $consultaMovilidad->AttrCategoria;
+                        } 
+                        // Si $consultaMovilidad es null, no se ejecutará el bloque if y $datos['categoria'] seguirá siendo null
                     }
 
                     if ($datos['tipo_de_trabajo'] === 'SA 12164' || $datos['tipo_de_trabajo'] === 'SA 12163') {
@@ -583,7 +587,7 @@ class BitacoraController extends Controller
                     $contrato->state = 1;
                     $contrato->save();
                 } catch (\Exception $e) {
-                    return response()->json(['error' => 'Error al guardar los datos en la base de datos']);               
+                    return response()->json(['error' => 'Error al guardar los datos en la base de datos '.$e]);               
                 }
             }
 
