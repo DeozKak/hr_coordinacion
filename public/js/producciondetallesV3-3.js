@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     customFunction: function (endpoint) {
                         let sum = 0;
                         let count = 0;
-
+                        
                         // Obtener el rango de filas
                         const fromRow = endpoint.ranges[0][0]; // Fila inicial
                         const toRow = endpoint.ranges[0][1];   // Fila final

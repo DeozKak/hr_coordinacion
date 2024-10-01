@@ -205,7 +205,7 @@ class ProgramacionController extends Controller
     {
         $registros = []; // Array para almacenar los registros en lotes
         $tamañoLote = 2000; // Puedes ajustar el tamaño del lote según tus necesidades
-
+        
         tbl_programacion_base::truncate();
 
         DB::beginTransaction(); // Iniciar una transacción
@@ -392,12 +392,9 @@ class ProgramacionController extends Controller
 
     public function update($id, Request $request)
     {
-
         try {
             $programacion = tbl_programacion_contrato::find($id);
-
             $campo = $request->propiedad;
-
             $programacion->$campo = $request->valor;
             $programacion->save();
         } catch (QueryException $e) {
@@ -433,6 +430,7 @@ class ProgramacionController extends Controller
 
     public function finish($id)
     {
+        
         try {
             $programacion = tbl_programacion_usuario::find($id);
             $programacion->finished = 1;
@@ -477,7 +475,7 @@ class ProgramacionController extends Controller
 
                 //quitar numero al tecnico
 
-                $tecnico = $programada->TECNICO;
+               /*  $tecnico = $programada->TECNICO;
                 $tecnico_sin_numero = substr($tecnico, strpos($tecnico, ". ") + 2);
 
                  $bodyData = [
@@ -495,7 +493,7 @@ class ProgramacionController extends Controller
                         'authorization' => 'Bearer bGBktWXeKxgX1syNGKtT8al4rfZHRemt',
                         'content-type' => 'application/json',
                     ],
-                ]);
+                ]); */
                 $programada->mensaje = 1;
                 $programada->save();
             }
@@ -645,7 +643,8 @@ class ProgramacionController extends Controller
 
             $plantilla = $plantilla->get();
             $busqueda = $busqueda->get();
-
+          
+         
             foreach ($plantilla as $registro) {
                 $busqueda->push($registro);
             }
@@ -716,7 +715,7 @@ class ProgramacionController extends Controller
             $fecha_hora_combinada_inicio = $fecha_original . ' ' . $hora_inicio;
             $fecha_hora_combinada_final = $fecha_original . ' ' . $hora_final;
 
-
+            
             // Crear un objeto DateTime a partir de la fecha y hora combinada
             $objeto_fecha_inicio = DateTime::createFromFormat('Y-m-d h:i:s A', $fecha_hora_combinada_inicio);
             $objeto_fecha_final = DateTime::createFromFormat('Y-m-d h:i:s A', $fecha_hora_combinada_final);

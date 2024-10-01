@@ -137,6 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         data: tabla_data,
         rowHeaders: true,
+        dropdownMenu: true,
         filters: true,
         height: '450px',
         licenseKey: 'non-commercial-and-evaluation',

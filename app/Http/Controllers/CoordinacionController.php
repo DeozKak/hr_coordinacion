@@ -17,7 +17,7 @@ class CoordinacionController extends Controller
 
     public function getdataCoordinacionRP(Request $request)
     {
-        /*  $porPagina = 100; // Cantidad de registros por página
+      /*   $porPagina = 100; // Cantidad de registros por página
         $pagina = $request->input('pagina', 1); // Obtener el número de página de la solicitud
 
         $offset = ($pagina - 1) * $porPagina;
@@ -27,12 +27,12 @@ class CoordinacionController extends Controller
             ->take($porPagina)
             ->get();
 
-        return response()->json($datos);
- */
-        $datos =  asignadas::whereIn('tipo_trabajo', [10444, 12161])->get();
+        return response()->json($datos); */
+        
+        // $datos =  asignadas::whereIn('tipo_trabajo', [10444, 12161])->get();
 
 
-        return response()->json($datos);
+        // return response()->json($datos);
         // return asignadas::whereIn('tipo_trabajo', [10444, 12161])->get()->take(50)->toJson();
 
     }
@@ -64,23 +64,22 @@ class CoordinacionController extends Controller
         ];
         
         $query = asignadas::whereIn('tipo_trabajo', [10444, 12161]);
-  
+
         if (!empty($filters)) {
             foreach ($filters as $filter) {
                 $index = $filter['column'];
                 $column = $columnMapping[$index] ?? null;
                 if ($column) {
-                $operation = $filter['operation'];
-                $conditions = $filter['conditions'];
-                // Procesar los datos de los filtros y aplicar la lógica de filtrado en la consulta
-              
-                 
+                    $operation = $filter['operation'];
+                    $conditions = $filter['conditions'];
+                    // Procesar los datos de los filtros y aplicar la lógica de filtrado en la consulta
+
+
                     $values = $conditions[1]['args'][0]; // Obtener el valor del filtro
-                
+
                     $query->whereIn($column, $values);
                 }
-            }    
-            
+            }
         }
 
         $datosFiltrados = $query->get();
