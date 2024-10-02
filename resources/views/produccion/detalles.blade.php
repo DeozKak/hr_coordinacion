@@ -9,8 +9,8 @@
 
 <input type="hidden" id="fecha_inicio" value="{{session('fecha_inicio')}}">
 <link rel="stylesheet" href="{{asset('css/produccion/produccion.css')}}">
-<script src="{{asset('js/producciondetallesV3-5.js')}}"></script>
-<script src="{{asset('js/zonas.js')}}"></script>
+<script src="{{asset('js/producciondetallesV3-7.js')}}"></script>
+<script src="{{asset('js/zonasV2.js')}}"></script>
 
 <input type="hidden" id="id_corte_detalles" value="">
 <input type="hidden" id="id_produccion" value="{{route('produccion.datosDetalles')}}">

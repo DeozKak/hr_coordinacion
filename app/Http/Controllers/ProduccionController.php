@@ -210,8 +210,6 @@ class ProduccionController extends Controller
         foreach ($periodo as $fecha) {
             $fechasIntermedias[] = $fecha->format('Y-m-d');
         }
-
-
         // sacar inspectores
         $inspectores = tbl_insp_cali::orderBy('apellidos', 'asc')->get();
         $sabados = array();
@@ -408,10 +406,6 @@ class ProduccionController extends Controller
             $datosInspector['promedio'] = number_format($datosInspector['total'] / $cantidad_dias, 1);
             $datosInspector['meta'] = $corte->meta;
             $datosInspector['porcentaje_meta'] = '%' . number_format(($datosInspector['sub_total'] / $datosInspector['meta']) * 100, 2);
-
-
-
-
 
             $produccionInspector[] = $datosInspector;
         }
@@ -714,7 +708,6 @@ class ProduccionController extends Controller
     public function consultarBitacora($fecha, $ccOperario)
     {
 
-
         // Consultar la tabla tbl_insp_cali para obtener el nombre del supervisor
         $inspector = tbl_insp_cali::select('users.name AS supervisor')
             ->join('users', 'users.id', '=', 'tbl_insp_cali.SUPERVISOR')
@@ -761,7 +754,6 @@ class ProduccionController extends Controller
 
     public function zonas(Request $request)
     {
-
         if (session('id_corte') || $request->idCorteDetalles) {
             $idCorte = session('id_corte') ?? $request->idCorteDetalles;
             $corte = tbl_produccion_corte::find($idCorte);
@@ -781,56 +773,62 @@ class ProduccionController extends Controller
         $diasIntermedios = $this->DiasIntermedios($corte);
 
         $zonas = tbl_produccion_zona::select('id', 'nombre')->get();
-
-
+       
         foreach ($zonas as $zona) {
-            $municipios = tbl_localidades_municipio::select('nombre')->where('id_zona', '=', $zona->id)->get();
-
-            $ContratosPorZonaReidencial = ['zona' => $zona->nombre . " RESIDENCIAL"];  // Inicializa con la zona
+            $ContratosPorZonaReidencial = ['zona' => $zona->nombre . " RESIDENCIAL"];
             $ContratosPorZonaComercial = ['zona' => $zona->nombre . " COMERCIAL"];
-            // Iterar por cada día en el intervalo de fechas
+    
             $period = new DatePeriod(
                 new DateTime($corte->fecha_inicio),
                 new DateInterval('P1D'),
                 (new DateTime($corte->fecha_fin))->modify('+1 day')
             );
-
+    
             foreach ($period as $date) {
                 $fecha = $date->format('Y-m-d');
-                $contadorResidencial = null;
-                $contadorComercial = null;
-
-                foreach ($municipios as $municipio) {
-                    $cantidadesResidencial = tbl_bitacora_contrato::where('MUNICIPIO', '=', $municipio->nombre)
-                        ->where('CATEGORIA', '=', 'RESIDENCIAL')
-                        ->where('FECHA', '=', $fecha)
-                        ->where('state', '=', 1)
-                        ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
-                        ->count();
-                    $contadorResidencial += $cantidadesResidencial;
-
-                    $cantidadesComercial = tbl_bitacora_contrato::where('MUNICIPIO', '=', $municipio->nombre)
-                        ->where('CATEGORIA', '=', 'COMERCIAL')
-                        ->where('FECHA', '=', $fecha)
-                        ->where('state', '=', 1)
-                        ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
-                        ->count();
-                    $contadorComercial += $cantidadesComercial;
-                }
-
-                $ContratosPorZonaReidencial[$fecha] = $contadorResidencial;
-                $ContratosPorZonaComercial[$fecha] = $contadorComercial;
+    
+                // Subconsulta para obtener los contratos residenciales
+                $contratosResidenciales = DB::table('tbl_bitacora_contratos')
+                    ->select(DB::raw('count(*) as total'))
+                    ->where('CATEGORIA', 'RESIDENCIAL')
+                    ->where('FECHA', $fecha)
+                    ->where('state', 1)
+                    ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
+                    ->whereIn('MUNICIPIO', function ($query) use ($zona) {
+                        $query->select('nombre')
+                            ->from('tbl_localidades_municipios')
+                            ->where('id_zona', $zona->id);
+                    })
+                    ->first();
+    
+                // Subconsulta para obtener los contratos comerciales
+                $contratosComerciales = DB::table('tbl_bitacora_contratos')
+                    ->select(DB::raw('count(*) as total'))
+                    ->where('CATEGORIA', 'COMERCIAL')
+                    ->where('FECHA', $fecha)
+                    ->where('state', 1)
+                    ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
+                    ->whereIn('MUNICIPIO', function ($query) use ($zona) {
+                        $query->select('nombre')
+                            ->from('tbl_localidades_municipios')
+                            ->where('id_zona', $zona->id);
+                    })
+                    ->first();
+    
+                $ContratosPorZonaReidencial[$fecha] = $contratosResidenciales->total;
+                $ContratosPorZonaComercial[$fecha] = $contratosComerciales->total;
             }
-
+    
             $conteoContratosResidencial[] = $ContratosPorZonaReidencial;
-            $conteoContratosComercial[] = $ContratosPorZonaComercial; // Agrega el array resultante al array final
+            $conteoContratosComercial[] = $ContratosPorZonaComercial;
         }
-
+     
         $response = [
             'diasIntermedios' => $diasIntermedios,
             'residencial' => $conteoContratosResidencial,
-            'comercial' => $conteoContratosComercial,
+            'comercial' => $conteoContratosComercial
         ];
+
         // Retornar la respuesta JSON
         return response()->json($response);
     }
