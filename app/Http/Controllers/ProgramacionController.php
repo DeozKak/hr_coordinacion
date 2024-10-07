@@ -922,7 +922,7 @@ class ProgramacionController extends Controller
                             $programada->TIPO_TRABAJO = $valorCelda;
                             break;
                         case 'E':
-                            $excelTimestamp = $valorCelda;
+                            $excelTimestamp = is_null($valorCelda) ? 0 : $valorCelda;
                             $fecha = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($excelTimestamp);
                             $programada->FECHA = $fecha->format('Y-m-d');
                             break;
