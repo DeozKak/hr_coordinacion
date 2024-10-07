@@ -24,6 +24,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use App\Models\tbl_bitacoras_causal;
 use App\Notifications\devolucion;
 use App\Http\Controllers\AutoGuardadoController;
+use Illuminate\Support\Facades\Log;
 
 
 class BitacoraController extends Controller
@@ -587,6 +588,7 @@ class BitacoraController extends Controller
                     $contrato->state = 1;
                     $contrato->save();
                 } catch (\Exception $e) {
+                    Log::error($e);
                     return response()->json(['error' => 'Error al guardar los datos en la base de datos '.$e]);               
                 }
             }
@@ -603,6 +605,7 @@ class BitacoraController extends Controller
 
                         //  $resultado = $validacion->getValidación_existentes();
                     } catch (\Exception $e) {
+                        Log::error($e);
                         return response()->json(['error' => 'Error al consultar los datos en la base de datos']);
                     }
 
