@@ -499,6 +499,14 @@ return [
                     'label_color' => 'success',
 
                 ],
+                [
+                    'text' => 'Parametrizar precios',
+                    'url' => 'fechasParametros',
+                    'icon' => 'far fa-circle',
+                    'can' => ['ver_residente', 'ver_coordinacion_RP'],
+                    'label_color' => 'success',
+
+                ],
             ]
         ],
 
@@ -535,8 +543,15 @@ return [
             'icon' => 'fas fa-money-check-alt',
             'submenu' => [
                 [
-                    'text' => 'Ver Nomina',
+                    'text' => 'Reporte de producción diario',
                     'url' => 'nomina',
+                    'icon' => 'far fa-circle',
+                    'can' => 'gestion_nomina',
+                    'label_color' => 'success',
+                ],
+                [
+                    'text' => 'Reporte consolidado',
+                    'url' => '/nomina/ReporteConsolidado',
                     'icon' => 'far fa-circle',
                     'can' => 'gestion_nomina',
                     'label_color' => 'success',

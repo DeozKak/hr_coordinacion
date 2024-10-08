@@ -1,119 +1,25 @@
-.content_header {
-    display: flex;
-    justify-content: center;
-    background-color: rgb(175, 180, 180);
-    padding: auto;
+.loader {
+    width: 48px;
+    height: 48px;
+    border: 5px solid orangered;
+    border-bottom-color: #00BFFF;
+    border-radius: 50%;
+    display: inline-block;
+    box-sizing: border-box;
+    animation: rotation 1s linear infinite;
 }
-.btn1 {
-    background-color: dodgerblue;
-    border: 0px;
-    padding: 5px;
-    color: black;
-    border-radius: 5px;
-    margin-right: 5px;
-    margin-top: 25px;
+
+@keyframes rotation {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
-.btn2 {
-    background-color: dodgerblue;
-    border: 0px;
-    padding: 5px;
-    color: black;
-    border-radius: 5px;
-    margin-right: 5px;
-}
-.btn3 {
-    background-color: dodgerblue;
-    border: 0px;
-    padding: 5px;
-    color: black;
-    border-radius: 5px;
-    margin-right: 5px;
-}
-.btn4 {
-    background-color: dodgerblue;
-    border: 0px;
-    padding: 5px;
-    color: black;
-    border-radius: 5px;
-    margin-right: 5px;
-}
-.btn5 {
-    background-color: dodgerblue;
-    border: 0px;
-    padding: 5px;
-    color: black;
-    border-radius: 5px;
-    margin-right: 5px;
-}
-.btn6 {
-    background-color: dodgerblue;
-    border: 0px;
-    padding: 5px;
-    color: black;
-    border-radius: 5px;
-    margin-right: 5px;
-}
-.btn7 {
-    background-color: dodgerblue;
-    border: 0px;
-    padding: 5px;
-    color: black;
-    border-radius: 5px;
-    margin-right: 5px;
-}
-.btn8 {
-    background-color: dodgerblue;
-    border: 0px;
-    padding: 5px;
-    color: black;
-    border-radius: 5px;
-    margin-right: 5px;
-}
-.btn9 {
-    background-color: dodgerblue;
-    border: 0px;
-    padding: 5px;
-    color: black;
-    border-radius: 5px;
-    margin-right: 5px;
-}
-.btn10 {
-    background-color: dodgerblue;
-    border: 0px;
-    padding: 5px;
-    color: black;
-    border-radius: 5px;
-    margin-right: 5px;
-}
-.btn11 {
-    background-color: dodgerblue;
-    border: 0px;
-    padding: 5px;
-    color: black;
-    border-radius: 5px;
-    margin-right: 5px;
-}
-.btn12 {
-    background-color: dodgerblue;
-    border: 0px;
-    padding: 5px;
-    color: black;
-    border-radius: 5px;
-    margin-right: 5px;
-}
-.btn13 {
-    background-color: dodgerblue;
-    border: 0px;
-    padding: 5px;
-    color: black;
-    border-radius: 5px;
-    margin-right: 50%;
-}
-.btn14 {
-    background-color: rgb(245, 19, 19);
-    border: 0px;
-    padding: 5px;
-    color: black;
-    border-radius: 5px;
-    margin-right: 5px;
+
+.cell-error {
+    background-color: #FFC7CE !important;
+    color: #A90046 !important;
 }

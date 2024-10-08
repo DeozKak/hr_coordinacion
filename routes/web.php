@@ -119,7 +119,6 @@ Route::middleware('web')->group(function () {
 
         //Rutas Nomina
         Route::get('/nomina', [NominaController::class, 'diario'])->name('nomina.index')->middleware(CheckPermission::class . ':gestion_nomina');
-        Route::get('/nomina/todos', [NominaController::class, 'showAll'])->name('nomina.todos');
         Route::get('/nomina/enero', [NominaController::class, 'showEnero'])->name('nomina.enero');
         Route::get('/nomina/febrero', [NominaController::class, 'showFebrero'])->name('nomina.febrero');
         Route::get('/nomina/marzo', [NominaController::class, 'showMarzo'])->name('nomina.marzo');
@@ -132,9 +131,15 @@ Route::middleware('web')->group(function () {
         Route::get('/nomina/octubre', [NominaController::class, 'showOctubre'])->name('nomina.octubre');
         Route::get('/nomina/noviembre', [NominaController::class, 'showNoviembre'])->name('nomina.noviembre');
         Route::get('/nomina/diciembre', [NominaController::class, 'showDiciembre'])->name('nomina.diciembre');
-        Route::get('/nomina/{mes}', [NominaController::class, 'showMes'])->name('nomina.mes');
-        Route::get('/nomina/editar', [NominaController::class, 'editar'])->name('nomina.editar');
-
+        Route::post('/nomina/guardar', [NominaController::class, 'guardarNomina'])->name('nomina.guardar');
+        Route::post('/nomina/inspeccionIndustrial', [NominaController::class, 'inspeccionIndustrial'])->name('nomina.guardarInspeccionIndustrial')->middleware(CheckPermission::class . ':gestion_nomina');;
+        Route::post('/nomina/metas', [NominaController::class, 'insertarMetas'])->name('nomina.insertarMetas')->middleware(CheckPermission::class . ':gestion_nomina');;
+        Route::get('/nomina/ReporteConsolidado', [NominaController::class, 'reporteConsolidado'])->name('nomina.reporteConsolidado')->middleware(CheckPermission::class . ':gestion_nomina');;
+        Route::post('/nomina/generarReportePorMes', [NominaController::class, 'generarReportePorMes'])->name('nomina.generarReportePorMes')->middleware(CheckPermission::class . ':gestion_nomina');;
+        Route::post('/nomina/generarReporteConsolidado', [NominaController::class, 'generarReporteConsolidado'])->name('nomina.generarReporteConsolidado')->middleware(CheckPermission::class . ':gestion_nomina');;
+        Route::get('/fechasParametros', [NominaController::class, 'fechasNomina'])->name('fechas_nomina.registrar')->middleware(CheckPermission::class . ':gestion_nomina');
+        Route::post('/fechasParametro/guardar', [NominaController::class, 'guardarFechasParametros'])->name('fechasParametro.guardar')->middleware(CheckPermission::class . ':gestion_nomina');;
+        Route::post('/fechasParametro/actualizar', [NominaController::class, 'actualizarFechasParametros'])->name('fechasParametro.actualizar')->middleware(CheckPermission::class . ':gestion_nomina');;
     });
     //Rutas para notificaciones
     Route::get('notifications/get', [NotificationsController::class, 'getNotificationsData'])->name('notifications.get');
