@@ -50,7 +50,7 @@ class ProgramacionController extends Controller
     public function create()
     {
         $programacion = tbl_programacion_usuario::where('finished', 0)->where('id_usuario', Auth::id())->first();
-       
+
         if (is_null($programacion)) {
             $fechaActual = Carbon::now();
             $soloFecha = $fechaActual->format('Y-m-d');
@@ -69,14 +69,12 @@ class ProgramacionController extends Controller
             return view('programacion.create', compact('tecnicos', 'user', 'programacion'));
         } else {
             return $this->index();
-           /*  $tecnicos = tbl_insp_cali::select('id', 'apellidos', 'nombres')
+            /*  $tecnicos = tbl_insp_cali::select('id', 'apellidos', 'nombres')
                 ->where('state', 1)
                 ->orderBy('apellidos') // Ordenar por apellidos ascendente
                 ->get();
 
             $user = Auth::user(); */
-
-           
         }
     }
 
@@ -85,7 +83,7 @@ class ProgramacionController extends Controller
         $action = $request->query('action');
 
         $programacion = tbl_programacion_usuario::find($id);
-        $tabla = tbl_programacion_contrato::where( 'id_programacion', $id)->get();
+        $tabla = tbl_programacion_contrato::where('id_programacion', $id)->get();
 
         if ($action === 'edit') {
             if (auth()->user()->haspermissionTo('generar_programacion')) {
@@ -112,7 +110,7 @@ class ProgramacionController extends Controller
             return view('programacion.create', compact('tecnicos', 'user', 'programacion', 'tabla', 'view', 'user'));
         }
         if ($action === 'edit') {
-        
+
             return view('programacion.create', compact('tecnicos', 'user', 'programacion', 'tabla', 'user'));
         }
     }
@@ -205,7 +203,7 @@ class ProgramacionController extends Controller
     {
         $registros = []; // Array para almacenar los registros en lotes
         $tamañoLote = 2000; // Puedes ajustar el tamaño del lote según tus necesidades
-        
+
         tbl_programacion_base::truncate();
 
         DB::beginTransaction(); // Iniciar una transacción
@@ -325,9 +323,10 @@ class ProgramacionController extends Controller
         }
 
         $datos = tbl_programacion_base::where('CONTRATO', $contrato)->first();
-
-        if ($datos->ESTADO_RECEPCION == '1' || $datos->ESTADO_RECEPCION == '2') {
-            return response()->json(['errors' => 'El contrato ya ha sido ejecutado']);
+        if ($datos->ESTADO_RECEPCION !== null) {
+            if ($datos->ESTADO_RECEPCION == '1' || $datos->ESTADO_RECEPCION == '2') {
+                return response()->json(['errors' => 'El contrato ya ha sido ejecutado']);
+            }
         }
 
         if ($datos) {
@@ -353,10 +352,12 @@ class ProgramacionController extends Controller
             ->where('TIPO_TRABAJO', $request->data[2])
             ->first();
         if ($exist) {
-            return response()->json(['exist' => 'Ya existe una programación con estos datos',
-                                    'id' => $exist->id,
-                                    'usuario' => $exist->PORQUE_PROGRAMO,
-                                    'agendamiento' => $exist->FECHA_AGENDAMIENTO]);
+            return response()->json([
+                'exist' => 'Ya existe una programación con estos datos',
+                'id' => $exist->id,
+                'usuario' => $exist->PORQUE_PROGRAMO,
+                'agendamiento' => $exist->FECHA_AGENDAMIENTO
+            ]);
         }
 
         try {
@@ -406,7 +407,7 @@ class ProgramacionController extends Controller
 
     public function destroy(Request $request)
     {
-       
+
         try {
             $id = $request->data;
             $programacion = tbl_programacion_contrato::find($id);
@@ -430,7 +431,7 @@ class ProgramacionController extends Controller
 
     public function finish($id)
     {
-        
+
         try {
             $programacion = tbl_programacion_usuario::find($id);
             $programacion->finished = 1;
@@ -475,7 +476,7 @@ class ProgramacionController extends Controller
 
                 //quitar numero al tecnico
 
-               /*  $tecnico = $programada->TECNICO;
+                /*  $tecnico = $programada->TECNICO;
                 $tecnico_sin_numero = substr($tecnico, strpos($tecnico, ". ") + 2);
 
                  $bodyData = [
@@ -512,7 +513,7 @@ class ProgramacionController extends Controller
 
     public function agendamiento(Request $request)
     {
-     
+
         $request->validate([
             'fechaInicio' => 'required|date',
             'fechaFin' => 'nullable|date|after_or_equal:fechaInicio',
@@ -532,7 +533,7 @@ class ProgramacionController extends Controller
                     ->join('tbl_programacion_usuarios AS pu', 'pc.id_programacion', '=', 'pu.id')
                     ->where('pc.FECHA_AGENDAMIENTO', '=', $fecha_inicio)
                     ->where('pu.finished', 1)
-                    ->where( 'pb.ESTADO_RECEPCION', '=', 0)
+                    ->where('pb.ESTADO_RECEPCION', '=', 0)
                     ->select(
                         'pc.id',
                         'pc.CONTRATO',
@@ -643,8 +644,8 @@ class ProgramacionController extends Controller
 
             $plantilla = $plantilla->get();
             $busqueda = $busqueda->get();
-          
-         
+
+
             foreach ($plantilla as $registro) {
                 $busqueda->push($registro);
             }
@@ -715,7 +716,7 @@ class ProgramacionController extends Controller
             $fecha_hora_combinada_inicio = $fecha_original . ' ' . $hora_inicio;
             $fecha_hora_combinada_final = $fecha_original . ' ' . $hora_final;
 
-            
+
             // Crear un objeto DateTime a partir de la fecha y hora combinada
             $objeto_fecha_inicio = DateTime::createFromFormat('Y-m-d h:i:s A', $fecha_hora_combinada_inicio);
             $objeto_fecha_final = DateTime::createFromFormat('Y-m-d h:i:s A', $fecha_hora_combinada_final);
@@ -1072,38 +1073,38 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
         return true;
     }
 
-    public function buscarPorContrato(Request $request){
+    public function buscarPorContrato(Request $request)
+    {
 
         $contrato = $request->input('contrato');
         $array = array();
 
-        try{
-        $programadas = tbl_programacion_usuario::whereIn(
-            'id',
-            tbl_programacion_contrato::select('id_programacion')
-                ->where('CONTRATO', 'LIKE', '%' . $contrato . '%')
-        )->get();
+        try {
+            $programadas = tbl_programacion_usuario::whereIn(
+                'id',
+                tbl_programacion_contrato::select('id_programacion')
+                    ->where('CONTRATO', 'LIKE', '%' . $contrato . '%')
+            )->get();
 
-        foreach ($programadas as $programada) {
-            $usuario = User::find($programada->id_usuario);
+            foreach ($programadas as $programada) {
+                $usuario = User::find($programada->id_usuario);
 
-            $array[] = [
-                'id' => $programada->id,
-                'nombre' => $programada->nombre,
-                'usuario' => $usuario->name,
-            ];
-        
+                $array[] = [
+                    'id' => $programada->id,
+                    'nombre' => $programada->nombre,
+                    'usuario' => $usuario->name,
+                ];
+            }
+        } catch (Exception $e) {
+            Log::error($e);
+            return response()->json(['error' => $e], 422);
         }
-    }catch (Exception $e) {
-        Log::error($e);
-        return response()->json(['error' => $e], 422);
-
-    }
         return response()->json($array);
     }
 
-    public function PlantillaStore(Request $request){
-     
+    public function PlantillaStore(Request $request)
+    {
+
         try {
             $programacion = new tbl_programacion_contrato();
             $programacion->CONTRATO = $request->data['CONTRATO'];
@@ -1131,11 +1132,7 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
 
             log::error($e);
             return response()->json(['error' => $e]);
-
         }
-        return response()->json(['message' => 'Registro guardado correctamente','id' => $programacion->id],200);
+        return response()->json(['message' => 'Registro guardado correctamente', 'id' => $programacion->id], 200);
     }
-
-
-    
 }
