@@ -9,12 +9,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Rmunate\Calendario\CalendarioColombia;
 
-class NominaController extends Controller
+class ReporteProduccionController extends Controller
 {
     public function diario()
     {
         $currentYear = date('Y') + 1;
-        return view('nomina.diario', compact('currentYear'));
+        return view('reporteProduccion.diario', compact('currentYear'));
     }
 
     public function showEnero(Request $request)
@@ -211,7 +211,6 @@ class NominaController extends Controller
                 'conteos' => $counts
             ];
 
-
             if (CalendarioColombia::date($dateString)->isHoliday()) {
                 $diasFestivos[] = $dateString;
             }
@@ -234,7 +233,7 @@ class NominaController extends Controller
         return response()->json($data);
     }
 
-    public function guardarNomina(Request $request)
+    public function guardarProduccion(Request $request)
     {
         $nuevaCant = $request->input('nuevaCant');
         $fecha = $request->input('fechaFila');
@@ -295,11 +294,11 @@ class NominaController extends Controller
         }
     }
 
-    public function fechasNomina()
+    public function fechasProduccion()
     {
         // consultamos los precios parametrizados
         $fechaPrecios = TblParametroPrecios::orderBy('id', 'desc')->get();
-        return view('nomina.registrarFechasNomina', compact('fechaPrecios'));
+        return view('reporteProduccion.registrarFechasNomina', compact('fechaPrecios'));
     }
 
     public function reporteConsolidado()
@@ -319,7 +318,7 @@ class NominaController extends Controller
             '-12' => 'Diciembre'
         ];
         $currentYear = date('Y') + 1;
-        return view('nomina.reporteConsolidado', compact('meses', 'currentYear'));
+        return view('reporteProduccion.reporteConsolidado', compact('meses', 'currentYear'));
     }
 
     public function generarReporteConsolidado(Request $request)
@@ -476,14 +475,13 @@ class NominaController extends Controller
     public function generarReportePorMes(Request $request)
     {
         $fecha = $request->input('data');
-
+        
         $anio = substr($fecha, 0, 4);
 
         // realizamos la misma consulta de los precios parametrizados
-        $parametroPrecios = TblParametroPrecios::whereYear('fecha_inicio', $anio)
-            ->whereYear('fecha_fin', $anio)
-            ->first();
-
+        $parametroPrecios = TblParametroPrecios::where('fecha_inicio', 'like', $anio . '%')
+        ->where('fecha_fin', 'like', $anio . '%')
+        ->first();
 
         if ($parametroPrecios == null) {
             $fechasParametro[] = [

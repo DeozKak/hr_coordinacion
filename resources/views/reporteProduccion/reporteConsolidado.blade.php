@@ -5,14 +5,14 @@
 @section('content_header')
 <div class="d-flex align-items-center">
     <h1 class="mb-2">Reporte Consolidado</h1>
-    <a href="{{ route('fechas_nomina.registrar') }}" class="ml-2" title="Recuerde parametrizar precios, para parametrizar precios haga click en el signo de interrogación" style="cursor: pointer;">
+    <a href="{{ route('fechasProduccion.registrar') }}" class="ml-2" title="Recuerde parametrizar precios, para parametrizar precios haga click en el signo de interrogación" style="cursor: pointer;">
         <i class="fas fa-question-circle"></i>
     </a>
 </div>
 @endsection
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/nomina/reporteConsolidado.css') }}">
+<link rel="stylesheet" href="{{ asset('css/reporteProduccion/reporteConsolidado.css') }}">
 <div class="row">
     <div class="col-md-2 mt-1">
         <select id="selectorAnio" class="form-control" aria-label="Seleccionar año"
@@ -56,7 +56,7 @@
                 <div class="card-body">
                     <x-adminlte-card title="REPORTE POR ZONA" theme="info" icon="fas fa-file-alt" collapsible maximizable>
                         <div class="divSelector mb-3" style="display: none">
-                            <select id="selectorMes" class="form-control selector-pequeno" aria-label="Seleccionar mes" data-url="{{ route('nomina.generarReportePorMes') }}">
+                            <select id="selectorMes" class="form-control selector-pequeno" aria-label="Seleccionar mes" data-url="{{ route('produccion.generarReportePorMes') }}">
                                 <option value="0" disabled selected>Seleccione un mes</option>
                                 @foreach ($meses as $index => $mes)
                                 <option value="{{ $index }}">{{ $mes }}</option>
@@ -72,9 +72,9 @@
         </div>
     </div>
 </div>
-<input type="hidden" id="guardarMetas" value="{{ route('nomina.insertarMetas') }}">
+<input type="hidden" id="guardarMetas" value="{{ route('produccion.insertarMetas') }}">
 @endsection
 
 @section('js')
-<script src="{{ asset('js/nomina/reporteConsolidado.js') }}"></script>
+<script src="{{ asset('js/reporteProduccion/reporteConsolidado.js') }}"></script>
 @endsection

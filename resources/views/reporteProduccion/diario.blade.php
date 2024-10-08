@@ -5,7 +5,7 @@
 @section('content_header')
 <div class="d-flex align-items-center">
     <h1 class="mb-2">Reporte de producción diario</h1>
-    <a href="{{ route('fechas_nomina.registrar') }}" class="ml-2" title="Recuerde parametrizar precios, para parametrizar precios haga click en el signo de interrogación" style="cursor: pointer;">
+    <a href="{{ route('fechasProduccion.registrar') }}" class="ml-2" title="Recuerde parametrizar precios, para parametrizar precios haga click en el signo de interrogación" style="cursor: pointer;">
         <i class="fas fa-question-circle"></i>
     </a>
 </div>
@@ -13,7 +13,7 @@
 
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/nomina/diario_nomina.css') }}">
+<link rel="stylesheet" href="{{ asset('css/reporteProduccion/reporteDiarioProduccion.css') }}">
 
 <div class="row align-items-center">
     <div class="col-md-2">
@@ -27,18 +27,18 @@
     <div class="col-md-3 nominaSelectorMes" style="display: none">
         <select id="nomina-selector" class="form-control" aria-label="Seleccionar mes">
             <option value="" disabled selected>Seleccione un mes</option>
-            <option value="{{ route('nomina.enero') }}">Enero</option>
-            <option value="{{ route('nomina.febrero') }}">Febrero</option>
-            <option value="{{ route('nomina.marzo') }}">Marzo</option>
-            <option value="{{ route('nomina.abril') }}">Abril</option>
-            <option value="{{ route('nomina.mayo') }}">Mayo</option>
-            <option value="{{ route('nomina.junio') }}">Junio</option>
-            <option value="{{ route('nomina.julio') }}">Julio</option>
-            <option value="{{ route('nomina.agosto') }}">Agosto</option>
-            <option value="{{ route('nomina.septiembre') }}">Septiembre</option>
-            <option value="{{ route('nomina.octubre') }}">Octubre</option>
-            <option value="{{ route('nomina.noviembre') }}">Noviembre</option>
-            <option value="{{ route('nomina.diciembre') }}">Diciembre</option>
+            <option value="{{ route('produccion.enero') }}">Enero</option>
+            <option value="{{ route('produccion.febrero') }}">Febrero</option>
+            <option value="{{ route('produccion.marzo') }}">Marzo</option>
+            <option value="{{ route('produccion.abril') }}">Abril</option>
+            <option value="{{ route('produccion.mayo') }}">Mayo</option>
+            <option value="{{ route('produccion.junio') }}">Junio</option>
+            <option value="{{ route('produccion.julio') }}">Julio</option>
+            <option value="{{ route('produccion.agosto') }}">Agosto</option>
+            <option value="{{ route('produccion.septiembre') }}">Septiembre</option>
+            <option value="{{ route('produccion.octubre') }}">Octubre</option>
+            <option value="{{ route('produccion.noviembre') }}">Noviembre</option>
+            <option value="{{ route('produccion.diciembre') }}">Diciembre</option>
         </select>
     </div>
     <div class="col-md-2 d-flex align-items-center">
@@ -70,11 +70,11 @@
         </div>
     </div>
 </div>
-<input type="hidden" id="guardarNomina" value="{{ route('nomina.guardar') }}">
-<input type="hidden" id="guardarInspeccion" value="{{ route('nomina.guardarInspeccionIndustrial') }}">
+<input type="hidden" id="guardarNomina" value="{{ route('produccion.guardar') }}">
+<input type="hidden" id="guardarInspeccion" value="{{ route('produccion.guardarInspeccionIndustrial') }}">
 <input type="hidden" id="tokenNomina" value="{{ csrf_token() }}">
 @endsection
 
 @section('js')
-<script src="{{ asset('js/nomina/diario_nomina.js') }}"></script>
+<script src="{{ asset('js/reporteProduccion/reporteDiarioProduccion.js') }}"></script>
 @endsection

@@ -532,6 +532,20 @@ return [
                     'can' => ['ver_residente','ver_produccion'],
                     'label_color' => 'success',
                 ],
+                [
+                    'text' => 'Reporte de producción diario',
+                    'url' => '/reporteProduccion',
+                    'icon' => 'far fa-circle',
+                    'can' => 'gestion_nomina',
+                    'label_color' => 'success',
+                ],
+                [
+                    'text' => 'Reporte consolidado',
+                    'url' => '/produccion/ReporteConsolidado',
+                    'icon' => 'far fa-circle',
+                    'can' => 'gestion_nomina',
+                    'label_color' => 'success',
+                ],
             ]
         ],
 
@@ -542,20 +556,7 @@ return [
             'can' => ['gestion_nomina'],
             'icon' => 'fas fa-money-check-alt',
             'submenu' => [
-                [
-                    'text' => 'Reporte de producción diario',
-                    'url' => 'nomina',
-                    'icon' => 'far fa-circle',
-                    'can' => 'gestion_nomina',
-                    'label_color' => 'success',
-                ],
-                [
-                    'text' => 'Reporte consolidado',
-                    'url' => '/nomina/ReporteConsolidado',
-                    'icon' => 'far fa-circle',
-                    'can' => 'gestion_nomina',
-                    'label_color' => 'success',
-                ],
+                
             ]
         ],
         /*  [
