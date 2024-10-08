@@ -88,7 +88,6 @@ document.addEventListener("DOMContentLoaded", function() {
                     valoresPrevios = [];
 
                     const preciosParametro = data.preciosParametros;
-                    console.log(preciosParametro)
                     const fechas = data.conteos;
                     const diasFestivos = data.diasFestivos;
                     const diasSabados = data.diasSabados;

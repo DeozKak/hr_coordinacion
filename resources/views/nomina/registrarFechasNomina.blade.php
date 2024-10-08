@@ -15,11 +15,11 @@
                             <div class="row">
                                 <div class="col-4">
                                     <label for="fechaPrecioInicio">Fecha inicio</label>
-                                    <input type="date" class="form-control" id="fechaPrecioInicio">
+                                    <input type="month" class="form-control" id="fechaPrecioInicio">
                                 </div>
                                 <div class="col-4">
                                     <label for="fechaPrecioFin">Fecha fin</label>
-                                    <input type="date" class="form-control" id="fechaPrecioFin">
+                                    <input type="month" class="form-control" id="fechaPrecioFin">
                                 </div>
                                 <div class="col-4">
                                     <label for="inspeccionInd">Inspección industrial</label>

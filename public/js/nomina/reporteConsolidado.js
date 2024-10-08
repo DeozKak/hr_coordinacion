@@ -635,7 +635,6 @@ $(document).ready(function () {
                 reporteMes.show();
             },
             error: function(xhr, status, error) {
-                console.log(error)
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
