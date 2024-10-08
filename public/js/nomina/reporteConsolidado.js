@@ -88,24 +88,52 @@ $(document).ready(function () {
                 previas.show();
 
                 let data = response;
-                console.log(data)
+
+                let totalGeneral = 0;
+
                 // Formatear los datos para Handsontable
-                let formattedData = data.map(item => [
-                    item.nombre_mes,
-                    item.total_residencial || 0,
-                    item.total_comercial || 0,
-                    item.total_inspecciones || 0,
-                    (item.total_residencial + item.total_comercial + item.total_inspecciones) || 0, // Total
-                    item.total_inspectores, // No Inspectores (Placeholder)
-                    formatter.format(item.total), // Valor (Placeholder)
-                    0, // Promedio Diario UND (Placeholder)
-                    0, // Promedio por Inspector UND (Placeholder)
-                    0, // Promedio Diario $ (Placeholder)
-                    0, // Promedio por Inspector $ (Placeholder)
-                    item.metaGyc, // Meta E&C (Placeholder)
-                    0+" %" , // % Cumpl (Placeholder)
-                    item.metaGdo, // Meta GDO (Placeholder)
-                    0+" %"  // % Cumpl GDO (Placeholder)
+                let formattedData = data.map(item => {
+
+                    let totalFila = (item.total_residencial + item.total_comercial + item.total_inspecciones) || 0;
+
+                    totalGeneral += totalFila;
+
+                    return [
+                        item.nombre_mes,
+                        item.total_residencial || 0,
+                        item.total_comercial || 0,
+                        item.total_inspecciones || 0,
+                        totalFila, // Total de la fila
+                        item.total_inspectores, // No Inspectores (Placeholder)
+                        formatter.format(item.total), // Valor (Placeholder)
+                        0, // Promedio Diario UND (Placeholder)
+                        0, // Promedio por Inspector UND (Placeholder)
+                        0, // Promedio Diario $ (Placeholder)
+                        0, // Promedio por Inspector $ (Placeholder)
+                        item.metaGyc, // Meta E&C (Placeholder)
+                        0 + " %", // % Cumpl (Placeholder)
+                        item.metaGdo, // Meta GDO (Placeholder)
+                        0 + " %"  // % Cumpl GDO (Placeholder)
+                    ];
+                });
+
+                // Agregar la fila de totales al final de los datos formateados
+                formattedData.push([
+                    'TOTAL',
+                    "", // Puedes dejar vacías las columnas que no quieras sumar
+                    "", // Si deseas sumar otras columnas, puedes hacerlo aquí
+                    "",
+                    totalGeneral, // Total general sumado
+                    "", // No Inspectores (Placeholder)
+                    "", // Valor (Placeholder)
+                    "", // Promedio Diario UND (Placeholder)
+                    "", // Promedio por Inspector UND (Placeholder)
+                    "", // Promedio Diario $ (Placeholder)
+                    "", // Promedio por Inspector $ (Placeholder)
+                    "", // Meta E&C (Placeholder)
+                    "", // % Cumpl (Placeholder)
+                    "", // Meta GDO (Placeholder)
+                    ""  // % Cumpl GDO (Placeholder)
                 ]);
     
                 // Actualizar los datos en la tabla Handsontable
@@ -128,6 +156,40 @@ $(document).ready(function () {
                         'META GDO',
                         '% CUMPL'
                     ],
+                });
+
+                // ponemos las columnas 11 y 13 editables
+                handReporte.updateSettings({
+                    cells: function (rowIndex, colIndex) {
+                        let cellProperties = {};
+
+                        if(colIndex === 0){
+                            cellProperties.className = 'cell-mes';
+                        }
+
+                        if (colIndex === 13 && rowIndex !== 12) {
+                            cellProperties.readOnly = false;
+                            cellProperties.className = 'cell-metaGDO';
+                        }
+
+                        //ponemos de color rojo la columna 11
+                        if (colIndex === 11 && rowIndex !== 12) {
+                            cellProperties.readOnly = false;
+                            cellProperties.className = 'cell-metaEYC';
+                        }
+                        return cellProperties;
+                    },
+                    afterOnCellMouseDown: function(event, coords, TD) {
+                        if (coords.col === 11 || coords.col === 13) {
+                            setTimeout(function() {
+                                const hotTextarea = document.querySelector('textarea.handsontableInput');
+                                if (hotTextarea) {
+                                    hotTextarea.removeAttribute('aria-hidden');
+                                    hotTextarea.setAttribute('tabindex', '0');
+                                }
+                            }, 0);
+                        }
+                    },
                 });
 
                 let formattedData2 = data.map(item => [
@@ -213,8 +275,9 @@ $(document).ready(function () {
                 });
 
                 let ultimaFila = handReporte.countRows();
+                let penultimateRow = ultimaFila - 2
 
-                for(let i = 0; i < ultimaFila; i++) {
+                for(let i = 0; i < penultimateRow; i++) {
                     let insResFila = handReporte.getDataAtCell(i, 1);
                     let insComFila = handReporte.getDataAtCell(i, 2);
                     let numInspectores = handReporte.getDataAtCell(i, 5);
@@ -317,45 +380,15 @@ $(document).ready(function () {
                     // ---------------------------------------------------------------
 
                 }
-                
-                // ponemos las columnas 11 y 13 editables
-                handReporte.updateSettings({
-                    cells: function (rowIndex, colIndex) {
-                        let cellProperties = {};
-
-                        if(colIndex === 0){
-                            cellProperties.className = 'cell-mes';
-                        }
-
-                        if (colIndex === 13) {
-                            cellProperties.readOnly = false;
-                            cellProperties.className = 'cell-metaGDO';
-                        }
-
-                        //ponemos de color rojo la columna 11
-                        if (colIndex === 11) {
-                            cellProperties.readOnly = false;
-                            cellProperties.className = 'cell-metaEYC';
-                        }
-                        return cellProperties;
-                    },
-                    afterOnCellMouseDown: function(event, coords, TD) {
-                        if (coords.col === 11 || coords.col === 13) {
-                            setTimeout(function() {
-                                const hotTextarea = document.querySelector('textarea.handsontableInput');
-                                if (hotTextarea) {
-                                    hotTextarea.removeAttribute('aria-hidden');
-                                    hotTextarea.setAttribute('tabindex', '0');
-                                }
-                            }, 0);
-                        }
-                    },
-                });
 
                 handReporte.addHook('afterChange', function (changes, source) {
                     if (source === 'edit') {
                         changes.forEach(([row, col, oldValue, newValue]) => {
-                            if (col === 11) {
+                            
+                            let totalRows = handReporte.countRows();
+                            let penultimateRow = totalRows - 2;
+
+                            if (col === 11 && row === penultimateRow) {
                                 if(newValue === ""){
                                     newValue = 0;
                                 }
@@ -407,7 +440,7 @@ $(document).ready(function () {
                                         }
                                     })
                                 }
-                            }else if(col == 13){
+                            }else if(col == 13 && row === penultimateRow){
                                 if(newValue === ""){
                                     newValue = 0;
                                 }
