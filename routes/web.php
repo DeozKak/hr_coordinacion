@@ -13,6 +13,7 @@ use App\Http\Controllers\InspectorController;
 use App\Http\Controllers\CorteProduccionController;
 use App\Http\Controllers\NotificationsController;
 use App\Http\Controllers\AutoGuardadoController;
+use App\Http\Controllers\ReporteProduccionController;
 use Illuminate\Http\Request;
 
 
@@ -25,7 +26,7 @@ Route::middleware('web')->group(function () {
     Route::middleware('throttle:60,1')->group(function () {
         Auth::routes();
     });
-    
+
     Route::middleware('auth')->group(function () {
         Route::get('/home', [HomeController::class, 'index'])->name('home');
 
@@ -41,7 +42,7 @@ Route::middleware('web')->group(function () {
         Route::post('/store', [AsignadasController::class, 'store'])->name('cargues.store')->middleware(CheckPermission::class . ':cargue_tareas');
 
         //Rutas Gestion--------------------------------------------------------------------------------------------------------------------------
-        
+
         Route::get('/gestion/coordinacion', [CoordinacionController::class, 'coordinacion'])->name('coordinacion')->middleware(CheckPermission::class . ':ver_coordinacion_RP');
         Route::get('/gestion/getdataCoordinacionRP', [CoordinacionController::class, 'getdataCoordinacionRP'])->name('getdataCoordinacionRP')->middleware(CheckPermission::class . ':ver_coordinacion_RP');
         Route::post('/gestion/filterData', [CoordinacionController::class, 'filterData'])->name('filterData')->middleware(CheckPermission::class . ':ver_coordinacion_RP');
@@ -67,7 +68,7 @@ Route::middleware('web')->group(function () {
         Route::get('bitacoras/buscar_por_contrato', [BitacoraController::class, 'buscarPorContrato'])->name('bitacoras.buscar_por_contrato')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('municipios/json', [BitacoraController::class, 'getMunicipiosJson'])->name('municipios.json')->middleware(CheckPermission::class . ':ver_bitacoras');
         //Rutas para inspectores-----------------------------------------------------------------------------------------------------------------
-        
+
         Route::get('/inspectores', [InspectorController::class, 'index'])->name('inspectores.index')->middleware(CheckPermission::class . ':gestion_inspectores');
         Route::get('/inspectores/create', [InspectorController::class, 'create'])->name('inspectores.create')->middleware(CheckPermission::class . ':gestion_inspectores');
         Route::post('/inspectores/store', [InspectorController::class, 'store'])->name('inspectores.store')->middleware(CheckPermission::class . ':gestion_inspectores');
@@ -115,6 +116,30 @@ Route::middleware('web')->group(function () {
         Route::put('/cortes_produccion/{id}/updateCorte', [CorteProduccionController::class, 'updateCorte'])->name('cortes_produccion.updateCorte')->middleware(CheckPermission::class . ':ver_residente');
         Route::get('/cortes_producction/{id}/editMunicipio', [CorteProduccionController::class, 'editMunicipio'])->name('cortes_produccion.editMunicipio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
         Route::put('/cortes_produccion/{id}/updateMunicipio', [CorteProduccionController::class, 'updateMunicipio'])->name('cortes_produccion.updateMunicipio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
+
+        //Rutas reporte produccion
+        Route::get('/reporteProduccion', [ReporteProduccionController::class, 'diario'])->name('nomina.index')->middleware(CheckPermission::class . ':reporte_produccion');
+        Route::get('/produccion/enero', [ReporteProduccionController::class, 'showEnero'])->name('produccion.enero');
+        Route::get('/produccion/febrero', [ReporteProduccionController::class, 'showFebrero'])->name('produccion.febrero');
+        Route::get('/produccion/marzo', [ReporteProduccionController::class, 'showMarzo'])->name('produccion.marzo');
+        Route::get('/produccion/abril', [ReporteProduccionController::class, 'showAbril'])->name('produccion.abril');
+        Route::get('/produccion/mayo', [ReporteProduccionController::class, 'showMayo'])->name('produccion.mayo');
+        Route::get('/produccion/junio', [ReporteProduccionController::class, 'showJunio'])->name('produccion.junio');
+        Route::get('/produccion/julio', [ReporteProduccionController::class, 'showJulio'])->name('produccion.julio');
+        Route::get('/produccion/agosto', [ReporteProduccionController::class, 'showAgosto'])->name('produccion.agosto');
+        Route::get('/produccion/septiembre', [ReporteProduccionController::class, 'showSeptiembre'])->name('produccion.septiembre');
+        Route::get('/produccion/octubre', [ReporteProduccionController::class, 'showOctubre'])->name('produccion.octubre');
+        Route::get('/produccion/noviembre', [ReporteProduccionController::class, 'showNoviembre'])->name('produccion.noviembre');
+        Route::get('/produccion/diciembre', [ReporteProduccionController::class, 'showDiciembre'])->name('produccion.diciembre');
+        Route::post('/produccion/guardar', [ReporteProduccionController::class, 'guardarProduccion'])->name('produccion.guardar');
+        Route::post('/produccion/inspeccionIndustrial', [ReporteProduccionController::class, 'inspeccionIndustrial'])->name('produccion.guardarInspeccionIndustrial')->middleware(CheckPermission::class . ':reporte_produccion');;
+        Route::post('/produccion/metas', [ReporteProduccionController::class, 'insertarMetas'])->name('produccion.insertarMetas')->middleware(CheckPermission::class . ':reporte_produccion');;
+        Route::get('/produccion/ReporteConsolidado', [ReporteProduccionController::class, 'reporteConsolidado'])->name('produccion.reporteConsolidado')->middleware(CheckPermission::class . ':reporte_produccion');;
+        Route::post('/produccion/generarReportePorMes', [ReporteProduccionController::class, 'generarReportePorMes'])->name('produccion.generarReportePorMes')->middleware(CheckPermission::class . ':reporte_produccion');;
+        Route::post('/produccion/generarReporteConsolidado', [ReporteProduccionController::class, 'generarReporteConsolidado'])->name('nomina.generarReporteConsolidado')->middleware(CheckPermission::class . ':reporte_produccion');;
+        Route::get('/fechasParametros', [ReporteProduccionController::class, 'fechasProduccion'])->name('fechasProduccion.registrar')->middleware(CheckPermission::class . ':reporte_produccion');
+        Route::post('/fechasParametro/guardar', [ReporteProduccionController::class, 'guardarFechasParametros'])->name('fechasParametro.guardar')->middleware(CheckPermission::class . ':reporte_produccion');;
+        Route::post('/fechasParametro/actualizar', [ReporteProduccionController::class, 'actualizarFechasParametros'])->name('fechasParametro.actualizar')->middleware(CheckPermission::class . ':reporte_produccion');;
     });
     //Rutas para notificaciones
     Route::get('notifications/get', [NotificationsController::class, 'getNotificationsData'])->name('notifications.get');
