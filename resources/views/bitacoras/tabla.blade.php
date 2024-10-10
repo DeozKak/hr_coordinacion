@@ -14,7 +14,7 @@
     <link rel="stylesheet" type="text/css" href="{{asset('css/bitacoras/Tablas.css')}}">
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="{{asset('js/tbl_dinamicaV4.js')}}"></script>
+    <script src="{{asset('js/tbl_dinamicaV5.js')}}"></script>
 </head>
 
 <body>
@@ -52,7 +52,7 @@
                 </div>
             </div>
             <div class="card-body">
-
+                           
                 <div class="nav-wrapper" style="overflow-x: auto; overflow-y: hidden; display: flex;">
                     <div class="tab-content">
                         <?php foreach ($nombres as $index => $nombre) : ?>
@@ -113,12 +113,12 @@
                                             <th></th>
                                             <th></th>
                                         </tr>
-                                        @php
-                                        $datosFiltrados = array_filter($response->toArray(), function ($row) use ($nombre) {
+                                        @php                                       
+                                        $datosFiltrados = array_filter($response->toArray(), function ($row) use ($nombre) {                                                                                                                
                                         return $row['NOMBRE'] === $nombre;
                                         });
-
-                                        @endphp
+                                        
+                                        @endphp                                       
                                     </thead>
                                     <tbody>
                                         @foreach ($datosFiltrados as $row)
@@ -129,6 +129,7 @@
                                             $horaInicialObj = null;
                                             $horaFinalObj = null;
                                             @endphp
+                
                                             <td>{{$row['id']}}</td>
                                             <td>{{$row['NOMBRE']}}</td>
                                             <td>{{$row['CC_OPERARIO']}}</td>

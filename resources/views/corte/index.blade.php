@@ -8,7 +8,7 @@
 
 @section('content')
 <input type="hidden" id="token" value="{{csrf_token()}}">
-<script src="{{asset('js/informacion_generalV2.js')}}"></script>
+<script src="{{asset('js/informacion_generalV3-1.js')}}"></script>
 <div class="row">
     <div class="col-md-6">
         <div class="card">
@@ -24,6 +24,7 @@
                             <th>Fecha Inicio</th>
                             <th>Fecha Fin</th>
                             <th>Meta</th>
+                            <th>Dobles</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -34,6 +35,7 @@
                             <td>{{ $corte->fecha_inicio }}</td>
                             <td>{{ $corte->fecha_fin }}</td>
                             <td>{{ $corte->meta }}</td>
+                            <td>{{ $corte->dobles }}</td>
                             <td>
                                 <div class="d-flex justify-content-center gap-2">
                                     <a class="btn btn-success btn-sm" data-corte-id="{{ $corte->id }}">Editar</a>
@@ -197,6 +199,10 @@
                 <div class="form-group">
                     <label for="meta">Meta</label>
                     <input type="text" class="form-control" id="meta" name="meta">
+                </div>
+                <div class="form-group">
+                    <label for="Dobles">Dobles</label>
+                    <input class="form-control" id="dobles" name="dobles">
                 </div>
 
 

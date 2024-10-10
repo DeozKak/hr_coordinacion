@@ -24,6 +24,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use App\Models\tbl_bitacoras_causal;
 use App\Notifications\devolucion;
 use App\Http\Controllers\AutoGuardadoController;
+use Illuminate\Support\Facades\Log;
 
 
 class BitacoraController extends Controller
@@ -137,7 +138,8 @@ class BitacoraController extends Controller
 
         $nombres = array();
         $ids = array();
-
+        
+        
         foreach ($inspectores as $inspector) {
             $nombres[] = $inspector->apellidos . ' ' . $inspector->nombres;
             $ids[$inspector->cedula] = $inspector->id;
@@ -159,14 +161,14 @@ class BitacoraController extends Controller
         $causales = tbl_bitacoras_causal::all();
 
         $response = $Guardado->guardar($spreadsheet, $nombres, $id_super);
-    
        
-       
+        
         if($response->isEmpty()){
             
             return redirect()->route('bitacora')->with('error', 'Error al generar la bitacora');
         
         }
+        
         return view('bitacoras.tabla', compact('nombres', 'id_super', 'municipios', 'inspectores','causales','response'));
     }
 
@@ -546,7 +548,11 @@ class BitacoraController extends Controller
 
                     if ($datos['categoria'] === null) {
                         $consultaMovilidad = Movilidad::select('AttrCategoria')->where('NroSitio', $datos['contrato'])->where('IdTarea', $datos['no_acta'])->first();
-                        $datos['categoria'] = $consultaMovilidad->AttrCategoria;
+                    
+                        if (!is_null($consultaMovilidad) && $consultaMovilidad->AttrCategoria !== null) {
+                            $datos['categoria'] = $consultaMovilidad->AttrCategoria;
+                        } 
+                        // Si $consultaMovilidad es null, no se ejecutará el bloque if y $datos['categoria'] seguirá siendo null
                     }
 
                     if ($datos['tipo_de_trabajo'] === 'SA 12164' || $datos['tipo_de_trabajo'] === 'SA 12163') {
@@ -582,7 +588,8 @@ class BitacoraController extends Controller
                     $contrato->state = 1;
                     $contrato->save();
                 } catch (\Exception $e) {
-                    return response()->json(['error' => 'Error al guardar los datos en la base de datos']);               
+                    Log::error($e);
+                    return response()->json(['error' => 'Error al guardar los datos en la base de datos '.$e]);               
                 }
             }
 
@@ -598,6 +605,7 @@ class BitacoraController extends Controller
 
                         //  $resultado = $validacion->getValidación_existentes();
                     } catch (\Exception $e) {
+                        Log::error($e);
                         return response()->json(['error' => 'Error al consultar los datos en la base de datos']);
                     }
 
@@ -954,14 +962,15 @@ class BitacoraController extends Controller
         ]);
     }
 
-    public function actualizar_devolucion($id)
+    public function actualizar_devolucion(Request $request,$id)
     {
-
+   
         $devolucion = tbl_dv_insp::find($id);
         $devolucion->GESTIONADO = 1;
         $devolucion->FECHA_GESTION = date('Y-m-d');
+        $devolucion->OBSERVACION_GESTION = $request->observacion;
         $devolucion->save();
-        $exist = tbl_bitacora_contrato::where('CONTRATO', $devolucion->CONTRATO)->where('ORDEN_TRABAJO', $devolucion->ORDEN_TRABAJO)->exists();
+       /*  $exist = tbl_bitacora_contrato::where('CONTRATO', $devolucion->CONTRATO)->where('ORDEN_TRABAJO', $devolucion->ORDEN_TRABAJO)->exists();
         if ($exist) {
             // Obtener los usuarios que deben recibir la notificación
             $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN'])->get();
@@ -971,7 +980,7 @@ class BitacoraController extends Controller
                 $usuario->notify(new Mod_Devolucion($usuarioLog->name, $devolucion->CONTRATO, $devolucion->id_bitacora));
             }
             return redirect()->route('bitacora.devoluciones');
-        }
+        } */
 
         /*  $contrato = new tbl_bitacora_contrato();
         $contrato->CC_OPERARIO = $devolucion->CC_OPERARIO;
@@ -993,14 +1002,14 @@ class BitacoraController extends Controller
         $contrato->state = 1;
         $contrato->save();
  */
-        // Obtener los usuarios que deben recibir la notificación
+      /*   // Obtener los usuarios que deben recibir la notificación
         $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN', 'Auxiliar_coordinacion'])->get();
         $usuarioLog = Auth::user();
 
         // Enviar la notificación a cada usuario
         foreach ($usuarios as $usuario) {
             $usuario->notify(new Mod_Devolucion($usuarioLog->name, $devolucion->CONTRATO, $devolucion->id_bitacora));
-        }
+        } */
         return redirect()->route('bitacora.devoluciones');
     }
 

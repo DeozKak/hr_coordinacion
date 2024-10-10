@@ -9,7 +9,7 @@ let fechaSeleccionada;
 let totalColspan = 0;
 /* Inicializacion tabla de producción */
 document.addEventListener('DOMContentLoaded', async () => {
-
+   
     document.getElementById('exportar').addEventListener('click', exportarExcel);
 
 
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 url: url, // Ruta al archivo PHP que realiza la consulta a la base de datos
                 type: 'GET',
                 success: function (response) {
-                    if(response.error){
+                    if (response.error) {
                         Swal.fire({
                             type: 'warning',
                             text: response.error
@@ -73,6 +73,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         return;
                     }
                     resolve(response);
+                    $('#loader').hide();
+                    $('#overlay').hide();
                 },
                 error: function (xhr, status, error) {
 
@@ -1120,67 +1122,64 @@ async function cargarDatos(idCorteDetalles = null) {
     }
 
     hot.loadData(rows);
+
     // Insertar fila para promedios  
     hot.setDataAtCell(hot.countRows(), 1, 'TOTAL');
     // Insertar fila para sumas (arriba de la de promedios)
     hot.setDataAtCell(hot.countRows(), 1, 'PROMEDIO');
+
     // Calcular promedios (considerando celdas vacías)
     const promedios = []; // Array para guardar los promedios
-    const filaPromedios = hot.countRows() - 2; // Penúltima fila (promedios)
-    totalColspan = totalColspan + 7;
+    const filaPromedios = hot.countRows() - 1; // Penúltima fila (promedios)
+    // console.log(filaPromedios);
+    /* totalColspan = totalColspan + 7; */
     colProm = totalColspan - 7;
-    const columnProm = [];
-    const columnSum = [];
     // Calcular promedios (considerando celdas vacías)
+    colProm = totalColspan - 7;
+
     for (let i = 0; i < colProm; i++) {
-        columnProm.push({
-            destinationRow: filaPromedios,
-            destinationColumn: i + 2,
-            sourceColumn: i + 2,
-            type: 'custom',
-                    customFunction: function (endpoint) {
-                        let sum = 0;
-                        let count = 0;
-
-                        // Obtener el rango de filas
-                        const fromRow = endpoint.ranges[0][0]; // Fila inicial
-                        const toRow = endpoint.ranges[0][1];   // Fila final
-                        
-                        for (let j = fromRow; j <= toRow; j++) {
-                            let value = hot.getDataAtCell(j, i + 2);
-                            if (!isNaN(value) && value !== null && value !== '') {
-                                sum += parseFloat(value);
-                                count++;
-                            }
-                        }
-
-                        let promedio = count > 0 ? (sum / count).toFixed(2) : '';
-                       
-                        promedios.push(promedio);
-                        return promedio;
-                    }
-    }); 
+        let sum = 0;
+        let count = 0;
+        for (let j = 0; j < filaPromedios; j++) { // Recorre todas las filas ANTES de la de promedios
+            let value = hot.getDataAtCell(j, i + 2);
+            if (!isNaN(value) && value !== null && value !== '') {
+                sum += parseFloat(value);
+                count++;
+            }
+        }
+        let promedio = count > 0 ? (sum / count).toFixed(2) : '';
+        promedios.push(parseFloat(promedio) || 0);
     }
-   
-     setTimeout(function() {
-        for (let i = 0; i < promedios.length; i++) {
-            hot.setDataAtCell(filaPromedios, i + 2, promedios[i]); 
-          }
-      }, 2000); 
-    // Calcular sumas
-     for (let i = 0; i < totalColspan; i++) {
-        
-        columnSum.push(
-                {
-                    destinationRow: hot.countRows() - 2, // Última fila (sumas)
-                    destinationColumn: i + 2,
-                    sourceColumn: i + 2,
-                    type: 'sum'
-                }
-            );
-       
-    }  
-    hot.updateSettings({columnSummary: columnSum});
+
+    // Crear un array de cambios
+    const cambios = [];
+    for (let i = 0; i < promedios.length; i++) {
+        cambios.push([filaPromedios, i + 2, promedios[i]]);
+    }
+
+    // Aplicar todos los cambios a la vez
+    hot.setDataAtCell(cambios);
+
+    // Calcular sumas manualmente (excluyendo la fila de promedios)
+    const sumas = [];
+    for (let i = 0; i < totalColspan; i++) {
+        let suma = 0;
+        for (let j = 0; j < filaPromedios - 1; j++) { // Recorrer hasta la fila ANTES de promedios
+            let value = hot.getDataAtCell(j, i + 2);
+            if (!isNaN(value) && value !== null && value !== '') {
+                suma += parseFloat(value);
+            }
+        }
+        sumas.push(suma);
+    }
+    // Insertar sumas en la fila correspondiente
+    const cambiosSumas = [];
+    const filaSumas = hot.countRows() - 2; // Fila de sumas
+    for (let i = 0; i < sumas.length; i++) {
+       cambiosSumas.push([filaSumas, i + 2, sumas[i]]);
+    }
+    hot.setDataAtCell(cambiosSumas);
+
 }
 //---------------------------------------------------------------------------------------------------//
 /* funcion para convertir respuesta JSON del servidor a un Array */
@@ -1362,6 +1361,6 @@ setInterval(() => {
         console.error("Error al cargar datos:", error);
         // Puedes agregar aquí lógica adicional para manejar el error, como mostrar un mensaje al usuario.
     }
-}, 150000);
+}, 300000);
 
 

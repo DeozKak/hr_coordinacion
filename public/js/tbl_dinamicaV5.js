@@ -690,8 +690,10 @@ function agregar_datos() {
     const duracion = "";
     const devolucion = "OK";
     const causal = "--SELECCIONE CAUSAL--";
-    const validador = validacionDatos(contrato, tabla);
-
+    let validador = false;
+    if(tipo_trabajo !== 'FI-29 revisión periódica línea matriz'){
+        validador = validacionDatos(contrato, tabla);
+    }
     if (validador === false) {
         // Crear una nueva fila y celdas para agregar los valores
         const array = {
@@ -874,6 +876,7 @@ function validacionDatos(contrato, tabla) {
 
     // Obtener los datos existentes en la tabla
     const data = tabla.DataTable().data();
+    console.log(data);
     let datosRepetidos = false;
     // Verificar si los datos ya existen en la tabla
     data.each(function (value, index) {

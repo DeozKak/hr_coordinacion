@@ -1,7 +1,7 @@
 
 
 document.addEventListener('DOMContentLoaded', () => {
-    $('#cortes').DataTable({
+    $('#cortes, #municipios, #sedes, #zonas, #devolucion').DataTable({
         paging: false,
         scrollCollapse: true,
         scrollY: '230px',
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    $('#municipios').DataTable({
+/*     $('#municipios').DataTable({
         paging: false,
         scrollCollapse: true,
         scrollY: '230px',
@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-    const btnCrearSede = document.getElementById('btnCrearSede');
+ */    const btnCrearSede = document.getElementById('btnCrearSede');
     const btnCrearCorte = document.getElementById('btnCrearCorte');
     const btnCrearMunicipio = document.getElementById('btnCrearMunicipio');
     const btnCrearCausal = document.getElementById('btnCrearCausal');
@@ -236,8 +236,8 @@ function CrearCorte() {
         const todosLosCamposLlenos = Array.from(camposFormulario).every(campo => campo.value.trim() !== '');
         if (todosLosCamposLlenos) {
             EnviarServidorStore("Corte");
-            camposFormulario.forEach(campo => campo.value = '');
-        } else {
+/*             camposFormulario.forEach(campo => campo.value = '');
+ */        } else {
             // Si algún campo está vacío, mostrar un mensaje de error
             alert('Por favor, complete todos los campos.');
         }
@@ -256,6 +256,7 @@ function editarCorte(id) {
             $('#fecha_inicio').val(response[0].fecha_inicio);
             $('#fecha_fin').val(response[0].fecha_fin);
             $('#meta').val(response[0].meta);
+            $('#dobles').val(response[0].dobles);
             $('#CorteModal').modal('show');
         }, error: function (xhr, status, error) {
             console.error("Error al obtener los datos del corte.");
@@ -267,9 +268,10 @@ function editarCorte(id) {
     function validarFormulario() {
         const camposFormulario = document.querySelectorAll('#CorteModal input');
         const todosLosCamposLlenos = Array.from(camposFormulario).every(campo => campo.value.trim() !== '');
+       console.log(todosLosCamposLlenos);
         if (todosLosCamposLlenos) {
             EnviarServidorUpdate("Corte", id);
-            camposFormulario.forEach(campo => campo.value = '');
+           /*  camposFormulario.forEach(campo => campo.value = ''); */
         } else {
             alert('Por favor, complete todos los campos.');
         }
@@ -364,7 +366,12 @@ function CrearSede() {
 
 function ValidarFormularioCortes() {
     const inputMeta = document.querySelectorAll('#meta');
-
+    const inputDobles = document.querySelectorAll('#dobles');
+    inputDobles.forEach((input) => {
+        input.addEventListener('input', function () {
+            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 2);
+        })
+    })
     inputMeta.forEach((input) => {
         input.addEventListener('input', function () {
             this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3);
@@ -398,9 +405,7 @@ function ValidarFormularioCortes() {
     const mesMin = ("0" + (fechaMinima.getMonth() + 1)).slice(-2);
     const fechaMinimaFormateada = fechaMinima.getFullYear() + "-" + mesMin + "-" + diaMin;
 
-    // Establecer la fecha mínima en ambos inputs
-    fechaInicioInput.min = fechaMinimaFormateada;
-    fechaFinInput.min = fechaMinimaFormateada;
+  
 
     // Validar fechas al cambiar
     fechaInicioInput.addEventListener('input', validarFechas);
@@ -455,6 +460,12 @@ function EnviarServidorStore(nombreTabla) {
             _token: token
         },
         success: function (response) {
+            if(response.errors){
+                alert(response.errors);
+                return;
+            }
+            const camposFormulario = document.querySelectorAll(`#${nombreTabla}Modal input`);
+            camposFormulario.forEach(campo => campo.value = '');
             $('#' + nombreTabla + 'Modal').modal('hide');
             window.location.reload();
         },
@@ -484,6 +495,12 @@ function EnviarServidorUpdate(nombreTabla, id) {
             _token: token
         },
         success: function (response) {
+            if(response.errors){
+                alert(response.errors);
+                return;
+            }
+            const camposFormulario = document.querySelectorAll(`#${nombreTabla}Modal input`);
+            camposFormulario.forEach(campo => campo.value = '');
             $('#' + nombreTabla + 'Modal').modal('hide');
             window.location.reload();
         },

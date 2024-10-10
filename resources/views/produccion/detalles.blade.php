@@ -9,8 +9,8 @@
 
 <input type="hidden" id="fecha_inicio" value="{{session('fecha_inicio')}}">
 <link rel="stylesheet" href="{{asset('css/produccion/produccion.css')}}">
-<script src="{{asset('js/producciondetallesV3-5.js')}}"></script>
-<script src="{{asset('js/zonas.js')}}"></script>
+<script src="{{asset('js/producciondetallesV3-7.js')}}"></script>
+<!-- <script src="{{asset('js/zonasV2.js')}}"></script> -->
 
 <input type="hidden" id="id_corte_detalles" value="">
 <input type="hidden" id="id_produccion" value="{{route('produccion.datosDetalles')}}">
@@ -18,20 +18,17 @@
 
 <div class="shadow-container">
 
-    <div class="card-body">
-        <a class="btn btn-primary" href="javascript:history.go(-1)" style="margin-bottom: 10px;">Ir Atrás</a>
-        <button type="button" class="btn btn-success" id="exportar" style="margin-bottom: 10px;">Exportar</button>
+
+    <a class="btn btn-primary" href="javascript:history.go(-1)" style="margin-bottom: 10px;">Ir Atrás</a>
+    <button type="button" class="btn btn-success" id="exportar" style="margin-bottom: 10px;">Exportar</button>
+    <x-adminlte-card title="Producción por dia" theme="info" icon="fas fa-code-branch" header-class="text-uppercase rounded-bottom border-info" collapsible>
         <div id="detalles" style="width: '100px'"></div>
-
+    </x-adminlte-card>
+    <div id="zonas">
+        <div id="loader"></div>
+        <div id="overlay"></div>
     </div>
-    <h1>Zonas</h1>
 
-    <div class="card-body">
-        <div id="zonas" style="width: '100px'">
-            <div id="loader"></div>
-            <div id="overlay"></div>
-        </div>
-    </div>
 </div>
 
 <!-- Modal Detalles de dia -->
@@ -211,6 +208,7 @@
         $(document).ready(function() {
             $('#ventanaEmergente').on('shown.bs.modal', function() {
                 select2();
+
                 function select2() {
                     $('#municipio-select').select2({
                         language: "es",
@@ -243,30 +241,30 @@
                 $('#municipio-select').select2('destroy'); // Destruir la instancia actual de Select2
                 $('#municipio-select').select2({
                     language: "es",
-                        ajax: {
-                            url: urlMunicipios, // Ruta a la función del controlador
-                            dataType: 'json',
-                            delay: 250, // Retraso antes de realizar la búsqueda
-                            data: function(params) {
-                                return {
-                                    term: params.term // Término de búsqueda
-                                };
-                            },
-                            processResults: function(data) {
-                                return {
-                                    results: $.map(data, function(item, key) { // Mapear resultados
-                                        return {
-                                            id: key,
-                                            text: item
-                                        };
-                                    })
-                                };
-                            },
-                            cache: true
+                    ajax: {
+                        url: urlMunicipios, // Ruta a la función del controlador
+                        dataType: 'json',
+                        delay: 250, // Retraso antes de realizar la búsqueda
+                        data: function(params) {
+                            return {
+                                term: params.term // Término de búsqueda
+                            };
                         },
-                        minimumInputLength: 2 // Mínimo de caracteres para iniciar la búsqueda
-                    });
-               
+                        processResults: function(data) {
+                            return {
+                                results: $.map(data, function(item, key) { // Mapear resultados
+                                    return {
+                                        id: key,
+                                        text: item
+                                    };
+                                })
+                            };
+                        },
+                        cache: true
+                    },
+                    minimumInputLength: 2 // Mínimo de caracteres para iniciar la búsqueda
+                });
+
             });
         });
     </script>
