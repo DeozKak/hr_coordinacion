@@ -3,7 +3,7 @@
 @section('title', 'Fechas nomina')
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/nomina/fechasParametro.css') }}">
+<link rel="stylesheet" href="{{ asset('css/reporteProduccion/fechasParametro.css') }}">
 
 <div class="container">
     <div class="row justify-content-center">
@@ -134,5 +134,5 @@
 @endsection
 
 @section('js')
-<script src="{{ asset('js/nomina/fechasParametro.js') }}"></script>
+<script src="{{ asset('js/reporteProduccion/fechasParametro.js') }}"></script>
 @endsection
