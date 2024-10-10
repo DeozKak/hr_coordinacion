@@ -507,6 +507,13 @@ return [
                     'label_color' => 'success',
 
                 ],
+                [
+                    'text' => 'Sal.Minimo - Aux.Transporte',
+                    'url' => 'nomina/parametrizarSalarioAux',
+                    'icon' => 'far fa-circle',
+                    'can' => ['ver_residente', 'ver_coordinacion_RP'],
+                    'label_color' => 'success',
+                ],
             ]
         ],
 
@@ -556,7 +563,13 @@ return [
             'can' => ['gestion_nomina'],
             'icon' => 'fas fa-money-check-alt',
             'submenu' => [
-                
+                [
+                    'text' => 'Nomina',
+                    'url' => '/nomina/reporteNomina',
+                    'icon' => 'far fa-circle',
+                    'can' => 'gestion_nomina',
+                    'label_color' => 'success',
+                ]
             ]
         ],
         /*  [

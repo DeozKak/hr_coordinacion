@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', 'Fechas nomina')
+@section('title', 'Reporte consolidado')
 
 @section('content_header')
 <div class="d-flex align-items-center">
