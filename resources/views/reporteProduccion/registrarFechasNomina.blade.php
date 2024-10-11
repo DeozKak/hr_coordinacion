@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', 'Fechas nomina')
+@section('title', 'Fechas parametros')
 
 @section('content')
 <link rel="stylesheet" href="{{ asset('css/reporteProduccion/fechasParametro.css') }}">
