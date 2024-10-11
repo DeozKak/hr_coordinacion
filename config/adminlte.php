@@ -536,14 +536,14 @@ return [
                     'text' => 'Reporte de producción diario',
                     'url' => '/reporteProduccion',
                     'icon' => 'far fa-circle',
-                    'can' => 'gestion_nomina',
+                    'can' => 'reporte_produccion',
                     'label_color' => 'success',
                 ],
                 [
                     'text' => 'Reporte consolidado',
                     'url' => '/produccion/ReporteConsolidado',
                     'icon' => 'far fa-circle',
-                    'can' => 'gestion_nomina',
+                    'can' => 'reporte_produccion',
                     'label_color' => 'success',
                 ],
             ]

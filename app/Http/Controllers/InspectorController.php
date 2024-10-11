@@ -42,6 +42,7 @@ class InspectorController extends Controller
         $inspector->cedula = request()->cedula;
         $inspector->state = 1;
         $inspector->SUPERVISOR = request()->supervisor;
+        $inspector->aprendizo = 1;
         $inspector->save();
         return redirect()->route('inspectores.index');
     }
@@ -58,6 +59,7 @@ class InspectorController extends Controller
             'nombres' => 'required',
             'apellidos' => 'required',
             'supervisor' => 'required',
+            
         ],[
             'nombres.required' => 'El campo nombres es obligatorio',
             'apellidos.required' => 'El campo apellidos es obligatorio',
@@ -66,6 +68,7 @@ class InspectorController extends Controller
         $inspector->nombres = $request->nombres;
         $inspector->apellidos = $request->apellidos;
         $inspector->SUPERVISOR = $request->supervisor;
+        $inspector->aprendiz = $request->aprendiz;
         $inspector->save();
         return redirect()->route('inspectores.index');
     }

@@ -58,6 +58,18 @@
                             <div class="alert alert-danger">{{ $message }}</div>
                             @enderror
                         </div>
+                        <div class="form-group">
+                            <label for="aprendiz">Aprendiz</label>
+                            <select name="aprendiz" id="aprendiz" class="form-control">
+                                @if ($inspector->aprendiz === 1)
+                                <option value="{{$inspector->aprendiz}}" selected>{{$inspector->aprendiz === 1 ? 'Si' : 'No'  }}</option>
+                                <option value="0">No</option>
+                                @else
+                                <option value="{{$inspector->aprendiz}}" selected>{{$inspector->aprendiz === 1 ? 'Si' : 'No'  }}</option>
+                                <option value="1">Si</option>
+                                @endif
+                            </select>
+                        </div>
 
                         <div class="button-container">
                             <button type="submit" id="enviar" class="btn btn-primary">Guardar</button>
@@ -65,10 +77,6 @@
 
 
                     <a class="btn btn-danger" style="margin-right: 10px;" onclick="goBack()">Cancelar</a>
-
-
-
-                </div>
             </div>
         </div>
     </div>
