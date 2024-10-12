@@ -22,7 +22,6 @@ $(document).ready(function(){
         // Obtenemos el nombre del mes anterior
         let nombreMesAnterior = fechaActual.toLocaleString('es-ES', { month: 'long' });
         
-        loaderNomina.show()
         if(mesAnio == ""){
             Swal.fire({
                 icon: 'warning',
@@ -31,6 +30,7 @@ $(document).ready(function(){
             });
             return
         }else{
+            loaderNomina.show()
             $.post({
                 url:url,
                 data:{
@@ -41,24 +41,45 @@ $(document).ready(function(){
                 success:function(response){
                     if(response.length > 0){
                         loaderNomina.hide()
+                        
                         if (window.handNomina && !window.handNomina.isDestroyed) {
                             window.handNomina.destroy();
                             window.handNomina = null;
+                        }
+
+                        if (window.handCostosProyecto && !window.handCostosProyecto.isDestroyed) {
+                            window.handCostosProyecto.destroy();
+                            window.handCostosProyecto = null;
                         }
     
                         $('.reporteNominaTitulo .card-title').text('Reporte de nómina Corte: '+nombreMesAnterior+'-'+nombreMesActual+' '+year)
                         $('.cardReporteProduccion').show()
     
                         let data = []
-                        let multasArray = [];
+                        let multasArray = []
+                        let inspectoresAprendiz = []
+                        let arraySalarioAux = []
     
                         if(response.length > 0){
                             data = response[0].data.produccionInspector
                             multasArray = response[0].multas
+                            inspectoresAprendiz = response[0].inspectores
+                            arraySalarioAux = response[0].salariosAux
                         }
-    
+        
                         let tablaNomina = $('#tablaNomina')
-    
+                        let tablaCostosProyecto = $('#tablaCostosProyecto')
+
+                        // TABLA COSTOS PROYECTO --------------------------------------------------
+                        window.handCostosProyecto = new Handsontable(tablaCostosProyecto[0], {
+                            data: [],
+                            colHeaders: [],
+                            readOnly: true,
+                            height: 'auto',
+                            licenseKey: 'non-commercial-and-evaluation',
+                        })
+            
+                        // TABLA NOMINA --------------------------------------------------
                         window.handNomina = new Handsontable(tablaNomina[0], {
                             data: [],
                             colHeaders: [],
@@ -125,7 +146,7 @@ $(document).ready(function(){
                             ]
                         });
     
-                        arrayNomina.push(['TOTAL', '', '', '', '', '', '', '', '', '']); 
+                        arrayNomina.push(['TOTAL', '', '', '', '', '', '', '', '', '']);
     
                         // Actualizar los datos en la tabla Handsontable
                         handNomina.updateSettings({
@@ -210,6 +231,10 @@ $(document).ready(function(){
                                 if (rowIndex === totalFilas && columnasNumericas.includes(colIndex)) {
                                     cellProperties.readOnly = true;
                                 }
+                                
+                                if(colIndex >=0 && colIndex <= 3 || colIndex === 9){
+                                    cellProperties.className = 'celdasGeneral';
+                                }
                             
                                 return cellProperties;
                             },
@@ -271,7 +296,7 @@ $(document).ready(function(){
                                                     let totalBonoComercial = totalBoni - totalMultas; // Calcular bono comercial
                                                     let totalRodamiento = handNomina.getDataAtCell(row, 8); // Total rodamiento
                                                     let totalNomina = totalBonoComercial + totalRodamiento; // Calcular total de nómina
-                        
+
                                                     // Actualizar los valores en la tabla
                                                     handNomina.setDataAtCell(row, 7, totalBonoComercial, 'programmatic'); // Actualiza bono comercial
                                                     handNomina.setDataAtCell(row, 9, totalNomina, 'programmatic'); // Actualiza total nómina
@@ -280,7 +305,7 @@ $(document).ready(function(){
                                                     handNomina.setDataAtCell(totalFilas, 7, 0, 'programmatic');
                                                     handNomina.setDataAtCell(totalFilas, 8, 0, 'programmatic');
                                                     handNomina.setDataAtCell(totalFilas, 9, 0, 'programmatic');
-                        
+
                                                     // Actualizar los totales
                                                     let totalMultasSum = 0;
                                                     let totalBonoComercialSum = 0;
@@ -300,7 +325,127 @@ $(document).ready(function(){
                                                         handNomina.setDataAtCell(totalFilas, 8, totalRodamientoSum, 'programmatic');
                                                         handNomina.setDataAtCell(totalFilas, 9, totalNominaSum, 'programmatic');
                                                     },0);
-                        
+
+
+                                                    let filaInspector = handNomina.getData().findIndex(fila => fila[0] == ccOperario);
+                                                    if (filaInspector !== -1) {
+                                                        let salarioInspectorTotal = totalNomina;
+                                                        let salario = 0;
+                                                        let auxTransPorte = 0;
+                                                        let salud = 0;
+                                                        let pension = 0;
+                                                        let arl = 0;
+                                                        let caja = 0;
+                                                        let prima = 0;
+                                                        let cesantias = 0;
+                                                        let intCesantias = 0;
+                                                        let vacaciones = 0;
+                                                        let total = 0;
+
+                                                        // Recalcular salario y deducciones
+                                                        if (inspectoresAprendiz) {
+                                                            inspectoresAprendiz.forEach(inspector => {
+                                                                if (ccOperario == inspector.cedula) {
+                                                                    // Validamos si es aprendiz o no
+                                                                    if (inspector.aprendiz === 1) {
+                                                                        salario = salarioInspectorTotal + arraySalarioAux.salarioMinimo;
+                                                                    } else {
+                                                                        salario = salarioInspectorTotal + arraySalarioAux.salarioMinimo + 150000;
+                                                                    }
+
+                                                                    // Verificar si el salario supera el doble del salario mínimo
+                                                                    auxTransPorte = salario > arraySalarioAux.salarioMinimo * 2 ? 0 : arraySalarioAux.auxilioTransporte;
+
+                                                                    salud = salario * arraySalarioAux.salud / 100;
+                                                                    pension = salario * arraySalarioAux.pension / 100;
+                                                                    arl = salario * arraySalarioAux.arl / 100;
+                                                                    caja = salario * arraySalarioAux.caja / 100;
+                                                                    prima = salario * arraySalarioAux.prima / 100
+                                                                    cesantias = salario * arraySalarioAux.cesantias / 100
+                                                                    intCesantias = salario * arraySalarioAux.intCesantias / 100
+                                                                    vacaciones = salario * arraySalarioAux.vacaciones / 100;
+
+                                                                    total = salario + auxTransPorte + salud + pension + arl + caja + prima + cesantias + intCesantias + vacaciones;
+                                                                }
+                                                            });
+
+                                                            // Actualiza los valores en arrayCostosProyecto
+                                                            let filaCostos = arrayCostosProyecto.findIndex(item => item[0] == ccOperario);
+                                                            if (filaCostos !== -1) {
+                                                                arrayCostosProyecto[filaCostos][2] = parseInt(salario);
+                                                                arrayCostosProyecto[filaCostos][3] = parseInt(auxTransPorte);
+                                                                arrayCostosProyecto[filaCostos][4] = parseInt(salud);
+                                                                arrayCostosProyecto[filaCostos][5] = parseInt(pension);
+                                                                arrayCostosProyecto[filaCostos][6] = parseInt(arl);
+                                                                arrayCostosProyecto[filaCostos][7] = parseInt(caja);
+                                                                arrayCostosProyecto[filaCostos][8] = parseInt(prima);
+                                                                arrayCostosProyecto[filaCostos][9] = parseInt(cesantias);
+                                                                arrayCostosProyecto[filaCostos][10] = parseInt(intCesantias);
+                                                                arrayCostosProyecto[filaCostos][11] = parseInt(vacaciones);
+                                                                arrayCostosProyecto[filaCostos][12] = parseInt(total);
+                                                            }
+
+                                                            // Actualizar la tabla con los nuevos datos
+                                                            handCostosProyecto.updateSettings({
+                                                                data: arrayCostosProyecto,
+                                                            });
+
+                                                            // Recalcular y actualizar los totales en la última fila
+                                                            let ultimafila = handCostosProyecto.countRows() - 1;
+
+                                                            let totalSalario = 0;
+                                                            let totalAuxTrans = 0;
+                                                            let totalSalud = 0;
+                                                            let totalPension = 0;
+                                                            let totalArl = 0;
+                                                            let totalCaja = 0;
+                                                            let totalPrima = 0;
+                                                            let totalCesantias = 0;
+                                                            let totalIntCesantias = 0;
+                                                            let totalVacaciones = 0;
+                                                            let totalGeneral = 0;
+
+                                                            for (let i = 0; i < ultimafila; i++) {
+                                                                let salarioInsFila = handCostosProyecto.getDataAtCell(i, 2);
+                                                                let auxTransFila = handCostosProyecto.getDataAtCell(i, 3);
+                                                                let saludFila = handCostosProyecto.getDataAtCell(i, 4);
+                                                                let pensionFila = handCostosProyecto.getDataAtCell(i, 5);
+                                                                let arlFila = handCostosProyecto.getDataAtCell(i, 6);
+                                                                let cajaFila = handCostosProyecto.getDataAtCell(i, 7);
+                                                                let primaFila = handCostosProyecto.getDataAtCell(i, 8);
+                                                                let cesantiasFila = handCostosProyecto.getDataAtCell(i, 9);
+                                                                let intCesantiasFila = handCostosProyecto.getDataAtCell(i, 10);
+                                                                let vacacionesFila = handCostosProyecto.getDataAtCell(i, 11);
+                                                                let totalFila = handCostosProyecto.getDataAtCell(i, 12);
+
+                                                                // Acumular los valores
+                                                                totalSalario += salarioInsFila;
+                                                                totalAuxTrans += auxTransFila;
+                                                                totalSalud += saludFila;
+                                                                totalPension += pensionFila;
+                                                                totalArl += arlFila;
+                                                                totalCaja += cajaFila;
+                                                                totalPrima += primaFila;
+                                                                totalCesantias += cesantiasFila;
+                                                                totalIntCesantias += intCesantiasFila;
+                                                                totalVacaciones += vacacionesFila;
+                                                                totalGeneral += totalFila;
+                                                            }
+
+                                                            // Establecemos los valores en la última fila
+                                                            handCostosProyecto.setDataAtCell(ultimafila, 2, totalSalario);
+                                                            handCostosProyecto.setDataAtCell(ultimafila, 3, totalAuxTrans);
+                                                            handCostosProyecto.setDataAtCell(ultimafila, 4, totalSalud);
+                                                            handCostosProyecto.setDataAtCell(ultimafila, 5, totalPension);
+                                                            handCostosProyecto.setDataAtCell(ultimafila, 6, totalArl);
+                                                            handCostosProyecto.setDataAtCell(ultimafila, 7, totalCaja);
+                                                            handCostosProyecto.setDataAtCell(ultimafila, 8, totalPrima);
+                                                            handCostosProyecto.setDataAtCell(ultimafila, 9, totalCesantias);
+                                                            handCostosProyecto.setDataAtCell(ultimafila, 10, totalIntCesantias);
+                                                            handCostosProyecto.setDataAtCell(ultimafila, 11, totalVacaciones);
+                                                            handCostosProyecto.setDataAtCell(ultimafila, 12, totalGeneral);
+                                                        }
+                                                    }
                                                 } else if (response == 2) {
                                                     Swal.fire({
                                                         icon: 'error',
@@ -320,6 +465,183 @@ $(document).ready(function(){
                                     }
                                 }
                             });
+                        });
+
+                        // Fin de la función ---------------------------------------------
+                        let arrayCostosProyecto = data.map(item => {
+                            let salario = 0;
+                            let auxTransPorte = 0;
+                            let salud = 0;
+                            let pension = 0;
+                            let arl = 0;
+                            let caja = 0;
+                            let prima = 0;
+                            let cesantias = 0;
+                            let intCesantias = 0;
+                            let vacaciones = 0;
+                            let total = 0;
+                            
+                            inspectoresAprendiz.forEach(inspector => {
+                                if (item.cedula == inspector.cedula) {
+                                    let filaInspector = handNomina.getData().findIndex(fila => fila[0] == inspector.cedula);
+                                    if (filaInspector !== -1) {
+
+                                        // traemos el total de la nomina del inspector
+                                        let salarioInspectorTotal = handNomina.getDataAtCell(filaInspector, 9);
+                    
+                                        // validamos si es aprendiz o no
+                                        if (inspector.aprendiz === 1) {
+                                            salario = salarioInspectorTotal + arraySalarioAux.salarioMinimo;
+                                        } else {
+                                            salario = salarioInspectorTotal + arraySalarioAux.salarioMinimo + 150000;
+                                        }
+                        
+                                        // Verificar si el salario supera el doble del salario mínimo
+                                        if (salario > arraySalarioAux.salarioMinimo * 2) {
+                                            auxTransPorte = 0;
+                                        } else {
+                                            auxTransPorte = arraySalarioAux.auxilioTransporte;
+                                        }
+
+                                        salud = salario * arraySalarioAux.salud / 100;
+                                        pension = salario * arraySalarioAux.pension / 100;
+                                        arl = salario * arraySalarioAux.arl / 100;
+                                        caja = salario * arraySalarioAux.caja / 100;
+                                        prima = salario * arraySalarioAux.prima / 100
+                                        cesantias = salario * arraySalarioAux.cesantias / 100
+                                        intCesantias = salario * arraySalarioAux.intCesantias / 100
+                                        vacaciones = salario * arraySalarioAux.vacaciones / 100;
+
+                                        total = salario + auxTransPorte + 
+                                                salud + pension + arl + 
+                                                caja + prima + 
+                                                cesantias + intCesantias + 
+                                                vacaciones;
+                                    }
+                                }
+                            });
+                            return [
+                                item.cedula,
+                                item.nombres,
+                                parseInt(salario),
+                                parseInt(auxTransPorte),
+                                parseInt(salud),
+                                parseInt(pension),
+                                parseInt(arl),
+                                parseInt(caja),
+                                parseInt(prima),
+                                parseInt(cesantias),
+                                parseInt(intCesantias),
+                                parseInt(vacaciones),
+                                parseInt(total)
+                            ];
+                        });
+
+                        arrayCostosProyecto.push(['TOTAL', '', '', '', '', '', '', '', '', '']);
+
+                        handCostosProyecto.updateSettings({
+                            data: arrayCostosProyecto,
+                            colHeaders: [
+                                'CODIGO',
+                                'NOMBRE DEL EMPLEADO',
+                                'SALARIO <br>'+formatter.format(arraySalarioAux.salarioMinimo)+'',
+                                'AUX TRA <br>'+formatter.format(arraySalarioAux.auxilioTransporte)+'',
+                                'SALUD <br>'+arraySalarioAux.salud+'%',
+                                'PENSION <br>'+arraySalarioAux.pension+'%',
+                                'ARL <br>'+arraySalarioAux.arl+'%',
+                                'CAJA <br>'+arraySalarioAux.caja+'%',
+                                'PRIMA <br>'+arraySalarioAux.prima+'%',
+                                'CESANTIAS <br>'+arraySalarioAux.cesantias+'%',
+                                'INT CESANTIAS <br>'+arraySalarioAux.intCesantias+'%',
+                                'VACACIONES <br>'+arraySalarioAux.vacaciones+'%',
+                                'TOTAL'
+                            ],
+                        });
+
+
+                        let ultimafila = handCostosProyecto.countRows() - 1;
+
+                        let totalSalario = 0;
+                        let totalAuxTrans = 0;
+                        let totalSalud = 0;
+                        let totalPension = 0;
+                        let totalArl = 0;
+                        let totalCaja = 0;
+                        let totalPrima = 0;
+                        let totalCesantias = 0;
+                        let totalIntCesantias = 0;
+                        let totalVacaciones = 0;
+                        let totalGeneral = 0;
+                        
+                        for (let i = 0; i < ultimafila; i++) {
+                            let salarioInsFila = handCostosProyecto.getDataAtCell(i, 2);
+                            let auxTransFila = handCostosProyecto.getDataAtCell(i, 3);
+                            let saludFila = handCostosProyecto.getDataAtCell(i, 4);
+                            let pensionFila = handCostosProyecto.getDataAtCell(i, 5);
+                            let arlFila = handCostosProyecto.getDataAtCell(i, 6);
+                            let cajaFila = handCostosProyecto.getDataAtCell(i, 7);
+                            let primaFila = handCostosProyecto.getDataAtCell(i, 8);
+                            let cesantiasFila = handCostosProyecto.getDataAtCell(i, 9);
+                            let intCesantiasFila = handCostosProyecto.getDataAtCell(i, 10);
+                            let vacacionesFila = handCostosProyecto.getDataAtCell(i, 11);
+                            let totalFila = handCostosProyecto.getDataAtCell(i, 12);
+                        
+                            // Acumular los valores
+                            totalSalario += salarioInsFila;
+                            totalAuxTrans += auxTransFila;
+                            totalSalud += saludFila;
+                            totalPension += pensionFila;
+                            totalArl += arlFila;
+                            totalCaja += cajaFila;
+                            totalPrima += primaFila;
+                            totalCesantias += cesantiasFila;
+                            totalIntCesantias += intCesantiasFila;
+                            totalVacaciones += vacacionesFila;
+                            totalGeneral += totalFila;
+                        }
+
+                        // establecemos los valores en la ultima fila 
+                        handCostosProyecto.setDataAtCell(ultimafila, 2, totalSalario);
+                        handCostosProyecto.setDataAtCell(ultimafila, 3, totalAuxTrans);
+                        handCostosProyecto.setDataAtCell(ultimafila, 4, totalSalud);
+                        handCostosProyecto.setDataAtCell(ultimafila, 5, totalPension);
+                        handCostosProyecto.setDataAtCell(ultimafila, 6, totalArl);
+                        handCostosProyecto.setDataAtCell(ultimafila, 7, totalCaja);
+                        handCostosProyecto.setDataAtCell(ultimafila, 8, totalPrima);
+                        handCostosProyecto.setDataAtCell(ultimafila, 9, totalCesantias);
+                        handCostosProyecto.setDataAtCell(ultimafila, 10, totalIntCesantias);
+                        handCostosProyecto.setDataAtCell(ultimafila, 11, totalVacaciones);
+                        handCostosProyecto.setDataAtCell(ultimafila, 12, totalGeneral);
+
+                        handCostosProyecto.updateSettings({
+                            cells: function (rowIndex, colIndex) {
+                                let cellProperties = {};
+                            
+                                // Columnas con formato numérico y pattern de dinero
+                                const columnasNumericas = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];  
+                            
+                                // Asignar formato numérico en las columnas específicas
+                                if (columnasNumericas.includes(colIndex)) {
+                                    cellProperties.type = 'numeric';
+                                    cellProperties.numericFormat = {
+                                        pattern: '$0,0', // Formato sin decimales
+                                        culture: 'en-US',
+                                    };
+                                }
+
+                                if(colIndex >= 0 && colIndex <= 11){
+                                    cellProperties.className = 'celdasGeneral';
+                                }
+
+                                if(colIndex === 12){
+                                    cellProperties.className = 'cell-total-costo';
+                                }
+
+                                if(rowIndex === ultimafila){
+                                    cellProperties.className = 'cell-ultima-fila';
+                                }
+                                return cellProperties;
+                            }
                         });
                     }else{
                         Swal.fire({
@@ -349,10 +671,11 @@ $(document).ready(function(){
 
     // Descargar excel
     $(document).on('click', '#descargarExcelNomina', function(){
+        // Obtener encabezados y datos de la primera tabla (handNomina)
         let headers1 = handNomina.getColHeader(); // Encabezados de la primera tabla
         let datos1 = handNomina.getData(); // Datos de la primera tabla
-        
-        // Formatear las columnas 5, 6, 7, 8 y 9 para que tengan formato de moneda
+
+        // Formatear las columnas 5, 6, 7, 8 y 9 para que tengan formato de moneda en handNomina
         datos1 = datos1.map((fila, rowIndex) => {
             return fila.map((cell, colIndex) => {
                 if ([5, 6, 7, 8, 9].includes(colIndex)) {
@@ -364,20 +687,47 @@ $(document).ready(function(){
                 return cell; // Devolver el valor original para otras columnas
             });
         });
-    
-        // Añadir encabezados a los datos
+
+        // Añadir encabezados a los datos de handNomina
         datos1.unshift(headers1);
-    
+
+        // Obtener encabezados y datos de la segunda tabla (handCostosProyecto)
+        let headers2 = handCostosProyecto.getColHeader().map(header => header.replace(/<br\s*\/?>/gi, ' ')); // Reemplazar <br> por espacio
+        let datos2 = handCostosProyecto.getData(); // Datos de la segunda tabla
+
+        // Formatear las columnas 2 a 12 para que tengan formato de moneda en handCostosProyecto
+        datos2 = datos2.map((fila, rowIndex) => {
+            return fila.map((cell, colIndex) => {
+                if (colIndex >= 2 && colIndex <= 12) {
+                    // Formatear solo si el valor es numérico
+                    if (typeof cell === 'number') {
+                        return `$${cell.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
+                    }
+                }
+                return cell; // Devolver el valor original para otras columnas
+            });
+        });
+
+        // Añadir encabezados a los datos de handCostosProyecto
+        datos2.unshift(headers2);
+
+        // Añadir una fila vacía para separar las tablas
+        datos1.push([],[]);
+        
+        // Unir las dos tablas (datos de handNomina y handCostosProyecto)
+        let datosCombinados = datos1.concat(datos2);
+
         // Crear una nueva hoja de trabajo
-        const worksheet = XLSX.utils.aoa_to_sheet(datos1);
-    
+        const worksheet = XLSX.utils.aoa_to_sheet(datosCombinados);
+
         // Crear un nuevo libro de trabajo y añadir la hoja
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte');
-    
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte_Completo');
+
         // Exportar el archivo Excel
-        XLSX.writeFile(workbook, 'Reporte_nomina.xlsx');
+        XLSX.writeFile(workbook, 'Reporte_nomina_costos.xlsx');
     });
+
     
     function regex(str) {
         return str === null || str === "" || /^\d+$/.test(str);

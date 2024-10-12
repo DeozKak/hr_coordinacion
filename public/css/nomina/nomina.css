@@ -43,3 +43,18 @@
         transform: rotate(360deg);
     }
 }
+
+.cell-total-costo{
+    background-color: #00B0F0 !important;
+    color: black !important;
+}
+
+.cell-ultima-fila{
+    background-color: #00B0F0 !important;
+    color: black !important;
+    font-weight: bold;
+}
+
+.celdasGeneral{
+    color: black !important;
+}

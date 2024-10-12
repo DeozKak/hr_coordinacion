@@ -23,6 +23,14 @@ $(document).ready(function () {
         let fechaSalAuxFin = $('#fechaSalAuxFin').val();
         let salMin = formatterNumber($('#salMin').val());
         let auxTrans = formatterNumber($('#auxTrans').val());
+        let salud = formatterPorcentaje($('#salud').val());
+        let pension = formatterPorcentaje($('#pension').val());
+        let arl = formatterPorcentaje($('#arl').val());
+        let caja = formatterPorcentaje($('#caja').val());
+        let prima = formatterPorcentaje($('#prima').val());
+        let cesantias = formatterPorcentaje($('#cesantias').val());
+        let intCesantias = formatterPorcentaje($('#intCesantias').val());
+        let vacaciones = formatterPorcentaje($('#vacaciones').val());
 
         let url = $(this).attr('data-url')
         let token = $(this).attr('data-token')
@@ -46,7 +54,10 @@ $(document).ready(function () {
             });
             return
         }else{
-            if(salMin != "" && auxTrans != ""){
+            if(salMin != "" && auxTrans != "" && salud != "" && 
+                pension != "" && arl != "" && caja != "" && 
+                prima != "" && cesantias != "" && intCesantias != "" && vacaciones != ""
+            ){
                 Swal.fire({
                     icon: 'warning',
                     title: 'Advertencia',
@@ -68,6 +79,14 @@ $(document).ready(function () {
                                 fechaSalAuxFin: fechaSalAuxFin,
                                 salMin: salMin,
                                 auxTrans: auxTrans,
+                                salud: salud,
+                                pension: pension,
+                                arl: arl,
+                                caja: caja,
+                                prima: prima,
+                                cesantias: cesantias,
+                                intCesantias: intCesantias,
+                                vacaciones: vacaciones,
                                 _token: token
                             },
                             success: function (response) {
@@ -150,6 +169,14 @@ $(document).ready(function () {
         let fechaSalAuxFin = tr.find('td').eq(2).text();
         let salMin = tr.find('td').eq(3).text();
         let auxTrans = tr.find('td').eq(4).text();
+        let salud = tr.find('td').eq(5).text();
+        let pension = tr.find('td').eq(6).text();
+        let arl = tr.find('td').eq(7).text();
+        let caja = tr.find('td').eq(8).text();
+        let prima = tr.find('td').eq(9).text();
+        let cesantias = tr.find('td').eq(10).text();
+        let intCesantias = tr.find('td').eq(11).text();
+        let vacaciones = tr.find('td').eq(12).text();
         let url = $('#editarParametroSalarioAux').attr('data-url');
 
         $('.tituloFormSalAux .card-title').text('Editar salario minimo - auxilio transporte registro #'+id);
@@ -182,6 +209,14 @@ $(document).ready(function () {
         $('#fechaSalAuxFin').val(fechaSalAuxFin);
         $('#salMin').val(salMin);
         $('#auxTrans').val(auxTrans);
+        $('#salud').val(salud);
+        $('#pension').val(pension);
+        $('#arl').val(arl);
+        $('#caja').val(caja);
+        $('#prima').val(prima);
+        $('#cesantias').val(cesantias);
+        $('#intCesantias').val(intCesantias);
+        $('#vacaciones').val(vacaciones);
 
         if (tr.find('.cancelarEdicionSalAux').length === 0) {
             let nuevoBoton = $('<button>')
@@ -214,6 +249,16 @@ $(document).ready(function () {
         let fechaSalAuxFin = $('#fechaSalAuxFin').val();
         let salMin = formatterNumber($('#salMin').val());
         let auxTrans = formatterNumber($('#auxTrans').val());
+        let salud = formatterPorcentaje($('#salud').val());
+        let pension = formatterPorcentaje($('#pension').val());
+        let arl = formatterPorcentaje($('#arl').val());
+        let caja = formatterPorcentaje($('#caja').val());
+        let prima = formatterPorcentaje($('#prima').val());
+        let cesantias = formatterPorcentaje($('#cesantias').val());
+        let intCesantias = formatterPorcentaje($('#intCesantias').val());
+        let vacaciones = formatterPorcentaje($('#vacaciones').val());
+
+        debugger
 
         // validamos los datos antes de enviarlos
         if(fechaSalAuxFin == "" || fechaSalAuxInicio == ""){
@@ -234,7 +279,9 @@ $(document).ready(function () {
             });
             return
         }else{
-            if(salMin != "" || auxTrans != ""){
+            if(salMin != "" && auxTrans != "" && salud != "" && 
+                pension != "" && arl != "" && caja != "" && 
+                prima != "" && cesantias != "" && intCesantias != "" && vacaciones != ""){
                     Swal.fire({
                         icon: 'warning',
                         title: 'Advertencia',
@@ -257,6 +304,14 @@ $(document).ready(function () {
                                     fechaSalAuxFin: fechaSalAuxFin,
                                     salMin: salMin,
                                     auxTrans: auxTrans,
+                                    salud: salud,
+                                    pension: pension,
+                                    arl: arl,
+                                    caja: caja,
+                                    prima: prima,
+                                    cesantias: cesantias,
+                                    intCesantias: intCesantias,
+                                    vacaciones: vacaciones,
                                     _token: token
                                 },
                                 success: function (response) {
@@ -349,6 +404,16 @@ $(document).ready(function () {
         $(this).val('$ ' + inputVal);
     });
 
+    $(document).on('input', '.inputPorcentaje', function() {
+        let inputVal = $(this).val();
+    
+        // Permitir solo números y puntos (para decimales escritos manualmente)
+        inputVal = inputVal.replace(/[^\d.]/g, '');
+    
+        // Mostrar el valor con el símbolo de porcentaje
+        $(this).val('%' + inputVal);
+    });
+
     function formatterNumber(str){
         if(str == ""){
             return ""
@@ -358,6 +423,16 @@ $(document).ready(function () {
             strPartes = strPartes.join('');
             let strFinal = parseInt(strPartes);
             return strFinal
+        }
+    }
+
+    function formatterPorcentaje(str){
+        if(str == ""){
+            return ""
+        }else{
+            let strPartes = str.split('%');
+            let strfinal = strPartes[1]
+            return strfinal
         }
     }
 })
