@@ -41,7 +41,8 @@ Route::middleware('web')->group(function () {
         //Rutas Gestion-----------------------------------------------------------------------------------
         Route::get('/gestion/coordinacion', [CoordinacionController::class, 'coordinacion'])->name('coordinacion')->middleware(CheckPermission::class . ':ver_coordinacion_RN');
         Route::get('/gestion/getdataCoordinacion', [CoordinacionController::class, 'getdataCoordinacion'])->name('getdataCoordinacionRP')->middleware(CheckPermission::class . ':ver_coordinacion_RN');
-        Route::post('/gestion/filterData', [CoordinacionController::class, 'filterData'])->name('filterData')->middleware(CheckPermission::class . ':ver_coordinacion_RN');
+        Route::get('/gestion/filterData', [CoordinacionController::class, 'filterData'])->name('filterData')->middleware(CheckPermission::class . ':ver_coordinacion_RN');
+        Route::post('/gestion/guardarProgramacionTecnico', [CoordinacionController::class, 'guardarProgramacionTecnico'])->name('guardarProgramacionTecnico')->middleware(CheckPermission::class . ':ver_coordinacion_RN');
 
         //Rutas para bitacoras-----------------------------------------------------------------------------
         Route::get('/bitacora', [BitacoraController::class, 'ver'])->name('bitacora')->middleware(CheckPermission::class . ':generar_bitacoras');
