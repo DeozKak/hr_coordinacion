@@ -13,7 +13,7 @@
 
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/reporteProduccion/reporteDiarioProduccion.css') }}">
+<link rel="stylesheet" href="{{ asset('css/reporteProduccion/reporteDiarioProduccion.css') }}?v={{ time() }}">
 
 <div class="row align-items-center">
     <div class="col-md-2">
@@ -56,6 +56,9 @@
             <div id="example" style="display: none">
                 <!--Reporte diario de produccion  -->
             </div>
+            <div class="loaderTablaDiario" style="display: none">
+                <span class="loaderDiario"></span>
+            </div>
         </x-adminlte-card>
     </div>
     <div class="row">
@@ -76,5 +79,5 @@
 @endsection
 
 @section('js')
-<script src="{{ asset('js/reporteProduccion/reporteDiarioProduccion.js') }}"></script>
+<script src="{{ asset('js/reporteProduccion/reporteDiarioProduccion.js') }}?v={{ time() }}"></script>
 @endsection

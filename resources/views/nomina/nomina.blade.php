@@ -13,7 +13,7 @@
 
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/nomina/nomina.css') }}">
+<link rel="stylesheet" href="{{ asset('css/nomina/nomina.css') }}?v={{ time() }}">
 
 <div class="row align-items-center">
     <div class="col-md-2">
@@ -36,12 +36,18 @@
             <div id="tablaNomina">
                 <!--Reporte nomina  -->
             </div>
+            <div class="loaderTablaNomina" style="display: none">
+                <span class="loaderNominaTabla"></span>
+            </div>
         </x-adminlte-card>
     </div>
     <div class="card-body">
         <x-adminlte-card title="Reporte costos proyecto" theme="info" icon="fas fa-file-alt" collapsible maximizable>
             <div id="tablaCostosProyecto">
                 <!--Reporte costos proyecto  -->
+            </div>
+            <div class="loaderTablaCostosProyecto" style="display: none">
+                <span class="loaderCostosProyecto"></span>
             </div>
         </x-adminlte-card>
     </div>
@@ -51,5 +57,5 @@
 @endsection
 
 @section('js')
-<script src="{{ asset('js/nomina/nomina.js') }}"></script>
+<script src="{{ asset('js/nomina/nomina.js') }}?v={{ time() }}"></script>
 @endsection

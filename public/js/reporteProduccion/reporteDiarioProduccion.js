@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let containerResumen = document.getElementById('tablaResumen');
     let loaderDiv = document.querySelector('.loaderDiv');
     let nominaSelectorMes = document.querySelector('.nominaSelectorMes');
+    let loaderTablaDiario = document.querySelector('.loaderTablaDiario');
 
     const formatter = new Intl.NumberFormat('es-CO', {
         style: 'currency',
@@ -484,7 +485,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
     document.getElementById('nominaSelectorAnio').addEventListener('change', function () {
         nominaSelectorMes.style.display = 'block';
-
     });
 
     let sumaValorProyectado = 0;
@@ -526,8 +526,7 @@ document.addEventListener("DOMContentLoaded", function() {
                             let fechaFila = hot.getDataAtCell(row, 0);
             
                             if (valoresPrevios[row] !== nuevaCant) {
-                                valoresPrevios[row] = nuevaCant; 
-            
+                                valoresPrevios[row] = nuevaCant;
                                 $.post({
                                     url: url,
                                     data: {
@@ -550,7 +549,7 @@ document.addEventListener("DOMContentLoaded", function() {
                                             text: 'No se pudo cambiar la cantidad',
                                             icon: 'error'
                                         });
-                                    }
+                                    },
                                 });
                             }
             
@@ -588,12 +587,71 @@ document.addEventListener("DOMContentLoaded", function() {
                                         contador++;
                                     }
                                 }
-            
+
                                 let arrayFechas = [];
                                 let dataLoaded = false;
                                 let cantEjecutada = parseFloat(hot.getDataAtCell(row, 16));
                                 let diferencia = cantEjecutada - nuevaCant;
             
+                                sumaValorProyectado = valorProyectado; 
+                                hot.setDataAtCell(row, 17, diferencia); 
+                                hot.setDataAtCell(row, 19, formatter.format(valorProyectado));
+                                hot.setDataAtCell(ultimaFila, 18, nuevaCant);
+                                hot.setDataAtCell(ultimaFila, 19, formatter.format(sumaValorProyectado));
+            
+                                if(contador == ultimaFila){
+
+                                    loaderTablaDiario.style.display = 'block';
+                                    container.style.opacity = '0.5';
+
+                                    setTimeout(function() {
+                                        let porcentajeTotal = "";
+                                        let porcentajeTotal2 = "";
+    
+                                        let total = hot.getDataAtCell(ultimaFila, 19);
+                                        let totalString = total.split('$')
+                                        totalString = totalString[1].trim();
+                                        totalString = totalString.split('.');
+                                        let resultadoFinal = totalString.join('')
+                                        resultadoFinal = parseInt(resultadoFinal);
+    
+                                        for (let i = 0; i < ultimaFila; i++) {
+                                            let valor = hot.getDataAtCell(i, 19);
+                                            let valorString = valor.split('$')
+                                            valorString = valorString[1].trim();
+                                            valorString = valorString.split('.');
+                                            let valorFinal = valorString.join('')
+                                            valorFinal = parseInt(valorFinal);
+                
+                                            let porcentaje = (valorFinal / resultadoFinal) * 100;
+                                            let porcentajeString = porcentaje.toString().split('.')[0];
+                                            porcentajeTotal = porcentajeString
+                                            hot.setDataAtCell(i, 20, '% ' + porcentajeString);
+                                        }
+                                        
+                                        hot.setDataAtCell(ultimaFila, 20, '% ' + porcentajeTotal);
+                
+                                        for (let i = 0; i < ultimaFila; i++) {
+                                            let valor = hot.getDataAtCell(i, 21);
+                                            let valorString = valor.split('$')
+                                            valorString = valorString[1].trim();
+                                            valorString = valorString.split('.');
+                                            let valorFinal = valorString.join('')
+                                            valorFinal = parseInt(valorFinal);
+                
+                                            let porcentaje = (valorFinal / resultadoFinal) * 100;
+                                            let porcentajeString = porcentaje.toString().split('.')[0];
+                                            porcentajeTotal2 = porcentajeString
+                                            hot.setDataAtCell(i, 22, '% ' + porcentajeString);
+                                        }
+    
+                                        hot.setDataAtCell(ultimaFila, 22, '% ' + porcentajeTotal2);
+
+                                        loaderTablaDiario.style.display = 'none';
+                                        container.style.opacity = '1';
+                                    },3000)
+                                }
+
                                 hot.updateSettings({
                                     afterRender: function () {
                                         if (!dataLoaded) {
@@ -686,57 +744,6 @@ document.addEventListener("DOMContentLoaded", function() {
                                         }
                                     }
                                 });
-            
-                                sumaValorProyectado = valorProyectado; 
-                                hot.setDataAtCell(row, 17, diferencia); 
-                                hot.setDataAtCell(row, 19, formatter.format(valorProyectado));
-                                hot.setDataAtCell(ultimaFila, 18, nuevaCant);
-                                hot.setDataAtCell(ultimaFila, 19, formatter.format(sumaValorProyectado));
-            
-                                if(contador == ultimaFila){
-
-                                    let porcentajeTotal = "";
-                                    let porcentajeTotal2 = "";
-
-                                    let total = hot.getDataAtCell(ultimaFila, 19);
-                                    let totalString = total.split('$')
-                                    totalString = totalString[1].trim();
-                                    totalString = totalString.split('.');
-                                    let resultadoFinal = totalString.join('')
-                                    resultadoFinal = parseInt(resultadoFinal);
-
-                                    for (let i = 0; i < ultimaFila; i++) {
-                                        let valor = hot.getDataAtCell(i, 19);
-                                        let valorString = valor.split('$')
-                                        valorString = valorString[1].trim();
-                                        valorString = valorString.split('.');
-                                        let valorFinal = valorString.join('')
-                                        valorFinal = parseInt(valorFinal);
-            
-                                        let porcentaje = (valorFinal / resultadoFinal) * 100;
-                                        let porcentajeString = porcentaje.toString().split('.')[0];
-                                        porcentajeTotal = porcentajeString
-                                        hot.setDataAtCell(i, 20, '% ' + porcentajeString);
-                                    }
-                                    
-                                    hot.setDataAtCell(ultimaFila, 20, '% ' + porcentajeTotal);
-            
-                                    for (let i = 0; i < ultimaFila; i++) {
-                                        let valor = hot.getDataAtCell(i, 21);
-                                        let valorString = valor.split('$')
-                                        valorString = valorString[1].trim();
-                                        valorString = valorString.split('.');
-                                        let valorFinal = valorString.join('')
-                                        valorFinal = parseInt(valorFinal);
-            
-                                        let porcentaje = (valorFinal / resultadoFinal) * 100;
-                                        let porcentajeString = porcentaje.toString().split('.')[0];
-                                        porcentajeTotal2 = porcentajeString
-                                        hot.setDataAtCell(i, 22, '% ' + porcentajeString);
-                                    }
-
-                                    hot.setDataAtCell(ultimaFila, 22, '% ' + porcentajeTotal2);
-                                }
                             }
                         }
                     }
