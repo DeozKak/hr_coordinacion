@@ -25,7 +25,7 @@ Route::middleware('web')->group(function () {
     Route::middleware('throttle:60,1')->group(function () {
         Auth::routes();
     });
-    
+
     Route::middleware('auth')->group(function () {
         Route::get('/home', [HomeController::class, 'index'])->name('home');
 
@@ -35,13 +35,14 @@ Route::middleware('web')->group(function () {
         Route::put('/profile/{user}', [UserController::class, 'updateProfile'])->name('update');
         Route::get('changePassword/{user}', [UserController::class, 'changePassword'])->name('changePassword');
         Route::put('uptadePassword/{user}', [UserController::class, 'updatePassword'])->name('updatePassword');
+        Route::post('/profile/getDataPermissions', [UserController::class, 'getDataPermissions'])->name('profile.getDataPermissions');
 
         //rutas cargues tareas----------------------------------------------------------------------------
         Route::get('/load', [AsignadasController::class, 'index'])->name('cargues.load')->middleware(CheckPermission::class . ':cargue_tareas');
         Route::post('/store', [AsignadasController::class, 'store'])->name('cargues.store')->middleware(CheckPermission::class . ':cargue_tareas');
 
         //Rutas Gestion--------------------------------------------------------------------------------------------------------------------------
-        
+
         Route::get('/gestion/coordinacion', [CoordinacionController::class, 'coordinacion'])->name('coordinacion')->middleware(CheckPermission::class . ':ver_coordinacion_RP');
         Route::get('/gestion/getdataCoordinacionRP', [CoordinacionController::class, 'getdataCoordinacionRP'])->name('getdataCoordinacionRP')->middleware(CheckPermission::class . ':ver_coordinacion_RP');
         Route::post('/gestion/filterData', [CoordinacionController::class, 'filterData'])->name('filterData')->middleware(CheckPermission::class . ':ver_coordinacion_RP');
@@ -67,14 +68,15 @@ Route::middleware('web')->group(function () {
         Route::get('bitacoras/buscar_por_contrato', [BitacoraController::class, 'buscarPorContrato'])->name('bitacoras.buscar_por_contrato')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('municipios/json', [BitacoraController::class, 'getMunicipiosJson'])->name('municipios.json')->middleware(CheckPermission::class . ':ver_bitacoras');
         //Rutas para inspectores-----------------------------------------------------------------------------------------------------------------
-        
+
         Route::get('/inspectores', [InspectorController::class, 'index'])->name('inspectores.index')->middleware(CheckPermission::class . ':gestion_inspectores');
         Route::get('/inspectores/create', [InspectorController::class, 'create'])->name('inspectores.create')->middleware(CheckPermission::class . ':gestion_inspectores');
         Route::post('/inspectores/store', [InspectorController::class, 'store'])->name('inspectores.store')->middleware(CheckPermission::class . ':gestion_inspectores');
-        Route::get('/inspectores/edit/{inspector}', [InspectorController::class, 'edit'])->name('inspectores.edit')->middleware(CheckPermission::class . ':gestion_inspectores');
-        Route::put('/inspectores/update/{inspector}', [InspectorController::class, 'update'])->name('inspectores.update')->middleware(CheckPermission::class . ':gestion_inspectores');
+        // Route::get('/inspectores/edit/{inspector}', [InspectorController::class, 'edit'])->name('inspectores.edit')->middleware(CheckPermission::class . ':gestion_inspectores');
+        Route::post('/inspectores/update', [InspectorController::class, 'update'])->name('inspectores.update')->middleware(CheckPermission::class . ':gestion_inspectores');
         Route::post('/inspectores/change_state/{inspector}', [InspectorController::class, 'change_state'])->name('inspectores.change_state')->middleware(CheckPermission::class . ':gestion_inspectores');
         Route::get('/inspectores/show_disabled', [InspectorController::class, 'show_disabled'])->name('inspectores.show_disabled')->middleware(CheckPermission::class . ':gestion_inspectores');
+        Route::post('inspectores/getData', [InspectorController::class, 'getDataInspector'])->name('inspector.getData')->middleware(CheckPermission::class . ':gestion_inspectores');
 
         //Rutas para Producción
         Route::get('/produccion/detalles_corte/{id}', [ProduccionController::class, 'detallesCorte'])->name('produccion.detallesCorte')->middleware(CheckPermission::class . ':ver_residente');

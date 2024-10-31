@@ -42,7 +42,7 @@
                     <a href="{{route('home')}}" class="btn btn-danger" style="margin-right: 10px;">Cancelar</a>
                     </div>
                 </div>
-                
+
             </div>
         </div>
     </div>
