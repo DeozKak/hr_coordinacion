@@ -80,7 +80,7 @@
 
     {{-- Body Content --}}
     @yield('body')
-    <input type="hidden" id="makeRead" name="makeRead" value="{{route('notifications.markAsRead')}}">
+    <input type="text" id="makeRead" name="makeRead" value="{{route('notifications.markAsRead')}}">
     {{-- Base Scripts --}}
     @if(!config('adminlte.enabled_laravel_mix'))
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
@@ -125,30 +125,59 @@
             setTimeout(() => {
                 document.addEventListener('click', function(event) {
                     let dropdownLink = null;
-                    if (event.target.matches('a.dropdown-item:not(.dropdown-footer)')) {
+                    if (event.target.matches('a.deleteNotification')) {
                         dropdownLink = event.target;
-                    } else if (event.target.matches('a.dropdown-item:not(.dropdown-footer) span')) {
-                        dropdownLink = event.target.closest('a.dropdown-item:not(.dropdown-footer)');
                     }
 
                     if (dropdownLink) {
                         const notificationId = dropdownLink.id;
-                  
+
                         const requestUrl = `${makeRead}?notification_id=${notificationId}`;
 
                         $.ajax({
                             url: requestUrl,
                             type: 'GET',
                             success: function(response) {
-                         
+
                             },
                             error: function(xhr, status, error) {
-                              
+
                             }
                         });
                     }
                 });
             }, 10);
+
+            $(document).on('click', '[id^="notificationTrash_"]', function(event) {
+                event.stopPropagation();
+
+                const notificationId = this.id.split('_')[1];
+                const data = 1;
+
+                $.ajax({
+                    url: "{{route('notifications.markAsRead')}}",
+                    type: "GET",
+                    data: {
+                        notification_id: notificationId,
+                         data: data,
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $('.adminlte-dropdown-content').html(response.notifications.dropdown);
+                            $('.navbar-badge').text(response.notifications.label);
+                        } else {
+                            console.error("Error:", response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("AJAX error:", error);
+                    }
+                });
+            });
+
+            $(document).on('click', '.adminlte-dropdown-content', function(event) {
+                event.stopPropagation();
+            });
         });
     </script>
 </body>
