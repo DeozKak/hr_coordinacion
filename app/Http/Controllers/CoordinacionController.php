@@ -247,24 +247,24 @@ class CoordinacionController extends Controller
             $valorActualizar = $codigoTecnico;
 
             $tecnico = DB::table('tbl_insp_cali')->where('id', $codigoTecnico)->first();
-            
+
             if ($tecnico == null) {
                 echo 3;
                 exit;
             }
-            
-            $parametros = [$valorActualizar,$fechaActual,$orden];
+
+            $parametros = [$valorActualizar, $fechaActual, $orden];
         } else if ($estadoProgramacion != null) {
             $campoActualizar = "estado_programacion";
             $valorActualizar = $estadoProgramacion;
-            $parametros = [$valorActualizar,$orden];
+            $parametros = [$valorActualizar, $orden];
         }
 
         $asignadas = DB::update(
             "UPDATE asignadas 
-                                                SET {$campoActualizar} = ? 
-                                                {$campoFecha}
-                                                WHERE orden = ?",
+                        SET {$campoActualizar} = ? 
+                        {$campoFecha}
+                        WHERE orden = ?",
             $parametros
         );
 

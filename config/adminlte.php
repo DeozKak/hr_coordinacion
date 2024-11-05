@@ -346,6 +346,12 @@ return [
                     'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
+                [
+                    'text' => 'Recepcion',
+                    'url' => 'receptionLoad',
+                    'icon' => 'far fa-circle',
+                    'label_color' => 'success',
+                ],
 
             ],
         ],
@@ -388,6 +394,12 @@ return [
                 [
                     'text' => 'Asignador',
                     'url' => 'asignador',
+                    'icon' => 'far fa-circle',
+                    'label_color' => 'success',
+                ],
+                [
+                    'text' => 'Recepcion',
+                    'url' => '/gestion/viewReception',
                     'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
