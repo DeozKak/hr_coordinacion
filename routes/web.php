@@ -102,6 +102,8 @@ Route::middleware('web')->group(function () {
             ]);
         })->name('obtener-url-bitacoras');
         Route::post('/crear-session-corte', [ProduccionController::class, 'crearSession'])->name('produccion.crearSession')->middleware(CheckPermission::class . ':ver_residente');
+        Route::post('/produccion/guardar_no_dobles', [ProduccionController::class, 'guardarNoDobles'])->name('produccion.guardarNoDobles')->middleware(CheckPermission::class . ':ver_residente');
+        Route::post('/produccion/contarDobles', [ProduccionController::class, 'contarDobles'])->name('produccion.contarDobles')->middleware(CheckPermission::class . ':ver_residente');
         //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         //Rutas Zonas
         Route::get('/produccion/zonas', [ProduccionController::class, 'zonas'])->name('produccion.zonas')->middleware(CheckPermission::class . ':ver_residente,ver_produccion');

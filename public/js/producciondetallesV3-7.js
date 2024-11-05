@@ -9,54 +9,54 @@ let fechaSeleccionada;
 let totalColspan = 0;
 /* Inicializacion tabla de producción */
 document.addEventListener('DOMContentLoaded', async () => {
-   
+
     document.getElementById('exportar').addEventListener('click', exportarExcel);
 
-
-    Handsontable.renderers.registerRenderer('customStylesRenderer', (hotInstance, TD, row, col, prop, value, cellProperties) => {
-        Handsontable.renderers.TextRenderer(hotInstance, TD, row, col, prop, value, cellProperties);
-        let columNameColor = hotInstance.getColHeader(col);
-        if (col !== 0 && col !== 1 && columNameColor !== 'META POR INSPECTOR' && columNameColor !== 'DIAS LABORADOS') {
-            TD.style.backgroundColor = 'rgb(215, 232, 255)';
-        }
-        if (columNameColor === 'MATRICES' || columNameColor === 'DOMINGOS Y FESTIVOS' || columNameColor === 'DISEÑOS ESPECIALES'
-            || columNameColor === '4 O MAS RECINTOS' || columNameColor === 'COMERCIALES') {
-            TD.style.backgroundColor = 'rgb(253, 234, 185)';
-        }
-        if (columNameColor === 'TOTAL' || columNameColor === 'SUB TOTAL') {
-            TD.style.backgroundColor = 'rgb(185, 196, 255)';
-        }
-
-        if (columNameColor === 'SUB TOTAL' && value < 180) {
-            TD.style.backgroundColor = 'rgb(255, 185, 185)';
-        }
-
-        if (columNameColor === 'PROMEDIO INDIVIDUAL' && value >= 8) {
-            TD.style.backgroundColor = 'rgb(147, 255, 134)';
-        } else if (columNameColor === 'PROMEDIO INDIVIDUAL' && value < 8) {
-            TD.style.backgroundColor = 'rgb(255, 185, 185)';
-        }
-
-        const columnName = hotInstance.getColHeader(col);
-        const ccOperario = hotInstance.getDataAtCell(row, 0);
-        if (diasFestivos.includes(columnName)) {
-            TD.style.backgroundColor = 'rgb(147, 255, 134)';
-        }
-        // Verificar si el nombre de la columna y el ccOperario coinciden con los datos en 'resultados'
-        sabadodobles.forEach(resultado => {
-            if (resultado.nombreDia === columnName && resultado.ccInspector === ccOperario) {
-                TD.style.backgroundColor = 'rgb(255, 240, 142)'; // Cambia el color según tus necesidades
+    function cellStyle(){
+        Handsontable.renderers.registerRenderer('customStylesRenderer', (hotInstance, TD, row, col, prop, value, cellProperties) => {
+            Handsontable.renderers.TextRenderer(hotInstance, TD, row, col, prop, value, cellProperties);
+            let columNameColor = hotInstance.getColHeader(col);
+            if (col !== 0 && col !== 1 && columNameColor !== 'META POR INSPECTOR' && columNameColor !== 'DIAS LABORADOS') {
+                TD.style.backgroundColor = 'rgb(215, 232, 255)';
             }
+            if (columNameColor === 'MATRICES' || columNameColor === 'DOMINGOS Y FESTIVOS' || columNameColor === 'DISEÑOS ESPECIALES'
+                || columNameColor === '4 O MAS RECINTOS' || columNameColor === 'COMERCIALES') {
+                TD.style.backgroundColor = 'rgb(253, 234, 185)';
+            }
+            if (columNameColor === 'TOTAL' || columNameColor === 'SUB TOTAL') {
+                TD.style.backgroundColor = 'rgb(185, 196, 255)';
+            }
+
+            if (columNameColor === 'SUB TOTAL' && value < 180) {
+                TD.style.backgroundColor = 'rgb(255, 185, 185)';
+            }
+
+            if (columNameColor === 'PROMEDIO INDIVIDUAL' && value >= 8) {
+                TD.style.backgroundColor = 'rgb(147, 255, 134)';
+            } else if (columNameColor === 'PROMEDIO INDIVIDUAL' && value < 8) {
+                TD.style.backgroundColor = 'rgb(255, 185, 185)';
+            }
+
+            const columnName = hotInstance.getColHeader(col);
+            const ccOperario = hotInstance.getDataAtCell(row, 0);
+            if (diasFestivos.includes(columnName)) {
+                TD.style.backgroundColor = 'rgb(147, 255, 134)';
+            }
+            // Verificar si el nombre de la columna y el ccOperario coinciden con los datos en 'resultados'
+            sabadodobles.forEach(resultado => {
+                if (resultado.nombreDia === columnName && resultado.ccInspector === ccOperario) {
+                    TD.style.backgroundColor = 'rgb(255, 240, 142)'; // Cambia el color según tus necesidades
+                }
+            });
         });
-
-
-    });
+    }
 
     const detalles = document.querySelector('#detalles');
     const url = document.querySelector('#id_produccion').value;
     let headers = [];
     let rows = [];
     let fechas = [];
+
     const fetchData = () => {
         return new Promise((resolve, reject) => {
             $.ajax({
@@ -73,6 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         return;
                     }
                     resolve(response);
+                    cellStyle()
                     $('#loader').hide();
                     $('#overlay').hide();
                 },
@@ -207,8 +208,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         });
                         detallesDia(fecha.fecha, rowData, columnName, nombre_completo);
                     }
-
-
                 }
             }
         });
@@ -222,7 +221,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         $('#loader').hide();
         $('#overlay').hide();
     }
-    // Insertar fila para promedios  
+    // Insertar fila para promedios
     hot.setDataAtCell(hot.countRows(), 1, 'TOTAL');
     // Insertar fila para sumas (arriba de la de promedios)
     hot.setDataAtCell(hot.countRows(), 1, 'PROMEDIO');
@@ -276,6 +275,111 @@ document.addEventListener('DOMContentLoaded', async () => {
             ]
         });
     }
+
+    $(document).on('click', '#noContar', function(){
+        let ccInspector = hot_dia.getDataAtRow(0,2)[3]
+        let fecha = hot_dia.getDataAtRow(0,4)[5]
+        let dataUrl = $(this).attr('data-url')
+        let token = $('#token').val()
+        let nombreInspector = hot_dia.getDataAtRow(0,1)[2]
+
+        $.ajax({
+            url:dataUrl,
+            type: 'POST',
+            data: {
+                ccInspector:ccInspector,
+                fecha:fecha,
+                _token:token,
+            },
+            success: function(response) {
+                // Crear un objeto Date a partir de la fecha en formato YYYY-MM-DD
+                let fechaTransformar = new Date(fecha);
+
+                // Array para traducir los días de la semana al español
+                let diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+                // Obtener el día de la semana y el día del mes
+                let diaSemanaEsp = diasSemana[fechaTransformar.getUTCDay()];
+                let diaMes = fechaTransformar.getUTCDate();
+
+                // Asegurarse de que el día del mes tenga dos dígitos
+                let diaMesFormateado = String(diaMes).padStart(2, '0');
+
+                // Formatear la fecha en el nuevo formato deseado
+                let fechaFormateada = `${diaSemanaEsp} ${diaMesFormateado}`;
+
+                console.log(fechaFormateada);
+                sabadodobles = sabadodobles.filter(element =>
+                    !(element.nombreDia === fechaFormateada && element.ccInspector === ccInspector)
+                );
+                cellStyle();
+                cargarDatos();
+
+                Swal.fire({
+                    position: "top-end",
+                    icon: "success",
+                    title: "Día doble descontado para el inspector: "+nombreInspector+" día: "+fechaFormateada,
+                    showConfirmButton: false,
+                    toast: true,
+                    timer: 4000
+                });
+
+                let botonContarDobles = "<button type='button' data-url='"+urlContarDobles+"' class='btn btn-info' id='contarDobles'>Contar dobles</button>"
+                $('#noContar').after(botonContarDobles)
+                $('#noContar').remove()
+            }
+        })
+    })
+
+    $(document).on('click', '#contarDobles', function(){
+        let ccInspector = hot_dia.getDataAtRow(0,2)[3]
+        let fecha = hot_dia.getDataAtRow(0,4)[5]
+        let dataUrl = $(this).attr('data-url')
+        let token = $('#token').val()
+        let nombreInspector = hot_dia.getDataAtRow(0,1)[2]
+
+        $.ajax({
+            url:dataUrl,
+            type: 'POST',
+            data: {
+                ccInspector:ccInspector,
+                fecha:fecha,
+                _token:token,
+            },
+            success: function(response) {
+                let fechaTransformar = new Date(fecha);
+
+                // Array para traducir los días de la semana al español
+                let diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+                // Obtener el día de la semana y el día del mes
+                let diaSemanaEsp = diasSemana[fechaTransformar.getUTCDay()];
+                let diaMes = fechaTransformar.getUTCDate();
+
+                // Asegurarse de que el día del mes tenga dos dígitos
+                let diaMesFormateado = String(diaMes).padStart(2, '0');
+
+                // Formatear la fecha en el nuevo formato deseado
+                let fechaFormateada = `${diaSemanaEsp} ${diaMesFormateado}`;
+
+                cellStyle();
+                cargarDatos();
+                Swal.fire({
+                    position: "top-end",
+                    icon: "success",
+                    title: "Día doble contado para el inspector : "+nombreInspector+" día: "+fechaFormateada,
+                    showConfirmButton: false,
+                    toast: true,
+                    timer: 4000
+                });
+
+                let botonNoContarDobles = "<button type='button' data-url='"+urlNoContarDobles+"' class='btn btn-info' id='noContar'>No contar dobles</button>"
+                $('#contarDobles').after(botonNoContarDobles)
+                $('#contarDobles').remove()
+            }
+        })
+
+    })
 });
 //---------------------------------------------------------------------------------------------------//
 
@@ -310,8 +414,6 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
     /* variable de rutas sale de la vista */
     const response = await fetch(urlObtenerDetalles + `?fecha=${fecha}&cc_inspector=${cc_inspector}`);
     const urlDetalles = await response.text();
-
-
 
     const contratos_dia = document.querySelector('#contratos_dia');
     const cerrar = document.querySelector('#cerrar_modal');
@@ -374,7 +476,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                 type: 'date',
                 dateFormat: 'YYYY-MM-DD',
                 datePickerConfig: {
-                    minDate: new Date(fecha_inicioCorte), // Esto establece la fecha mínima como el día de inicio del corte 
+                    minDate: new Date(fecha_inicioCorte), // Esto establece la fecha mínima como el día de inicio del corte
                     maxDate: new Date(new Date().getTime() - (24 * 60 * 60 * 1000)) // Esto establece la fecha máxima como el día actual
                 }
             },// Usa el editor personalizado, // FECHA
@@ -482,7 +584,6 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                         },
                         success: function (response) {
                             const idCorteDetallesInput = document.querySelector('#id_corte_detalles');
-
                             if (idCorteDetallesInput) { // Verificar si el elemento existe
                                 cargarDatos(idCorteDetallesInput.value);
                             } else {
@@ -509,7 +610,52 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         url: urlDetalles, // Ruta al archivo PHP que realiza la consulta a la base de datos
         type: 'GET',
         success: function (response) {
-            datosBaseDatos = response;
+            datosBaseDatos = response[0];
+
+            console.log(hot.getSelectedLast())
+
+            // setTimeout(() => {
+            //     // para saber el color de la celda
+            //     const selectedRow = hot.getSelectedLast()[0];
+            //     const selectedColumn = hot.getSelectedLast()[1];
+            //     const cellElement = hot.getCell(selectedRow, selectedColumn);
+            //     const dataText = hot.getDataAtCell(selectedRow, selectedColumn);
+            //     const cellBackgroundColor = window.getComputedStyle(cellElement).backgroundColor;
+            //     // ----------------------
+
+            //     // validamos si la celda es de color verde
+            //     if (dataText != "") {
+            //         console.log(cellBackgroundColor);
+
+            //         if (cellBackgroundColor == "rgb(147, 255, 134)" && !response[1]) {
+            //             if (!$('#noContar').length) { // Solo agregar si el botón no existe ya
+            //                 let botonNoContarDobles = "<button type='button' data-url='" + urlNoContarDobles + "' class='btn btn-info' id='noContar'>No contar dobles</button>";
+            //                 $('#contarDobles').after(botonNoContarDobles);
+            //                 $('#contarDobles').remove();
+            //             }
+            //         } else if (response[1] == true) {
+            //             if (!$('#contarDobles').length) { // Solo agregar si el botón no existe ya
+            //                 let botonContarDobles = "<button type='button' data-url='" + urlContarDobles + "' class='btn btn-info' id='contarDobles'>Contar dobles</button>";
+            //                 $('#noContar').after(botonContarDobles);
+            //                 $('#noContar').remove();
+            //             }
+            //         }
+            //     } else {
+            //         // Elimina ambos botones si no se cumplen las condiciones
+            //         $('#noContar').remove();
+            //         $('#contarDobles').remove();
+            //     }
+            // }, 0);
+
+            // if(response[1] == true){
+            //     let botonContarDobles = "<button type='button' data-url='"+urlContarDobles+"' class='btn btn-info' id='contarDobles'>Contar dobles</button>"
+            //     $('#noContar').after(botonContarDobles)
+            //     $('#noContar').remove()
+            // }else{
+            //     let botonNoContarDobles = "<button type='button' data-url='"+urlNoContarDobles+"' class='btn btn-info' id='noContar'>No contar dobles</button>"
+            //     $('#contarDobles').after(botonNoContarDobles)
+            //     $('#contarDobles').remove()
+            // }
             // Asigna los datos obtenidos a la variable
             const array2D = convertirJSONaArray2D(datosBaseDatos);
             hot_dia.loadData(array2D);
@@ -1123,7 +1269,7 @@ async function cargarDatos(idCorteDetalles = null) {
 
     hot.loadData(rows);
 
-    // Insertar fila para promedios  
+    // Insertar fila para promedios
     hot.setDataAtCell(hot.countRows(), 1, 'TOTAL');
     // Insertar fila para sumas (arriba de la de promedios)
     hot.setDataAtCell(hot.countRows(), 1, 'PROMEDIO');

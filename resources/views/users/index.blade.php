@@ -140,27 +140,25 @@
 
 @section('js')
 <script>
-    $(document).ready(function() {
-        $('#table_users').DataTable({
-            responsive: true,
-            autoWidth: false,
-            ordering: false,
-            "language": {
-                "lengthMenu": "Mostrar _MENU_ registros por página",
-                "zeroRecords": "Nada encontrado - lo siento",
-                "info": "Mostrando la página _PAGE_ de _PAGES_",
-                "infoEmpty": "No hay registros disponibles",
-                "infoFiltered": "(Filtrado de _MAX_ registros totales)",
-                "search": "Buscar:",
-                "paginate": {
-                    "first": "Primero",
-                    "last": "Ultimo",
-                    "next": "Siguiente",
-                    "previous": "Anterior"
-                }
+$(document).ready(function() {
+    $('#table_users').DataTable({
+        ordering: false,
+        "language": {
+            "lengthMenu": "Mostrar _MENU_ registros por página",
+            "zeroRecords": "Nada encontrado - lo siento",
+            "info": "Mostrando la página _PAGE_ de _PAGES_",
+            "infoEmpty": "No hay registros disponibles",
+            "infoFiltered": "(Filtrado de _MAX_ registros totales)",
+            "search": "Buscar:",
+            "paginate": {
+                "first": "Primero",
+                "last": "Ultimo",
+                "next": "Siguiente",
+                "previous": "Anterior"
             }
-        });
-    $('.edit-btn').on('click', function() {
+        }
+    });
+    $(document).on('click', '.edit-btn', function() {
         const user = $(this).data('user')
         $('#idUsuarioEditar').val(user.id)
         $('#nombresEditar').val(user.name)
