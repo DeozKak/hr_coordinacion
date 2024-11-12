@@ -36,7 +36,7 @@
     <div class="modal-dialog" style="max-width: 90%;" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="titulo">Inspecciones </h5>
+                <h5 class="modal-title" id="titulo">Inspecciones </h5>&nbsp;<span class="text-danger" id="cantidadDobles"></span>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -48,13 +48,34 @@
             </div>
             <div class="modal-footer">
                 @haspermission('ver_residente')
-                <button type="button" data-url="{{ route('produccion.guardarNoDobles') }}" class="btn btn-info" id="noContar">No contar dobles</button>
                 <button type="button" class="btn btn-success" id="agregar">Agregar Inspección</button>
                 @endhaspermission
                 <button type="button" class="btn btn-secondary" id="cerrar_modal" data-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="modalContarDoblesSabado" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Contar dobles</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <label for="contarSabado">Inspecciones a contar<span class="text-danger inspeccionesTotales"></span></label>
+        <input class="form-control inputNumeric" type="text" id="contarSabado">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-primary btnGuardarContarSabado" data-url="{{route('produccion.countDoublesSaturday')}}">Guardar</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- modal agregar Inspeccion -->
@@ -206,6 +227,9 @@
         const urlInsertar = "{{ route('produccion.insertarContrato') }}"
         const urlContarDobles = "{{ route('produccion.contarDobles') }}"
         const urlNoContarDobles = "{{ route('produccion.guardarNoDobles') }}"
+        const urlGuardarNoDoblesFestivos = "{{ route('produccion.storeNotDoublesHolidays') }}"
+        const urlCountDoublesHolidays = "{{ route('produccion.countDoublesHolidays') }}"
+        const urlNoContarDoblesSabados = "{{ route('produccion.noContarDoblesSaturday') }}"
 
         $(document).ready(function() {
             $('#ventanaEmergente').on('shown.bs.modal', function() {

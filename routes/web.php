@@ -104,6 +104,10 @@ Route::middleware('web')->group(function () {
         Route::post('/crear-session-corte', [ProduccionController::class, 'crearSession'])->name('produccion.crearSession')->middleware(CheckPermission::class . ':ver_residente');
         Route::post('/produccion/guardar_no_dobles', [ProduccionController::class, 'guardarNoDobles'])->name('produccion.guardarNoDobles')->middleware(CheckPermission::class . ':ver_residente');
         Route::post('/produccion/contarDobles', [ProduccionController::class, 'contarDobles'])->name('produccion.contarDobles')->middleware(CheckPermission::class . ':ver_residente');
+        Route::post('/produccion/storeNotDoublesHolidays', [ProduccionController::class, 'storeNotDoublesHolidays'])->name('produccion.storeNotDoublesHolidays')->middleware(CheckPermission::class . ':ver_residente');
+        Route::post('/produccion/countDoublesHolidays', [ProduccionController::class, 'countDoublesHolidays'])->name('produccion.countDoublesHolidays')->middleware(CheckPermission::class . ':ver_residente');
+        Route::post('/produccion/countDoublesSaturday', [ProduccionController::class, 'countDoublesSaturday'])->name('produccion.countDoublesSaturday')->middleware(CheckPermission::class . ':ver_residente');
+        Route::post('/produccion/noContarDoblesSaturday', [ProduccionController::class, 'noContarDoblesSaturday'])->name('produccion.noContarDoblesSaturday')->middleware(CheckPermission::class . ':ver_residente');
         //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         //Rutas Zonas
         Route::get('/produccion/zonas', [ProduccionController::class, 'zonas'])->name('produccion.zonas')->middleware(CheckPermission::class . ':ver_residente,ver_produccion');
