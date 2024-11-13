@@ -16,19 +16,33 @@ class CoordinacionController extends Controller
 
     public function getdataCoordinacion(Request $request)
     {
-
         $porPagina = 100; // Cantidad de registros por página
+        $pagina = $request->input('pagina', 1); // Obtener el número de página de la solicitud
+        $offset = ($pagina - 1) * $porPagina;
 
+        // Obtener los datos necesarios
+        $datos = asignadas::select('*')
+            ->leftJoin('tbl_programacion_contratos', 'tbl_programacion_contratos.ORDEN_TRABAJO', '=', 'asignadas.orden')
+            ->whereIn('asignadas.tipo_trabajo', [10444, 12161])
+            ->skip($offset)
+            ->take($porPagina)
+            ->get();
+
+        $arrayEstPro = [
+            'Aplaza visita',
+            'Llamar de nuevo',
+            'No autoriza',
+            'No contesta',
+            'Programada',
+        ];
 
         // CONSULTAMOS LOS INPSECTORES
         $inspectores = tbl_insp_cali::select('id', 'nombres', 'apellidos')
             ->where('state', 1)
             ->get();
 
-
         // Crear un array para almacenar los datos con índice
         $datosConIndice = $datos->map(function ($item, $index) use ($offset) {
-
 
             $jornada = explode(" ", $item->HORA_INICIO);
             if (isset($jornada[1])) {
@@ -158,7 +172,7 @@ class CoordinacionController extends Controller
             $datos = Asignadas::select('*')
                 ->leftJoin('tbl_programacion_contratos', 'tbl_programacion_contratos.ORDEN_TRABAJO', '=', 'asignadas.orden')
                 ->where($columnaBuscar, 'like', "%{$valor}%")
-                ->whereIn('asignadas.tipo_trabajo', [10444, 12161])
+                ->whereIn('asignadas.tipo_trabajo', values: [10444, 12161])
                 ->skip($offset)
                 ->take($porPagina)
                 ->get();
@@ -246,62 +260,62 @@ class CoordinacionController extends Controller
             $valorActualizar = $estadoProgramacion;
             $parametros = [$valorActualizar, $orden];
 
-        $filters = $request->input('filters');
-        $columnMapping = [
-            '0' => 'orden',
-            '1' => 'contrato',
-            '2' => 'producto',
-            '3' => 'numero_solicitud',
-            '4' => 'tipo_solicitud',
-            '5' => 'NIT_CC',
-            '6' => 'nombre_lugar',
-            '7' => 'departamento',
-            '8' => 'localidad',
-            '9' => 'sector_operativo',
-            '10' => 'direccion',
-            '11' => 'consecutivo_ruta',
-            '12' => 'telefono',
-            '13' => 'medidor',
-            '14' => 'categoria',
-            '15' => 'unidad_operativa',
-            '16' => 'tipo_trabajo',
-            '17' => 'fecha_asignacion',
-            '18' => 'observacion_solicitud',
-            // Agrega más mapeos de índices a nombres de columnas según sea necesario
-        ];
-        
-        $query = asignadas::whereIn('tipo_trabajo', [10444, 12161]);
+            $filters = $request->input('filters');
+            $columnMapping = [
+                '0' => 'orden',
+                '1' => 'contrato',
+                '2' => 'producto',
+                '3' => 'numero_solicitud',
+                '4' => 'tipo_solicitud',
+                '5' => 'NIT_CC',
+                '6' => 'nombre_lugar',
+                '7' => 'departamento',
+                '8' => 'localidad',
+                '9' => 'sector_operativo',
+                '10' => 'direccion',
+                '11' => 'consecutivo_ruta',
+                '12' => 'telefono',
+                '13' => 'medidor',
+                '14' => 'categoria',
+                '15' => 'unidad_operativa',
+                '16' => 'tipo_trabajo',
+                '17' => 'fecha_asignacion',
+                '18' => 'observacion_solicitud',
+                // Agrega más mapeos de índices a nombres de columnas según sea necesario
+            ];
 
-        if (!empty($filters)) {
-            foreach ($filters as $filter) {
-                $index = $filter['column'];
-                $column = $columnMapping[$index] ?? null;
-                if ($column) {
-                    $operation = $filter['operation'];
-                    $conditions = $filter['conditions'];
-                    // Procesar los datos de los filtros y aplicar la lógica de filtrado en la consulta
+            $query = asignadas::whereIn('tipo_trabajo', [10444, 12161]);
+
+            if (!empty($filters)) {
+                foreach ($filters as $filter) {
+                    $index = $filter['column'];
+                    $column = $columnMapping[$index] ?? null;
+                    if ($column) {
+                        $operation = $filter['operation'];
+                        $conditions = $filter['conditions'];
+                        // Procesar los datos de los filtros y aplicar la lógica de filtrado en la consulta
 
 
-                    $values = $conditions[1]['args'][0]; // Obtener el valor del filtro
+                        $values = $conditions[1]['args'][0]; // Obtener el valor del filtro
 
-                    $query->whereIn($column, $values);
+                        $query->whereIn($column, $values);
+                    }
                 }
             }
 
-        }
-
-        $asignadas = DB::update(
-            "UPDATE asignadas 
+            $asignadas = DB::update(
+                "UPDATE asignadas 
                         SET {$campoActualizar} = ? 
                         {$campoFecha}
                         WHERE orden = ?",
-            $parametros
-        );
+                $parametros
+            );
 
-        if ($asignadas) {
-            echo 1;
-        } else {
-            echo 2;
+            if ($asignadas) {
+                echo 1;
+            } else {
+                echo 2;
+            }
         }
     }
 }
