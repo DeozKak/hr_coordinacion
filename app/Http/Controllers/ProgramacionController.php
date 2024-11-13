@@ -57,6 +57,7 @@ class ProgramacionController extends Controller
             $programacion =  new tbl_programacion_usuario;
             $programacion->nombre = "Programación " . $soloFecha;
             $programacion->id_usuario = Auth::id();
+            $programacion->created_at;
             $programacion->save();
 
             $tecnicos = tbl_insp_cali::select('id', 'apellidos', 'nombres')

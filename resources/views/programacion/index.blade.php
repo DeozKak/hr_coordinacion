@@ -9,7 +9,7 @@
 
 @section( 'content')
 <style>
-     
+
         /* En tu archivo CSS (por ejemplo, Reportes.css) */
         .lista-resultados {
             max-height: 200px;
@@ -35,7 +35,7 @@
             background-color: #f5f5f5;
             /* Cambia el color de fondo al pasar el mouse por encima */
         }
-    
+
 </style>
 
 <body>
@@ -69,24 +69,39 @@
                             <div id="resultadosBusqueda" class="lista-resultados">
                             </div>
                             @endhaspermission
-                           
+
                             <br>
 
                             <table id="programacion" class="table table-striped table-bordered">
                                 <thead>
                                     <tr>
                                         <th>ID</th>
-                                        <th>nombre</th>
                                         <th>Usuario</th>
+                                        <th>Tipo de programación</th>
+                                        <th>Fecha de creación</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($datos as $dato)
+                                    <?php
+                                        $fecha=explode(" ",$dato->created_at)[0];
+                                        $nombre=explode(" ",$dato->nombre);
+
+                                        if ($nombre[1]=="tecnicos") {
+                                            $tipo_cargue=$nombre[0] . " " . $nombre[1];
+
+                                        } else {
+                                            $tipo_cargue="";
+                                        }
+
+
+                                    ?>
                                     <tr>
                                         <td>{{$dato->id}}</td>
-                                        <td>{{$dato->nombre}}</td>
                                         <td>{{$dato->usuario->name}}</td>
+                                        <td>{{$tipo_cargue}}</td>
+                                        <td>{{$fecha}}</td>
                                         <td>
                                             @haspermission('ver_programacion')
                                             <a href="{{ route('programacion.show', $dato->id)}}'?action=edit" title="show">
@@ -228,7 +243,7 @@
         Swal.fire({
             title: "{{session('warning')}}",
             showDenyButton: true,
-            showCancelButton: true, 
+            showCancelButton: true,
             allowOutsideClick: false,
             confirmButtonText: "Si",
             denyButtonText: "No",
