@@ -21,14 +21,12 @@
                                 El usuario <strong><?php echo ($user) ?></strong> ha gestionado una devolución en el contrato <strong><?php echo ($contrato) ?></strong>.
                             </p>
                             <p style="line-height: 1.6;">
-                                Este correo corresponde al reporte: <strong><?php echo $archivo->nombre_archivo ?></strong>
+                                El contrato se devolvió en el reporte: <strong><?php echo $archivo->nombre_archivo ?></strong>
                             </p>
                             <p>
-                                <a href="<?php echo(route('bitacoras.ver_reporte', ['id_bitacora' => $bitacora])) ?>" class="button" style="display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Ver detalles</a>
+                                <a href="<?php echo(route('bitacoras.ver_reporte', ['id_bitacora' => $bitacora])) ?>" class="button" style="display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 10px;">Ver detalles</a>
                             </p>
-                            <p style="line-height: 1.6;">
-                                La información se ha actualizado en <strong>Producción</strong> y en la bitácora.
-                            </p>
+                           
                         </td>
                     </tr>
                 </table>

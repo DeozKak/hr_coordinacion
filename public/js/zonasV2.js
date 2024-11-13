@@ -27,6 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
             data: { idCorteDetalles },
             dataType: 'json',
             success: function (response) {
+              
+               
                 const nombresMes = response.diasIntermedios.map(item => item.nombreMes);
                 // Obtener los nombres de mes únicos
                 const nombresMesUnicos = [...new Set(nombresMes)];
@@ -56,8 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 zonas.loadData(combinedDataForHandsontable);
                 zonas.alter('insert_row_above', 3);
 
-                $('#loader').hide();
-                $('#overlay').hide();
 
             },
             error: function (xhr, status, error) {
@@ -78,7 +78,7 @@ if (idCorteDetallesInput) { // Verificar si el elemento existe
 }else{
     cargaDatos();
 }
-}, 150000);
+}, 300000);
 
 function cargaDatos(idCorteDetalles = null) {
 
@@ -88,6 +88,7 @@ function cargaDatos(idCorteDetalles = null) {
         data: { idCorteDetalles },
         dataType: 'json',
         success: function (response) {
+          
             const nombresMes = response.diasIntermedios.map(item => item.nombreMes);
             // Obtener los nombres de mes únicos
             const nombresMesUnicos = [...new Set(nombresMes)];
@@ -117,8 +118,7 @@ function cargaDatos(idCorteDetalles = null) {
             zonas.loadData(combinedDataForHandsontable);
             zonas.alter('insert_row_above', 3);
 
-            $('#loader').hide();
-            $('#overlay').hide();
+           
 
         },
         error: function (xhr, status, error) {

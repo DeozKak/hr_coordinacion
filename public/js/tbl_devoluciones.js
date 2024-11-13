@@ -3,7 +3,7 @@ let codigoHTMLges = "";
 
 $(document).ready(function () {
     $.fn.dataTable.ext.errMode = function (settings, helpPage, message) {
-      
+
     };
     $('#devoluciones').each(function () {
 
@@ -14,7 +14,7 @@ $(document).ready(function () {
         codigoHTMLdev += tablaHTMLdev;
 
     });
-    
+
     $('#gestionados').each(function () {
 
         let tablaHTMLges = $(this)[0].outerHTML;
@@ -24,7 +24,7 @@ $(document).ready(function () {
         codigoHTMLges += tablaHTMLges;
 
     });
-    
+
     $('#devoluciones').DataTable({
         scrollCollapse: true,
         scrollX: true,
@@ -66,9 +66,9 @@ $(document).ready(function () {
     $('div[id="gestionados_wrapper"]').hide();
 
     $('.btnav').on('click', function () {
-        
+
         const btn = $(this).attr('id');
-        console.log(btn);
+
         if (btn === 'Devoluciones') {
             const devoluciones = $('a[id="Devoluciones"]');
             devoluciones.addClass('active');
@@ -92,9 +92,6 @@ $(document).ready(function () {
         $('#overlay').show();
 
         const url = document.getElementById('exportar_devoluciones').value;
-        console.log(url);
-        console.log(codigoHTMLdev);
-        console.log(codigoHTMLges);
 
         const csrfToken = document.getElementById('token').value;
         $.ajax({
@@ -150,13 +147,13 @@ $(document).ready(function () {
             url: url,
             data: {
                 codigoHTML: codigoHTML,
-             
+
             },
             success: function (response) {
-               
-                var nombreArchivo = response.nombreArchivo;
+
+                let nombreArchivo = response.nombreArchivo;
                 if (nombreArchivo !== undefined) {
-                    var urlDescarga = 'Controlador/Archivos/' + nombreArchivo;
+                    let urlDescarga = 'Controlador/Archivos/' + nombreArchivo;
                     window.location.href = urlDescarga;
                     $('#loader').hide();
                     $('#overlay').hide();

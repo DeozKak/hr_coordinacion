@@ -318,11 +318,11 @@ return [
             'dropdown_flabel' => 'todas las notificaciones',
             'update_cfg' => [
                 'url' => 'notifications/get',
-                'period' => 15,
+                'period' => 75,
             ],
         ],
 
-       
+
 
         // Sidebar items:
         [
@@ -441,12 +441,6 @@ return [
                     'label_color' => 'success',
                 ],
                 [
-                    'text' => 'Nómina',
-                    'url' => 'nomina',
-                    'icon' => 'far fa-circle',
-                    'label_color' => 'success',
-                ],
-                [
                     'text' => 'Indicadores',
                     'url' => 'indicadores',
                     'icon' => 'far fa-circle',
@@ -517,6 +511,21 @@ return [
                     'label_color' => 'success',
 
                 ],
+                [
+                    'text' => 'Parametrizar precios',
+                    'url' => 'fechasParametros',
+                    'icon' => 'far fa-circle',
+                    'can' => ['ver_residente', 'ver_coordinacion_RP'],
+                    'label_color' => 'success',
+
+                ],
+                [
+                    'text' => 'Sal.Minimo - Aux.Transporte',
+                    'url' => 'nomina/parametrizarSalarioAux',
+                    'icon' => 'far fa-circle',
+                    'can' => ['ver_residente', 'ver_coordinacion_RP'],
+                    'label_color' => 'success',
+                ],
             ]
         ],
 
@@ -542,6 +551,62 @@ return [
                     'can' => ['ver_residente','ver_produccion'],
                     'label_color' => 'success',
                 ],
+                [
+                    'text' => 'Reporte de producción diario',
+                    'url' => '/reporteProduccion',
+                    'icon' => 'far fa-circle',
+                    'can' => 'reporte_produccion',
+                    'label_color' => 'success',
+                ],
+                [
+                    'text' => 'Reporte consolidado',
+                    'url' => '/produccion/ReporteConsolidado',
+                    'icon' => 'far fa-circle',
+                    'can' => 'reporte_produccion',
+                    'label_color' => 'success',
+                ],
+            ]
+        ],
+
+        ['header' => 'Nomina', 'can' => ['gestion_nomina'],],
+
+        [
+            'text' => 'Nomina',
+            'can' => ['gestion_nomina'],
+            'icon' => 'fas fa-money-check-alt',
+            'submenu' => [
+                [
+                    'text' => 'Nomina',
+                    'url' => '/nomina/reporteNomina',
+                    'icon' => 'far fa-circle',
+                    'can' => 'gestion_nomina',
+                    'label_color' => 'success',
+                ]
+            ]
+        ],
+
+      /*   ['header' => 'Programación', 'can' => ['generar_programacion','ver_programacion'],],
+ */
+        [
+            'text' => 'Programación',
+            'can' => ['generar_programacion','ver_programacion'],
+            'icon' => 'fas fa-calendar-minus',
+            'submenu' => [
+                [
+                    'text' => 'Programar',
+                    'url' => '/programacion',
+                    'icon' => 'far fa-circle',
+                    'can' => ['generar_programacion','ver_programacion'],
+                    'label_color' => 'success',
+                ],
+                [
+                    'text' => 'Ver Programación',
+                    'url' => '/programacion/detalles',
+                    'icon' => 'far fa-circle',
+                    'can' => ['ver_programacion'],
+                    'label_color' => 'success',
+                ],
+                
             ]
         ],
         /*  [
@@ -728,7 +793,7 @@ return [
                 [
                     'type' => 'js',
                     'asset' => true,
-                    'location' => '//cdn.jsdelivr.net/npm/sweetalert2@8',
+                    'location' => '//cdn.jsdelivr.net/npm/sweetalert2@11',
                 ],
             ],
         ],

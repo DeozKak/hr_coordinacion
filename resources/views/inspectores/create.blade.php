@@ -1,4 +1,4 @@
-@extends('adminlte::page')
+{{-- @extends('adminlte::page')
 
 @section('title', 'Nuevo Inspector')
 
@@ -82,4 +82,4 @@
     }
 </script>
 @endsection
-@endsection
+@endsection --}}
