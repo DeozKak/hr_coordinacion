@@ -572,6 +572,31 @@ return [
                 ]
             ]
         ],
+
+      /*   ['header' => 'Programación', 'can' => ['generar_programacion','ver_programacion'],],
+ */
+        [
+            'text' => 'Programación',
+            'can' => ['generar_programacion','ver_programacion'],
+            'icon' => 'fas fa-calendar-minus',
+            'submenu' => [
+                [
+                    'text' => 'Programar',
+                    'url' => '/programacion',
+                    'icon' => 'far fa-circle',
+                    'can' => ['generar_programacion','ver_programacion'],
+                    'label_color' => 'success',
+                ],
+                [
+                    'text' => 'Ver Programación',
+                    'url' => '/programacion/detalles',
+                    'icon' => 'far fa-circle',
+                    'can' => ['ver_programacion'],
+                    'label_color' => 'success',
+                ],
+                
+            ]
+        ],
         /*  [
             'text' => 'change_password',
             'url' => 'admin/settings',

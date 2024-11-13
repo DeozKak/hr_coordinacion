@@ -61,13 +61,12 @@
                                         @haspermission('mod_devoluciones')
                                         <th>Acciones</th>
                                         @endhaspermission
-
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($devoluciones as $dato)
                                     <tr style="<?php if ($dato->vence === "60 meses") {
-                                                    echo ("background-color: rgb(251,201,255);");
+                                                    echo "background-color: rgb(251,201,255);";
                                                 } ?>">
 
                                         <td> {{$dato->Supervisor->name}}</td>
@@ -142,7 +141,7 @@
                                 <tbody>
                                     @foreach ($gestionados as $dato)
                                     <tr style="<?php if ($dato->vence === "60 meses") {
-                                                    echo ("background-color: rgb(251,201,255);");
+                                                    echo "background-color: rgb(251,201,255);";
                                                 } ?>">
                                         <td>{{$dato->Supervisor->name}}</td>
                                         <td> {{$dato->Inspector->nombres}} {{$dato->Inspector->apellidos}}</td>

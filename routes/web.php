@@ -12,14 +12,16 @@ use App\Http\Controllers\BitacoraController;
 use App\Http\Controllers\InspectorController;
 use App\Http\Controllers\CorteProduccionController;
 use App\Http\Controllers\NotificationsController;
+use App\Http\Controllers\ProgramacionController;
 use App\Http\Controllers\AutoGuardadoController;
 use App\Http\Controllers\NominaController;
 use App\Http\Controllers\ReporteProduccionController;
+
 use Illuminate\Http\Request;
 
 
 Route::get('/', function () {
-    return redirect()->route('home');
+    return redirect()->route('login');
 });
 
 Route::middleware('web')->group(function () {
@@ -54,7 +56,7 @@ Route::middleware('web')->group(function () {
         Route::post('/generar_bitacora', [BitacoraController::class, 'generar_bitacora'])->name('bitacoras.generar')->middleware(CheckPermission::class . ':generar_bitacoras');
         Route::post('/guardar_tabla/{super?}', [BitacoraController::class, 'guardar_tabla'])->name('bitacoras.guardar_tabla')->middleware(CheckPermission::class . ':generar_bitacoras');
         Route::post('/borrar_archivos', [BitacoraController::class, 'borrar_archivos'])->name('bitacoras.borrar_archivos')->middleware(CheckPermission::class . ':generar_bitacoras');
-        Route::get('/storage/app/uploads/{file}',[BitacoraController::class, 'download'])->name('bitacoras.download')->middleware(CheckPermission::class . ':ver_bitacoras');
+        Route::get('/storage/app/uploads/{file}', [BitacoraController::class, 'download'])->name('bitacoras.download')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('/bitacora/devoluciones', [BitacoraController::class, 'devoluciones'])->name('bitacora.devoluciones')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::post('/bitacora/exportar_devoluciones', [BitacoraController::class, 'exportar_tabla_devoluciones'])->name('bitacora.exportar_devoluciones')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('/bitacora/reportes', [BitacoraController::class, 'reportes'])->name('bitacoras.reportes')->middleware(CheckPermission::class . ':ver_bitacoras');
@@ -68,7 +70,7 @@ Route::middleware('web')->group(function () {
         Route::post('bitacora/actualizar/{id}', [AutoGuardadoController::class, 'Actualizar'])->name('bitacoras.actualizar')->middleware(CheckPermission::class . ':generar_bitacoras');
         Route::post('bitacora/agregar', [AutoGuardadoController::class, 'Agregar'])->name('bitacoras.agregar')->middleware(CheckPermission::class . ':generar_bitacoras');
         Route::get('bitacoras/buscar_por_contrato', [BitacoraController::class, 'buscarPorContrato'])->name('bitacoras.buscar_por_contrato')->middleware(CheckPermission::class . ':ver_bitacoras');
-        Route::get('municipios/json', [BitacoraController::class, 'getMunicipiosJson'])->name('municipios.json')->middleware(CheckPermission::class . ':ver_bitacoras');
+        Route::get('municipios/json', [BitacoraController::class, 'getMunicipiosJson'])->name('municipios.json')->middleware(CheckPermission::class . ':ver_bitacoras,generar_programacion');
         //Rutas para inspectores-----------------------------------------------------------------------------------------------------------------
 
         Route::get('/inspectores', [InspectorController::class, 'index'])->name('inspectores.index')->middleware(CheckPermission::class . ':gestion_inspectores');
@@ -127,6 +129,33 @@ Route::middleware('web')->group(function () {
         Route::get('/cortes_producction/{id}/editMunicipio', [CorteProduccionController::class, 'editMunicipio'])->name('cortes_produccion.editMunicipio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
         Route::put('/cortes_produccion/{id}/updateMunicipio', [CorteProduccionController::class, 'updateMunicipio'])->name('cortes_produccion.updateMunicipio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
 
+        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        //Rutas para notificaciones
+        Route::get('notifications/get', [NotificationsController::class, 'getNotificationsData'])->name('notifications.get');
+        Route::get('notifications/markAsRead', [NotificationsController::class, 'markAsRead'])->name('notifications.markAsRead');
+        Route::get('notifications', [NotificationsController::class, 'index'])->name('notifications.index');
+        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        
+        //Rutas Programación
+        Route::get('/programacion', [ProgramacionController::class, 'index'])->name('programacion.index')->middleware(CheckPermission::class . ':generar_programacion');
+        Route::get('/programacion/create', [ProgramacionController::class, 'create'])->name('programacion.create')->middleware(CheckPermission::class . ':generar_programacion');
+        Route::post('/programacion/base', [ProgramacionController::class, 'base'])->name('programacion.base')->middleware(CheckPermission::class . ':generar_programacion');
+        Route::get('/programacion/busqueda/{contrato}', [ProgramacionController::class, 'busqueda'])->name('programacion.busqueda')->middleware(CheckPermission::class . ':generar_programacion');
+        Route::post('/programacion/store', [ProgramacionController::class, 'store'])->name('programacion.store')->middleware(CheckPermission::class . ':generar_programacion');
+        Route::delete('/programacion/delete', [ProgramacionController::class, 'destroy'])->name('programacion.destroy')->middleware(CheckPermission::class . ':generar_programacion');
+        Route::get('/programacion/show/{id}', [ProgramacionController::class, 'show'])->name('programacion.show')->middleware(CheckPermission::class . ':generar_programacion');
+        Route::put('/programacion/update/{id}', [ProgramacionController::class, 'update'])->name('programacion.update')->middleware(CheckPermission::class . ':generar_programacion');
+        Route::delete('/programacion/erase/{id}', [ProgramacionController::class, 'erase'])->name('programacion.erase')->middleware(CheckPermission::class . ':generar_programacion');
+        Route::post('/programacion/finish/{id}', [ProgramacionController::class, 'finish'])->name('programacion.finish')->middleware(CheckPermission::class . ':generar_programacion');
+        Route::get('/programacion/detalles', [ProgramacionController::class, 'detalles'])->name('programacion.detalles')->middleware(CheckPermission::class . ':ver_programacion');
+        Route::post('programacion/agendamiento', [ProgramacionController::class, 'agendamiento'])->name('programacion.agendamiento')->middleware(CheckPermission::class . ':ver_programacion');
+        Route::post('programacion/masivos', [ProgramacionController::class, 'masivos'])->name('programacion.masivos')->middleware(CheckPermission::class . ':ver_programacion');
+        Route::get('programacion/exportar', [ProgramacionController::class, 'exportar'])->name('programacion.exportar')->middleware(CheckPermission::class . ':ver_programacion');
+        Route::post('programacion/GDO', [ProgramacionController::class, 'programacionGDO'])->name('programacion.programacionGDO')->middleware(CheckPermission::class . ':ver_programacion');
+        Route::get('programacion/buscar_por_contrato', [ProgramacionController::class, 'buscarPorContrato'])->name('programacion.buscar_por_contrato')->middleware(CheckPermission::class . ':ver_programacion');
+        Route::post('programacion/plantilla/store', [ProgramacionController::class, 'PlantillaStore'])->name('programacion.PlantillaStore')->middleware(CheckPermission::class . ':ver_programacion');
+
+
         Route::get('/cortes_producction/{id}/editSede', [CorteProduccionController::class, 'editSede'])->name('cortes_produccion.editSede')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
         Route::put('/cortes_produccion/{id}/updateSede', [CorteProduccionController::class, 'updateSede'])->name('cortes_produccion.updateSede')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
         Route::get('/cortes_producction/{id}/editZona', [CorteProduccionController::class, 'editZona'])->name('cortes_produccion.editZona')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
@@ -169,10 +198,6 @@ Route::middleware('web')->group(function () {
         Route::post('/nomina/guardarSalarioAux', [NominaController::class, 'guardarSalarioAux'])->name('nomina.guardarSalarioAux')->middleware(CheckPermission::class . ':gestion_nomina');
         Route::post('/nomina/actualizarSalarioAux', [NominaController::class, 'actualizarSalarioAux'])->name('nomina.actualizarSalarioAux')->middleware(CheckPermission::class . ':gestion_nomina');
 
-    });
-    //Rutas para notificaciones
-    Route::get('notifications/get', [NotificationsController::class, 'getNotificationsData'])->name('notifications.get');
-    Route::get('notifications/markAsRead', [NotificationsController::class, 'markAsRead'])->name('notifications.markAsRead');
-    Route::get('notifications', [NotificationsController::class, 'index'])->name('notifications.index');
-});
 
+    });
+});

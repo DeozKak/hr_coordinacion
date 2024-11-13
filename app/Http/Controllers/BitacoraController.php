@@ -1042,7 +1042,7 @@ class BitacoraController extends Controller
     public function download($nombreArchivo)
     {
         $rutaCompleta = storage_path('app/uploads/') . $nombreArchivo;
-
+        
         // Verificar si el archivo existe
         if (Storage::exists('uploads/' . $nombreArchivo)) {
             return response()->download($rutaCompleta);
