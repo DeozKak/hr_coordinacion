@@ -19,7 +19,7 @@ class InspectorController extends Controller
     {
         $supervisores = User::role('Supervisor')->get();
         return view('inspectores.index', compact('supervisores'));
-   
+    }
 
     public function store(){
         $validatedData = request()->validate([
