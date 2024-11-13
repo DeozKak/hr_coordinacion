@@ -1,0 +1,46 @@
+#prueba {
+    height: 650px; /* o el tamaño que desees */
+    overflow-y: auto; /* Esto permite el scroll */
+}
+
+.overlay {
+    position: absolute; /* Posiciona el ícono de carga en relación al contenedor */
+    top: 50%; /* Centrado verticalmente */
+    left: 50%; /* Centrado horizontalmente */
+    transform: translate(-50%, -50%); /* Ajusta la posición para centrar */
+    z-index: 10; /* Asegúrate de que esté por encima de la tabla */
+    display: none; /* Ocultar por defecto */
+}
+
+.handsontable td.tecnico {
+    background-color: white !important;
+}
+
+#loader1 {
+    border: 16px solid rgba(0, 0, 0, 0.1);
+    /* Borde transparente */
+    border-top: 16px solid #3498db;
+    /* Azul */
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+    /* Animación de rotación */
+    position: fixed;
+    /* Fijar posición */
+    top: 50%;
+    /* Posición vertical en el centro */
+    left: 50%;
+    /* Posición horizontal en el centro */
+    margin-top: -60px;
+    /* Centrar verticalmente */
+    margin-left: -60px;
+    /* Centrar horizontalmente */
+    z-index: 9999;
+    /* Asegurar que esté sobre otros elementos */
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

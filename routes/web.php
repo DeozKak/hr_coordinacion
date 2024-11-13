@@ -44,12 +44,19 @@ Route::middleware('web')->group(function () {
         //rutas cargues tareas----------------------------------------------------------------------------
         Route::get('/load', [AsignadasController::class, 'index'])->name('cargues.load')->middleware(CheckPermission::class . ':cargue_tareas');
         Route::post('/store', [AsignadasController::class, 'store'])->name('cargues.store')->middleware(CheckPermission::class . ':cargue_tareas');
+        // ruta carga recepcion
+        Route::get('/receptionLoad',[AsignadasController::class, 'receptionLoad'])->name('load.receptionLoad')->middleware(CheckPermission::class . ':cargue_tareas');
+        Route::post('/receptionLoad/store',[AsignadasController::class, 'receptionStore'])->name('load.receptionStore')->middleware(CheckPermission::class . ':cargue_tareas');
 
-        //Rutas Gestion--------------------------------------------------------------------------------------------------------------------------
 
-        Route::get('/gestion/coordinacion', [CoordinacionController::class, 'coordinacion'])->name('coordinacion')->middleware(CheckPermission::class . ':ver_coordinacion_RP');
-        Route::get('/gestion/getdataCoordinacionRP', [CoordinacionController::class, 'getdataCoordinacionRP'])->name('getdataCoordinacionRP')->middleware(CheckPermission::class . ':ver_coordinacion_RP');
-        Route::post('/gestion/filterData', [CoordinacionController::class, 'filterData'])->name('filterData')->middleware(CheckPermission::class . ':ver_coordinacion_RP');
+        //Rutas Gestion-----------------------------------------------------------------------------------
+        Route::get('/gestion/coordinacion', [CoordinacionController::class, 'coordinacion'])->name('coordinacion')->middleware(CheckPermission::class . ':ver_coordinacion_RN');
+        Route::get('/gestion/getdataCoordinacion', [CoordinacionController::class, 'getdataCoordinacion'])->name('getdataCoordinacionRP')->middleware(CheckPermission::class . ':ver_coordinacion_RN');
+        Route::get('/gestion/filterData', [CoordinacionController::class, 'filterData'])->name('filterData')->middleware(CheckPermission::class . ':ver_coordinacion_RN');
+        Route::post('/gestion/guardarProgramacionTecnico', [CoordinacionController::class, 'guardarProgramacionTecnico'])->name('guardarProgramacionTecnico')->middleware(CheckPermission::class . ':ver_coordinacion_RN');
+        Route::get('/gestion/viewReception', [AsignadasController::class, 'getReceptions'])->middleware(CheckPermission::class . ':ver_coordinacion_RN');
+        Route::get('/gestion/reception', [AsignadasController::class, 'getDataReception'])->name('management.reception')->middleware(CheckPermission::class . ':ver_coordinacion_RN');
+
 
         //Rutas para bitacoras-----------------------------------------------------------------------------------------------------------------
         Route::get('/bitacora', [BitacoraController::class, 'ver'])->name('bitacora')->middleware(CheckPermission::class . ':generar_bitacoras');
