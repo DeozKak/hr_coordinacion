@@ -19,9 +19,36 @@ class InspectorController extends Controller
     {
         $supervisores = User::role('Supervisor')->get();
         return view('inspectores.index', compact('supervisores'));
+   
+
+    public function store(){
+        $validatedData = request()->validate([
+            'nombres' => 'required',
+            'apellidos' => 'required',
+            'type_id' => 'required',
+            'cedula' => 'required|unique:tbl_insp_cali',
+            'supervisor' => 'required',
+        ],[
+            'nombres.required' => 'El campo nombres es obligatorio',
+            'apellidos.required' => 'El campo apellidos es obligatorio',
+            'type_id.required' => 'El campo tipo de identificación es obligatorio',
+            'cedula.required' => 'El campo cédula es obligatorio',
+            'cedula.unique' => 'La cédula ingresada ya existe en la base de datos',
+            'supervisor.required' => 'El campo supervisor es obligatorio',
+        ]);
+        $inspector = new tbl_insp_cali();
+        $inspector->nombres = request()->nombres;
+        $inspector->apellidos = request()->apellidos;
+        $inspector->type_id = request()->type_id;
+        $inspector->cedula = request()->cedula;
+        $inspector->state = 1;
+        $inspector->SUPERVISOR = request()->supervisor;
+        $inspector->aprendizo = 1;
+        $inspector->save();
+        return redirect()->route('inspectores.index');
     }
 
-    public function store(Request $request, tbl_insp_cali $inspector)
+    public function edit(tbl_insp_cali $inspector)
     {
 
         $nombres = $request->input('nombres');
@@ -74,6 +101,7 @@ class InspectorController extends Controller
 
     public function update(Request $request)
     {
+
         $id = $request->input('id');
         $nombre = $request->input('nombres');
         $apellidos = $request->input('apellidos');
@@ -104,6 +132,23 @@ class InspectorController extends Controller
                 ], 500);
             }
         }
+
+        $validatedData = $request->validate([
+            'nombres' => 'required',
+            'apellidos' => 'required',
+            'supervisor' => 'required',
+            
+        ],[
+            'nombres.required' => 'El campo nombres es obligatorio',
+            'apellidos.required' => 'El campo apellidos es obligatorio',
+            'supervisor.required' => 'El campo supervisor es obligatorio',
+        ]);
+        $inspector->nombres = $request->nombres;
+        $inspector->apellidos = $request->apellidos;
+        $inspector->SUPERVISOR = $request->supervisor;
+        $inspector->aprendiz = $request->aprendiz;
+        $inspector->save();
+        return redirect()->route('inspectores.index');
     }
 
     public function change_state(Request $request, $id)

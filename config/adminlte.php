@@ -322,7 +322,7 @@ return [
             ],
         ],
 
-       
+
 
         // Sidebar items:
         [
@@ -429,12 +429,6 @@ return [
                     'label_color' => 'success',
                 ],
                 [
-                    'text' => 'Nómina',
-                    'url' => 'nomina',
-                    'icon' => 'far fa-circle',
-                    'label_color' => 'success',
-                ],
-                [
                     'text' => 'Indicadores',
                     'url' => 'indicadores',
                     'icon' => 'far fa-circle',
@@ -505,6 +499,21 @@ return [
                     'label_color' => 'success',
 
                 ],
+                [
+                    'text' => 'Parametrizar precios',
+                    'url' => 'fechasParametros',
+                    'icon' => 'far fa-circle',
+                    'can' => ['ver_residente', 'ver_coordinacion_RP'],
+                    'label_color' => 'success',
+
+                ],
+                [
+                    'text' => 'Sal.Minimo - Aux.Transporte',
+                    'url' => 'nomina/parametrizarSalarioAux',
+                    'icon' => 'far fa-circle',
+                    'can' => ['ver_residente', 'ver_coordinacion_RP'],
+                    'label_color' => 'success',
+                ],
             ]
         ],
 
@@ -530,6 +539,37 @@ return [
                     'can' => ['ver_residente','ver_produccion'],
                     'label_color' => 'success',
                 ],
+                [
+                    'text' => 'Reporte de producción diario',
+                    'url' => '/reporteProduccion',
+                    'icon' => 'far fa-circle',
+                    'can' => 'reporte_produccion',
+                    'label_color' => 'success',
+                ],
+                [
+                    'text' => 'Reporte consolidado',
+                    'url' => '/produccion/ReporteConsolidado',
+                    'icon' => 'far fa-circle',
+                    'can' => 'reporte_produccion',
+                    'label_color' => 'success',
+                ],
+            ]
+        ],
+
+        ['header' => 'Nomina', 'can' => ['gestion_nomina'],],
+
+        [
+            'text' => 'Nomina',
+            'can' => ['gestion_nomina'],
+            'icon' => 'fas fa-money-check-alt',
+            'submenu' => [
+                [
+                    'text' => 'Nomina',
+                    'url' => '/nomina/reporteNomina',
+                    'icon' => 'far fa-circle',
+                    'can' => 'gestion_nomina',
+                    'label_color' => 'success',
+                ]
             ]
         ],
         /*  [
