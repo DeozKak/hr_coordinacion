@@ -148,6 +148,76 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+    
+    const openGDOBtn = document.getElementById('openGDOBtn');
+    const addGDOModal = document.getElementById('addGDO');
+    const GDO = new bootstrap.Modal(addGDOModal);
+
+    const closeModalGDO = document.querySelector('.GDO'); // Selecciona el botón de cierre
+
+    closeModalGDO.addEventListener('click', function () {
+        GDO.hide();
+    });
+
+    openGDOBtn.addEventListener('click', function () {
+        GDO.show();
+    });
+
+    const GDOform = document.getElementById('GDOForm');
+    const errorContainerGDO = document.createElement('div'); // Contenedor para mensajes de error
+    const loaderGDO = document.getElementById('loaderGDO');
+
+    GDOform.addEventListener('submit', function (event) {
+        event.preventDefault();
+        loader.style.display = 'block'; // Mostrar animación de carga
+        // Limpiar mensajes de error anteriores antes de enviar el formulario
+       
+
+        const formData = new FormData(this);
+        const url = document.getElementById('url_GDO').value; // Ruta Laravel para procesar el formulario
+
+
+        $.ajax({
+            type: 'POST',
+            url: url,
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                // Manejo de la respuesta exitosa (opcional)
+                Swal.fire({
+                    position: "top-end",
+                    icon: "success",
+                    title: response.message,
+                    showConfirmButton: false,
+                    toast: true,
+                    timer: 4000
+                });
+                errorContainer.innerHTML = '';
+                errorContainer.classList.remove('alert', 'alert-danger');
+                modal.hide();
+            },
+            error: function (xhr, status, error) {
+                console.log(xhr.responseText);
+                if (xhr.status === 422) {
+                    const errors = xhr.responseJSON.errors;
+                    showValidationErrors(errors,addProgramacionModal,errorContainer); // Mostrar errores en el modal
+                } else {
+                    console.error(xhr.responseText); // Mostrar errores en la consola
+
+                }
+            },
+            complete: function () {
+                loader.style.display = 'none';
+               
+                programacionForm.reset(); // Limpiar el formulario
+            }
+        });
+    });
+
+
+
+
     function showValidationErrors(errors,addmodal,errorContainer) {
         errorContainer.innerHTML = ''; // Limpiar mensajes anteriores
         errorContainer.classList.add('alert', 'alert-danger');

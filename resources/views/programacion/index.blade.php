@@ -7,7 +7,7 @@
 @stop
 
 
-@section('content')
+@section( 'content')
 <style>
      
         /* En tu archivo CSS (por ejemplo, Reportes.css) */
@@ -44,6 +44,7 @@
     <input type="hidden" name="url_masivo" id="url_masivo" value="{{ route('programacion.masivos') }}">
     <input type="hidden" name="url_buscar" id="url_buscar" value="{{ route('programacion.buscar_por_contrato') }}">
     <input type="hidden" name="url_ver" id="url_ver" value="{{ route('programacion.show', ['id' => ':id'])}}'?action=view">
+    <input type="hidden" name="url_GDO" id="url_GDO" value="{{ route('programacion.programacionGDO')}}">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-12">
@@ -56,8 +57,9 @@
                             </a>
                             @haspermission('ver_programacion')
 
-                            <button id="openModalBtn" class="btn btn-primary btn-sm" title="Add New Programacion"> Añadir a Base </button>
-                            <button id="openMasivoBtn" class="btn btn-primary btn-sm" title="Add New Programacion"> Programadas Tecnicos </button>
+                            <button id="openModalBtn" class="btn btn-primary btn-sm" title="Añadir a Base"> Añadir a Base </button>
+                            <button id="openMasivoBtn" class="btn btn-primary btn-sm" title="Programadas Tecnicos"> Programadas Tecnicos </button>
+                            <button id="openGDOBtn" class="btn btn-secondary btn-sm" title="Programadas GDO"> Programadas GDO </button>
                             <br>
                             <br>
                             <div class="form-group">
@@ -160,10 +162,39 @@
                 </div>
             </div>
         </div>
+
+    <!-- Programadas GDO -->
+    <div class="modal fade" id="addGDO" tabindex="-1" aria-labelledby="addGDOLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addGDOLabel">Programadas GDO</h5>
+                        <button type="button" class="GDO" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="#" id="GDOForm" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            <div class="form-group">
+                                <label for="archivo">Selecciona un archivo:</label>
+
+                                <input class="form-control mb-3" type="file" name="archivo" id="archivo">
+
+                                <div id="loaderGDO" style="display: none;">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+
+                            </div>
+                            <button class="btn btn-primary" type="submit">Cargar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 @section('js')
-<script src="{{ asset('js/indexProgramacionV3-1.js') }}" type="text/javascript"></script>
+<script src="{{ asset('js/indexProgramacionV3-2.js') }}" type="text/javascript"></script>
 
 
 @if (session('success'))
