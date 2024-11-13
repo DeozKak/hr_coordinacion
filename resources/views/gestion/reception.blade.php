@@ -24,7 +24,6 @@
         </div>
     </div>
 </div>
-<input type="hidden" id="nextScroll" value="false">
 
 @section('js')
 <script src="{{ asset('js/management/reception.js') }}?v={{ time() }}"></script>

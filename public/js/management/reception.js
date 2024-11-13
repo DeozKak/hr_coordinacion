@@ -54,7 +54,6 @@ $(document).ready(function(){
             debounce(function () {
                 // let value = buscador.val();
                 // let tipe = columnasBuscar.val();
-                let flag = falseTrue.val();
                 const currentScrollTop = hotReception.view._wt.wtOverlays.topOverlay.getScrollPosition();
                 const totalRows = hotReception.countRows();
                 // let ruta = "";
@@ -66,13 +65,9 @@ $(document).ready(function(){
                         cantScrollDown = 1;
                         cantScrollUp = 0;
                     } else {
-                        if(flag == "false"){
-                            currentPage++;
-                        }
+                        currentPage++;
                     }
-                    if(flag == "false"){
-                        cargarPagina(currentPage, false);
-                    }
+                    cargarPagina(currentPage, false);
                 }
 
                 // Scroll hacia arriba
@@ -109,6 +104,7 @@ $(document).ready(function(){
                 const nuevosDatos = response.data;
                 console.log(nuevosDatos)
                 if(nuevosDatos.length > 0){
+
                     let datosExistentes = hotReception.getData();
     
                     if (esScrollHaciaArriba) {
@@ -156,10 +152,14 @@ $(document).ready(function(){
                     }
                     
                     hotReception.loadData(datosExistentes);
-                    overlay.style.display = 'none';
                 }else{
-                    $('#nextScroll').val("true");
+
+                    if (!esScrollHaciaArriba && currentPage > 1) {
+                        currentPage--;
+                    }
+                    overlay.style.display = 'none';
                 }
+                overlay.style.display = 'none';
             }
         })
     }
