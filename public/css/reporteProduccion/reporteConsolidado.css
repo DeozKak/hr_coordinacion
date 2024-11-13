@@ -1,0 +1,54 @@
+.cell-metaEYC{
+    background-color: #F7CAAC !important;
+    color: black !important;
+}
+
+.cell-metaGDO{
+    background-color: #0070C0 !important;
+    color: white !important;
+}
+
+.cell-mes{
+    background-color: #4472C4 !important;
+    color: white !important;
+}
+
+.cell-rp{
+    background-color: #00B0F0 !important;
+    color: black !important;
+}
+
+.cell-previas{
+    background-color: #FFFF00 !important;
+    color: black !important;
+}
+
+.loaderReporteConsolidado {
+    width: 48px;
+    height: 48px;
+    border: 5px solid orangered;
+    border-bottom-color: #00BFFF;
+    border-radius: 50%;
+    display: inline-block;
+    box-sizing: border-box;
+    animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.selector-pequeno {
+    max-width: 50%;
+}
+
+.cell-comercial{
+    background-color: #00FF00 !important;
+    color: black !important;
+}

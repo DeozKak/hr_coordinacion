@@ -1,0 +1,45 @@
+.cell-copas{
+    background-color: #9CC2E5 !important;
+    color: black !important;
+}
+
+.cell-total-bonif{
+    background-color: #FFFF00 !important;
+    color: black !important;
+}
+
+.cell-multas{
+    background-color: #FF0000 !important;
+    color: black !important;
+}
+
+.cell-bono-comercial{
+    background-color: #00B050 !important;
+    color: black !important;
+}
+
+.cell-rodamiento{
+    background-color: #0070C0 !important;
+    color: black !important;
+}
+
+.loaderNomina {
+    width: 48px;
+    height: 48px;
+    border: 5px solid orangered;
+    border-bottom-color: #00BFFF;
+    border-radius: 50%;
+    display: inline-block;
+    box-sizing: border-box;
+    animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

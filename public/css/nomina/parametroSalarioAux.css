@@ -1,0 +1,8 @@
+.btn-group {
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+.btn {
+    margin-right: 5px;
+}
