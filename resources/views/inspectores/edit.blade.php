@@ -1,3 +1,5 @@
+
+
 @extends('adminlte::page')
 
 @section('title', 'Editar Inspector')
@@ -91,3 +93,4 @@
 </script>
 @endsection
 @endsection
+

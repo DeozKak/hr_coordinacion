@@ -98,7 +98,8 @@
                     showCancelButton: true,
                     confirmButtonColor: '#3085d6',
                     cancelButtonColor: '#d33',
-                    confirmButtonText: 'Sí, cambiar estado'
+                    confirmButtonText: 'Sí, cambiar estado',
+                    cancelButtonText: 'Cancelar'
                 }).then((result) => {
                     if (result.value == true) {
                         currentForm.submit(); // Enviar el formulario si el usuario confirma
@@ -107,7 +108,7 @@
             });
         });
     });
-    
+
 
     function goBack() {
         window.history.back();

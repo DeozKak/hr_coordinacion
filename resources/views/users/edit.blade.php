@@ -11,18 +11,17 @@
     <div class="row">
         <div class="col-sm-6 mx-auto">
             <div class="card">
-                <div class="card-body">   
+                <div class="card-body">
                     @if($userlogin->hasRole('admin'))
-                    <form action="{{route('admin.update', $user)}}" method="POST" autocomplete="off">
+                    <form action="{{route('admin.update', ['id' => $user])}}" method="POST" autocomplete="off">
                     @else
 
                     <form action="{{ route('update', ['user' => $user->id]) }}" method="POST" autocomplete="off">
                     @endif
                         @csrf
-                        @method('PUT')
                         <div class="form-group">
                             <label for="name">Nombre</label>
-                            <input type="text" name="name" id="name" class="form-control" value="{{$user->name}}" required>
+                            <input type="text" name="nombres" id="nombres" class="form-control" value="{{$user->name}}" required>
                         </div>
                         <div class="form-group">
                             <label for="email">Email</label>
@@ -100,7 +99,6 @@
                     <a href="{{route('home')}}" class="btn btn-danger" style="margin-right: 10px;">Cancelar</a>
                     @endif
                     <a href="{{route('changePassword',['user' => $user->id])}}" class="btn btn-warning">Cambiar Contraseña</a>
-                 
                 </div>
             </div>
         </div>
