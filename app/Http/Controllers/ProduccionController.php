@@ -53,16 +53,16 @@ class ProduccionController extends Controller
             $warning = 'No hay contratos en el corte activo';
         }
         // sacar inspectores
-        $inpectores = tbl_insp_cali::all();
+        $inspectores = tbl_insp_cali::all();
 
-        if (count($inpectores->toArray()) === 0 && !$error) {
+        if (count($inspectores->toArray()) === 0 && !$error) {
             $error = true;
             $warning = 'No hay inspectores activos';
         }
         $contadortotal = 0;
         // sacar produccion de cada inspector
         $produccionInspector = array();
-        foreach ($inpectores as $inspector) {
+        foreach ($inspectores as $inspector) {
             // Contratos comerciales
             $contratosComerciales = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
                 ->where('FECHA', '>=', $corte->fecha_inicio)
@@ -173,9 +173,10 @@ class ProduccionController extends Controller
 
 
         if ($error) {
-            return view('produccion.index', ['produccionInspector' => $produccionInspector, 'numerosContratos' => $numerosContratos, 'contratosCategoria' => $contratosCategoria, 'conteoContratosPorZona' => $conteoContratosPorZona, 'corte' => $corte, 'warning' => $warning]);
+            return view('produccion.index', ['produccionInspector' => $produccionInspector, 'numerosContratos' => $numerosContratos, 'contratosCategoria' => $contratosCategoria, 'conteoContratosPorZona' => $conteoContratosPorZona, 'corte' => $corte, 'warning' => $warning,'inspectores' => $inspectores]);
         }
-        return view('produccion.index', compact('produccionInspector', 'contratosCategoria', 'conteoContratosPorZona', 'corte', 'warning', 'municipiosNoEncontrados', 'inpectores'));
+     
+        return view('produccion.index', compact('produccionInspector', 'contratosCategoria', 'conteoContratosPorZona', 'corte', 'warning', 'municipiosNoEncontrados', 'inspectores'));
     }
 
     public function detallesCorte($id)

@@ -15,20 +15,23 @@
             <canvas id="inspeccionesDiarias"></canvas>
         </x-adminlte-card>
     </div>
+
     <div class="row">
         <div class="col-6">
             <div class="card">
                 <div class="card-body">
                     <x-adminlte-card title="Categorias Inspecciones" theme="info" icon="fas fa-code-branch" header-class="text-uppercase rounded-bottom border-info">
+                        @if(isset($inspectores) && $inspectores->isNotEmpty())
                         <select class="form-control" id="inspectorSelect" style="width: 50%;">
                             <option value="">Mostrar todos los contratos</option>
-                            @foreach ($inpectores as $inspector)
+                            @foreach ($inspectores as $inspector)
                             @if ($inspector->state == 1)
                             <option value="{{$inspector->cedula}}">{{$inspector->apellidos}}</option>
                             @endif
                             @endforeach
                         </select>
                         <canvas id="categoriaInsp"></canvas>
+                        @endif
                     </x-adminlte-card>
                 </div>
             </div>
