@@ -9,7 +9,7 @@
 
 <input type="hidden" id="fecha_inicio" value="{{session('fecha_inicio')}}">
 <link rel="stylesheet" href="{{asset('css/produccion/produccion.css')}}">
-<script src="{{asset('js/producciondetallesV3-7.js')}}?v={{ time()}}"></script>
+<script src="{{asset('js/producciondetallesV3-8.js')}}?v={{ time()}}"></script>
 <!-- <script src="{{asset('js/zonasV2.js')}}"></script> -->
 
 <input type="hidden" id="id_corte_detalles" value="">
@@ -223,7 +223,6 @@
         const urlDesasociar = "{{ route('produccion.eliminarDetallesDiario', ['id' => ':id']) }}";
         const urlCrearSession = "{{ route('produccion.crearSession') }}";
         const urlActualizarDetallesDia = "{{ route('produccion.detallesDiario',['fecha' => ':fecha', 'inspector' => ':inspector']) }}";
-        const urlZonas = "{{ route('produccion.zonas') }}";
         const urlInsertar = "{{ route('produccion.insertarContrato') }}"
         const urlContarDobles = "{{ route('produccion.contarDobles') }}"
         const urlNoContarDobles = "{{ route('produccion.guardarNoDobles') }}"

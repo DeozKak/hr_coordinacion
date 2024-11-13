@@ -80,7 +80,7 @@
 
     {{-- Body Content --}}
     @yield('body')
-    <input type="text" id="makeRead" name="makeRead" value="{{route('notifications.markAsRead')}}">
+    <input type="hidden" id="makeRead" name="makeRead" value="{{route('notifications.markAsRead')}}">
     {{-- Base Scripts --}}
     @if(!config('adminlte.enabled_laravel_mix'))
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>

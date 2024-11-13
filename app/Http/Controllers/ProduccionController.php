@@ -223,6 +223,9 @@ class ProduccionController extends Controller
                 $response = json_decode($historico->data);
                 session()->forget('id_corte');
                 session()->save();
+
+                session()->put('corteEnviar', $corte);
+                
                 return response()->json($response);
             }
         } else {
@@ -233,10 +236,10 @@ class ProduccionController extends Controller
             $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
                 ->where('fecha_fin', '>=', $fecha_resta_un_dia)
                 ->first();
-
-            session()->put('corteEnviar', $corte);
+                session()->put('corteEnviar', $corte);
         }
-
+      
+      
         $diasIntermedios = $this->DiasIntermedios($corte);
         if ($diasIntermedios == null) {
             return response()->json(['error' => 'No hay corte activo']);

@@ -307,8 +307,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             success: function(response) {
                 // Crear un objeto Date a partir de la fecha en formato YYYY-MM-DD+
 
-                let botonContarDobles = "";
-
+               
                 let fechaTransformar = new Date(fecha);
 
                 // Array para traducir los días de la semana al español
@@ -343,15 +342,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 $('#exampleModal').modal('hide');
 
-                // DESCOMENTAR SI SE NECESITA PONER LOS BOTONES Y QUE NO SE CIERRE EL MODAL
-                // if(!response.success){
-                //     botonContarDobles = "<button type='button' data-url='"+urlContarDobles+"' class='btn btn-info' id='contarDobles'>Contar dobles</button>"
-                // }else{
-                //     botonContarDobles = "<button type='button' data-url='"+urlCountDoublesHolidays+"' class='btn btn-info' id='contarDoblesFestivos'>Contar dobles</button>"
-                // }
-                // $('#noContar, #noContarDoblesFestivos').after(botonContarDobles)
-                // $('#noContar, #noContarDoblesFestivos').remove()
-                // $('#cantidadDobles').text('')
+               
             }
         })
     })
@@ -406,9 +397,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 $('#exampleModal').modal('hide');
 
-                // let botonAbrirModalContarDoblesSabado = "<button type='button' class='btn btn-info' id='abrirModalContarDoblesSabado'>Contar dobles</button>"
-                // $('#agregar').before(botonAbrirModalContarDoblesSabado);
-                // $('#noContarDoblesSabado').remove()
             }
         })
     })
@@ -430,8 +418,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
             success: function(response) {
                 
-                // let botonNoContarDobles = ""
-
+                
                 let fechaTransformar = new Date(fecha);
 
                 // Array para traducir los días de la semana al español
@@ -461,14 +448,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 $('#exampleModal').modal('hide');
                  
-                // if(!response.success){
-                //     botonNoContarDobles = "<button type='button' data-url='"+urlNoContarDobles+"' class='btn btn-info' id='noContar'>No contar dobles</button>"
-                // }else{
-                //     botonNoContarDobles = "<button type='button' data-url='"+urlGuardarNoDoblesFestivos+"' class='btn btn-info' id='noContarDoblesFestivos'>No contar dobles</button>"
-                // }
-
-                // $('#contarDobles, #contarDoblesFestivos').after(botonNoContarDobles)
-                // $('#contarDobles, #contarDoblesFestivos').remove()
+               
             }
         })
     })
@@ -788,9 +768,9 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             const array = url.split("/");
             const last = array[array.length - 1]
             
+            $('#cantidadDobles').text('');
             if(last == 'detalles'){
 
-                $('#cantidadDobles').text('');
                 $('#noContar, #noContarDoblesFestivos, #contarDobles, #contarDoblesFestivos, #abrirModalContarDoblesSabado, #noContarDoblesSabado').remove();
     
                 // para saber el color de la celda
@@ -832,7 +812,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                                 let botonContarDobles = "<button type='button' data-url='" + urlContarDobles + "' class='btn btn-info' id='contarDobles'>Contar dobles</button>"
                                 $('#agregar').before(botonContarDobles);
                             }
-                        }else if(response[3] != 0 && !response[1] && !response[2] && cellBackgroundColor == "rgb(255, 240, 142)"){
+                        }else if(response[3].length != 0 && !response[1] && !response[2] && cellBackgroundColor == "rgb(255, 240, 142)"){
                             if (!$('#noContarDoblesSabado').length) { // Solo agregar si el botón no existe ya
                                 $('#cantidadDobles').text('(cantidad de inspecciones dobles: ' + response[3][0][0] +')')
                                 let botonNoContarDoblesSabados = "<button type='button' data-url='" + urlNoContarDoblesSabados + "' class='btn btn-info' id='noContarDoblesSabado'>No contar dobles</button>"
@@ -846,9 +826,12 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                     }
     
                     if(cellBackgroundColor == "rgb(147, 255, 134)"){
-                        if(cantInspecciones != 0){
-                            $('#cantidadDobles').text('(cantidad de inspecciones dobles: ' + cantInspecciones +')')
+                        if($('#contarDoblesFestivos').text() !== 'Contar dobles'){
+                            if(cantInspecciones != 0){
+                                $('#cantidadDobles').text('(cantidad de inspecciones dobles: ' + cantInspecciones +')')
+                            }
                         }
+                       
                     }
                 } else {
                     // Elimina ambos botones si no se cumplen las condiciones
