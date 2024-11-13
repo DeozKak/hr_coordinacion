@@ -334,7 +334,7 @@ return [
             'url' => 'admin/blog',
             'can' => 'manage-blog',
         ],
-        ['header' => 'Resvisiones Periódicas', 'can' => 'ver_coordinacion_RP',],
+        ['header' => 'Resvisiones Nuevas', 'can' => 'ver_coordinacion_RN',],
         [
             'text' => 'Cargues',
             'icon' => 'fas fa-upload',
@@ -346,6 +346,12 @@ return [
                     'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
+                [
+                    'text' => 'Recepcion',
+                    'url' => 'receptionLoad',
+                    'icon' => 'far fa-circle',
+                    'label_color' => 'success',
+                ],
 
             ],
         ],
@@ -353,7 +359,7 @@ return [
         [
             'text' => 'Gestión',
             'icon' => 'fas fa-tasks',
-            'can' => 'ver_coordinacion_RP',
+            'can' => 'ver_coordinacion_RN',
             'submenu' => [
                 [
                     'text' => 'Coordinación',
@@ -391,12 +397,18 @@ return [
                     'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
+                [
+                    'text' => 'Recepcion',
+                    'url' => '/gestion/viewReception',
+                    'icon' => 'far fa-circle',
+                    'label_color' => 'success',
+                ],
             ],
         ],
         [
             'text' => 'Seguimiento',
             'icon' => 'fas fa-walking',
-            'can' => 'ver_coordinacion_RP',
+            'can' => 'ver_coordinacion_RN',
             'submenu' => [
                 [
                     'text' => 'App',

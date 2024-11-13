@@ -19,7 +19,7 @@ class InspectorController extends Controller
     {
         $supervisores = User::role('Supervisor')->get();
         return view('inspectores.index', compact('supervisores'));
-   
+    }
 
     public function store(){
         $validatedData = request()->validate([
@@ -48,7 +48,7 @@ class InspectorController extends Controller
         return redirect()->route('inspectores.index');
     }
 
-    public function edit(tbl_insp_cali $inspector)
+    public function edit(tbl_insp_cali $inspector,Request $request)
     {
 
         $nombres = $request->input('nombres');
@@ -133,22 +133,6 @@ class InspectorController extends Controller
             }
         }
 
-        $validatedData = $request->validate([
-            'nombres' => 'required',
-            'apellidos' => 'required',
-            'supervisor' => 'required',
-            
-        ],[
-            'nombres.required' => 'El campo nombres es obligatorio',
-            'apellidos.required' => 'El campo apellidos es obligatorio',
-            'supervisor.required' => 'El campo supervisor es obligatorio',
-        ]);
-        $inspector->nombres = $request->nombres;
-        $inspector->apellidos = $request->apellidos;
-        $inspector->SUPERVISOR = $request->supervisor;
-        $inspector->aprendiz = $request->aprendiz;
-        $inspector->save();
-        return redirect()->route('inspectores.index');
     }
 
     public function change_state(Request $request, $id)

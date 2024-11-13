@@ -3,238 +3,63 @@
 @section('title', 'Coordinación')
 
 @section('content_header')
-<h1>Coordinación</h1>
+<h1>Coordinación Nuevas</h1>
 @endsection
 
 @section('content')
 <link rel="stylesheet" href="{{asset('css/gestion/coordinacion.css')}}">
 
 <div class="card">
+    <div id="loader1" style="display: none;"></div>
     <div class="card-body">
-
-
-        <div id="prueba" style=" width: '100px'"></div>
-
+        <div class="row align-items-end">
+            <div class="col-md-2">
+                <select class="form-control" id="columnasBuscar">
+                    <option value="" disabled selected>Seleccione columna</option>
+                    <option value="0">Orden</option>
+                    <option value="1">Contrato</option>
+                    <option value="2">Producto</option>
+                    <option value="3">Numero solicitud</option>
+                    <option value="4">Tipo solicitud</option>
+                    <option value="5">Cedula</option>
+                    <option value="6">Nombre</option>
+                    <option value="7">Departamento</option>
+                    <option value="8">Localidad</option>
+                    <option value="9">Barrio</option>
+                    <option value="10">Dirección</option>
+                    <option value="11">Consecutivo Ruta</option>
+                    <option value="12">Telefono</option>
+                    <option value="13">Medidor</option>
+                    <option value="14">Categoria</option>
+                    <option value="15">Unidad</option>
+                    <option value="16">Tipo trabajo</option>
+                    <option value="17">Fecha asignación</option>
+                    <option value="18">Observación solicitud</option>
+                </select>
+            </div>
+            <div class="col-md-3 ms-2"> <!-- Agregado un margen izquierdo -->
+                <input class="form-control" id="inputBuscar" type="text" placeholder="Buscar" readonly />
+                <input type="hidden" id="tipoColumnas" />
+                <input type="hidden" id="falseTrue" />
+                <input type="hidden" id="tokenCoordinacionRP" value="{{ csrf_token() }}">
+            </div>
+        </div>
+        <div id="prueba" class="mt-3" style="position: relative; display: none;">
+            <!-- tabla coordinacion -->
+        </div>
+        <div class="overlay" style="display: none;">
+            <i class="fas fa-2x fa-sync-alt"></i>
+        </div>
         @csrf
     </div>
 </div>
 
 @section('js')
+<script src="{{asset('js/coordinaciontbl.js')}}"></script>
 <script>
-    var nestedHeaders = [
-        [{
-            label: 'ASIGNACION BASE OSF',
-            colspan: 19
-        }],
-        ['Orden', 'Contrato', 'Producto', 'Numero solicitud', 'Tipo solicitud', 'Cedula', 'Nombre', 'Departamento', 'Localidad', 'Barrio', 'Dirección', 'Consecutivo Ruta', 'Telefono',
-            'Medidor', 'Categoria', 'Unidad', 'Tipo trabajo', 'Fecha asignación', 'Observación solicitud'
-        ]
-    ];
-    // selector del contenedor de la tabla
-    const container = document.querySelector('#prueba');
-    // configuración de la tabla y inicialización
-    const hot = new Handsontable(container, {
-
-
-        lenguaje: 'es-MX',
-        rowHeaders: true,
-        fillHandle: false,
-        height: '550px',
-        allowRemoveColumn: false,
-        customBorders: false,
-        multiColumnSorting: false,
-        nestedHeaders: nestedHeaders,
-        colHeaders: ['Orden', 'Contrato', 'Producto', 'Numero solicitud', 'Tipo solicitud', 'Cedula', 'Nombre', 'Departamento', 'Localidad', 'Barrio', 'Dirección', 'Consecutivo Ruta', 'Telefono',
-            'Medidor', 'Categoria', 'Unidad', 'Tipo trabajo', 'Fecha asignación', 'Observación solicitud', /* columnas 12161 */ , 'Orden externa', 'Tipo solicitud', 'Fecha Solicitud', 'Observacion Externa', 'Fecha reasignacion'
-        ],
-        columns: [{
-                data: 'orden'
-            },
-            {
-                data: 'contrato'
-            },
-            {
-                data: 'producto'
-            },
-            {
-                data: 'numero_solicitud'
-            },
-            {
-                data: 'tipo_solicitud'
-            },
-            {
-                data: 'NIT_CC'
-            },
-            {
-                data: 'nombre_lugar'
-            },
-            {
-                data: 'departamento'
-            },
-            {
-                data: 'localidad'
-            },
-            {
-                data: 'sector_operativo'
-            },
-            {
-                data: 'direccion'
-            },
-            {
-                data: 'consecutivo_ruta'
-            },
-            {
-                data: 'telefono'
-            },
-            {
-                data: 'medidor'
-            },
-            {
-                data: 'categoria'
-            },
-            {
-                data: 'unidad_operativa'
-            },
-            {
-                data: 'tipo_trabajo'
-            },
-            {
-                data: 'fecha_asignacion'
-            },
-            {
-                data: 'observacion_solicitud'
-            }
-        ],
-        data: [],
-        fixedColumnsStart: 3,
-        manualColumnResize: true,
-        licenseKey: 'non-commercial-and-evaluation',
-        filters: true,
-        dropdownMenu: true,
-        filteringMode: 'remote',
-        beforeFilter: function(filters) {
-            $.ajax({
-                url: "{{route('filterData')}}",
-                data: {
-                    filters: filters
-                },
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                method: 'POST',
-                success: function(response) {
-                    hot.loadData(response, null, 'json');
-                },
-                error: function(xhr, status, error) {
-                    console.log(xhr.responseText);
-                }
-            });
-            return false;
-        }
-    });
-    // variables para la paginación
-    let pagina = 1;
-    /* let registro = 100;
-    let paginasCargadas = 1;
-    const paginasParaEliminar = 5;
-    let scrollPosition = 0;  */
-    // función para cargar los datos por primera vez
-    function cargaPrimeraVez() {
-
-        $.ajax({
-            url: "{{route('getdataCoordinacionRP')}}",
-            data: {
-                pagina: pagina
-            },
-            method: 'GET',
-            success: function(response) {
-                hot.loadData(response, null, 'json');
-                pagina++;
-            },
-            error: function(err) {
-                console.log(err);
-
-            }
-        });
-
-    }
-
-    cargaPrimeraVez();
-    /*  function eliminarRegistrosAnteriores() {
-
-        if (paginasCargadas % paginasParaEliminar === 0 && paginasCargadas > 0) {
-     
-        const firstVisibleRow = Math.floor(wtHolderElement.scrollTop / 23); // Ajusta el valor 23 según la altura de las filas en tu tabla
-        const lastVisibleRow = firstVisibleRow + Math.ceil(wtHolderElement.clientHeight / 23);
-
-        const filasAEliminar = lastVisibleRow - firstVisibleRow;
-
-        hot.alter('remove_row', firstVisibleRow, filasAEliminar);
-        wtHolderElement.scrollTop = scrollPosition;
-    }
-     } */
-
-    // función para cargar más registros
-    /*  function cargarMasRegistros() {
-         const bottom = wtHolderElement.scrollTop + wtHolderElement.clientHeight >= wtHolderElement.scrollHeight;
-
-         if (bottom) {
-             $.ajax({
-                 url: "{{route('getdataCoordinacionRP')}}",
-                 data: {
-                     pagina: pagina
-                 },
-                 method: 'GET',
-                 success: function(response) {
-                     eliminarRegistrosAnteriores();
-                     insertarDatosEnFilas(response, registro);
-                     
-
-
-                     pagina++;
-                     registro += 100;
-                     paginasCargadas++;
-                 },
-                 error: function(err) {
-                     console.log(err);
-                     console.error('Error al cargar más registros');
-                 }
-             });
-         }
-     } */
-    // función para convertir la respuesta del servidor de JSON a un array 2D
-    // para que pueda ser insertado en la tabla
-    /*  function convertirJSONaArray2D(jsonData) {
-         const columnasDeseadas = ['orden', 'contrato', 'producto', 'numero_solicitud', 'tipo_solicitud', 'NIT_CC', 'nombre_lugar', 'departamento', 'localidad', 'sector_operativo', 'direccion', 'consecutivo_ruta', 'telefono', 'medidor', 'categoria', 'unidad_operativa', 'tipo_trabajo', 'fecha_asignacion', 'observacion_solicitud'];
-
-         return Object.keys(jsonData).map(key => {
-             const fila = jsonData[key];
-             return columnasDeseadas.map(columna => fila[columna]);
-         });
-     } */
-
-    // función para insertar los datos en las filas de la tabla
-    /* function insertarDatosEnFilas(datos, filaInicial) {
-        const array2D = convertirJSONaArray2D(datos);
-
-        hot.populateFromArray(filaInicial, 0, array2D);
-    } */
-    // elemento contenedor de la tabla que obtine el scroll
-    /*  const wtHolderElement = document.querySelector('.wtHolder'); */
-
-    // cargar los datos por primera vez
-
-
-    // evento para cargar más registros al hacer scroll
-    /*   wtHolderElement.addEventListener('scroll', function() {
-          scrollPosition = wtHolderElement.scrollTop;
-          cargarMasRegistros();
-      });
-
-      hot.addHook('afterRender', function() {
-          wtHolderElement.scrollTop = scrollPosition;
-      }); */
+    const url = "{{route('getdataCoordinacionRP')}}"
+    const url2 = "{{route('filterData')}}"
+    const url3 = "{{route('guardarProgramacionTecnico')}}"
 </script>
-
-@endsection
+@stop
 @endsection

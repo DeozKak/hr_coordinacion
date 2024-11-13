@@ -102,7 +102,6 @@ class ProduccionController extends Controller
                 'contratos' => $numerosContratos // Conserva el total de contratos en esta variable
             ];
         }
-        // dd($produccionInspector);
         // sacar categorias de los contratos
         $contratosCategoria = tbl_bitacora_contrato::select('CATEGORIA', 'CC_OPERARIO')
             ->where('FECHA', '>=', $corte->fecha_inicio)

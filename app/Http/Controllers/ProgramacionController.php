@@ -298,11 +298,8 @@ class ProgramacionController extends Controller
             DB::commit(); // Confirmar la transacción si todo tiene éxito
             return true;
         } catch (QueryException $e) {
-            throw $e;
-
-            DB::rollback(); // Revertir la transacción si ocurre un error
             Log::error("Error al insertar datos: " . $e->getMessage()); // Registrar el error para depuración
-            return false;
+            throw $e;
         }
     }
 
