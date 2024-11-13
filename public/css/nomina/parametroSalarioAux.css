@@ -6,3 +6,17 @@
 .btn {
     margin-right: 5px;
 }
+
+
+#tableParametroSalarioAux {
+    font-size: 0.875rem; /* Reducir el tamaño de la fuente */
+}
+
+#tableParametroSalarioAux th, #tableParametroSalarioAux td {
+    padding: 0.5rem; /* Reducir el espaciado interno de las celdas */
+}
+
+#tableParametroSalarioAux thead th {
+    padding-top: 0.25rem; /* Reducir el espaciado superior de las celdas de encabezado */
+    padding-bottom: 0.25rem; /* Reducir el espaciado inferior de las celdas de encabezado */
+}

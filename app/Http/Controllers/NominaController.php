@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\tbl_insp_cali;
 use App\Models\tbl_produccion_corte;
 use App\Models\TblNominaMultas;
 use App\Models\TblParametroSalAux;
@@ -20,7 +21,9 @@ class NominaController extends Controller
         $mesAnio = $request->input('mesAnio');
         $produccionFiltrada = [];
         $arrayMultasRod = [];
-       
+        $arrayInspectores = [];
+        $arraySalAux = [];
+
         $cortesProduccion = tbl_produccion_corte::with('corte')
         ->where('fecha_fin', 'like', '%' . $mesAnio . '%')
         ->get();
@@ -28,6 +31,49 @@ class NominaController extends Controller
         // consultamos la tabla de nomina multas con el mes y anio correspondiente
         $multasRodamiento = TblNominaMultas::where('fecha',$mesAnio) 
         ->get();
+
+        // consultamos todos los inspectores
+        $inspectores = tbl_insp_cali::all();
+
+        //consultamos el salario minimo y el auxilio de transporte
+        $parametroSalMinAux = TblParametroSalAux::where('fecha_inicio', '<=', $mesAnio)
+        ->where('fecha_fin', '>=', $mesAnio)
+        ->first();
+
+        if ($parametroSalMinAux) {
+            $arraySalAux = [
+                'salarioMinimo' => $parametroSalMinAux->salario_minimo,
+                'auxilioTransporte' => $parametroSalMinAux->auxilio_transporte,
+                'salud' => $parametroSalMinAux->salud,
+                'pension' => $parametroSalMinAux->pension,
+                'arl' => $parametroSalMinAux->arl,
+                'caja' => $parametroSalMinAux->caja,
+                'prima' => $parametroSalMinAux->prima,
+                'cesantias' => $parametroSalMinAux->cesantias,
+                'intCesantias' => $parametroSalMinAux->intCesantias,
+                'vacaciones' => $parametroSalMinAux->vacaciones
+            ];
+        }else{
+            $arraySalAux = [
+                'salarioMinimo' => 0,
+                'auxilioTransporte' => 0,
+                'salud' => 0,
+                'pension' => 0,
+                'arl' => 0,
+                'caja' => 0,
+                'prima' => 0,
+                'cesantias' => 0,
+                'intCesantias' => 0,
+                'vacaciones' => 0
+            ];
+        }
+
+        foreach($inspectores as $inspector){
+            $arrayInspectores[] = [
+                'cedula' => $inspector->cedula,
+                'aprendiz' => $inspector->aprendiz
+            ];
+        }
 
         foreach($multasRodamiento as $item){
             $arrayMultasRod[] = [
@@ -41,10 +87,11 @@ class NominaController extends Controller
             $data = json_decode($corte->corte->data, true);
             $produccionFiltrada[] = [
                 'data' => $data,
-                'multas' => $arrayMultasRod
+                'multas' => $arrayMultasRod,
+                'inspectores' => $arrayInspectores,
+                'salariosAux' => $arraySalAux
             ];
         }
-        
         return response()->json($produccionFiltrada);
     }
 
@@ -109,6 +156,14 @@ class NominaController extends Controller
         $fechaFin = $request->input('fechaSalAuxFin');
         $salMin = intval($request->input('salMin'));
         $auxTrans = intval($request->input('auxTrans'));
+        $salud = $request->input('salud');
+        $pension = $request->input('pension');
+        $arl = $request->input('arl');
+        $caja = $request->input('caja');
+        $prima = $request->input('prima');
+        $cesantias = $request->input('cesantias');
+        $intCesantias = $request->input('intCesantias');
+        $vacaciones = $request->input('vacaciones');
 
         // Validación de fechas vacías
         if ($fechaInicio == "" || $fechaFin == "") {
@@ -121,7 +176,9 @@ class NominaController extends Controller
         }
 
         // Validación de datos numéricos
-        if (!is_numeric($salMin) || !is_numeric($auxTrans)) {
+        if (!is_numeric($salMin) || !is_numeric($auxTrans) || $salud == "" ||
+            $pension == "" || $arl == "" || $caja == "" || $prima == "" ||
+            $cesantias == "" || $intCesantias == "" || $vacaciones == "") {
             return response()->json(['status' => 3]); // Datos inválidos
         }
 
@@ -148,6 +205,14 @@ class NominaController extends Controller
                 'fecha_fin' => $fechaFin,
                 'salario_minimo' => $salMin,
                 'auxilio_transporte' => $auxTrans,
+                'salud' => $salud,
+                'pension' => $pension,
+                'arl' => $arl,
+                'caja' => $caja,
+                'prima' => $prima,
+                'cesantias' => $cesantias,
+                'intCesantias' => $intCesantias,
+                'vacaciones' => $vacaciones
             ]);
 
             if ($insertar) {
@@ -164,6 +229,14 @@ class NominaController extends Controller
         $fechaFin = $request->input('fechaSalAuxFin');
         $salMin = intval($request->input('salMin'));
         $auxTrans = intval($request->input('auxTrans'));
+        $salud = $request->input('salud');
+        $pension = $request->input('pension');
+        $arl = $request->input('arl');
+        $caja = $request->input('caja');
+        $prima = $request->input('prima');
+        $cesantias = $request->input('cesantias');
+        $intCesantias = $request->input('intCesantias');
+        $vacaciones = $request->input('vacaciones');
 
         // Validación de fechas vacías
         if ($fechaInicio == "" || $fechaFin == "") {
@@ -175,7 +248,9 @@ class NominaController extends Controller
             return response()->json(['status' => 2]); // La fecha de inicio no puede ser mayor a la de fin
         }
 
-        if (!is_numeric($salMin) || !is_numeric($auxTrans)) {
+        if (!is_numeric($salMin) || !is_numeric($auxTrans) || $salud == "" || 
+            $pension == "" || $arl == "" || $caja == "" || $prima == "" || 
+            $cesantias == "" || $intCesantias == "" || $vacaciones == "") {
             return response()->json(['status' => 3]); // Datos inválidos
         }
 
@@ -203,7 +278,15 @@ class NominaController extends Controller
                 $registroActual->fecha_inicio == $fechaInicio &&
                 $registroActual->fecha_fin == $fechaFin &&
                 $registroActual->salario_minimo == $salMin &&
-                $registroActual->auxilio_transporte == $auxTrans
+                $registroActual->auxilio_transporte == $auxTrans &&
+                $registroActual->salud == $salud &&
+                $registroActual->pension == $pension &&
+                $registroActual->arl == $arl &&
+                $registroActual->caja == $caja &&
+                $registroActual->prima == $prima &&
+                $registroActual->cesantias == $cesantias &&
+                $registroActual->intCesantias == $intCesantias &&
+                $registroActual->vacaciones == $vacaciones
             ) {
                 return response()->json(['status' => 7]);
             } else {
@@ -213,7 +296,14 @@ class NominaController extends Controller
                     'fecha_fin' => $fechaFin,
                     'salario_minimo' => $salMin,
                     'auxilio_transporte' => $auxTrans,
-                    
+                    'salud' => $salud,
+                    'pension' => $pension,
+                    'arl' => $arl,
+                    'caja' => $caja,
+                    'prima' => $prima,
+                    'cesantias' => $cesantias,
+                    'intCesantias' => $intCesantias,
+                    'vacaciones' => $vacaciones 
                 ]);
 
                 if ($actualizar) {

@@ -16,6 +16,14 @@ class TblParametroSalAux extends Model
         'fecha_fin',
         'salario_minimo',
         'auxilio_transporte',
+        'salud',
+        'pension',
+        'arl',
+        'caja',
+        'prima',
+        'cesantias',
+        'intCesantias',
+        'vacaciones'
     ];
     
 }
