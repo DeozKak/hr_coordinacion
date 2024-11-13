@@ -11,40 +11,89 @@ use Spatie\Permission\Models\Permission;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(User $user)
     {
         $users = User::all();
-
-        return view('users.index', compact('users'));
-    }
-
-    public function edit(User $user)
-    {
         $userlogin = auth()->user();
         $roles = Role::all();
-        $currentRole = $user->roles->first();
-        $permissions = Permission::all();
-        $userPermissions = $user->permissions;
-        $availablePermissions = $permissions->diff($userPermissions);
+        $currentRole = $userlogin->roles->first();
 
-        return view('users.edit', compact('userlogin' ,'user', 'roles', 'permissions', 'userPermissions', 'availablePermissions', 'currentRole'));
+        return view('users.index', compact('users', 'userlogin', 'roles', 'currentRole', 'user'));
     }
 
     public function update(Request $request, User $user)
     {
-      
-        $user->syncRoles($request->roles);
-        $permissionAssigned = json_decode($request->assignedPermissions, true);
-        $permissionrevoked = json_decode($request->revokedPermissions, true);
-        $user->syncPermissions($permissionAssigned);
-        $user->revokePermissionTo($permissionrevoked);
-        // Limpiar la caché de permisos
-        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->save();
+        $id = $request->input('id');
+        $nombre = $request->input('nombres');
+        $roles = $request->input('roles');
+        $email = $request->input('email');
+        $assignedPermissions = $request->input('assignedPermissions');
+        $revokedPermissions = $request->input('revokedPermissions');
+        $claveNueva = $request->input('claveNueva');
+        $claveConfirmar = $request->input('claveConfirmar');
 
-        return redirect()->route('admin.index');
+        if($nombre == "" || $email == "") {
+            return response()->json([
+                'status'=> 'warning',
+                'message'=> 'Los campos son obligatorios'
+            ]);
+        }else{
+            $user = User::find($id);
+
+            if($claveNueva != null){
+                $cambioClave = $this->updatePassword($request, $user, $claveNueva, $claveConfirmar);
+                if(isset($cambioClave->original)){
+                   return response()->json([
+                        'status' => $cambioClave->original['status'],
+                        'message' => $cambioClave->original['message'],
+                    ]);
+                }
+            }else{
+                $cambioClave = false;
+            }
+
+            if(!is_array($assignedPermissions) && !is_array( $revokedPermissions)){
+                $permissionAssigned = json_decode($assignedPermissions, true);
+                $permissionrevoked = json_decode($revokedPermissions, true);
+                $flag = true;
+            }else{
+                $permissionAssigned = $assignedPermissions;
+                $permissionrevoked = $revokedPermissions;
+                $flag = false;
+            }
+
+            $user->syncRoles($roles);
+            $user->syncPermissions($permissionAssigned);
+            $user->revokePermissionTo($permissionrevoked);
+            // Limpiar la caché de permisos
+            app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+            $user->name = $nombre;
+            $user->email = $email;
+            $guardarUsuario = $user->save();
+
+            if($flag){
+                return redirect()->route('admin.index');
+            }
+
+            if($guardarUsuario && $cambioClave){
+                return response()->json(data: [
+                    'status'=> 'success',
+                    'user'=> $user,
+                    'message'=> 'Usuario y contraseña editado exitosamente'
+                ]);
+            }else if($guardarUsuario){
+                return response()->json(data: [
+                    'status'=> 'success',
+                    'user'=> $user,
+                    'message'=> 'Usuario editado exitosamente'
+                ]);
+            }else{
+                return response()->json([
+                    'status'=> 'error',
+                    'message'=> 'Error al editar el usuario'
+                ]);
+            }
+        }
     }
 
     public function changeStatus(User $user)
@@ -52,11 +101,24 @@ class UserController extends Controller
         if ($user->state == 0){
             $user->state = 1;
             $user->save();
+
+            return response()->json([
+                'status' => 'success',
+                'user' => $user,
+                'message' => 'El usuario se activó con éxito'
+            ]);
+
         }else{
             $user->state = 0;
-            $user->save();}
+            $user->save();
 
-        return redirect()->route('admin.index');
+            return response()->json([
+                'status' => 'success',
+                'user' => $user,
+                'message' => 'El usuario se desactivó con éxito'
+            ]);
+        }
+
     }
 
     public function changePassword(User $user)
@@ -64,26 +126,59 @@ class UserController extends Controller
         return view('users.changePassword', compact('user'));
     }
 
-    public function updatePassword(Request $request, User $user)
+    public function updatePassword(Request $request, User $user, $claveNueva = false, $claveConfirmar = false)
     {
-        $validator = Validator::make($request->all(), [
-            'new_password' => 'required|min:8',
+        if($claveNueva != null){
+            $newPassword = $claveNueva;
+        }else{
+            $newPassword = $request->new_password;
+        }
+
+        if($claveConfirmar != null){
+            $confirmPassword = $claveConfirmar;
+        }else{
+            $confirmPassword = $request->conf_password;
+        }
+
+        $validator = Validator::make([
+            'newPassword' => $newPassword,
+        ], [
+            'newPassword' => 'required|min:8',
         ]);
 
-        if($request->new_password != $request->conf_password){
-            return redirect()->back()->with('error', 'Las contraseñas no coinciden')->withInput();
+
+        if($newPassword != $confirmPassword){
+            if($claveNueva != null){
+                return response()->json([
+                    'status'=> 'passwordDiff',
+                    'message'=> 'Las contraseñas no coinciden'
+                ]);
+            }else{
+                return redirect()->back()->with('error', 'Las contraseñas no coinciden')->withInput();
+            }
         }
-        
+
         if ($validator->fails()) {
-            return redirect()->back()->with('error', 'La contraseña debe ser de minimo 8 caracteres')->withInput();
+            if($claveNueva != null){
+                return response()->json([
+                    'status'=> 'passowordLength',
+                    'message'=> 'La contraseña debe ser de minimo 8 caracteres'
+                ]);
+            }else{
+                return redirect()->back()->with('error', 'La contraseña debe ser de minimo 8 caracteres')->withInput();
+            }
         }
-        $user->password = bcrypt($request->new_password);
+        $user->password = bcrypt($newPassword);
         $user->save();
-        $userlogin = auth()->user();
-        if ($userlogin->hasRole('admin')){
-        return redirect()->route('admin.index')->with('success', 'Contraseña actualizada correctamente');
+        if($claveNueva != null){
+            return true;
         }else{
-            return redirect()->route('home')->with('success', 'Contraseña actualizada correctamente');
+            $userlogin = auth()->user();
+            if ($userlogin->hasRole('admin')){
+                return redirect()->route('admin.index')->with('success', 'Contraseña actualizada correctamente');
+            }else{
+                return redirect()->route('home')->with('success', 'Contraseña actualizada correctamente');
+            }
         }
     }
 
@@ -92,7 +187,7 @@ class UserController extends Controller
         $userlogin = auth()->user();
         $user = auth()->user();
         $currentRole = $user->roles->first();
-       
+
         return view('users.show', compact('userlogin','user', 'currentRole'));
     }
 
@@ -109,11 +204,24 @@ class UserController extends Controller
 
     public function updateProfile(Request $request, User $user)
     {
-       
         $user->name = $request->name;
         $user->email = $request->email;
         $user->save();
 
         return redirect()->route('home')->with('success', 'Perfil actualizado correctamente');
+    }
+
+    public function getDataPermissions(Request $request, ){
+        $id = $request->input('id');
+
+        $user = User::find($id);
+        $permissions = Permission::all();
+        $userPermissions = $user->permissions;
+        $availablePermissions = $permissions->diff($userPermissions);
+
+        return response()->json([
+            'asignadas' => $userPermissions,
+            'disponibles' => $availablePermissions
+        ]);
     }
 }

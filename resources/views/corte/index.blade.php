@@ -8,7 +8,7 @@
 
 @section('content')
 <input type="hidden" id="token" value="{{csrf_token()}}">
-<script src="{{asset('js/informacion_generalV2.js')}}"></script>
+<script src="{{asset('js/informacion_generalV3-1.js')}}?v={{ time() }}"></script>
 <div class="row">
     <div class="col-md-6">
         <div class="card">
@@ -24,21 +24,23 @@
                             <th>Fecha Inicio</th>
                             <th>Fecha Fin</th>
                             <th>Meta</th>
+                            <th>Dobles</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($cortes as $corte)
-                        <tr>
+                        <tr data-id="{{$corte->id}}">
                             <td>{{ $corte->nombre }}</td>
                             <td>{{ $corte->fecha_inicio }}</td>
                             <td>{{ $corte->fecha_fin }}</td>
                             <td>{{ $corte->meta }}</td>
+                            <td>{{ $corte->dobles }}</td>
                             <td>
                                 <div class="d-flex justify-content-center gap-2">
-                                    <a class="btn btn-success btn-sm" data-corte-id="{{ $corte->id }}">Editar</a>
-                                    <a class="btn btn-primary btn-sm" data-corte-id="{{ $corte->id }}" id="btndetallesCorte">Detalles</a>
-                                    <a class="btn btn-secondary btn-sm" data-corte-id="{{ $corte->id }}">Graficos</a>
+                                    <button class="btn btn-info btn-sm abrirCorteModal" data-corte-id="{{ $corte->id }}">Editar</button>&nbsp;
+                                    <button class="btn btn-primary btn-sm btndetallesCorte" data-corte-id="{{ $corte->id }}">Detalles</button>&nbsp;
+                                    <button class="btn btn-secondary btn-sm" data-corte-id="{{ $corte->id }}">Graficos</button>&nbsp;
                                 </div>
                             </td>
                         </tr>
@@ -67,19 +69,25 @@
                     </thead>
                     <tbody>
                         @foreach ($municipios as $municipio)
-                        <tr>
+                        <tr data-id="{{$municipio->id}}">
                             <td>{{ $municipio->nombre }}</td>
                             <td>{{ $municipio->sede->nombre }}</td>
                             <td>{{ $municipio->zona->nombre }}</td>
                             <td>
                                 <div style="display: flex; gap: 5px; justify-content: center;">
-                                    <a class="btn btn-success btn-sm" data-municipio-id="{{ $municipio->id }}">Editar</a>
+                                    <button class="btn btn-info btn-sm abrirMunicipioModal" data-municipio-id="{{ $municipio->id }}">Editar</button>
+                                    @if ($municipio->status == 1)
+                                        <button class="btn btn-danger btn-sm" id="btnChangeStatusMunicipio" data-municipio-id="{{ $municipio->id }}">Desactivar</button>
+                                    @else
+                                        <button class="btn btn-success btn-sm" id="btnChangeStatusMunicipio" data-municipio-id="{{ $municipio->id }}">Activar</button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
                         @endforeach
                     </tbody>
                 </table>
+                <input type="hidden" id="cambiarEstadoMunicipio" value="{{route('cortes_produccion.changeStatusMunicipio')}}">
             </div>
         </div>
     </div>
@@ -95,16 +103,28 @@
                     <thead>
                         <tr>
                             <th>Nombre</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($sedes as $sede)
-                        <tr>
+                        <tr data-id="{{$sede->id}}">
                             <td>{{ $sede->nombre }}</td>
+                            <td>
+                                <div style="display: flex; gap: 5px; justify-content: center;">
+                                    <button class="btn btn-info btn-sm abrirSedeModal" data-sede-id="{{ $sede->id }}">Editar</button>
+                                    @if ($sede->status == 1)
+                                        <button class="btn btn-danger btn-sm" id="btnChangeStatusSede" data-sede-id="{{ $sede->id }}">Desactivar</button>
+                                    @else
+                                        <button class="btn btn-success btn-sm" id="btnChangeStatusSede" data-sede-id="{{ $sede->id }}">Activar</button>
+                                    @endif
+                                </div>
+                            </td>
                         </tr>
                         @endforeach
                     </tbody>
                 </table>
+                <input type="hidden" id="cambiarEstadoSede" value="{{route('cortes_produccion.changeStatusSede')}}">
             </div>
         </div>
     </div>
@@ -115,20 +135,33 @@
                 <h3 class="card-title">Zonas</h3>
             </div>
             <div class="card-body">
+                <a class="btn btn-primary mb-2" id="btnCrearZona">Crear Zona</a>
                 <table class="table table-striped" id="zonas">
                     <thead>
                         <tr>
                             <th>Nombre</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($zonas as $zona)
-                        <tr>
+                        <tr data-id="{{$zona->id}}">
                             <td>{{ $zona->nombre }}</td>
+                            <td>
+                                <div style="display: flex; gap: 5px; justify-content: center;">
+                                    <button class="btn btn-info btn-sm abrirZonaModal" data-zona-id="{{ $zona->id }}">Editar</button>
+                                    @if ($zona->status == 1)
+                                        <button class="btn btn-danger btn-sm" id="btnChangeStatusZona" data-zona-id="{{ $zona->id }}">Desactivar</button>
+                                    @else
+                                        <button class="btn btn-success btn-sm" id="btnChangeStatusZona" data-zona-id="{{ $zona->id }}">Activar</button>
+                                    @endif
+                                </div>
+                            </td>
                         </tr>
                         @endforeach
                     </tbody>
                 </table>
+                <input type="hidden" id="cambiarEstadoZona" value="{{route('cortes_produccion.changeStatusZona')}}">
             </div>
         </div>
     </div>
@@ -140,7 +173,7 @@
             </div>
             <div class="card-body">
                 <a class="btn btn-primary mb-2" id="btnCrearCausal">Crear Causal</a>
-                <table class="table table-striped" id="devolucion">
+                <table class="table table-striped" id="causal">
                     <thead>
                         <tr>
                             <th>Nombre</th>
@@ -149,12 +182,17 @@
                     </thead>
                     <tbody>
                         @foreach ($causales as $index => $causal)
-                        <tr>
+                        <tr data-id="{{$causal->id}}">
                             <td>{{ $causal->nom_causal }}</td>
                             <td>
                                 <div style="display: flex; gap: 5px; justify-content: center;">
                                     @if ($index > 0) {{-- Only show the button if the index is greater than 0 --}}
-                                    <a class="btn btn-success btn-sm" data-causal-id="{{ $causal->id }}">Editar</a>
+                                        <button class="btn btn-info btn-sm abrirCausalModal" data-causal-id="{{ $causal->id }}">Editar</button>
+                                        @if ($causal->status == 1)
+                                            <button class="btn btn-danger btn-sm" id="btnChangeStatusCausal" data-causal-id="{{ $causal->id }}">Desactivar</button>
+                                        @else
+                                            <button class="btn btn-success btn-sm" id="btnChangeStatusCausal" data-causal-id="{{ $causal->id }}">Activar</button>
+                                        @endif
                                     @endif
                                 </div>
                             </td>
@@ -162,146 +200,170 @@
                         @endforeach
                     </tbody>
                 </table>
+                <input type="hidden" id="cambiarEstadoCausal" value="{{route('cortes_produccion.changeStatusCausal')}}">
             </div>
         </div>
     </div>
 </div>
-</div>
-
-
-
 
 {{-- Modal para crear Corte --}}
-<div class="modal fade" id="CorteModal" tabindex="-1" aria-labelledby="crearCorteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="crearCorteModalLabel">Crear Corte</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-
-
-                <div class="form-group">
-                    <label for="nombre">Nombre</label>
-                    <input type="text" class="form-control" id="nombre" name="nombre">
-                </div>
-                <div class="form-group">
-                    <label for="fecha_inicio">Fecha Inicio</label>
-                    <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio">
-                </div>
-                <div class="form-group">
-                    <label for="fecha_fin">Fecha Fin</label>
-                    <input type="date" class="form-control" id="fecha_fin" name="fecha_fin">
-                </div>
-                <div class="form-group">
-                    <label for="meta">Meta</label>
-                    <input type="text" class="form-control" id="meta" name="meta">
-                </div>
-
-
-            </div>
-            <div class="modal-footer">
-                <button type="submit" id="crear" class="btn btn-primary">Crear</button>
-            </div>
+<div class="modal fade" id="corteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="crearCorteModalLabel">Crear Corte</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="nombre">Nombre</label>
+            <input type="text" class="form-control" id="nombreCorte" name="nombre">
+            <input type="hidden" id="idGuardarCorte">
+          </div>
+          <div class="form-group">
+            <label for="fecha_inicio">Fecha Inicio</label>
+            <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio">
+          </div>
+          <div class="form-group">
+            <label for="fecha_fin">Fecha Fin</label>
+            <input type="date" class="form-control" id="fecha_fin" name="fecha_fin">
+          </div>
+          <div class="form-group">
+            <label for="meta">Meta</label>
+            <input type="text" class="form-control inputNumericoMeta" id="meta" name="meta">
+          </div>
+          <div class="form-group">
+            <label for="Dobles">Dobles</label>
+            <input type="text" class="form-control inputNumericoDobles" id="dobles" name="dobles">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+          <button type="submit" id="crearCorte" class="btn btn-primary">Crear Corte</button>
+        </div>
+      </div>
     </div>
 </div>
 
 {{-- Modal para crear Municipio --}}
-<div class="modal fade" id="MunicipioModal" tabindex="-1" aria-labelledby="crearMunicipioModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="crearSedeModalLabel">Ingresar Municipio</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="nombre">Nombre</label>
-                    <input type="text" class="form-control" id="nombreMunicipio" name="nombre">
-                </div>
-                <div class="form-group">
-                    <label for="sede">Sede</label>
-                    <select class="form-control" name="sede" id="sede">
-                        <option value="">Seleccione una sede</option>
-                        @foreach ($sedes as $sede)
-                        <option value="{{$sede->id}}">{{$sede->nombre}}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="zona">Zona</label>
-                    <select class="form-control" name="zona" id="zona">
-                        <option value="">Seleccione una zona</option>
-                        @foreach ($zonas as $zona)
-                        <option value="{{$zona->id}}">{{$zona->nombre}}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="submit" id="crearMunicipio" class="btn btn-primary">Crear</button>
-            </div>
+<div class="modal fade" id="municipioModal" tabindex="-1" role="dialog" aria-labelledby="crearMunicipioModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="crearMunicipioModalLabel">Ingresar Municipio</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="nombre">Nombre</label>
+            <input type="text" class="form-control" id="nombreMunicipio" name="nombre">
+            <input type="hidden" id="idGuardarMunicipio">
+          </div>
+          <div class="form-group">
+            <label for="sede">Sede</label>
+            <select class="form-control" name="sede" id="sedeMunicipio">
+              <option value="">Seleccione una sede</option>
+              @foreach ($sedes as $sede)
+                <option value="{{ $sede->id }}">{{ $sede->nombre }}</option>
+              @endforeach
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="zona">Zona</label>
+            <select class="form-control" name="zona" id="zonaMunicipio">
+              <option value="">Seleccione una zona</option>
+              @foreach ($zonas as $zona)
+                <option value="{{ $zona->id }}">{{ $zona->nombre }}</option>
+              @endforeach
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+          <button type="submit" id="crearMunicipio" class="btn btn-primary">Crear Municipio</button>
+        </div>
+      </div>
     </div>
-</div>
+  </div>
 
-{{-- Modal para crear sede --}}
-<div class="modal fade" id="SedeModal" tabindex="-1" aria-labelledby="crearSedeModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="crearSedeModalLabel">Ingresar Sede</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="nombre">Nombre</label>
-                    <input type="text" class="form-control" id="nombreSede" name="nombre">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="submit" id="crearSede" class="btn btn-primary">Crear</button>
-            </div>
+{{-- Modal para crear Sede --}}
+<div class="modal fade" id="sedeModal" tabindex="-1" role="dialog" aria-labelledby="crearSedeModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="crearSedeModalLabel">Ingresar Sede</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="nombreSede">Nombre</label>
+            <input type="text" class="form-control" id="nombreSede">
+            <input type="hidden" id="idGuardarSede">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+          <button type="submit" id="crearSede" class="btn btn-primary">Crear Sede</button>
+        </div>
+      </div>
     </div>
-</div>
+  </div>
+
+{{-- Modal para crear Zona --}}
+<div class="modal fade" id="zonaModal" tabindex="-1" role="dialog" aria-labelledby="crearZonaModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="crearZonaModalLabel">Ingresar Zona</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="nombre">Nombre</label>
+            <input type="text" class="form-control" id="nombreZona" name="nombre">
+            <input type="hidden" id="idGuardarZona">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+          <button type="submit" id="crearZona" class="btn btn-primary">Crear Zona</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
 {{-- Modal para crear Causal --}}
-<div class="modal fade" id="CausalModal" tabindex="-1" aria-labelledby="crearCausalModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="crearCausalModalLabel">Ingresar Causal</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="nombre">Nombre</label>
-                    <input type="text" class="form-control" id="nombreCausal" name="nombre">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="submit" id="crearCausal" class="btn btn-primary">Guardar</button>
-            </div>
+<div class="modal fade" id="causalModal" tabindex="-1" role="dialog" aria-labelledby="crearCausalModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="crearCausalModalLabel">Ingresar Causal</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="nombre">Nombre</label>
+            <input type="text" class="form-control" id="nombreCausal" name="nombre">
+            <input type="hidden" id="idGuardarCausal">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+          <button type="submit" id="crearCausal" class="btn btn-primary">Guardar Causal</button>
+        </div>
+      </div>
     </div>
-</div>
-@if(session('success'))
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        Swal.fire({
-            position: "top-end",
-            type: "success",
-            title: "{{ session('success') }}",
-            showConfirmButton: false,
-            toast: true,
-            timer: 4000
-        });
-    });
-</script>
-@endif
+  </div>
 <script>
     const rangosFechasExistentes = @json($cortes);
 </script>
