@@ -16,8 +16,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 "next": "Siguiente",
                 "previous": "Anterior"
             }
-        }
+        },
+         // Aquí agregamos la propiedad 'order'
+        "order": [[ 3, "desc" ]] 
     });
+
+
+
     // codigo de modal masivo
     const openMasivo = document.getElementById('openMasivoBtn');
     const addMasivoModal = document.getElementById('addMasivoModal');

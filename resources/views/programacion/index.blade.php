@@ -78,7 +78,7 @@
                                         <th>ID</th>
                                         <th>Usuario</th>
                                         <th>Tipo de programación</th>
-                                        <th>Fecha de creación</th>
+                                        <th>Creado</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
@@ -91,7 +91,9 @@
                                         if ($nombre[1]=="tecnicos") {
                                             $tipo_cargue=$nombre[0] . " " . $nombre[1];
 
-                                        } else {
+                                        } elseif($nombre[1]=="GDO") {
+                                            $tipo_cargue=$nombre[0] . " " . $nombre[1];
+                                        }else{
                                             $tipo_cargue="";
                                         }
 

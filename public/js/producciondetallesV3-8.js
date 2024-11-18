@@ -637,7 +637,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                 editor: 'select', // Tipo combobox
                 selectOptions: ['RP 10444', 'RP 12161', 'RN 12162', 'SA 12164', 'SA 12163'],
             }, // TIPO TRABAJO
-            { type: 'numeric', validator: 'custom.numeric' }, // CONTRATO
+            { type: 'numeric', validator: 'custom.numeric'}, // CONTRATO
             { type: 'numeric', validator: 'custom.numeric' }, // ORDEN TRABAJO
             { type: 'numeric', correctFormat: true }, // ORDEN EXT
             {
