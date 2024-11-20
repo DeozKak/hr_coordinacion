@@ -611,7 +611,7 @@ class ProgramacionController extends Controller
                         'pc.TECNICO',
                         'pc.HORA_INICIO',
                         'pc.HORA_FINAL',
-                    );
+                    ); // Agrupamos por los campos deseados;
 
                 $plantilla = DB::table('tbl_programacion_contratos')
                     ->where('FECHA_AGENDAMIENTO', '>=', $fecha_inicio)
@@ -642,13 +642,24 @@ class ProgramacionController extends Controller
 
             $plantilla = $plantilla->get();
             $busqueda = $busqueda->get();
-
-
-            foreach ($plantilla as $registro) {
-                $busqueda->push($registro);
+            $uniqueData = [];
+            $uniqueKeys = [];
+            
+            foreach ($busqueda as $item) {
+                $key = $item->ORDEN_TRABAJO . $item->FECHA_AGENDAMIENTO . $item->PORQUE_PROGRAMO;
+            
+                if (!in_array($key, $uniqueKeys)) {
+                    $uniqueData[] = $item;
+                    $uniqueKeys[] = $key;
+                }
             }
-
-
+            
+            $busqueda = $uniqueData;
+      
+            foreach ($plantilla as $registro) {
+                $busqueda[] = $registro; // Agregamos cada elemento de $plantilla al array $busqueda
+            }
+            
             return response()->json([
                 'data' => $busqueda,
                 'columnas' => $columnasAIncluir
@@ -907,7 +918,7 @@ class ProgramacionController extends Controller
                     $programada->HORA_INICIO = "07:59:00 a.m.";
                     $programada->HORA_FINAL = "04:59:00 p.m.";
                 }
-
+            
                 foreach (['F', 'D', 'E', 'K', 'J', 'S', 'H', 'G', 'I', 'C', 'N', 'P', 'B'] as $columna) {
 
                     $valorCelda = $worksheet->getCell($columna . $row->getRowIndex())->getValue();
@@ -973,13 +984,13 @@ class ProgramacionController extends Controller
                             break;
                     }
                 }
-                /* $exist = tbl_programacion_contrato::where('CONTRATO', $programada->CONTRATO)
-                    ->where('ORDEN_TRABAJO', $programada->ORDEN_TRABAJO)
+                $exist = tbl_programacion_contrato::where('ORDEN_TRABAJO', $programada->ORDEN_TRABAJO)
                     ->where('TIPO_TRABAJO', $programada->TIPO_TRABAJO)
+                    ->where('FECHA_AGENDAMIENTO',  $programada->FECHA_AGENDAMIENTO)
                     ->exists();
                 if ($exist) {
                     continue;
-                } */
+                }
                 $programada->save();
             }
             return true;

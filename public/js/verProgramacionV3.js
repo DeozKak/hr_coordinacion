@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 fechaFin: fechaFin // Si no se selecciona rango, fechaFin será null
             },
             success: function(response) {
+                console.log(response);
                 hot = new Handsontable(document.getElementById('buscador'), {
                     data: response.data, 
                     colHeaders: response.columnas,
