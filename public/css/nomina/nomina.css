@@ -85,6 +85,11 @@
     font-weight: bold;
 }
 
+.cell-aprendiz{
+    background-color: #dfbd8b !important;
+    color: black !important;
+}
+
 .celdasGeneral{
     color: black !important;
 }
