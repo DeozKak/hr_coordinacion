@@ -330,10 +330,11 @@ $(document).ready(function(){
                                                     },0);
 
                                                     if(rodamiento != null){
-                                                        handCostosProyecto.setDataAtCell(row, 3, formatter.format(rodamiento));
+                                                        handCostosProyecto.setDataAtCell(row, 4, formatter.format(rodamiento));
                                                     }
 
                                                     let cedulaOperario = handNomina.getDataAtCell(row, 0);
+                                                    let aprendiz;
                                                     let salario = 0;
                                                     let auxilioTransporte = 0;
                                                     let salud = 0;
@@ -350,8 +351,10 @@ $(document).ready(function(){
                                                         if(inspector.cedula == cedulaOperario){
                                                             // validamos si el inspector es aprendiz o no
                                                             if(inspector.aprendiz == 1){
+                                                                aprendiz = "SI";
                                                                 salario = totalNomina +  arraySalarioAux.salarioMinimo
                                                             }else{
+                                                                aprendiz = "NO";
                                                                 salario = totalNomina +  arraySalarioAux.salarioMinimo + 150000
                                                             }
 
@@ -377,20 +380,21 @@ $(document).ready(function(){
                                                             
                                                         }
                                                     })
-
+                                                   
                                                     // establecemos el salario y el auxilio de transporte a la 
                                                     // celda correspondiente en la tabla de costos proyecto
-                                                    handCostosProyecto.setDataAtCell(row, 2, formatter.format(salario));
-                                                    handCostosProyecto.setDataAtCell(row, 4, formatter.format(auxilioTransporte));
-                                                    handCostosProyecto.setDataAtCell(row, 5, formatter.format(salud));
-                                                    handCostosProyecto.setDataAtCell(row, 6, formatter.format(pension));
-                                                    handCostosProyecto.setDataAtCell(row, 7, formatter.format(arl));
-                                                    handCostosProyecto.setDataAtCell(row, 8, formatter.format(caja));
-                                                    handCostosProyecto.setDataAtCell(row, 9, formatter.format(prima));
-                                                    handCostosProyecto.setDataAtCell(row, 10, formatter.format(cesantias));
-                                                    handCostosProyecto.setDataAtCell(row, 11, formatter.format(intCesantias));
-                                                    handCostosProyecto.setDataAtCell(row, 12, formatter.format(vacaciones));
-                                                    handCostosProyecto.setDataAtCell(row, 13, formatter.format(total));
+                                                    handCostosProyecto.setDataAtCell(row, 2, aprendiz);
+                                                    handCostosProyecto.setDataAtCell(row, 3, formatter.format(salario));
+                                                    handCostosProyecto.setDataAtCell(row, 5, formatter.format(auxilioTransporte));
+                                                    handCostosProyecto.setDataAtCell(row, 6, formatter.format(salud));
+                                                    handCostosProyecto.setDataAtCell(row, 7, formatter.format(pension));
+                                                    handCostosProyecto.setDataAtCell(row, 8, formatter.format(arl));
+                                                    handCostosProyecto.setDataAtCell(row, 9, formatter.format(caja));
+                                                    handCostosProyecto.setDataAtCell(row, 10, formatter.format(prima));
+                                                    handCostosProyecto.setDataAtCell(row, 11, formatter.format(cesantias));
+                                                    handCostosProyecto.setDataAtCell(row, 12, formatter.format(intCesantias));
+                                                    handCostosProyecto.setDataAtCell(row, 13, formatter.format(vacaciones));
+                                                    handCostosProyecto.setDataAtCell(row, 14, formatter.format(total));
 
                                                     let ultimafila = handCostosProyecto.countRows() - 1;
 
@@ -409,18 +413,18 @@ $(document).ready(function(){
 
                                                     for(let i = 0; i < ultimafila; i++){
                                                         // recorremos las filas de la tabla de costos proyecto
-                                                        let celdaSalario = formtaterNumber(handCostosProyecto.getDataAtCell(i, 2));
-                                                        let celdaRodamiento = formtaterNumber(handCostosProyecto.getDataAtCell(i, 3));
-                                                        let celdaAuxTransporte = formtaterNumber(handCostosProyecto.getDataAtCell(i, 4));
-                                                        let celdaSalud = formtaterNumber(handCostosProyecto.getDataAtCell(i, 5));
-                                                        let celdaPension = formtaterNumber(handCostosProyecto.getDataAtCell(i, 6));
-                                                        let celdaArl = formtaterNumber(handCostosProyecto.getDataAtCell(i, 7));
-                                                        let celdaCaja = formtaterNumber(handCostosProyecto.getDataAtCell(i, 8));
-                                                        let celdaPrima = formtaterNumber(handCostosProyecto.getDataAtCell(i, 9));
-                                                        let celdaCesantias = formtaterNumber(handCostosProyecto.getDataAtCell(i, 10));
-                                                        let celdaIntCesantias = formtaterNumber(handCostosProyecto.getDataAtCell(i, 11));
+                                                        let celdaSalario = formtaterNumber(handCostosProyecto.getDataAtCell(i, 3));
+                                                        let celdaRodamiento = formtaterNumber(handCostosProyecto.getDataAtCell(i, 4));
+                                                        let celdaAuxTransporte = formtaterNumber(handCostosProyecto.getDataAtCell(i, 5));
+                                                        let celdaSalud = formtaterNumber(handCostosProyecto.getDataAtCell(i, 6));
+                                                        let celdaPension = formtaterNumber(handCostosProyecto.getDataAtCell(i, 7));
+                                                        let celdaArl = formtaterNumber(handCostosProyecto.getDataAtCell(i, 8));
+                                                        let celdaCaja = formtaterNumber(handCostosProyecto.getDataAtCell(i, 9));
+                                                        let celdaPrima = formtaterNumber(handCostosProyecto.getDataAtCell(i, 10));
+                                                        let celdaCesantias = formtaterNumber(handCostosProyecto.getDataAtCell(i, 11));
+                                                        let celdaIntCesantias = formtaterNumber(handCostosProyecto.getDataAtCell(i, 12));
                                                         let celdaVacaciones = formtaterNumber(handCostosProyecto.getDataAtCell(i, 12));
-                                                        let celdaTotal = formtaterNumber(handCostosProyecto.getDataAtCell(i, 13));
+                                                        let celdaTotal = formtaterNumber(handCostosProyecto.getDataAtCell(i, 14));
 
                                                         sumaTotalSalario += celdaSalario
                                                         sumaTotalRodamiento += celdaRodamiento
@@ -437,18 +441,19 @@ $(document).ready(function(){
                                                     }
 
                                                     // establecemos el total de la tabla de costos proyecto
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 2, formatter.format(sumaTotalSalario));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 3, formatter.format(sumaTotalRodamiento));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 4, formatter.format(sumaTotalAuxTransporte));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 5, formatter.format(sumaTotalSalud));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 6, formatter.format(sumaTotalPension));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 7, formatter.format(sumaTotalArl));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 8, formatter.format(sumaTotalCaja));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 9, formatter.format(sumaTotalPrima));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 10, formatter.format(sumaTotalCesantias));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 11, formatter.format(sumaTotalIntCesantias));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 12, formatter.format(sumaTotalVacaciones));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 13, formatter.format(sumaTotalTotal));
+                                                  
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 3, formatter.format(sumaTotalSalario));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 4, formatter.format(sumaTotalRodamiento));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 5, formatter.format(sumaTotalAuxTransporte));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 6, formatter.format(sumaTotalSalud));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 7, formatter.format(sumaTotalPension));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 8, formatter.format(sumaTotalArl));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 9, formatter.format(sumaTotalCaja));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 10, formatter.format(sumaTotalPrima));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 11, formatter.format(sumaTotalCesantias));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 12, formatter.format(sumaTotalIntCesantias));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 13, formatter.format(sumaTotalVacaciones));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 14, formatter.format(sumaTotalTotal));
                                                    
                                                 } else if (response == 2) {
                                                     Swal.fire({
@@ -477,6 +482,7 @@ $(document).ready(function(){
 
                         // Fin de la función ---------------------------------------------
                         let arrayCostosProyecto = data.map(item => {
+                            let aprendiz;
                             let salario = 0;
                             let auxTransPorte = 0;
                             let salud = 0;
@@ -502,8 +508,10 @@ $(document).ready(function(){
 
                                         // validamos si es aprendiz o no
                                         if (inspector.aprendiz === 1) {
+                                            aprendiz = "SI"
                                             salario = salarioInspectorTotal + arraySalarioAux.salarioMinimo;
                                         } else {
+                                            aprendiz = "NO"
                                             salario = salarioInspectorTotal + arraySalarioAux.salarioMinimo + 150000;
                                         }
                         
@@ -534,6 +542,7 @@ $(document).ready(function(){
                             return [
                                 item.cedula,
                                 item.nombres,
+                                aprendiz,
                                 parseInt(salario),
                                 parseInt(valorRod),
                                 parseInt(auxTransPorte),
@@ -556,6 +565,7 @@ $(document).ready(function(){
                             colHeaders: [
                                 'CODIGO',
                                 'NOMBRE DEL EMPLEADO',
+                                'APRENDIZ',
                                 'SALARIO <br>'+formatter.format(arraySalarioAux.salarioMinimo)+'',
                                 'VALOR <br> RODAMIENTO',
                                 'AUX TRA <br>'+formatter.format(arraySalarioAux.auxilioTransporte)+'',
@@ -588,12 +598,14 @@ $(document).ready(function(){
                         
                         for (let i = 0; i < ultimafila; i++) {
                             // asignamos el valor al salario
-                            let salarioInsFila = handCostosProyecto.getDataAtCell(i, 2);
-                            let valorRodFila = handCostosProyecto.getDataAtCell(i, 3);
+                            let salarioInsFila = handCostosProyecto.getDataAtCell(i, 3);
+                            let valorRodFila = handCostosProyecto.getDataAtCell(i, 4);
+
 
                             // volvemos a setear el valor de rodamiento
-                            handCostosProyecto.setDataAtCell(i, 3, formatter.format(valorRodFila));
-                            handCostosProyecto.setDataAtCell(i, 2, formatter.format(salarioInsFila - valorRodFila));
+                           /*  handCostosProyecto.setDataAtCell(i, 2, "nas"); */
+                            handCostosProyecto.setDataAtCell(i, 4, formatter.format(valorRodFila));
+                            handCostosProyecto.setDataAtCell(i, 3, formatter.format(salarioInsFila - valorRodFila));
                             // volvemos a tomar el valor de la celda
                             salarioInsFila = salarioInsFila - valorRodFila
 
@@ -626,16 +638,16 @@ $(document).ready(function(){
                                         pension + arl + caja + prima + 
                                         cesantias + intCesantias + vacaciones;
 
-                            handCostosProyecto.setDataAtCell(i, 4, formatter.format(auxTrans));
-                            handCostosProyecto.setDataAtCell(i, 5, formatter.format(salud));
-                            handCostosProyecto.setDataAtCell(i, 6, formatter.format(pension));
-                            handCostosProyecto.setDataAtCell(i, 7, formatter.format(arl));
-                            handCostosProyecto.setDataAtCell(i, 8, formatter.format(caja));
-                            handCostosProyecto.setDataAtCell(i, 9, formatter.format(prima));
-                            handCostosProyecto.setDataAtCell(i, 10, formatter.format(cesantias));
-                            handCostosProyecto.setDataAtCell(i, 11, formatter.format(intCesantias));
-                            handCostosProyecto.setDataAtCell(i, 12, formatter.format(vacaciones));
-                            handCostosProyecto.setDataAtCell(i, 13, formatter.format(total));
+                            handCostosProyecto.setDataAtCell(i, 5, formatter.format(auxTrans));
+                            handCostosProyecto.setDataAtCell(i, 6, formatter.format(salud));
+                            handCostosProyecto.setDataAtCell(i, 7, formatter.format(pension));
+                            handCostosProyecto.setDataAtCell(i, 8, formatter.format(arl));
+                            handCostosProyecto.setDataAtCell(i, 9, formatter.format(caja));
+                            handCostosProyecto.setDataAtCell(i, 10, formatter.format(prima));
+                            handCostosProyecto.setDataAtCell(i, 11, formatter.format(cesantias));
+                            handCostosProyecto.setDataAtCell(i, 12, formatter.format(intCesantias));
+                            handCostosProyecto.setDataAtCell(i, 13, formatter.format(vacaciones));
+                            handCostosProyecto.setDataAtCell(i, 14, formatter.format(total));
                         
                             // Acumular los valores
                             totalSalario += salarioInsFila;
@@ -653,32 +665,37 @@ $(document).ready(function(){
                         }
 
                         // establecemos los valores en la ultima fila 
-                        handCostosProyecto.setDataAtCell(ultimafila, 2, formatter.format(totalSalario));
-                        handCostosProyecto.setDataAtCell(ultimafila, 3, formatter.format(totalValorRod));
-                        handCostosProyecto.setDataAtCell(ultimafila, 4, formatter.format(totalAuxTrans));
-                        handCostosProyecto.setDataAtCell(ultimafila, 5, formatter.format(totalSalud));
-                        handCostosProyecto.setDataAtCell(ultimafila, 6, formatter.format(totalPension));
-                        handCostosProyecto.setDataAtCell(ultimafila, 7, formatter.format(totalArl));
-                        handCostosProyecto.setDataAtCell(ultimafila, 8, formatter.format(totalCaja));
-                        handCostosProyecto.setDataAtCell(ultimafila, 9, formatter.format(totalPrima));
-                        handCostosProyecto.setDataAtCell(ultimafila, 10, formatter.format(totalCesantias));
-                        handCostosProyecto.setDataAtCell(ultimafila, 11, formatter.format(totalIntCesantias));
-                        handCostosProyecto.setDataAtCell(ultimafila, 12, formatter.format(totalVacaciones));
-                        handCostosProyecto.setDataAtCell(ultimafila, 13, formatter.format(totalGeneral));
+                        handCostosProyecto.setDataAtCell(ultimafila, 3, formatter.format(totalSalario));
+                        handCostosProyecto.setDataAtCell(ultimafila, 4, formatter.format(totalValorRod));
+                        handCostosProyecto.setDataAtCell(ultimafila, 5, formatter.format(totalAuxTrans));
+                        handCostosProyecto.setDataAtCell(ultimafila, 6, formatter.format(totalSalud));
+                        handCostosProyecto.setDataAtCell(ultimafila, 7, formatter.format(totalPension));
+                        handCostosProyecto.setDataAtCell(ultimafila, 8, formatter.format(totalArl));
+                        handCostosProyecto.setDataAtCell(ultimafila, 9, formatter.format(totalCaja));
+                        handCostosProyecto.setDataAtCell(ultimafila, 10, formatter.format(totalPrima));
+                        handCostosProyecto.setDataAtCell(ultimafila, 11, formatter.format(totalCesantias));
+                        handCostosProyecto.setDataAtCell(ultimafila, 12, formatter.format(totalIntCesantias));
+                        handCostosProyecto.setDataAtCell(ultimafila, 13, formatter.format(totalVacaciones));
+                        handCostosProyecto.setDataAtCell(ultimafila, 14, formatter.format(totalGeneral));
 
                         handCostosProyecto.updateSettings({
                             cells: function (rowIndex, colIndex) {
                                 
                                 let cellProperties = {};
 
-                                if(colIndex >= 0 && colIndex <= 12){
+                                if(colIndex >= 0 && colIndex <= 13){
                                     cellProperties.className = 'celdasGeneral';
                                 }
 
-                                if(colIndex === 13){
+                                if(colIndex === 14){
                                     cellProperties.className = 'cell-total-costo';
                                 }
 
+                                if(rowIndex >= 0 && rowIndex < ultimafila && colIndex === 2){
+                                    if(handCostosProyecto.getDataAtCell(rowIndex, 2) === "SI"){
+                                        cellProperties.className = 'cell-aprendiz';
+                                    }
+                                }
                                 if(rowIndex === ultimafila){
                                     cellProperties.className = 'cell-ultima-fila';
                                 }
@@ -710,7 +727,7 @@ $(document).ready(function(){
             })
         }
     })
-
+    
     // Descargar excel
     $(document).on('click', '#descargarExcelNomina', function(){
         // Obtener encabezados y datos de la primera tabla (handNomina)

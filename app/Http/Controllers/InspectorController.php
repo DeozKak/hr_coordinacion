@@ -21,34 +21,7 @@ class InspectorController extends Controller
         return view('inspectores.index', compact('supervisores'));
     }
 
-    public function store(){
-        $validatedData = request()->validate([
-            'nombres' => 'required',
-            'apellidos' => 'required',
-            'type_id' => 'required',
-            'cedula' => 'required|unique:tbl_insp_cali',
-            'supervisor' => 'required',
-        ],[
-            'nombres.required' => 'El campo nombres es obligatorio',
-            'apellidos.required' => 'El campo apellidos es obligatorio',
-            'type_id.required' => 'El campo tipo de identificación es obligatorio',
-            'cedula.required' => 'El campo cédula es obligatorio',
-            'cedula.unique' => 'La cédula ingresada ya existe en la base de datos',
-            'supervisor.required' => 'El campo supervisor es obligatorio',
-        ]);
-        $inspector = new tbl_insp_cali();
-        $inspector->nombres = request()->nombres;
-        $inspector->apellidos = request()->apellidos;
-        $inspector->type_id = request()->type_id;
-        $inspector->cedula = request()->cedula;
-        $inspector->state = 1;
-        $inspector->SUPERVISOR = request()->supervisor;
-        $inspector->aprendizo = 1;
-        $inspector->save();
-        return redirect()->route('inspectores.index');
-    }
-
-    public function edit(tbl_insp_cali $inspector,Request $request)
+    public function store(Request $request, tbl_insp_cali $inspector)
     {
 
         $nombres = $request->input('nombres');
@@ -101,11 +74,11 @@ class InspectorController extends Controller
 
     public function update(Request $request)
     {
-
         $id = $request->input('id');
         $nombre = $request->input('nombres');
         $apellidos = $request->input('apellidos');
         $supervisor = $request->input('supervisor');
+        $aprendiz = $request->input('aprendiz');
 
         if ($nombre == "" || $apellidos == "") {
             return response()->json([
@@ -117,6 +90,7 @@ class InspectorController extends Controller
             $inspector->nombres = $nombre;
             $inspector->apellidos = $apellidos;
             $inspector->SUPERVISOR = $supervisor;
+            $inspector->aprendiz = $aprendiz;
             $inspector->save();
 
             if ($inspector) {
@@ -132,7 +106,6 @@ class InspectorController extends Controller
                 ], 500);
             }
         }
-
     }
 
     public function change_state(Request $request, $id)
@@ -191,7 +164,8 @@ class InspectorController extends Controller
                 'apellidos' => $inspectorData->apellidos,
                 'type_id' => $inspectorData->type_id,
                 'cedula' => $inspectorData->cedula,
-                'supervisor' => $inspectorData->SUPERVISOR
+                'supervisor' => $inspectorData->SUPERVISOR,
+                'aprendiz' => $inspectorData->aprendiz
             ];
 
             return response()->json([
