@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     GDOform.addEventListener('submit', function (event) {
         event.preventDefault();
-        loader.style.display = 'block'; // Mostrar animación de carga
+        loaderGDO.style.display = 'block'; // Mostrar animación de carga
         // Limpiar mensajes de error anteriores antes de enviar el formulario
        
 
@@ -198,15 +198,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     toast: true,
                     timer: 4000
                 });
-                errorContainer.innerHTML = '';
-                errorContainer.classList.remove('alert', 'alert-danger');
-                modal.hide();
+                errorContainerGDO.innerHTML = '';
+                errorContainerGDO.classList.remove('alert', 'alert-danger');
+                GDO.hide();
             },
             error: function (xhr, status, error) {
                 console.log(xhr.responseText);
                 if (xhr.status === 422) {
                     const errors = xhr.responseJSON.errors;
-                    showValidationErrors(errors,addProgramacionModal,errorContainer); // Mostrar errores en el modal
+                    showValidationErrors(errors,addProgramacionModal,errorContainerGDO); // Mostrar errores en el modal
                 } else {
                     console.error(xhr.responseText); // Mostrar errores en la consola
 
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
             complete: function () {
                 loader.style.display = 'none';
                
-                programacionForm.reset(); // Limpiar el formulario
+                GDOform.reset(); // Limpiar el formulario
             }
         });
     });
