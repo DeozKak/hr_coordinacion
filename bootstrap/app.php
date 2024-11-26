@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             __DIR__ . '/../routes/productionReport/productionReport.php',
             __DIR__ . '/../routes/scheduling/scheduling.php',
             __DIR__ . '/../routes/users/users.php',
+            __DIR__ . '/../routes/stickers/stickers.php',
         ],
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
