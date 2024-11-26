@@ -583,14 +583,17 @@ class ProgramacionController extends Controller
                 $columnasAExcluir = ['updated_at', 'created_at'];
                 $columnasAIncluir = array_diff($columnasTabla, $columnasAExcluir);
 
-                $busqueda = DB::table('tbl_programacion_contratos AS pc') // Alias para tbl_programacion_contratos
-                    ->join('tbl_programacion_base AS pb', 'pc.CONTRATO', '=', 'pb.CONTRATO')
-                    ->join('tbl_programacion_usuarios AS pu', 'pc.id_programacion', '=', 'pu.id')
-                    ->where('FECHA_AGENDAMIENTO', '>=', $fecha_inicio)
-                    ->where('FECHA_AGENDAMIENTO', '<=', $fecha_fin)
-                    ->where('pu.finished', 1)
-                    ->where('pb.ESTADO_RECEPCION', '=', 0)
-                    ->orWhereNull('pb.ESTADO_RECEPCION')
+                $busqueda = DB::table('tbl_programacion_contratos AS pc')
+                ->join('tbl_programacion_base AS pb', 'pc.CONTRATO', '=', 'pb.CONTRATO')
+                ->join('tbl_programacion_usuarios AS pu', 'pc.id_programacion', '=', 'pu.id')
+                ->where(function ($query) use ($fecha_inicio, $fecha_fin) {  // Agrupamos las condiciones
+                $query->whereBetween('FECHA_AGENDAMIENTO', [$fecha_inicio, $fecha_fin])
+                    ->where(function ($subquery) {
+                        $subquery->where('pb.ESTADO_RECEPCION', '=', 0)
+                        ->orWhereNull('pb.ESTADO_RECEPCION');
+                    });
+                })
+                ->where('pu.finished', 1)
                     ->select(
                         'pc.id',
                         'pc.CONTRATO',
