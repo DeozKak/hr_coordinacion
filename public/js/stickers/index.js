@@ -1,6 +1,13 @@
 document.addEventListener('DOMContentLoaded', function () {
 
-    const div_table = document.getElementById('table');
+   $('#semanas').DataTable({
+        "responsive": true,
+        "lengthChange": false,
+        "autoWidth": false,
+    });
+
+
+    /* const div_table = document.getElementById('table');
 
     let hot = new Handsontable(div_table, {
         data: [],
@@ -24,6 +31,6 @@ document.addEventListener('DOMContentLoaded', function () {
         manualColumnResize: true,
         rowHeaders: true,
         colHeaders: true,
-    });
+    }); */
 
 });
