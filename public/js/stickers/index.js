@@ -1,9 +1,10 @@
 document.addEventListener('DOMContentLoaded', function () {
 
-   $('#semanas').DataTable({
+    $('#semanas').DataTable({
         "responsive": true,
         "lengthChange": false,
         "autoWidth": false,
+        "order": [[1, 'desc']] //  Ordena por la segunda columna (índice 1) en orden ascendente ('asc')
     });
 
 
