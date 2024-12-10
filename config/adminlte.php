@@ -478,6 +478,13 @@ return [
                     'can' => 'ver_bitacoras',
                     'label_color' => 'success',
                 ],
+                [
+                    'text' => 'Control Stikers',
+                    'url' => 'bitacora/stickers',
+                    'icon' => 'far fa-circle',
+                    'can' => 'generar_bitacoras',
+                    'label_color' => 'success',
+                ]
             ]
         ],
 
