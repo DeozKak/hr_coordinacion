@@ -11,7 +11,7 @@
 <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
 <input type="hidden" name="url_data" id="url_data" value="{{ route('bitacora.stickers.getData',['id' => $id]) }}">
 <input type="hidden" name="url_update" id="url_update" value="{{ route('bitacora.stickers.update') }}">
-
+<input type="hidden" name="index" id="index" value="{{ route('bitacora.stickers') }}">
 <div class="card">
     <div class="card-body">
     <form action="{{ url()->previous() }}" method="GET">

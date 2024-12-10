@@ -10,7 +10,8 @@ use App\Models\tbl_insp_cali;
 use App\Models\tbl_bitacora_contrato;
 use Illuminate\Support\Facades\DB;
 use IntlDateFormatter;
-use PhpParser\Node\Expr\Cast\Object_;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class StickersController extends Controller
 {
@@ -48,8 +49,12 @@ class StickersController extends Controller
             // Obtener el año (puedes usar $fecha_inicio o $fecha_fin)
             $año = date('Y', strtotime($fecha_inicio));
 
-            // Concatenar los valores
-            $resultado = "$mes_inicio - $mes_fin / $año";
+            // Concatenar los valores, verificando si el mes es el mismo
+            if ($mes_inicio == $mes_fin) {
+                $resultado = "$mes_inicio / $año";
+            } else {
+                $resultado = "$mes_inicio - $mes_fin / $año";
+            }
 
             $semana = new tbl_controlstick_semana;
             $semana->mes_año = $resultado;
@@ -72,6 +77,39 @@ class StickersController extends Controller
 
     public function getData($id)
     {
+        
+         $fecha_actual = date('Y-m-d');
+       /*  $fecha_actual = "2024-12-16"; */
+        $verf_semana = tbl_controlstick_semana::find($id);
+        if ($fecha_actual >= $verf_semana->fecha_inicio && $fecha_actual <= $verf_semana->fecha_fin) {
+        } else {
+            $historico = tbl_controlstick_historico::where('id_semana', $id)->first();
+            
+            // Obtener las fechas de la semana
+            $lunes = date('Y-m-d', strtotime($verf_semana->fecha_inicio));
+            $martes = date('Y-m-d', strtotime($lunes . ' + 1 day'));
+            $miercoles = date('Y-m-d', strtotime($lunes . ' + 2 days'));
+            $jueves = date('Y-m-d', strtotime($lunes . ' + 3 days'));
+            $viernes = date('Y-m-d', strtotime($lunes . ' + 4 days'));
+            $sabado = date('Y-m-d', strtotime($lunes . ' + 5 days'));
+            $domingo = date('Y-m-d', strtotime($lunes . ' + 6 days'));
+
+            // Construir los nestedHeaders con las fechas
+
+            $response = json_decode($historico->Data); // $response es un objeto stdClass
+
+            // Agregar el nuevo registro como una propiedad del objeto
+            $response->indicador_lectura = 1;
+           
+             /*  $response = [
+                'nestedHeaders' => $nestedHeaders,
+                'registros' => $historico,
+                'indicador_lectura' => 1
+            ];  */
+            return response()->json($response);
+        }
+
+        $user = Auth::user();
 
         $inspectores = tbl_insp_cali::selectRaw('CONCAT(apellidos, " ", nombres) AS nombre_completo, cedula')->where('state', 1)
             ->orderBy('apellidos', 'asc')
@@ -128,20 +166,18 @@ class StickersController extends Controller
                 ->groupBy('fecha')
                 ->get()->toArray();
 
-
             if ($contratosPorDia == []) {
                 $ins_activado = tbl_insp_cali::where('cedula', $inspector->cedula)->first();
                 if ($ins_activado->state == 0) {
                     continue;
                 }
-               
             }
             //consulta para cargar los datos guardados
             $data = tbl_controlstick_historico::where('id_semana', $id)->first();
-       
-           if($data !== null){
-            $data = json_decode($data->Data);
-           }
+
+            if ($data !== null) {
+                $data = json_decode($data->Data);
+            }
             foreach ($contratosPorDia as $contrato) {
 
                 switch ($this->diaDeLaSemana($contrato['fecha'])) {
@@ -185,7 +221,6 @@ class StickersController extends Controller
                         break;
                 }
             }
-
             $matrices = [
                 $lunesMatriz ?? "",
                 $martesMatriz ?? "",
@@ -223,28 +258,31 @@ class StickersController extends Controller
             $rechazados = array_map(function ($valor) {
                 return isset($valor) ? $valor : 0;
             }, $rechazados);
-            
+
             //validacion primera vez
 
-            if( $data == null || $data->registros == []){
+            if ($data == null || $data->registros == []) {
                 $amarillos = 0;
                 $rojos = 0;
-            }else
-            {
+            } else {
                 $amarillos = $data->registros->{$inspector->cedula}->AMARILLOS;
                 $rojos = $data->registros->{$inspector->cedula}->ROJOS;
             }
-            
+
 
             $saldoAmarillo = $amarillos - array_sum($certificados);
-            $saldoAmarillo_rech = $saldoAmarillo - array_sum($rechazados);
             $saldoRojo = $rojos - array_sum($rechazados);
-            
+            $saldoRojo_matriz = $saldoRojo - array_sum($matrices);
+        
             $registros[$inspector->cedula] = [
                 'cc_operario' => $inspector->cedula,
                 'nombre_completo' => $inspector->nombre_completo,
-                'saldoAnteriorAmarillo' => $registro_anterior->registros[$inspector->cedula]->saldoAmarillo ?? 0,
-                'saldoAnteriorRojo' => $registro_anterior->registros[$inspector->cedula]->saldoRojo ?? 0,
+                'saldoAnteriorAmarillo' => isset($registro_anterior->registros->{$inspector->cedula}->saldoAmarillo) 
+                            ? $registro_anterior->registros->{$inspector->cedula}->saldoAmarillo 
+                            : 0,
+                'saldoAnteriorRojo' => isset($registro_anterior->registros->{$inspector->cedula}->saldoRojo) 
+                ? $registro_anterior->registros->{$inspector->cedula}->saldoRojo 
+                : 0,
                 'AMARILLOS' => $amarillos,
                 'ROJOS' =>  $rojos,
                 'lunesCert' => $lunesCert ?? "",
@@ -268,12 +306,11 @@ class StickersController extends Controller
                 'domingoCert' => $domingoCert ?? "",
                 'domingoRech' => $domingoRech ?? "",
                 'domingoMatriz' => $domingoMatriz ?? "",
-                'saldoAmarillo' => $saldoAmarillo_rech,
-                'saldoRojo' =>  $saldoRojo
+                'saldoAmarillo' => $saldoAmarillo,
+                'saldoRojo' =>  $saldoRojo_matriz
             ];
-       
         }
-   
+
         // Obtener las fechas de la semana
         $lunes = date('Y-m-d', strtotime($semana->fecha_inicio));
         $martes = date('Y-m-d', strtotime($lunes . ' + 1 day'));
@@ -349,9 +386,31 @@ class StickersController extends Controller
             $historico->Data = json_encode($response);
             $historico->save();
         }
-        
+
         $response = json_decode($historico->Data);
-       
+
+        //validacion para sacar operarios por supervisor
+        if (!$user->haspermissionTo('control_stickers')) {
+            $cc_operarios = tbl_insp_cali::select('cedula')->where('SUPERVISOR', $user->id)->get();
+
+            // Convertir la colección de objetos a un array simple de cédulas
+            $cc_operarios = $cc_operarios->pluck('cedula')->toArray();
+
+            // Convertir $response->registros a un array
+            $response->registros = get_object_vars($response->registros);
+
+            // Filtrar los registros del response
+            $response->registros = array_filter(
+                $response->registros,
+                function ($registro) use ($cc_operarios) {
+                    return in_array($registro->cc_operario, $cc_operarios);
+                }
+            );
+        }
+        if ($response->registros == []) {
+            session()->flash('error', 'No tiene permisos para ver el reporte');
+            return response()->json(['warning' => 'No tiene permisos para ver el reporte']);
+        }
         return response()->json($response);
     }
 
@@ -366,12 +425,11 @@ class StickersController extends Controller
 
             $consulta->Data = json_encode($data);
             $consulta->save();
-         
+
             return response()->json(['message' => 'OK']);
         } catch (\Exception $e) {
             return response()->json(['error' => $e]);
         }
-
     }
 
 
@@ -385,8 +443,6 @@ class StickersController extends Controller
 
         // Convertir la primera letra a mayúscula
         $diaSemana = ucfirst($diaSemana);
-
-
 
         return $diaSemana;
     }

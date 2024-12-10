@@ -113,7 +113,7 @@
         Swal.fire({
             title: "Error",
             text: "{{session('error')}}",
-            type: "error"
+            icon: "error"
         });
     });
 </script>

@@ -9,7 +9,6 @@
 @section('content')
 
 <style>
-
 .card {
  padding: 20px; /* Añade un poco de espacio interno */
 }
