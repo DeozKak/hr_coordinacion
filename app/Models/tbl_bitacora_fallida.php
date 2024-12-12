@@ -1,0 +1,28 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class tbl_bitacora_fallida extends Model
+{
+    protected $fillable = [
+        'NOMBRE',
+        'id',
+        'CC_OPERARIO',
+        'MUNICIPIO',
+        'FECHA',
+        'No_ACTA' ,
+        'TIPO_TRABAJO',
+        'CONTRATO',
+        'ORDEN_TRABAJO',
+        'ORDEN_EXT',
+        'CATEGORIA',
+        'RESULTADO_CIERRE',
+        'created_at',
+        'updated_at',
+        'id_bitacora',
+        'id_usuario',
+        'id_super'
+    ];
+}

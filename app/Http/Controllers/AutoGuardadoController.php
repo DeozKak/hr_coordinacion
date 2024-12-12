@@ -10,6 +10,7 @@ use App\Models\tbl_bitacora_contrato;
 use App\Models\tbl_insp_cali;
 use App\Models\tbl_bitacora_archivo;
 use App\Models\tbl_temp_contrato;
+use App\Models\tbl_temp_fallida;
 
 class AutoGuardadoController extends Controller
 {
@@ -19,27 +20,26 @@ class AutoGuardadoController extends Controller
         $archivo = tbl_bitacora_archivo::where('NOMBRE_ARCHIVO', $nombre)
             ->where('finished', '=', '1')->exists();
 
-        if($archivo){
+        if ($archivo) {
             return response()->json(['error' => 'El archivo seleccionado ya ha sido procesado']);
-        
         }
 
         $proceso = tbl_bitacora_archivo::where('NOMBRE_ARCHIVO', $nombre)
             ->where('finished', '=', '0')->exists();
 
-        if($proceso){
+        if ($proceso) {
             return  response()->json(['error' => 'El archivo seleccionado se encuentra en proceso por otro usuario']);
         }
     }
 
-    public function guardar($spreadsheet, $nombres, $super)
+    public function guardar($spreadsheet, $nombres, $super, $cierre_todos = null)
     {
         $rutaArchivo = str_replace(".xls", " ", session('nom_archivo'));
         $rutaArchivoFinal = str_replace("4.08", "", $rutaArchivo);
         $nombreArchivo = $rutaArchivoFinal . ".xlsx";
 
         $usuario = Auth::user();
-      
+
         try {
             $bitacora = tbl_bitacora_archivo::where('id_usuario', $usuario->id)->where('finished', '=', 0)->first();
             if (!$bitacora) {
@@ -53,20 +53,40 @@ class AutoGuardadoController extends Controller
             throw $e;
         }
         $datos = [];
-     
+        $DatosFallidas = [];
+        $arrayFallidas = [
+            '.ANULADO VALLE',
+            '.DIRECCION NO ENCONTRADA',
+            '.PREDIO EN CONSTRUCCION',
+            'APLAZADO POR EL USUARIO.',
+            'CASA SOLA.',
+            'CERTIFICADA POR EYC.',
+            'CERTIFICADA POR OIA EXTERNO.',
+            'MEDIDOR POR LITROS BORRADOS.',
+            'MENOR DE EDAD.',
+            'NO ESTA EL ENCARGADO.',
+            'NOVEDAD BLOQUEANTE',
+            'NOVEDAD BLOQUEANTE.',
+            'PERDIDA',
+            'PREDIO DESOCUPADO.',
+            'PROGRAMADA.',
+            'SIN GESTION.',
+            'USUARIO NO AUTORIZA.'
+        ];
+        $columnas = ['A', 'B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K', 'M', 'N', 'O', 'Q'];
         foreach ($nombres as $nombre) {
             foreach ($spreadsheet->getSheetNames() as $sheetName) {
                 $sheet = $spreadsheet->getSheetByName($sheetName);
                 foreach ($sheet->getRowIterator() as $row) {
-                    if($row->getRowIndex() === 1) continue;
-                    
+                    if ($row->getRowIndex() === 1) continue;
+
                     $contrato = $sheet->getCell('H' . $row->getRowIndex())->getValue();
                     $nombreCelda = $sheet->getCell('A' . $row->getRowIndex())->getValue();
                     $cc_operario = $sheet->getCell('B' . $row->getRowIndex())->getValue(); // Índice potencial
                     $vence = $sheet->getCell('Q' . $row->getRowIndex())->getValue();
                     $cierre = ltrim($sheet->getCell('M' . $row->getRowIndex())->getValue(), '.');
-                   
-               
+
+
                     // Verificar condiciones de filtrado
                     if (
                         strpos($contrato, ":") === 0 &&
@@ -74,10 +94,10 @@ class AutoGuardadoController extends Controller
                         in_array($cierre, ["CERTIFICADA", "CERTIFICADA CON NOVEDADES", "INSPECCIONADA CON DEFECTO CRITICO VALLE", "INSPECCIONADA CON DEFECTO NO CRITICO VALLE"])
                     ) {
                         $filaDatos = []; // Array para almacenar datos de la fila
-                        
-                        foreach (['A', 'B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K', 'M', 'N', 'O', 'Q'] as $columna) {
+
+                        foreach ($columnas as $columna) {
                             $valor = $sheet->getCell($columna . $row->getRowIndex())->getValue();
-                            if($columna === 'A'){
+                            if ($columna === 'A') {
                                 $valor = trim($valor);
                             }
                             if ($columna === 'M') {
@@ -99,22 +119,86 @@ class AutoGuardadoController extends Controller
 
                         // Usar el valor de la columna 'B' como índice
                         $datos[$cc_operario][] = $filaDatos;
+                    } elseif (
+                        $cierre_todos !== '0' &&
+                        strpos($contrato, ":") === 0 &&
+                        trim($nombreCelda) === $nombre &&
+                        in_array($cierre, $arrayFallidas)
+
+                    ) {
+                        $filaDatosFallidas = []; // Array para almacenar datos de la fila
+                        foreach ($columnas as $columna) {
+                            $valor = $sheet->getCell($columna . $row->getRowIndex())->getValue();
+                            if ($columna === 'A') {
+                                $valor = trim($valor);
+                            }
+                            if ($columna === 'M') {
+                                $valor = ltrim($sheet->getCell($columna . $row->getRowIndex())->getValue(), '.');
+                            }
+                            if ($columna === 'D' && is_numeric($valor)) {
+                                $fecha = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($valor);
+                                $valor = $fecha->format('y-m-d');
+                            }
+
+                            // Formateo especial para vencimiento
+                            if ($columna === 'Q') {
+                                $venceDate = \DateTime::createFromFormat('d/m/Y', $valor);
+                                $valor = ($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m')) ? "60 meses" : "";
+                            }
+
+                            $filaDatosFallidas[$columna] = $valor;
+                        }
+                        $DatosFallidas[$cc_operario][] = $filaDatosFallidas;
                     }
                 }
             }
         }
 
         try {
+            if ($cierre_todos !== '0') {
+                foreach ($DatosFallidas as $cc => $inspecciones) {
+                    foreach ($inspecciones as $inspeccion) {
+
+                        $existe = tbl_temp_fallida::where('CONTRATO', $inspeccion['H'])
+                            ->where('ORDEN_TRABAJO', $inspeccion['I'])
+                            ->where('No_ACTA', $inspeccion['E'])
+                            ->where('TIPO_TRABAJO', $inspeccion['G'])
+                            ->exists();
+                        if (!$existe) {
+                            tbl_temp_fallida::create([
+                                'NOMBRE' => $inspeccion['A'],
+                                'CC_OPERARIO' => $inspeccion['B'],
+                                'MUNICIPIO' => $inspeccion['C'],
+                                'FECHA' => $inspeccion['D'],
+                                'No_ACTA' => $inspeccion['E'],
+                                'TIPO_TRABAJO' => $inspeccion['G'],
+                                'CONTRATO' => $inspeccion['H'],
+                                'ORDEN_TRABAJO' => $inspeccion['I'],
+                                'ORDEN_EXT' => $inspeccion['J'],
+                                'CATEGORIA' => $inspeccion['K'],
+                                'RESULTADO_CIERRE' => $inspeccion['M'],
+                                'id_bitacora' => $bitacora->id,
+                                'id_usuario' => $usuario->id,
+                                'id_super' => $super ?? 1,
+                            ]);
+                        }
+                    }
+                }
+            }
+
             foreach ($datos as $cc => $inspecciones) {
+          
                 foreach ($inspecciones as $inspeccion) {
+                  
                     $existe = tbl_temp_contrato::where('CONTRATO', $inspeccion['H'])
                         ->where('ORDEN_TRABAJO', $inspeccion['I'])
                         ->where('No_ACTA', $inspeccion['E'])
                         ->where('TIPO_TRABAJO', $inspeccion['G'])
                         ->exists();
-                    if (!$existe) {
+                 
+                    if (!$existe || $cierre_todos === '0') {
 
-                            
+
                         tbl_temp_contrato::create([
                             'NOMBRE' => $inspeccion['A'],
                             'CC_OPERARIO' => $inspeccion['B'],
@@ -132,7 +216,7 @@ class AutoGuardadoController extends Controller
                             'VENCE' => $inspeccion['Q'],
                             'id_bitacora' => $bitacora->id,
                             'id_usuario' => $usuario->id,
-                            'id_super' => $super ?? 1 
+                            'id_super' => $super ?? 1
                         ]);
                     }
                 }
@@ -180,8 +264,12 @@ class AutoGuardadoController extends Controller
     {
         try {
             $contratos = tbl_temp_contrato::where('id_bitacora', $id_bitacora)->get();
+            $fallidas = tbl_temp_fallida::where('id_bitacora', $id_bitacora)->get();
             foreach ($contratos as $contrato) {
                 $contrato->delete();
+            }
+            foreach ($fallidas as $fallida) {
+                $fallida->delete();
             }
             $archivo = tbl_bitacora_archivo::where('id', $id_bitacora)->first();
             $archivo->delete();
