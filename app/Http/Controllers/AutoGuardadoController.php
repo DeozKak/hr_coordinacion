@@ -6,11 +6,11 @@ use App\Models\tbl_bitacoras_causal;
 use App\Models\tbl_localidades_municipio;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\tbl_bitacora_contrato;
 use App\Models\tbl_insp_cali;
 use App\Models\tbl_bitacora_archivo;
 use App\Models\tbl_temp_contrato;
 use App\Models\tbl_temp_fallida;
+
 
 class AutoGuardadoController extends Controller
 {
@@ -70,7 +70,6 @@ class AutoGuardadoController extends Controller
             'PERDIDA',
             'PREDIO DESOCUPADO.',
             'PROGRAMADA.',
-            'SIN GESTION.',
             'USUARIO NO AUTORIZA.'
         ];
         $columnas = ['A', 'B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K', 'M', 'N', 'O', 'Q'];
@@ -85,7 +84,6 @@ class AutoGuardadoController extends Controller
                     $cc_operario = $sheet->getCell('B' . $row->getRowIndex())->getValue(); // Índice potencial
                     $vence = $sheet->getCell('Q' . $row->getRowIndex())->getValue();
                     $cierre = ltrim($sheet->getCell('M' . $row->getRowIndex())->getValue(), '.');
-
 
                     // Verificar condiciones de filtrado
                     if (

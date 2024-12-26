@@ -50,7 +50,7 @@ class CorteProduccionController extends Controller
                 'message' => 'La fecha de inicio no puede ser mayor a la fecha de fin.',
             ]);
         }
-
+        
         // 3. Validar que el rango de fechas no se solape con otro existente
         $solapamiento = tbl_produccion_corte::where(function ($query) use ($corte) {
           $query->whereBetween('fecha_inicio', [$corte->fecha_inicio, $corte->fecha_fin])

@@ -129,7 +129,10 @@ class ProduccionController extends Controller
                 ->where('FECHA', '>=', $corte->fecha_inicio)
                 ->where('FECHA', '<=', $corte->fecha_fin)
                 ->where('state', '=', 1)
-                ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
+                ->whereNotIn('TIPO_TRABAJO', [
+                    'FI-29 revisión periódica línea matriz',
+                    'FI-31 REVISIÓN NUEVA LINEA MATRIZ',
+                ])          
                 ->distinct()
                 ->get()
                 ->pluck('MUNICIPIO');
@@ -323,13 +326,18 @@ class ProduccionController extends Controller
                 ->where('FECHA', '>=', $corte->fecha_inicio)
                 ->where('FECHA', '<=', $corte->fecha_fin)
                 ->where('state', '=', 1)
-                ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
+                ->whereNotIn('TIPO_TRABAJO', [
+                    'FI-29 revisión periódica línea matriz',
+                    'FI-31 REVISIÓN NUEVA LINEA MATRIZ',
+                ])
                 ->select(DB::raw('DATE(FECHA) as fecha, COUNT(*) as total_contratos'))
                 ->groupBy('fecha')
                 ->get();
                 if ($contratosPorDia->sum('total_contratos') == 0) {
                     continue;
                 }
+
+           
             $contratosPorCategoria = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
                 ->where('state', '=', 1)
                 ->whereBetween('FECHA', [$corte->fecha_inicio, $corte->fecha_fin])
@@ -347,7 +355,10 @@ class ProduccionController extends Controller
             $matrices = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
                 ->where('state', '=', 1)
                 ->whereBetween('FECHA', [$corte->fecha_inicio, $corte->fecha_fin])
-                ->where('TIPO_TRABAJO', '=', 'FI-29 revisión periódica línea matriz')
+                ->where(function ($query) {
+                    $query->where('TIPO_TRABAJO', '=', 'FI-29 revisión periódica línea matriz')
+                          ->orWhere('TIPO_TRABAJO', '=', 'FI-31 REVISIÓN NUEVA LINEA MATRIZ');
+                })
                 ->count();
 
             $diseñosEspeciales = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)

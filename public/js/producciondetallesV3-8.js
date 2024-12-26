@@ -81,7 +81,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     $('#overlay').hide();
                 },
                 error: function (xhr, status, error) {
-
                     console.log(xhr.responseText);
                     Swal.fire({
                         type: 'error',
@@ -93,7 +92,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
     };
-
+    
     try {
         const response = await fetchData();
 
@@ -541,7 +540,6 @@ function exportarExcel() {
     });
 
 }
-
 
 function calculateAndSetTotal(row, indexColumn) {
 

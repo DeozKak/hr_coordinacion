@@ -627,7 +627,7 @@ class BitacoraController extends Controller
                             ->where('orden_trabajo', $dato['orden_de_trabajo'])
                             ->get();
 
-                        //  $resultado = $validacion->getValidación_existentes();
+                        // $resultado = $validacion->getValidación_existentes();
                     } catch (\Exception $e) {
                         Log::error($e);
                         return response()->json(['error' => 'Error al consultar los datos en la base de datos']);

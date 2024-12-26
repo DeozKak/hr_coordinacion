@@ -401,7 +401,7 @@ $(document).ready(function () {
     const grupo2 = document.querySelector('.matriz-des2');
 
     selectTipoTrabajo.addEventListener('change', function () {
-        if (selectTipoTrabajo.value === "FI-29 revisión periódica línea matriz") {
+        if (selectTipoTrabajo.value === "FI-29 revisión periódica línea matriz" || selectTipoTrabajo.value === "FI-31 REVISIÓN NUEVA LINEA MATRIZ") {
             grupo1.style.display = 'none';
             grupo2.style.display = 'none';
         } else {
@@ -450,7 +450,7 @@ $(document).ready(function () {
             }
             if (campo.value.trim() === '' || campo.value === ':' || campo.value === 'P') {
                 const selectTipoTrabajo = document.getElementById('tipo_trabajo');
-                if (selectTipoTrabajo.value === "FI-29 revisión periódica línea matriz") {
+                if (selectTipoTrabajo.value === "FI-29 revisión periódica línea matriz" || selectTipoTrabajo.value === "FI-31 REVISIÓN NUEVA LINEA MATRIZ") {
                     if (campo.id === 'orden_trabajo' || campo.id === 'NroRecintosP' || campo.id === 'recintos' || campo.id === 'categoria') {
                         return;
                     }
@@ -691,7 +691,7 @@ function agregar_datos() {
     const devolucion = "OK";
     const causal = "--SELECCIONE CAUSAL--";
     let validador = false;
-    if(tipo_trabajo !== 'FI-29 revisión periódica línea matriz'){
+    if(tipo_trabajo !== 'FI-29 revisión periódica línea matriz' || tipo_trabajo !== 'FI-31 REVISIÓN NUEVA LINEA MATRIZ') {
         validador = validacionDatos(contrato, tabla);
     }
     if (validador === false) {
