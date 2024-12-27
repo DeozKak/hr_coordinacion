@@ -204,7 +204,6 @@ class ProgramacionController extends Controller
     {
         $registros = []; // Array para almacenar los registros en lotes
         $tamañoLote = 2000; // Puedes ajustar el tamaño del lote según tus necesidades
-
         tbl_programacion_base::truncate();
 
         DB::beginTransaction(); // Iniciar una transacción
@@ -278,7 +277,25 @@ class ProgramacionController extends Controller
                             break;
                     }
                 }
-
+                //modificar el tecnico asignado de la base dependiendo de la base en excel
+                $programacion = tbl_programacion_contrato::where('ORDEN_TRABAJO', $rowData["NUMERO_ORDEN"])->where('CONTRATO', $rowData["CONTRATO"])->get();
+                if($programacion->count() > 0){
+                    foreach ($programacion as $pro) {
+                        try {
+                     
+                        $inspector = tbl_insp_cali::where('id', $rowData["ID_TECNICO"])->first();
+                        if($pro->FECHA_AGENDAMIENTO >= date('Y-m-d')){
+                            $pro->TECNICO = $rowData["ID_TECNICO"].'. '.$inspector->apellidos.' '.$inspector->nombres;
+                            $pro->save();
+                       
+                        }
+                              
+                    }catch (\Throwable $th) {
+                        Log::error($th);
+                    }
+                    }
+                }
+               
                 if ($filaVacia) {
                     continue; // Saltar la fila si está vacía
                 }
@@ -296,6 +313,7 @@ class ProgramacionController extends Controller
             }
 
             DB::commit(); // Confirmar la transacción si todo tiene éxito
+         
             return true;
         } catch (QueryException $e) {
             Log::error("Error al insertar datos: " . $e->getMessage()); // Registrar el error para depuración
@@ -321,6 +339,9 @@ class ProgramacionController extends Controller
         }
 
         $datos = tbl_programacion_base::where('CONTRATO', $contrato)->first();
+        if($datos == null){
+            return null;
+        }
         if ($datos->ESTADO_RECEPCION !== null) {
             if ($datos->ESTADO_RECEPCION == '1' || $datos->ESTADO_RECEPCION == '2') {
                 return response()->json(['errors' => 'El contrato ya ha sido ejecutado']);
@@ -805,7 +826,7 @@ class ProgramacionController extends Controller
             'archivo.file' => 'El valor debe ser un archivo.',
             'archivo.mimes' => 'El archivo debe ser de tipo XLS o XLSX.',
         ]);
-
+    
         $archivo = $request->file('archivo');
         $spreadsheet = IOFactory::load($archivo);
         $worksheet = $spreadsheet->getActiveSheet();

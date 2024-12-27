@@ -1218,7 +1218,6 @@ class ProduccionController extends Controller
                 $datos['datos']['totalInspecciones'] = array_values($datos['datos']['totalInspecciones']);
             }
         }
-
         $sqlProHis->no_dobles_festivos = json_encode($corteHisJson);
         $sqlProHis->save();
         return response()->json(['success' => true]);
