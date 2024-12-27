@@ -20,7 +20,7 @@
     }
   }
   
-  #zonas #loader {
+#loader {
     border: 16px solid rgba(0, 0, 0, 0.329);
     /* Borde transparente */
     border-top: 16px solid #3498db;
@@ -45,7 +45,7 @@
   }
   
   /* Estilo adicional para oscurecer el fondo */
-  #zonas #overlay {
+#overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -81,7 +81,7 @@
     margin-right: 10px; /* Espacio entre botones */
 }
 
-#zonas, #detalles {
+#detalles {
     width: 100%; /* Aprovecha todo el ancho disponible */
     height: 300px; /* Altura fija para Handsontable */
 }

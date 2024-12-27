@@ -9,12 +9,14 @@ let fechaSeleccionada;
 let totalColspan = 0;
 let cellBackgroundColor = "";
 let cantInspecciones = 0;
-
+let rowSelected;
+let columnSelected;
 /* Inicializacion tabla de producción */
 document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('exportar').addEventListener('click', exportarExcel);
-
+   /*  $('#loader').show();
+    $('#overlay').show(); */
     function cellStyle(){
         Handsontable.renderers.registerRenderer('customStylesRenderer', (hotInstance, TD, row, col, prop, value, cellProperties) => {
             Handsontable.renderers.TextRenderer(hotInstance, TD, row, col, prop, value, cellProperties);
@@ -197,6 +199,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (isFechaColumn) {
                     const selectedRow = hot.getSelectedLast()[0]; // Obtiene la última fila seleccionada
+                    const selectedColumn = hot.getSelectedLast()[1];
+                    rowSelected = selectedRow;
+                    columnSelected = selectedColumn;
                     const rowData = hot.getDataAtCell(selectedRow, 0);
                     const nombre_completo = hot.getDataAtCell(selectedRow, 1); // Obtiene el valor de la celda en la columna 0 de la fila seleccionada
                     let cellElement = hot.getCell(selectedRow, selectedColumn);
@@ -756,6 +761,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
     });
 
     /* consulta llenar tabla */
+   
     $.ajax({
         url: urlDetalles, // Ruta al archivo PHP que realiza la consulta a la base de datos
         type: 'GET',
@@ -772,8 +778,8 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                 $('#noContar, #noContarDoblesFestivos, #contarDobles, #contarDoblesFestivos, #abrirModalContarDoblesSabado, #noContarDoblesSabado').remove();
     
                 // para saber el color de la celda
-                const selectedRow = hot.getSelectedLast()[0];
-                const selectedColumn = hot.getSelectedLast()[1];
+                const selectedRow = rowSelected;
+                const selectedColumn = columnSelected;
                 const cellElement = hot.getCell(selectedRow, selectedColumn);
                 const dataText = hot.getDataAtCell(selectedRow, selectedColumn);
                 const cellBackgroundColor = window.getComputedStyle(cellElement).backgroundColor;
@@ -856,7 +862,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             });
         }
     });
-
+   
     const fechaconvert = formatearFecha(fecha);
     /* Variable sale de la vista Blade */
     const responseBitacoras = await fetch(urlObtenerBitacoras + `?fecha=${fechaconvert}&cc_inspector=${cc_inspector}`);
