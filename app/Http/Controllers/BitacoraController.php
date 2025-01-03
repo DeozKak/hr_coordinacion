@@ -677,7 +677,7 @@ class BitacoraController extends Controller
                     }
                 }
             }
-
+            try{
             // Obtener los usuarios que deben recibir la notificación
             $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN', 'Auxiliar_coordinacion'])->get();
             $usuarioLog = Auth::user();
@@ -686,6 +686,9 @@ class BitacoraController extends Controller
             foreach ($usuarios as $usuario) {
                 $usuario->notify(new Bitacora($usuarioLog->name, $bitacora->id));
             }
+        }catch(\Exception $e){
+            Log::error($e);
+        }
         } else {
 
             $user = Auth::user();
