@@ -206,14 +206,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log(xhr.responseText);
                 if (xhr.status === 422) {
                     const errors = xhr.responseJSON.errors;
-                    showValidationErrors(errors,addProgramacionModal,errorContainerGDO); // Mostrar errores en el modal
+                    showValidationErrors(errors,addGDOModal,errorContainerGDO); // Mostrar errores en el modal
                 } else {
                     console.error(xhr.responseText); // Mostrar errores en la consola
 
                 }
             },
             complete: function () {
-                loader.style.display = 'none';
+                loaderGDO.style.display = 'none';
                
                 GDOform.reset(); // Limpiar el formulario
             }
