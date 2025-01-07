@@ -14,7 +14,7 @@
     <link rel="stylesheet" type="text/css" href="{{asset('css/bitacoras/Tablas.css')}}">
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="{{asset('js/tbl_dinamicaV5.js')}}"></script>
+    <script src="{{asset('js/tbl_dinamicaV6.js')}}"></script>
 </head>
 
 <body>
@@ -260,6 +260,7 @@
                                 <select class="form-control" name="tipo_trabajo" id="tipo_trabajo">
                                     <option value="">Seleccione Tipo de Trabajo</option>
                                     <option value="FI-29 revisión periódica línea matriz">FI-29 revisión periódica línea matriz</option>
+                                    <option value="FI-31 REVISIÓN NUEVA LINEA MATRIZ">FI-31 REVISIÓN NUEVA LINEA MATRIZ</option>
                                     <option value="RP 10444">RP 10444</option>
                                     <option value="RP 12161">RP 12161</option>
                                     <option value="RN 12162">RN 12162</option>

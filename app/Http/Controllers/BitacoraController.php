@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\tbl_dv_insp;
 use App\Models\tbl_temp_contrato;
+use App\Models\tbl_temp_fallida;
 use App\Models\User;
 use App\Models\tbl_insp_cali;
 use App\Models\tbl_bitacora_archivo;
@@ -24,6 +25,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use App\Models\tbl_bitacoras_causal;
 use App\Notifications\devolucion;
 use App\Http\Controllers\AutoGuardadoController;
+use App\Models\tbl_bitacora_fallida;
 use Illuminate\Support\Facades\Log;
 
 
@@ -34,33 +36,32 @@ class BitacoraController extends Controller
         $supervisores = Auth::user();
         $id_user = $supervisores->id;
         if ($supervisores->hasRole('Supervisor')) {
-          
-            $temp = tbl_bitacora_archivo::where('id_usuario','=',$id_user)->where('finished','=',0)->first();
-        
-            
-            if(!$temp){
-               
+
+            $temp = tbl_bitacora_archivo::where('id_usuario', '=', $id_user)->where('finished', '=', 0)->first();
+
+
+            if (!$temp) {
+
                 return view('bitacoras.generar', compact('supervisores'));
             }
-          
-           
+
+
             session()->flash('warning', 'Ya tienes una bitácora en proceso. ¿Deseas continuar?');
 
-            return view('bitacoras.generar', compact('supervisores','temp'));
+            return view('bitacoras.generar', compact('supervisores', 'temp'));
         }
         $supervisores = User::role('Supervisor')->get();
 
-        $temp = tbl_bitacora_archivo::where('id_usuario','=',$id_user)->where('finished','=',0)->first();
-       
-        if(!$temp){
-           
+        $temp = tbl_bitacora_archivo::where('id_usuario', '=', $id_user)->where('finished', '=', 0)->first();
+
+        if (!$temp) {
+
             return view('bitacoras.generar', compact('supervisores'));
         }
-      
-       
+
+
         session()->flash('warning', 'Ya tienes una bitácora en proceso. ¿Deseas continuar?');
-        return view('bitacoras.generar', compact('supervisores','temp'));
-    
+        return view('bitacoras.generar', compact('supervisores', 'temp'));
     }
 
     public function generar_bitacora(Request $request)
@@ -90,7 +91,7 @@ class BitacoraController extends Controller
 
             $excelFilePath = $rutaDestino;
 
-            return $this->procesarArchivoExcel($excelFilePath, new AutoGuardadoController());
+            return $this->procesarArchivoExcel($excelFilePath, new AutoGuardadoController(), null, null, $request->supervisor);
         }
 
         $supervisor = User::find($request->supervisor);
@@ -103,19 +104,19 @@ class BitacoraController extends Controller
 
         $excelFilePath = $rutaDestino;
 
-        return $this->procesarArchivoExcel($excelFilePath, new AutoGuardadoController(),$supervisor->name, $supervisor->id);
+        return $this->procesarArchivoExcel($excelFilePath, new AutoGuardadoController(), $supervisor->name, $supervisor->id);
     }
 
-    public function procesarArchivoExcel($excelFilePath, AutoGuardadoController $Guardado ,$nom_super = null, $id_super = null)
+    public function procesarArchivoExcel($excelFilePath, AutoGuardadoController $Guardado, $nom_super = null, $id_super = null, $cierre = null)
     {
 
         session(['nom_archivo' => basename($excelFilePath)]);
-       
+
         $validacionArchivo1 = str_replace(".xls", " ", basename($excelFilePath));
         $validacionArchivo2 = str_replace("4.08", "", $validacionArchivo1);
 
         $exist = $Guardado->buscar($validacionArchivo2);
-       
+
         if ($exist) {
             $data = $exist->getData(true); // Obtener datos como array asociativo
             $mensaje = $data['error'];
@@ -138,13 +139,13 @@ class BitacoraController extends Controller
 
         $nombres = array();
         $ids = array();
-        
-        
+
+
         foreach ($inspectores as $inspector) {
             $nombres[] = $inspector->apellidos . ' ' . $inspector->nombres;
             $ids[$inspector->cedula] = $inspector->id;
         }
-    
+
         session(['ids_inspectores' => $ids]);
         $id_inspector = 1118285465;
 
@@ -160,16 +161,15 @@ class BitacoraController extends Controller
         unlink($excelFilePath);
         $causales = tbl_bitacoras_causal::all();
 
-        $response = $Guardado->guardar($spreadsheet, $nombres, $id_super);
-       
-        
-        if($response->isEmpty()){
-            
+        $response = $Guardado->guardar($spreadsheet, $nombres, $id_super ,$cierre);
+
+
+        if ($response->isEmpty()) {
+
             return redirect()->route('bitacora')->with('error', 'Error al generar la bitacora');
-        
         }
-        
-        return view('bitacoras.tabla', compact('nombres', 'id_super', 'municipios', 'inspectores','causales','response'));
+
+        return view('bitacoras.tabla', compact('nombres', 'id_super', 'municipios', 'inspectores', 'causales', 'response'));
     }
 
     public function guardar_tabla(Request $request, User $super = null)
@@ -179,7 +179,7 @@ class BitacoraController extends Controller
         $dataTable = $request->datos;
         $indicadores = $request->indicadores;
         $valoresSeleccionados = $request->valoresSeleccionados;
-        
+
         $datos_array = array();
 
         // Crear una instancia de la clase Spreadsheet
@@ -190,10 +190,10 @@ class BitacoraController extends Controller
 
             $idTabla = "$indice";
 
-            
-            
+
+
             $nombre_tabla = $tabla[0][1] ?? "Tabla $indice";
-        
+
             $nombre_tabla = strlen($nombre_tabla) > 31 ? substr($nombre_tabla, 0, 31) : $nombre_tabla;
 
             // Crear una nueva hoja de cálculo para esta tabla
@@ -270,18 +270,18 @@ class BitacoraController extends Controller
                         if (array_key_exists($clave, $valoresSeleccionados) && $valoresSeleccionados[$clave] === "OK") {
                             $validacion = 0;
                             // copiado del campo 60 meses a la hoja OK
-                            if($indiceColumna === 19){
+                            if ($indiceColumna === 19) {
                                 $hoja_OK->setCellValue([16, $indiceFila_ok], $contenidoCelda);
-                               
+
                                 $celda_color = $hoja_OK->getCell([7, $indiceFila_ok]);
 
                                 $celda_color->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('92D050');
                             }
-                            
+
                             if ($indiceColumna < 16) {
 
                                 $hoja_OK->setCellValue([$indiceColumna, $indiceFila_ok], $contenidoCelda);
-                               
+
                                 $celda_color = $hoja_OK->getCell([7, $indiceFila_ok]);
 
                                 $celda_color->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('92D050');
@@ -299,15 +299,15 @@ class BitacoraController extends Controller
                                 $celda_color = $hoja->getCell([8, $indiceFila]);
                                 $celda_color->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('92D050');
                                 $cedula_insp = $hoja->getCell([3, $indiceFila])->getValue();
-                             
+
                                 // guardar un array con todos los contratos en ok
                                 $ids_inspectores = session('ids_inspectores');
                                 $id_cedula = $ids_inspectores[$cedula_insp];
                                 $fecha = $hoja->getCell([5, $indiceFila])->getValue();
-                               if($hoja->getCell([16, $indiceFila])->getValue()===null){
+                                if ($hoja->getCell([16, $indiceFila])->getValue() === null) {
                                     $hoja->setCellValue([16, $indiceFila], "NO");
-                               }
-                               
+                                }
+
                                 $datos_array_OK[] = array(
                                     'cc_operario' => $hoja->getCell([3, $indiceFila])->getValue(),
                                     'municipio' => $hoja->getCell([4, $indiceFila])->getValue(),
@@ -325,7 +325,6 @@ class BitacoraController extends Controller
                                     'vence' => $vence,
                                     'rechazo' => $rechazo
                                 );
-                                                                                      
                             } else {
 
                                 $celda_color = $hoja->getCell([8, $indiceFila]);
@@ -344,9 +343,9 @@ class BitacoraController extends Controller
                             $ids_inspectores = session('ids_inspectores');
                             $id_cedula = $ids_inspectores[$cedula_insp];
                             $fecha = $hoja->getCell([5, $indiceFila])->getValue();
-                            if($hoja->getCell([16, $indiceFila])->getValue()===null){
+                            if ($hoja->getCell([16, $indiceFila])->getValue() === null) {
                                 $hoja->setCellValue([16, $indiceFila], "NO");
-                           }
+                            }
 
                             $datos_array[] = array(
                                 "supervisor" => $super->id,
@@ -380,9 +379,9 @@ class BitacoraController extends Controller
                                 $celdaExcel_OK->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('FF8000');
                             }
                         } else {
-                         
+
                             $hoja->setCellValue([$indiceColumna, $indiceFila], "");
-                            $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoCelda); 
+                            $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoCelda);
 
                             $celda = $hoja->getCell([$indiceColumna, $indiceFila]);
 
@@ -398,7 +397,7 @@ class BitacoraController extends Controller
                                     break;
                             }
                         }
-                   
+
                         // Incrementar el índice de columna
                         $indiceColumna++;
                     }
@@ -521,18 +520,43 @@ class BitacoraController extends Controller
         // Guardar el archivo Excel
         $writer->save(storage_path('app/uploads/') . $rutaArchivoFinal . ".xlsx");
 
-             
+
 
         $nombreArchivo = $rutaArchivoFinal . ".xlsx";
         if ($super !== null) {
+            try {
+                $usuario = Auth::user();
+                $bitacora = tbl_bitacora_archivo::where('id_usuario', $usuario->id)->where('finished', '=', 0)->first();
 
-            $usuario = Auth::user();
+                $bitacora->finished = 1;
+                $bitacora->save();
+                $bitacoraFallidas = tbl_temp_fallida::where('id_bitacora', $bitacora->id);
 
-            $bitacora = tbl_bitacora_archivo::where('id_usuario', $usuario->id)->where('finished','=',0)->first();
-           
-            $bitacora->finished = 1;
-            $bitacora->save();
-           tbl_temp_contrato::where('id_bitacora', $bitacora->id)->delete();
+                tbl_bitacora_fallida::insertUsing([
+                    'NOMBRE',
+                    'id',
+                    'CC_OPERARIO',
+                    'MUNICIPIO',
+                    'FECHA',
+                    'No_ACTA',
+                    'TIPO_TRABAJO',
+                    'CONTRATO',
+                    'ORDEN_TRABAJO',
+                    'ORDEN_EXT',
+                    'CATEGORIA',
+                    'RESULTADO_CIERRE',
+                    'created_at',
+                    'updated_at',
+                    'id_bitacora',
+                    'id_usuario',
+                    'id_super'
+                ], $bitacoraFallidas);
+                // Opcional: Eliminar los registros de la tabla temporal
+                $bitacoraFallidas->delete();
+                tbl_temp_contrato::where('id_bitacora', $bitacora->id)->delete();
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'Error al insertar Fallidas '.$e]);
+            }
 
             foreach ($datos_array_OK as $datos) {
                 try {
@@ -548,10 +572,10 @@ class BitacoraController extends Controller
 
                     if ($datos['categoria'] === null) {
                         $consultaMovilidad = Movilidad::select('AttrCategoria')->where('NroSitio', $datos['contrato'])->where('IdTarea', $datos['no_acta'])->first();
-                    
+
                         if (!is_null($consultaMovilidad) && $consultaMovilidad->AttrCategoria !== null) {
                             $datos['categoria'] = $consultaMovilidad->AttrCategoria;
-                        } 
+                        }
                         // Si $consultaMovilidad es null, no se ejecutará el bloque if y $datos['categoria'] seguirá siendo null
                     }
 
@@ -589,7 +613,7 @@ class BitacoraController extends Controller
                     $contrato->save();
                 } catch (\Exception $e) {
                     Log::error($e);
-                    return response()->json(['error' => 'Error al guardar los datos en la base de datos '.$e]);               
+                    return response()->json(['error' => 'Error al guardar los datos en la base de datos ' . $e]);
                 }
             }
 
@@ -603,7 +627,7 @@ class BitacoraController extends Controller
                             ->where('orden_trabajo', $dato['orden_de_trabajo'])
                             ->get();
 
-                        //  $resultado = $validacion->getValidación_existentes();
+                        // $resultado = $validacion->getValidación_existentes();
                     } catch (\Exception $e) {
                         Log::error($e);
                         return response()->json(['error' => 'Error al consultar los datos en la base de datos']);
@@ -653,7 +677,7 @@ class BitacoraController extends Controller
                     }
                 }
             }
-
+            try{
             // Obtener los usuarios que deben recibir la notificación
             $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN', 'Auxiliar_coordinacion'])->get();
             $usuarioLog = Auth::user();
@@ -662,15 +686,17 @@ class BitacoraController extends Controller
             foreach ($usuarios as $usuario) {
                 $usuario->notify(new Bitacora($usuarioLog->name, $bitacora->id));
             }
-        }else{
+        }catch(\Exception $e){
+            Log::error($e);
+        }
+        } else {
 
             $user = Auth::user();
-            $bitacora = tbl_bitacora_archivo::where('id_usuario', $user->id)->where('finished','=',0)->first();
+            $bitacora = tbl_bitacora_archivo::where('id_usuario', $user->id)->where('finished', '=', 0)->first();
 
             tbl_temp_contrato::where('id_bitacora', $bitacora->id)->delete();
 
             $bitacora->delete();
-
         }
         session()->flash('success', 'Bitacora generada correctamente');
         return response()->json([
@@ -915,7 +941,7 @@ class BitacoraController extends Controller
 
     public function reportes()
     {
-        $bitacoras = tbl_bitacora_archivo::where('finished','=','1')->get()->map(function ($bitacora) {
+        $bitacoras = tbl_bitacora_archivo::where('finished', '=', '1')->get()->map(function ($bitacora) {
             $bitacora->fecha_creacion = $bitacora->created_at->format('Y-m-d');
             return $bitacora;
         });
@@ -926,11 +952,11 @@ class BitacoraController extends Controller
     {
         $bitacora = tbl_bitacora_archivo::find($id_bitacora);
         $causales_dv = tbl_bitacoras_causal::all();
-    
+
         if ($bitacora == null) {
             return redirect()->route('bitacoras.reportes')->with('error', 'Bitacora no encontrada');
         }
-        return view('bitacoras.verReporte', compact('bitacora','causales_dv'));
+        return view('bitacoras.verReporte', compact('bitacora', 'causales_dv'));
     }
 
     public function consultaReporte($id_bitacora)
@@ -962,15 +988,15 @@ class BitacoraController extends Controller
         ]);
     }
 
-    public function actualizar_devolucion(Request $request,$id)
+    public function actualizar_devolucion(Request $request, $id)
     {
-   
+
         $devolucion = tbl_dv_insp::find($id);
         $devolucion->GESTIONADO = 1;
         $devolucion->FECHA_GESTION = date('Y-m-d');
         $devolucion->OBSERVACION_GESTION = $request->observacion;
         $devolucion->save();
-       /*  $exist = tbl_bitacora_contrato::where('CONTRATO', $devolucion->CONTRATO)->where('ORDEN_TRABAJO', $devolucion->ORDEN_TRABAJO)->exists();
+        /*  $exist = tbl_bitacora_contrato::where('CONTRATO', $devolucion->CONTRATO)->where('ORDEN_TRABAJO', $devolucion->ORDEN_TRABAJO)->exists();
         if ($exist) {
             // Obtener los usuarios que deben recibir la notificación
             $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN'])->get();
@@ -1002,7 +1028,7 @@ class BitacoraController extends Controller
         $contrato->state = 1;
         $contrato->save();
  */
-      /*   // Obtener los usuarios que deben recibir la notificación
+        /*   // Obtener los usuarios que deben recibir la notificación
         $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN', 'Auxiliar_coordinacion'])->get();
         $usuarioLog = Auth::user();
 
@@ -1042,7 +1068,7 @@ class BitacoraController extends Controller
     public function download($nombreArchivo)
     {
         $rutaCompleta = storage_path('app/uploads/') . $nombreArchivo;
-        
+
         // Verificar si el archivo existe
         if (Storage::exists('uploads/' . $nombreArchivo)) {
             return response()->download($rutaCompleta);
@@ -1056,11 +1082,11 @@ class BitacoraController extends Controller
     {
         $idsArray = explode(',', $ids);
         $archivo = tbl_bitacora_archivo::find($bitacora);
-   
+
         // Validar y sanitizar los IDs (como en el ejemplo anterior)
         try {
             $contratos = tbl_bitacora_contrato::findMany($idsArray);
-         
+
             foreach ($contratos as $contrato) {
                 $inspector = tbl_insp_cali::where('cedula', $contrato->CC_OPERARIO)->first();
                 $devolucion = new tbl_dv_insp();
@@ -1096,9 +1122,8 @@ class BitacoraController extends Controller
             $super = User::find($archivo->id_usuario);
 
             $super->notify(new devolucion($userLog->name, $devolucion->contrato, $super->name, $archivo, $request->input('causal')));
-
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Error al devolver los contratos '.$e->getMessage()]);
+            return response()->json(['error' => 'Error al devolver los contratos ' . $e->getMessage()]);
         }
         return response()->json($contratos);
     }

@@ -161,7 +161,7 @@ class StickersController extends Controller
                     DB::raw('DATE(FECHA) as fecha'),
                     DB::raw('SUM(CASE WHEN RESULTADO_CIERRE IN ("CERTIFICADA", "CERTIFICADA CON NOVEDADES") THEN 1 ELSE 0 END) as total_contratos_cert'),
                     DB::raw('SUM(CASE WHEN RESULTADO_CIERRE IN ("INSPECCIONADA CON DEFECTO CRITICO VALLE", "INSPECCIONADA CON DEFECTO NO CRITICO VALLE") THEN 1 ELSE 0 END) as total_contratos_rech'),
-                    DB::raw('SUM(CASE WHEN TIPO_TRABAJO = "FI-29 revisión periódica línea matriz" THEN 1 ELSE 0 END) as total_revisiones_matriz')
+                    DB::raw('SUM(CASE WHEN TIPO_TRABAJO IN ("FI-29 revisión periódica línea matriz","FI-31 REVISIÓN NUEVA LINEA MATRIZ") THEN 1 ELSE 0 END) as total_revisiones_matriz')
                 )
                 ->groupBy('fecha')
                 ->get()->toArray();

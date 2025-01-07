@@ -559,6 +559,13 @@ return [
                     'label_color' => 'success',
                 ],
                 [
+                    'text' => 'Detalles Fallidas',
+                    'url' => '/produccion/fallidas',
+                    'icon' => 'fas fa-circle',
+                    'can' => ['ver_residente','ver_produccion'],
+                    'label_color' => 'success',
+                ],
+                [
                     'text' => 'Reporte de producción diario',
                     'url' => '/reporteProduccion',
                     'icon' => 'far fa-circle',
