@@ -277,25 +277,30 @@ class ProgramacionController extends Controller
                             break;
                     }
                 }
-                //modificar el tecnico asignado de la base dependiendo de la base en excel
-                $programacion = tbl_programacion_contrato::where('ORDEN_TRABAJO', $rowData["NUMERO_ORDEN"])->where('CONTRATO', $rowData["CONTRATO"])->get();
-                if($programacion->count() > 0){
-                    foreach ($programacion as $pro) {
-                        try {
-                     
-                        $inspector = tbl_insp_cali::where('id', $rowData["ID_TECNICO"])->first();
-                        if($pro->FECHA_AGENDAMIENTO >= date('Y-m-d')){
-                            $pro->TECNICO = $rowData["ID_TECNICO"].'. '.$inspector->apellidos.' '.$inspector->nombres;
-                            $pro->save();
-                       
+
+                if ($rowData["ID_TECNICO"] !== null) {
+                    if ($rowData["ID_TECNICO"] !== "0") {
+
+                        //modificar el tecnico asignado de la base dependiendo de la base en excel
+                        $programacion = tbl_programacion_contrato::where('ORDEN_TRABAJO', $rowData["NUMERO_ORDEN"])->where('CONTRATO', $rowData["CONTRATO"])->get();
+                        if ($programacion->count() > 0) {
+                            foreach ($programacion as $pro) {
+                                try {
+
+                                    $inspector = tbl_insp_cali::where('id', $rowData["ID_TECNICO"])->first();
+                                    if ($pro->FECHA_AGENDAMIENTO >= date('Y-m-d')) {
+                                        $pro->TECNICO = $rowData["ID_TECNICO"] . '. ' . $inspector->apellidos . ' ' . $inspector->nombres;
+                                        $pro->save();
+                                    }
+                                } catch (\Throwable $th) {
+                                    Log::error($th);
+                                }
+                            }
                         }
-                              
-                    }catch (\Throwable $th) {
-                        Log::error($th);
-                    }
                     }
                 }
-               
+
+
                 if ($filaVacia) {
                     continue; // Saltar la fila si está vacía
                 }
@@ -313,7 +318,7 @@ class ProgramacionController extends Controller
             }
 
             DB::commit(); // Confirmar la transacción si todo tiene éxito
-         
+            
             return true;
         } catch (QueryException $e) {
             Log::error("Error al insertar datos: " . $e->getMessage()); // Registrar el error para depuración
@@ -339,7 +344,7 @@ class ProgramacionController extends Controller
         }
 
         $datos = tbl_programacion_base::where('CONTRATO', $contrato)->first();
-        if($datos == null){
+        if ($datos == null) {
             return null;
         }
         if ($datos->ESTADO_RECEPCION !== null) {
@@ -349,12 +354,17 @@ class ProgramacionController extends Controller
         }
 
         if ($datos) {
+
             $id_inspector = $datos->ID_TECNICO;
 
             $inspector = tbl_insp_cali::where('id', $datos->ID_TECNICO)->first();
+            if ($inspector !== null) {
+                // Modificar la propiedad ID_TECNICO con el resultado de la consulta
+                $datos->ID_TECNICO = $id_inspector . '. ' . $inspector->apellidos . ' ' . $inspector->nombres;
+            } else {
+                $datos->ID_TECNICO = null;
+            }
 
-            // Modificar la propiedad ID_TECNICO con el resultado de la consulta
-            $datos->ID_TECNICO = $id_inspector . '. ' . $inspector->apellidos . ' ' . $inspector->nombres;
             return response()->json($datos);
         } else {
             return response()->json(['errors' => 'No se encontraron registros'], 422);
@@ -450,7 +460,6 @@ class ProgramacionController extends Controller
 
     public function finish($id)
     {
-
         try {
             $programacion = tbl_programacion_usuario::find($id);
             $programacion->finished = 1;
@@ -605,16 +614,16 @@ class ProgramacionController extends Controller
                 $columnasAIncluir = array_diff($columnasTabla, $columnasAExcluir);
 
                 $busqueda = DB::table('tbl_programacion_contratos AS pc')
-                ->join('tbl_programacion_base AS pb', 'pc.CONTRATO', '=', 'pb.CONTRATO')
-                ->join('tbl_programacion_usuarios AS pu', 'pc.id_programacion', '=', 'pu.id')
-                ->where(function ($query) use ($fecha_inicio, $fecha_fin) {  // Agrupamos las condiciones
-                $query->whereBetween('FECHA_AGENDAMIENTO', [$fecha_inicio, $fecha_fin])
-                    ->where(function ($subquery) {
-                        $subquery->where('pb.ESTADO_RECEPCION', '=', 0)
-                        ->orWhereNull('pb.ESTADO_RECEPCION');
-                    });
-                })
-                ->where('pu.finished', 1)
+                    ->join('tbl_programacion_base AS pb', 'pc.CONTRATO', '=', 'pb.CONTRATO')
+                    ->join('tbl_programacion_usuarios AS pu', 'pc.id_programacion', '=', 'pu.id')
+                    ->where(function ($query) use ($fecha_inicio, $fecha_fin) {  // Agrupamos las condiciones
+                        $query->whereBetween('FECHA_AGENDAMIENTO', [$fecha_inicio, $fecha_fin])
+                            ->where(function ($subquery) {
+                                $subquery->where('pb.ESTADO_RECEPCION', '=', 0)
+                                    ->orWhereNull('pb.ESTADO_RECEPCION');
+                            });
+                    })
+                    ->where('pu.finished', 1)
                     ->select(
                         'pc.id',
                         'pc.CONTRATO',
@@ -668,22 +677,22 @@ class ProgramacionController extends Controller
             $busqueda = $busqueda->get();
             $uniqueData = [];
             $uniqueKeys = [];
-            
+
             foreach ($busqueda as $item) {
                 $key = $item->ORDEN_TRABAJO . $item->FECHA_AGENDAMIENTO . $item->PORQUE_PROGRAMO;
-            
+
                 if (!in_array($key, $uniqueKeys)) {
                     $uniqueData[] = $item;
                     $uniqueKeys[] = $key;
                 }
             }
-            
+
             $busqueda = $uniqueData;
-      
+
             foreach ($plantilla as $registro) {
                 $busqueda[] = $registro; // Agregamos cada elemento de $plantilla al array $busqueda
             }
-            
+
             return response()->json([
                 'data' => $busqueda,
                 'columnas' => $columnasAIncluir
@@ -826,7 +835,7 @@ class ProgramacionController extends Controller
             'archivo.file' => 'El valor debe ser un archivo.',
             'archivo.mimes' => 'El archivo debe ser de tipo XLS o XLSX.',
         ]);
-    
+
         $archivo = $request->file('archivo');
         $spreadsheet = IOFactory::load($archivo);
         $worksheet = $spreadsheet->getActiveSheet();
@@ -942,7 +951,7 @@ class ProgramacionController extends Controller
                     $programada->HORA_INICIO = "07:59:00 a.m.";
                     $programada->HORA_FINAL = "04:59:00 p.m.";
                 }
-            
+
                 foreach (['F', 'D', 'E', 'K', 'J', 'S', 'H', 'G', 'I', 'C', 'N', 'P', 'B'] as $columna) {
 
                     $valorCelda = $worksheet->getCell($columna . $row->getRowIndex())->getValue();
@@ -1023,7 +1032,6 @@ class ProgramacionController extends Controller
             Log::error("Error al insertar datos: " . $e->getMessage()); // Registrar el error para depuración
             return false;
         }
-        
     }
 
     public function programacionGDO(Request $request)
@@ -1114,7 +1122,7 @@ class ProgramacionController extends Controller
         $tabla->finished = 1;
         $tabla->mensaje = 1;
         $tabla->save();
-        
+
         try {
             foreach ($worksheet->getRowIterator() as $row) {
                 if ($row->getRowIndex() === 1) {
@@ -1144,16 +1152,16 @@ class ProgramacionController extends Controller
                 if (preg_match($patron, $jornada, $coincidencias)) {
                     // Si hay coincidencia, la jornada se encuentra en $coincidencias[1]
                     $jornadaVisita = $coincidencias[1];
-                    if($jornadaVisita == "AM"){
+                    if ($jornadaVisita == "AM") {
                         $programada->HORA_INICIO = "07:59:00 a.m.";
                         $programada->HORA_FINAL = "11:59:00 a.m.";
                     }
-                    if($jornadaVisita == "PM"){
+                    if ($jornadaVisita == "PM") {
                         $programada->HORA_INICIO = "01:59:00 p.m.";
                         $programada->HORA_FINAL = "04:59:00 p.m.";
                     }
                 } else {
-                  return false;
+                    return false;
                 }
                 $existe = 0;
                 foreach (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M'] as $columna) {
@@ -1163,7 +1171,7 @@ class ProgramacionController extends Controller
                     switch ($columna) {
                         case 'A':
                             $exist = tbl_programacion_contrato::where('CONTRATO', $valorCelda)->exists();
-                            if($exist){
+                            if ($exist) {
                                 $existe = $existe + 1;
                             }
                             $programada->CONTRATO = $valorCelda;
@@ -1179,7 +1187,7 @@ class ProgramacionController extends Controller
                             break;
                         case 'E':
                             $exist = tbl_programacion_contrato::where('ORDEN_TRABAJO', $valorCelda)->exists();
-                            if($exist){
+                            if ($exist) {
                                 $existe = $existe + 1;
                             }
                             $programada->ORDEN_TRABAJO = $valorCelda;
@@ -1199,14 +1207,14 @@ class ProgramacionController extends Controller
                         case 'K':
                             $patron = '/FECHA DE VISITA (\d{4}-\d{2}-\d{2})/';
                             preg_match($patron, $jornada, $coincidencias);
-                         
+
                             $programada->FECHA_AGENDAMIENTO = $coincidencias[1];
                             break;
                         case 'L':
                             $programada->OBSERVACIONES = $valorCelda;
                             break;
                         case 'M':
-                            if($valorCelda == null || $valorCelda == ""){
+                            if ($valorCelda == null || $valorCelda == "") {
                                 break;
                             }
                             $inspector = tbl_insp_cali::where('id', $valorCelda)->first();
@@ -1222,7 +1230,9 @@ class ProgramacionController extends Controller
                 if ($exist) {
                     continue;
                 } */
-               if($existe >= 2){continue;}
+                if ($existe >= 2) {
+                    continue;
+                }
                 $programada->save();
             }
             return true;
