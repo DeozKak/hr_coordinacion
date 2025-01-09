@@ -762,6 +762,14 @@ class ProduccionController extends Controller
             ->where('tbl_bitacora_contratos.FECHA', '=', $fecha)
             ->get();
 
+            $contadores = tbl_bitacora_contrato::selectRaw("PRIORIDAD, COUNT(*) AS total")
+            ->join('tbl_insp_cali', 'tbl_insp_cali.cedula', '=', 'tbl_bitacora_contratos.CC_OPERARIO')
+            ->where('tbl_bitacora_contratos.CC_OPERARIO', '=', $inspector)
+            ->where('tbl_bitacora_contratos.FECHA', '=', $fecha)
+            ->groupBy('tbl_bitacora_contratos.PRIORIDAD')
+            ->get();
+           
+
         // Consultar la tabla `tbl_produccion_historico` usando el id del corte
         $sqlProHis = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
 
@@ -832,6 +840,7 @@ class ProduccionController extends Controller
             $flagHolidays,
             $arrayDoblesSabados,
             $totalContratos,
+            $contadores->toArray(),
         ]);
     }
 

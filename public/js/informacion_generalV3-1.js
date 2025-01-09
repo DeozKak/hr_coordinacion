@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         $('#nombreMunicipio').val('');
                         $('#sedeMunicipio').val('');
                         $('#zonaMunicipio').val('');
-                        console.log(response)
+                       
 
                         let nuevaFila = `
                             <tr data-id="${response.success.id}">
@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if(response.status== 'exist'){
                         Swal.fire({
                             icon: 'warning',
-                            title: 'Municipio duplicada',
+                            title: 'Municipio duplicado',
                             text: response.message,
                         })
                     }else{

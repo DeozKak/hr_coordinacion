@@ -2,6 +2,7 @@
 
 let hot;
 let hot_dia;
+let hot_contadores;
 let diasFestivos;
 let sabadodobles = [];
 let InspectorSelected;
@@ -569,7 +570,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
     /* variable de rutas sale de la vista */
     const response = await fetch(urlObtenerDetalles + `?fecha=${fecha}&cc_inspector=${cc_inspector}`);
     const urlDetalles = await response.text();
-
+    const contadores_dia = document.querySelector('#contadores_dia');
     const contratos_dia = document.querySelector('#contratos_dia');
     const cerrar = document.querySelector('#cerrar_modal');
     const titulo = document.querySelector('#titulo');
@@ -615,6 +616,14 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         Handsontable.validators.registerValidator('custom.text', customTextValidator);
     })(Handsontable);
 
+    hot_contadores = new Handsontable(contadores_dia, {
+        readOnly: true,
+        manualColumnMove: false,
+        rowHeaders: false,
+        colHeaders: false,
+        height: '150px',
+        licenseKey: 'non-commercial-and-evaluation',
+    });
 
     hot_dia = new Handsontable(contratos_dia, {
         readOnly: true,
@@ -766,8 +775,8 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         url: urlDetalles, // Ruta al archivo PHP que realiza la consulta a la base de datos
         type: 'GET',
         success: function (response) {
+            hot_contadores.loadData(response[5]);
             datosBaseDatos = response[0];
-
             const url = window.location.href
             const array = url.split("/");
             const last = array[array.length - 1]
@@ -854,7 +863,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
 
         },
         error: function (xhr, status, error) {
-
+            console.log(xhr.responseText);
             Swal.fire({
                 type: 'error',
                 title: 'Error',

@@ -591,6 +591,8 @@ class BitacoraController extends Controller
                             continue;
                         }
                     }
+                    $consultaPrioridad = Movilidad::select('Prioridad')->where('NroSitio', $datos['contrato'])->where('IdTarea', $datos['no_acta'])->first();
+                    $datos['prioridad'] =  $consultaPrioridad->Prioridad;
                     $contrato = new tbl_bitacora_contrato();
                     $contrato->CC_OPERARIO = $datos['cc_operario'];
                     $contrato->MUNICIPIO = $datos['municipio'];
@@ -605,6 +607,7 @@ class BitacoraController extends Controller
                     $contrato->HORA_INICIO = $datos['hora_inicio'];
                     $contrato->HORA_FINAL = $datos['hora_fin'];
                     $contrato->DURACION_INSP = $duracion->format('%H:%I');
+                    $contrato->PRIORIDAD = $datos['prioridad'];
                     $contrato->setAttribute('4_RECINTOS', $datos['4_recintos']);
                     $contrato->vence = $datos['vence'];
                     $contrato->CAUSAL_RECHAZO = $datos['rechazo'];
