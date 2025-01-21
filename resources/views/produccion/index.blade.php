@@ -7,31 +7,114 @@
 @endsection
 
 @section('content')
-<script src="{{asset('js/produccionIndex.js')}}"></script>
+{{-- <script src="{{asset('js/produccionIndex.js')}}"></script> --}}
 <div class="card">
     <div class="card-body">
-    <a class="btn btn-primary" href="javascript:history.go(-1)" style="margin-bottom: 10px;">Ir Atrás</a>
-        <x-adminlte-card title="Total Inspecciones por Operario" theme="info" icon="fas fa-hard-hat">
-            <canvas id="inspeccionesDiarias"></canvas>
-        </x-adminlte-card>
+        <a class="btn btn-primary" href="javascript:history.go(-1)" style="margin-bottom: 10px;">Ir Atrás</a>
+
+        <!-- Navegación de Tabs -->
+        <ul class="nav nav-tabs" id="comparisonTabs">
+            <li class="nav-item">
+                <a class="nav-link active" id="graficoPrincipal-tab" data-toggle="tab" href="#graficoPrincipal" role="tab" aria-controls="graficoPrincipal" aria-selected="true">
+                    Gráfico Principal
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link disabled" id="comparacion-tab" data-toggle="tab" href="#comparacion" role="tab" aria-controls="comparacion" aria-selected="false">
+                    Comparación de Cortes
+                </a>
+            </li>
+        </ul>
+
+        <!-- Contenido de las Tabs -->
+        <div class="tab-content">
+            <!-- Tab: Gráfico Principal -->
+            <div class="tab-pane fade show active" id="graficoPrincipal" role="tabpanel" aria-labelledby="graficoPrincipal-tab">
+                <x-adminlte-card title="Total Inspecciones por Operario" theme="info" icon="fas fa-chart-bar" header-class="text-uppercase rounded-bottom border-info">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <!-- Selector de comparación de cortes -->
+                            <select id="cortesComparisonSelectStackedbar" class="form-control" multiple style="display:none;">
+                                <option value="">Seleccione un corte a comparar</option>
+                                @foreach ($cortes as $opcionCorte)
+                                    @if ($opcionCorte->id !== $corte->id)
+                                        <?php
+                                        $añoInicio = explode('-', $opcionCorte->fecha_inicio)[0];
+                                        $añoFin = explode('-', $opcionCorte->fecha_fin)[0];
+                                        ?>
+                                        <option value="{{ $opcionCorte->id }}">Corte: {{ $opcionCorte->nombre }} - {{$añoInicio}} - {{$añoFin}}</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                            <!-- Selector de cortes -->
+                            <select class="form-control" id="cortesSelect" data-corte-actual="{{ $corte->id }}">
+                                <option value="{{ $corte->id }}">Corte actual</option>
+                                @foreach ($cortes as $opcionCorte)
+                                    @if ($opcionCorte->id !== $corte->id)
+                                        <?php
+                                        $añoInicio = explode('-', $opcionCorte->fecha_inicio)[0];
+                                        $añoFin = explode('-', $opcionCorte->fecha_fin)[0];
+                                        ?>
+                                        <option value="{{ $opcionCorte->id }}">Corte: {{ $opcionCorte->nombre }} - {{ $añoInicio }} - {{ $añoFin }}</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <!-- Selector de inspectores -->
+                            <select class="form-control" id="inspectorSelectStackedbar">
+                                <option value="">Todos los inspectores</option>
+                                @foreach ($arrayInspectores as $inspector)
+                                    @if ($inspector['status'] == 1)
+                                        <option value="{{ $inspector['cedula'] }}">{{ $inspector['apellido'] }}</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <canvas id="inspeccionesDiarias"></canvas>
+                </x-adminlte-card>
+            </div>
+
+            <!-- Tab: Comparación de Cortes -->
+            <div class="tab-pane fade" id="comparacion" role="tabpanel" aria-labelledby="comparacion-tab">
+                <x-adminlte-card title="Comparación Total de Inspecciones entre Cortes" theme="info" icon="fas fa-chart-bar" header-class="text-uppercase rounded-bottom border-info">
+                    <!-- Nuevo selector para la gráfica de comparación -->
+                    <select id="cortesComparisonSelect" multiple>
+                        <option value="">Seleccione un corte a comparar</option>
+                        @foreach ($cortes as $opcionCorte)
+
+
+                            @if ($opcionCorte->id !== $corte->id)
+                                <?php
+                                $añoInicio = explode('-',$opcionCorte->fecha_inicio)[0];
+                                $añoFin = explode('-',$opcionCorte->fecha_fin)[0];
+                                ?>
+                                <option value="{{ $opcionCorte->id }}">Corte: {{ $opcionCorte->nombre }} - {{$añoInicio}} - {{$añoFin}}</option>
+                            @endif
+                        @endforeach
+                    </select>
+                    <canvas id="comparacionInspecciones" style="width: 1125px; height: 562px; max-height: 562px;"></canvas>
+                </x-adminlte-card>
+            </div>
+        </div>
     </div>
 
+    <!-- Sección adicional con categorías de inspección -->
     <div class="row">
         <div class="col-6">
             <div class="card">
                 <div class="card-body">
-                    <x-adminlte-card title="Categorias Inspecciones" theme="info" icon="fas fa-code-branch" header-class="text-uppercase rounded-bottom border-info">
-                        @if(isset($inspectores) && $inspectores->isNotEmpty())
+                    <x-adminlte-card title="Categorías Inspecciones" theme="info" icon="fas fa-code-branch" header-class="text-uppercase rounded-bottom border-info">
                         <select class="form-control" id="inspectorSelect" style="width: 50%;">
                             <option value="">Mostrar todos los contratos</option>
-                            @foreach ($inspectores as $inspector)
-                            @if ($inspector->state == 1)
-                            <option value="{{$inspector->cedula}}">{{$inspector->apellidos}}</option>
-                            @endif
+                            @foreach ($inpectores as $inspector)
+                                @if ($inspector->state == 1)
+                                    <option value="{{ $inspector->cedula }}">{{ $inspector->apellidos }}</option>
+                                @endif
                             @endforeach
                         </select>
                         <canvas id="categoriaInsp"></canvas>
-                        @endif
                     </x-adminlte-card>
                 </div>
             </div>
@@ -39,8 +122,8 @@
         <div class="col-6">
             <div class="card">
                 <div class="card-body">
-                    <x-adminlte-card title="Inspecciones hechas por zonas" theme="info" icon="fas fa-map-marker-alt">
-                        <canvas id="zonasInsp"></canvas>
+                    <x-adminlte-card title="Inspecciones hechas por zonas" theme="info" icon="fas fa-map-marker-alt" header-class="text-uppercase rounded-bottom border-info">
+                        <canvas id="zonasInsp" style="width: 553px; height: 553px; max-height: 553px;"></canvas>
                     </x-adminlte-card>
                 </div>
             </div>
@@ -62,8 +145,6 @@
 </script>
  {{$warning = null;}}
 @endif
-
-
 
 @if(isset($municipiosNoEncontrados) && $municipiosNoEncontrados->isNotEmpty())
 <script>
@@ -88,319 +169,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <script>
-    let stackedBar;
-        const meta = @json($corte->meta ?? []);
-        const canva = document.querySelector('#inspeccionesDiarias').getContext('2d');
-        const labels = {!! json_encode($produccionInspector) !!};
-        Chart.register(ChartDataLabels);
-
-        stackedBar = new Chart(canva, {
-            type: 'bar',
-            data: {
-                labels: labels.map(inspector => inspector.nombres),
-                datasets: [{
-                    label: 'Inspecciones',
-                    data: labels.map(inspector => inspector.contratos),
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                },
-                plugins: {
-                    annotation: {
-                        annotations: {
-                            line1: {
-                                type: 'line',
-                                mode: 'horizontal',
-                                scaleID: 'y',
-                                value: meta, // Valor de la línea de meta
-                                borderColor: 'rgba(75, 192, 192, 1)',
-                                borderWidth: 2,
-                                label: {
-                                    content: 'META',
-                                    enabled: true,
-                                    position: 'end'
-                                }
-                            }
-                        }
-                    },
-                    datalabels: {
-                        anchor: 'end',
-                        align: 'top',
-                        formatter: (value, context) => {
-                            return value; // Mostrar el valor encima de las barras
-                        }
-                    }
-                }
-            }
-        });
-    let pieChart;
-    const canvaCategoria = document.querySelector('#categoriaInsp').getContext('2d');
-    const contratosCategoria = {!! json_encode($contratosCategoria) !!}; // Datos desde el backend
-    const inspectorSelect = document.getElementById('inspectorSelect');
-
-    // Función para actualizar el gráfico con los datos totales o de un inspector específico
-    function actualizarGrafico(inspectorCedula = null) {
-        let contratosComerciales = 0;
-        let contratosResidenciales = 0;
-
-        // Contar contratos comerciales y residenciales
-        contratosCategoria.forEach(item => {
-            if (inspectorCedula === null || item.CC_OPERARIO === inspectorCedula) {
-                if (item.CATEGORIA === 'COMERCIAL') {
-                    contratosComerciales++;
-                } else if (item.CATEGORIA === 'RESIDENCIAL') {
-                    contratosResidenciales++;
-                }
-            }
-        });
-
-        // Mostrar alerta si el inspector seleccionado no tiene contratos
-        if (inspectorCedula && contratosComerciales === 0 && contratosResidenciales === 0) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Sin contratos',
-                text: 'Este inspector no tiene contratos comerciales ni residenciales.',
-                confirmButtonText: 'Aceptar'
-            });
-        }
-
-        // Si el gráfico ya existe, actualizar los datos
-        if (pieChart) {
-            pieChart.data.datasets[0].data = [contratosComerciales, contratosResidenciales];
-            pieChart.update(); // Refrescar el gráfico
-        } else {
-            // Crear un nuevo gráfico si no existe
-            pieChart = new Chart(canvaCategoria, {
-                type: 'pie',
-                data: {
-                    labels: ['Comerciales', 'Residenciales'],
-                    datasets: [{
-                        label: 'Categorías de Contratos',
-                        data: [contratosComerciales, contratosResidenciales],
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.2)',
-                            'rgba(54, 162, 235, 0.2)'
-                        ],
-                        borderColor: [
-                            'rgba(255, 99, 132, 1)',
-                            'rgba(54, 162, 235, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    plugins: {
-                        datalabels: {
-                            formatter: (value, context) => {
-                                return value; // Mostrar el valor de la cantidad de contratos en el gráfico
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    // Evento para detectar cambios en el select
-    inspectorSelect.addEventListener('change', (event) => {
-        const selectedInspector = event.target.value; // Obtener el valor seleccionado (cédula del inspector)
-        actualizarGrafico(selectedInspector || null);
-    });
-
-    // Al cargar la página, mostramos el total de todos los contratos
-    document.addEventListener('DOMContentLoaded', () => {
-        actualizarGrafico(); // Llamamos a la función para mostrar el total de contratos
-    });
-
-    let ZonaPie
-    const canvaZonas = document.querySelector('#zonasInsp').getContext('2d');
-    const ContratosZonas = {!!json_encode($conteoContratosPorZona) !!};
-
-    const zona = [];
-    const data = [];
-    for (let i = 0; i < ContratosZonas.length; i++) {
-        zona.push(ContratosZonas[i].zona);
-        data.push(ContratosZonas[i].contratos);
-    }
-
-        ZonaPie = new Chart(zonasInsp, {
-        type: 'pie',
-        data: {
-            labels: zona,
-            datasets: [{
-                label: 'Contratos por Zona',
-                data: data,
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(54, 162, 235, 0.2)',
-                    'rgba(123, 200, 87, 0.2)'
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(123, 200, 87, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            plugins: {
-                datalabels: {
-                    formatter: (value, context) => {
-                        return value; // Mostrar el valor de la cantidad de contratos en el gráfico
-                    }
-                }
-            }
-        }
-    });
-    window.addEventListener('resize', redibujarGraficos);
-
-function redibujarGraficos() {
-    // Destruir gráficos existentes para evitar superposición de gráficos viejos
-    if (ZonaPie) ZonaPie.destroy();
-    if (pieChart) pieChart.destroy();
-    if (stackedBar) stackedBar.destroy();
-
-    // Configurar de nuevo `stackedBar` con sus datos y opciones
-    const canva = document.querySelector('#inspeccionesDiarias').getContext('2d');
-    const labels = {!!json_encode($produccionInspector) !!};
-    Chart.register(ChartDataLabels);
-    stackedBar = new Chart(canva, {
-        type: 'bar',
-        data: {
-            labels: labels.map(inspector => inspector.nombres),
-            datasets: [{
-                label: 'Inspecciones',
-                data: labels.map(inspector => inspector.contratos),
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                borderColor: 'rgba(255, 99, 132, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            },
-            plugins: {
-                annotation: {
-                    annotations: {
-                        line1: {
-                            type: 'line',
-                            mode: 'horizontal',
-                            scaleID: 'y',
-                            value: meta, // Valor de la línea de meta
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 2,
-                            label: {
-                                content: 'META',
-                                enabled: true,
-                                position: 'end'
-                            }
-                        }
-                    }
-                },
-                datalabels: {
-                    anchor: 'end',
-                    align: 'top',
-                    formatter: (value) => value // Mostrar el valor encima de las barras
-                }
-            }
-        }
-    });
-
-    // Calcular los datos para `pieChart` de categorías de contratos
-    let contratosComerciales = 0;
-    let contratosResidenciales = 0;
-    const inspectorCedula = inspectorSelect.value || null; // Obtener el inspector seleccionado
-
-    // Lógica para contar contratos comerciales y residenciales según `actualizarGrafico`
-    contratosCategoria.forEach(item => {
-        if (inspectorCedula === null || item.CC_OPERARIO === inspectorCedula) {
-            if (item.CATEGORIA === 'COMERCIAL') {
-                contratosComerciales++;
-            } else if (item.CATEGORIA === 'RESIDENCIAL') {
-                contratosResidenciales++;
-            }
-        }
-    });
-
-    // Mostrar alerta si el inspector seleccionado no tiene contratos
-    if (inspectorCedula && contratosComerciales === 0 && contratosResidenciales === 0) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Sin contratos',
-            text: 'Este inspector no tiene contratos comerciales ni residenciales.',
-            confirmButtonText: 'Aceptar'
-        });
-    }
-
-    // Configurar `pieChart` para las categorías de contratos con los datos actualizados
-    pieChart = new Chart(canvaCategoria, {
-        type: 'pie',
-        data: {
-            labels: ['Comerciales', 'Residenciales'],
-            datasets: [{
-                label: 'Categorías de Contratos',
-                data: [contratosComerciales, contratosResidenciales],
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(54, 162, 235, 0.2)'
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            plugins: {
-                datalabels: {
-                    formatter: (value) => value // Mostrar el valor de la cantidad de contratos
-                }
-            }
-        }
-    });
-
-    // Configurar `ZonaPie` para contratos por zona
-    ZonaPie = new Chart(canvaZonas, {
-        type: 'pie',
-        data: {
-            labels: zona,
-            datasets: [{
-                label: 'Contratos por Zona',
-                data: data,
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(54, 162, 235, 0.2)',
-                    'rgba(123, 200, 87, 0.2)'
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(123, 200, 87, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            plugins: {
-                datalabels: {
-                    formatter: (value) => value // Mostrar el valor de contratos en el gráfico
-                }
-            }
-        }
-    });
-}
-
+    window.appData = {
+        meta: @json($corte->meta ?? []),
+        contratosCategoria: {!! json_encode($contratosCategoria ?? []) !!},
+        contratosZonas: {!! json_encode($conteoContratosPorZona ?? []) !!},
+        labels: {!! json_encode($produccionInspector ?? []) !!}
+    };
 </script>
+
+<script src="{{ asset('js/seguimientoProduccionUpdate/verProduccion.js') }}?v={{ time() }}"></script>
+
 @stop

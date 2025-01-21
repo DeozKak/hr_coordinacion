@@ -73,7 +73,7 @@ class CoordinacionController extends Controller
             ];
         });
 
-        // retornamos los tecnicos y el datosConIndice 
+        // retornamos los tecnicos y el datosConIndice
         return response()->json(
             [
                 'estadoProgramacion' => $arrayEstPro,
@@ -269,7 +269,7 @@ class CoordinacionController extends Controller
             '18' => 'observacion_solicitud',
             // Agrega más mapeos de índices a nombres de columnas según sea necesario
         ];
-        
+
         $query = asignadas::whereIn('tipo_trabajo', [10444, 12161]);
 
         if (!empty($filters)) {
@@ -291,8 +291,8 @@ class CoordinacionController extends Controller
         }
 
         $asignadas = DB::update(
-            "UPDATE asignadas 
-                        SET {$campoActualizar} = ? 
+            "UPDATE asignadas
+                        SET {$campoActualizar} = ?
                         {$campoFecha}
                         WHERE orden = ?",
             $parametros

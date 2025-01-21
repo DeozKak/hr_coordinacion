@@ -119,6 +119,8 @@ Route::middleware('web')->group(function () {
         Route::post('/produccion/countDoublesHolidays', [ProduccionController::class, 'countDoublesHolidays'])->name('produccion.countDoublesHolidays')->middleware(CheckPermission::class . ':ver_residente');
         Route::post('/produccion/countDoublesSaturday', [ProduccionController::class, 'countDoublesSaturday'])->name('produccion.countDoublesSaturday')->middleware(CheckPermission::class . ':ver_residente');
         Route::post('/produccion/noContarDoblesSaturday', [ProduccionController::class, 'noContarDoblesSaturday'])->name('produccion.noContarDoblesSaturday')->middleware(CheckPermission::class . ':ver_residente');
+        Route::post('/produccion/getCorteData', [ProduccionController::class, 'getCorteData'])->name('produccion.getCorteData')->middleware(CheckPermission::class . ':ver_residente');
+
         //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         //Rutas Zonas
         Route::get('/produccion/zonas', [ProduccionController::class, 'zonas'])->name('produccion.zonas')->middleware(CheckPermission::class . ':ver_residente,ver_produccion');
@@ -142,7 +144,7 @@ Route::middleware('web')->group(function () {
         Route::get('notifications/markAsRead', [NotificationsController::class, 'markAsRead'])->name('notifications.markAsRead');
         Route::get('notifications', [NotificationsController::class, 'index'])->name('notifications.index');
         //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        
+
         //Rutas Programación
         Route::get('/programacion', [ProgramacionController::class, 'index'])->name('programacion.index')->middleware(CheckPermission::class . ':generar_programacion');
         Route::get('/programacion/create', [ProgramacionController::class, 'create'])->name('programacion.create')->middleware(CheckPermission::class . ':generar_programacion');
@@ -196,7 +198,7 @@ Route::middleware('web')->group(function () {
         Route::get('/fechasParametros', [ReporteProduccionController::class, 'fechasProduccion'])->name('fechasProduccion.registrar')->middleware(CheckPermission::class . ':reporte_produccion');
         Route::post('/fechasParametro/guardar', [ReporteProduccionController::class, 'guardarFechasParametros'])->name('fechasParametro.guardar')->middleware(CheckPermission::class . ':reporte_produccion');
         Route::post('/fechasParametro/actualizar', [ReporteProduccionController::class, 'actualizarFechasParametros'])->name('fechasParametro.actualizar')->middleware(CheckPermission::class . ':reporte_produccion');
-       
+
         // rutas nomina
         Route::get('/nomina/reporteNomina', [NominaController::class, 'getReporteNomina'])->name('nomina.reporteNomina')->middleware(CheckPermission::class . ':gestion_nomina');
         Route::post('/nomina/generarReporteNomina', [NominaController::class, 'postReporteNomina'])->name('nomina.generarReporteNomina')->middleware(CheckPermission::class . ':gestion_nomina');

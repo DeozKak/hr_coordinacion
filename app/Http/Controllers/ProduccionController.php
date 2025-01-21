@@ -21,10 +21,12 @@ use Illuminate\Support\Facades\Cache;
 use Rmunate\Calendario\CalendarioColombia;
 use App\Notifications\Produccion;
 
+
 class ProduccionController extends Controller
 {
     public function index(Request $request)
     {
+        $cortes = tbl_produccion_corte::all();
         if ($request->id) {
             $corte = tbl_produccion_corte::find($request->id);
         } else {
@@ -34,6 +36,9 @@ class ProduccionController extends Controller
                 ->where('fecha_fin', '>=', $fecha_resta_un_dia)
                 ->first();
         }
+        // Guardar el ID del corte actual en la sesión
+        session(['corte_actual_id' => $corte->id]);
+
         $warning = null;
         $error = false;
         // sacar cortes activos
@@ -53,16 +58,16 @@ class ProduccionController extends Controller
             $warning = 'No hay contratos en el corte activo';
         }
         // sacar inspectores
-        $inspectores = tbl_insp_cali::all();
+        $inpectores = tbl_insp_cali::all();
 
-        if (count($inspectores->toArray()) === 0 && !$error) {
+        if (count($inpectores->toArray()) === 0 && !$error) {
             $error = true;
             $warning = 'No hay inspectores activos';
         }
         $contadortotal = 0;
         // sacar produccion de cada inspector
         $produccionInspector = array();
-        foreach ($inspectores as $inspector) {
+        foreach ($inpectores as $inspector) {
             // Contratos comerciales
             $contratosComerciales = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
                 ->where('FECHA', '>=', $corte->fecha_inicio)
@@ -99,7 +104,8 @@ class ProduccionController extends Controller
                 'nombres' => $inspector->apellidos,
                 'contratos_comerciales' => $contratosComerciales,
                 'contratos_residenciales' => $contratosResidenciales,
-                'contratos' => $numerosContratos // Conserva el total de contratos en esta variable
+                'contratos' => $numerosContratos, // Conserva el total de contratos en esta variable
+                'cedula' => $inspector->cedula
             ];
         }
         // dd($produccionInspector);
@@ -166,6 +172,29 @@ class ProduccionController extends Controller
                 'contratos' => $contador
             ];
         }
+
+        // Consulta para filtrar los inspectores del corte actual
+        $inspectoresContratos = tbl_bitacora_contrato::select('CC_OPERARIO')
+            ->where('FECHA', '>=', $corte->fecha_inicio)
+            ->where('FECHA', '<=', $corte->fecha_fin)
+            ->where('state', '=', 1)
+            ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
+            ->groupBy('CC_OPERARIO')
+            ->get();
+
+        $arrayInspectores = [];
+        foreach ($inspectoresContratos as $val) {
+            $queryInsp = tbl_insp_cali::where('cedula', $val->CC_OPERARIO)->first();
+            // dd($queryInsp);
+            if ($queryInsp != null) {
+                $arrayInspectores[] = [
+                    'id' => $queryInsp->id,
+                    'apellido' => $queryInsp->apellidos,
+                    'status' => $queryInsp->state,
+                    'cedula' => $queryInsp->cedula,
+                ];
+            }
+        }
         if (count($conteoContratosPorZona) === 0 && !$error) {
             $error = true;
             $warning = 'error en las zonas';
@@ -173,10 +202,67 @@ class ProduccionController extends Controller
 
 
         if ($error) {
-            return view('produccion.index', ['produccionInspector' => $produccionInspector, 'numerosContratos' => $numerosContratos, 'contratosCategoria' => $contratosCategoria, 'conteoContratosPorZona' => $conteoContratosPorZona, 'corte' => $corte, 'warning' => $warning,'inspectores' => $inspectores]);
+            return view('produccion.index', ['produccionInspector' => $produccionInspector, 'numerosContratos' => $numerosContratos, 'contratosCategoria' => $contratosCategoria, 'conteoContratosPorZona' => $conteoContratosPorZona, 'corte' => $corte, 'warning' => $warning]);
         }
-     
-        return view('produccion.index', compact('produccionInspector', 'contratosCategoria', 'conteoContratosPorZona', 'corte', 'warning', 'municipiosNoEncontrados', 'inspectores'));
+        return view('produccion.index', compact('produccionInspector', 'contratosCategoria', 'conteoContratosPorZona', 'corte', 'warning', 'municipiosNoEncontrados', 'inpectores', 'cortes', 'arrayInspectores'));
+    }
+
+    public function getCorteData(Request $request)
+    {
+        // Obtener el corte actual desde la sesión
+        $corteActualId = session('corte_actual_id');
+
+        // Obtener el ID del corte seleccionado
+        $corteIdSeleccionado = $request->id;
+
+        // Verifica si el ID seleccionado es el mismo que el corte actual
+        if ($corteIdSeleccionado == $corteActualId) {
+            return response()->json(['message' => 'El corte seleccionado es el mismo que el corte actual. No se realizará ninguna comparación.']);
+        }
+
+        $corteId = $request->id;
+
+        // Buscar el corte seleccionado por ID
+        $corte = tbl_produccion_corte::find($corteId);
+
+        if (!$corte) {
+            return response()->json(['error' => 'Corte no encontrado'], 404);
+        }
+
+        // Obtener los inspectores y sus inspecciones para el corte seleccionado
+        $inpectores = tbl_insp_cali::all();
+        $produccionInspector = [];
+
+        foreach ($inpectores as $inspector) {
+            $contratosComerciales = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
+                ->where('FECHA', '>=', $corte->fecha_inicio)
+                ->where('FECHA', '<=', $corte->fecha_fin)
+                ->where('state', '=', 1)
+                ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
+                ->where('CATEGORIA', '=', 'COMERCIAL')
+                ->count();
+
+            $contratosResidenciales = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
+                ->where('FECHA', '>=', $corte->fecha_inicio)
+                ->where('FECHA', '<=', $corte->fecha_fin)
+                ->where('state', '=', 1)
+                ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
+                ->where('CATEGORIA', '=', 'RESIDENCIAL')
+                ->count();
+
+            $numerosContratos = $contratosComerciales + $contratosResidenciales;
+
+            $produccionInspector[] = [
+                'nombres' => $inspector->apellidos,
+                'contratos' => $numerosContratos,
+                'cedula' => $inspector->cedula
+            ];
+        }
+
+        return response()->json([
+            'produccionInspector' => $produccionInspector,
+            'nombreCorte' => $corte->nombre . " " . explode("-", $corte->fecha_inicio)[0] . "-" . explode("-", $corte->fecha_fin)[0]
+        ]);
     }
 
     public function detallesCorte($id)
@@ -216,28 +302,27 @@ class ProduccionController extends Controller
         if (session('id_corte') || $request->idCorteDetalles) {
             $idCorte = session('id_corte') ?? $request->idCorteDetalles;
             $corte = tbl_produccion_corte::find($idCorte);
-            
+
+            session()->put('corteEnviar', $corte);
+
             $exist = tbl_produccion_historico::where('id_corte', $corte->id)->exists();
-            
+
             if ($exist) {
                 $historico = tbl_produccion_historico::where('id_corte', $corte->id)->first();
                 $response = json_decode($historico->data);
-                session()->forget('id_corte');
-                session()->save();
                 return response()->json($response);
             }
+            session()->forget('id_corte');
         } else {
-
-            $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
+            // $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
+            $fecha_actual = "2024-10-20"; // Obtiene la fecha actual en formato 'YYYY-MM-DD'
             $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
 
             $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
                 ->where('fecha_fin', '>=', $fecha_resta_un_dia)
                 ->first();
-
             session()->put('corteEnviar', $corte);
         }
-
         $diasIntermedios = $this->DiasIntermedios($corte);
         if ($diasIntermedios == null) {
             return response()->json(['error' => 'No hay corte activo']);
@@ -260,8 +345,6 @@ class ProduccionController extends Controller
         // sacar produccion de cada inspector
         $produccionInspector = array();
         foreach ($inspectores as $inspector) {
-            $contadorFestivosDomingos = 0;
-            $contadorDiasSabados = 0;
             //inicializar variables contadores
             $contadorDiseñosEspeciales = null;
             $contadorMatrices = null;
@@ -325,9 +408,9 @@ class ProduccionController extends Controller
                 ->select(DB::raw('DATE(FECHA) as fecha, COUNT(*) as total_contratos'))
                 ->groupBy('fecha')
                 ->get();
-                if ($contratosPorDia->sum('total_contratos') == 0) {
-                    continue;
-                }
+            if ($contratosPorDia->sum('total_contratos') == 0) {
+                continue;
+            }
             $contratosPorCategoria = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
                 ->where('state', '=', 1)
                 ->whereBetween('FECHA', [$corte->fecha_inicio, $corte->fecha_fin])
@@ -360,33 +443,8 @@ class ProduccionController extends Controller
             if ($matrices > 0) {
                 $contadorMatrices = $matrices;
             }
-
-            $sqlProHis = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
-            $jsonDecode = json_decode($sqlProHis->no_dobles_festivos, true);
-
-            if($jsonDecode != null){
-                foreach($jsonDecode['noDoblesFestivos'] as &$registro){
-                    foreach($registro['datos']['totalInspecciones'] as $totalInsp){
-                        if($registro['datos']['cc_inspector'] == $inspector->cedula){
-                            $contadorFestivosDomingos += $totalInsp['total_contratos'];
-                        }
-                    }
-                }
-            }
-
-            $jsonDecodeSabados = json_decode($sqlProHis->dobles_sabados, true);
-
-            if($jsonDecodeSabados != null){
-                foreach($jsonDecodeSabados['doblesSabados'] as &$registro){
-                    foreach($registro['datos']['totalInspecciones'] as $totalInsp){
-                        if($registro['datos']['cc_inspector'] == $inspector->cedula){
-                            $contadorDiasSabados += intval($totalInsp['total_contratos']);
-                        }
-                    }
-                }
-            }
-            
             // contadores dobles contratos
+
             foreach ($contratosPorDia as $contrato) {
 
                 foreach ($diasFestivosRango as $festivo) {
@@ -462,7 +520,7 @@ class ProduccionController extends Controller
             }
             $datosInspector['matrices'] = $contadorMatrices;
 
-            $datosInspector['festivos'] = $totalFestivos - $contadorFestivosDomingos + $contadorDiasSabados;
+            $datosInspector['festivos'] = $totalFestivos;
             $datosInspector['diseños_especiales'] = $contadorDiseñosEspeciales;
             $datosInspector['4_recintos'] = $contratos4recintosRedondeado;
             $datosInspector['comerciales'] = $contadorComerciales;
@@ -487,11 +545,11 @@ class ProduccionController extends Controller
 
         $jsonNoDobles = json_decode($sqlHistorico->no_dobles, true);
 
-        if($jsonNoDobles != null){
-            foreach($sabados as $sabadoIndex => &$sabado) {
-                foreach($sabado['datos'] as $datoIndex => $dato) {
-                    foreach($jsonNoDobles as $datos) {
-                        foreach($datos as $item) {
+        if ($jsonNoDobles != null) {
+            foreach ($sabados as $sabadoIndex => &$sabado) {
+                foreach ($sabado['datos'] as $datoIndex => $dato) {
+                    foreach ($jsonNoDobles as $datos) {
+                        foreach ($datos as $item) {
                             // Comprobamos si el inspector y la fecha coinciden
                             if ($dato['cc_inspector'] == $item['datos']['cc_inspector'] && in_array($dato['fecha'], $item['datos']['fechas'])) {
                                 // Si se cumple la condición, eliminamos el dato en la posición correspondiente
@@ -522,13 +580,14 @@ class ProduccionController extends Controller
             $historico = tbl_produccion_historico::where('id_corte', $corte->id)->first();
             $historico->data = json_encode($reponse);
             $historico->save();
-        }else{
+        } else {
             $historico = new tbl_produccion_historico();
             $historico->data = json_encode($reponse);
             $historico->id_corte = $corte->id;
             $historico->save();
         }
         $reponse = json_decode($historico->data);
+
         return response()->json($reponse);
     }
 
@@ -632,10 +691,10 @@ class ProduccionController extends Controller
 
             // Verificar cada contrato por día y excluir días festivos
             foreach ($contratosPorSemana as $contrato) {
-               /*  $esFestivo = in_array($contrato->fecha, $diasFestivos);
+                /*  $esFestivo = in_array($contrato->fecha, $diasFestivos);
                 if (!$esFestivo) { */
-                    $totalContratos += $contrato->total_contratos;
-               /*  } */
+                $totalContratos += $contrato->total_contratos;
+                /*  } */
             }
 
             // Ajustar los límites de las condicionales si hay un festivo en la semana
@@ -649,40 +708,6 @@ class ProduccionController extends Controller
 
                 if (!$esSabadoFestivo) {
 
-                    $corte = session('corteEnviar');
-                    $sqlHistorico = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
-                    
-                    $jsonSabadosDobles = json_decode($sqlHistorico->dobles_sabados, true);
-
-                    if($jsonSabadosDobles != null){
-                        foreach($jsonSabadosDobles as $datos) {
-                            foreach($datos as $item) {
-                                if($item['datos']['cc_inspector'] == $inspector->cedula){
-                                    foreach($item['datos']['totalInspecciones'] as $sabado) {
-                                        if($sabado['fecha'] == $fechaSabado){
-                                            $sabadosdobles[] = [
-                                                'fecha' => $sabado['fecha'],
-                                                'cc_inspector' => $item['datos']['cc_inspector']
-                                            ];
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    $jsonNoDobles = json_decode($sqlHistorico->no_dobles, true);
-
-                    if($jsonNoDobles != null){
-                        foreach($jsonNoDobles as $datos) {
-                            foreach($datos as $item) {
-                                if($inspector->cedula == $item['datos']['cc_inspector'] && in_array($contratosSabado->first()->fecha,$item['datos']['fechas'])){
-                                    continue 3;
-                                }
-                            }
-                        }
-                    }
-
                     if ($totalContratos >= $limiteContratos) {
 
                         // Sumar los contratos del sábado
@@ -691,12 +716,26 @@ class ProduccionController extends Controller
                         try {
                             $sabadosdobles[] = [
                                 'fecha' => $contratosSabado->first()->fecha,
-                                'cc_inspector' => $inspector->cedula,
-                                'totalContratosSabado' => $totalContratosSabado
+                                'cc_inspector' => $inspector->cedula
                             ];
                         } catch (\Exception $e) {
                         }
                     } elseif ($totalContratos < $limiteContratos && $totalContratos >= $limiteContratosBajo) {
+
+                        $corte = session('corteEnviar');
+                        $sqlHistorico = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
+                        $jsonNoDobles = json_decode($sqlHistorico->no_dobles, true);
+
+                        if ($jsonNoDobles != null) {
+                            foreach ($jsonNoDobles as $datos) {
+                                foreach ($datos as $item) {
+                                    if ($inspector->cedula == $item['datos']['cc_inspector'] && in_array($contratosSabado->first()->fecha, $item['datos']['fechas'])) {
+                                        continue 3;
+                                    }
+                                }
+                            }
+                        }
+
                         // Sumar los contratos del sábado con ajustes
                         $totalContratosSabado = $contratosSabado->sum('total_contratos');
                         $totalContratosSabado = ($totalContratos === $limiteContratosMedio) ? $totalContratosSabado - 1 : $totalContratosSabado - 2;
@@ -711,8 +750,7 @@ class ProduccionController extends Controller
                             try {
                                 $sabadosdobles[] = [
                                     'fecha' => $contratosSabado->first()->fecha,
-                                    'cc_inspector' => $inspector->cedula,
-                                    'totalContratosSabado' => $totalContratosSabado
+                                    'cc_inspector' => $inspector->cedula
                                 ];
                             } catch (\Exception $e) {
                                 // Manejo de excepciones (opcional)
@@ -732,6 +770,7 @@ class ProduccionController extends Controller
         }
         // Descomentar para ver el resultado final
         // dd($contadorDiasSabados);
+
         return [
             'contadorDiasSabados' => $contadorDiasSabados,
             'sabadosdobles' => $sabadosdobles
@@ -744,18 +783,16 @@ class ProduccionController extends Controller
 
         $contratosDia = tbl_bitacora_contrato::selectRaw("tbl_bitacora_contratos.id, CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP,
         tbl_bitacora_contratos.`4_RECINTOS`,tbl_bitacora_contratos.state,tbl_bitacora_contratos.diseno_especial,tbl_bitacora_contratos.vence")
-        ->join('tbl_insp_cali', 'tbl_insp_cali.cedula', '=', 'tbl_bitacora_contratos.CC_OPERARIO')
-        ->where('tbl_bitacora_contratos.CC_OPERARIO', '=', $inspector)
+            ->join('tbl_insp_cali', 'tbl_insp_cali.cedula', '=', 'tbl_bitacora_contratos.CC_OPERARIO')
+            ->where('tbl_bitacora_contratos.CC_OPERARIO', '=', $inspector)
             ->where('tbl_bitacora_contratos.FECHA', '=', $fecha)
             ->get();
+
 
         // Consultar la tabla `tbl_produccion_historico` usando el id del corte
         $sqlProHis = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
 
         $jsonNoDobles = json_decode($sqlProHis->no_dobles, true);
-        $jsonNoDoblesHoliday = json_decode($sqlProHis->no_dobles_festivos, true);
-        $jsonDoblesSabados = json_decode($sqlProHis->dobles_sabados, true);
-        $contratosDoblesSabadoos = json_decode($sqlProHis->data, true);
 
         $flag = false;
         if ($jsonNoDobles != null) {
@@ -768,57 +805,9 @@ class ProduccionController extends Controller
             }
         }
 
-        $flagHolidays = false;
-        if ($jsonNoDoblesHoliday != null) {
-            foreach ($jsonNoDoblesHoliday as $datos) {
-                foreach ($datos as $item) {
-                    if ($inspector == $item['datos']['cc_inspector']) {
-                        foreach ($item['datos']['totalInspecciones'] as $item2) {
-                            if ($item2['fecha'] == $fecha) {
-                                $flagHolidays = true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        $totalContratos = 0;
-        $arrayDoblesSabados = [];
-        if($jsonDoblesSabados != null){
-            foreach($jsonDoblesSabados as $datos){
-                foreach($datos as $item){
-                    if($inspector == $item['datos']['cc_inspector']){
-                        foreach($item['datos']['totalInspecciones'] as $item2){
-                            if($item2['fecha'] == $fecha){
-                                $flagDoblesSabados = true;
-                                $arrayDoblesSabados[] = [
-                                    $item2['total_contratos'],
-                                    $flagDoblesSabados
-                                ];
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        foreach($contratosDoblesSabadoos['sabadodobles'] as $item){
-            foreach($item['datos'] as $val){
-                if($val['fecha'] == $fecha && $val['cc_inspector'] == $inspector){
-                    if(isset($val['totalContratosSabado'])){
-                        $totalContratos = $val['totalContratosSabado'];
-                    }
-                }
-            }
-        }
-
         return response()->json([
             $contratosDia,
             $flag,
-            $flagHolidays,
-            $arrayDoblesSabados,
-            $totalContratos,
         ]);
     }
 
@@ -964,88 +953,89 @@ class ProduccionController extends Controller
         return ['error' => 'Bitácora no encontrada.'];
     }
 
-    // public function zonas(Request $request)
-    // {
-    //     if (session('id_corte') || $request->idCorteDetalles) {
-    //         $idCorte = session('id_corte') ?? $request->idCorteDetalles;
-    //         $corte = tbl_produccion_corte::find($idCorte);
-    //         session()->forget('id_corte');
-    //         session()->save();
-    //     } else {
-    //         $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
-    //         $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
+    public function zonas(Request $request)
+    {
+        if (session('id_corte') || $request->idCorteDetalles) {
+            $idCorte = session('id_corte') ?? $request->idCorteDetalles;
+            $corte = tbl_produccion_corte::find($idCorte);
+            session()->forget('id_corte');
+            session()->save();
+        } else {
+            $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
+            $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
 
-    //         $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
-    //             ->where('fecha_fin', '>=', $fecha_resta_un_dia)
-    //             ->first();
-    //     }
-    //     if ($corte == null) {
-    //         return response()->json(['error' => 'No hay corte activo']);
-    //     }
-    //     $diasIntermedios = $this->DiasIntermedios($corte);
+            $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
+                ->where('fecha_fin', '>=', $fecha_resta_un_dia)
+                ->first();
+        }
+        if ($corte == null) {
+            return response()->json(['error' => 'No hay corte activo']);
+        }
+        $diasIntermedios = $this->DiasIntermedios($corte);
 
-    //     $zonas = tbl_produccion_zona::select('id', 'nombre')->get();
+        $zonas = tbl_produccion_zona::select('id', 'nombre')->get();
 
-    //     foreach ($zonas as $zona) {
-    //         $ContratosPorZonaReidencial = ['zona' => $zona->nombre . " RESIDENCIAL"];
-    //         $ContratosPorZonaComercial = ['zona' => $zona->nombre . " COMERCIAL"];
+        foreach ($zonas as $zona) {
+            $ContratosPorZonaReidencial = ['zona' => $zona->nombre . " RESIDENCIAL"];
+            $ContratosPorZonaComercial = ['zona' => $zona->nombre . " COMERCIAL"];
 
-    //         $period = new DatePeriod(
-    //             new DateTime($corte->fecha_inicio),
-    //             new DateInterval('P1D'),
-    //             (new DateTime($corte->fecha_fin))->modify('+1 day')
-    //         );
+            $period = new DatePeriod(
+                new DateTime($corte->fecha_inicio),
+                new DateInterval('P1D'),
+                (new DateTime($corte->fecha_fin))->modify('+1 day')
+            );
 
-    //         foreach ($period as $date) {
-    //             $fecha = $date->format('Y-m-d');
+            foreach ($period as $date) {
+                $fecha = $date->format('Y-m-d');
 
-    //             // Subconsulta para obtener los contratos residenciales
-    //             $contratosResidenciales = DB::table('tbl_bitacora_contratos')
-    //                 ->select(DB::raw('count(*) as total'))
-    //                 ->where('CATEGORIA', 'RESIDENCIAL')
-    //                 ->where('FECHA', $fecha)
-    //                 ->where('state', 1)
-    //                 ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
-    //                 ->whereIn('MUNICIPIO', function ($query) use ($zona) {
-    //                     $query->select('nombre')
-    //                         ->from('tbl_localidades_municipios')
-    //                         ->where('id_zona', $zona->id);
-    //                 })
-    //                 ->first();
+                // Subconsulta para obtener los contratos residenciales
+                $contratosResidenciales = DB::table('tbl_bitacora_contratos')
+                    ->select(DB::raw('count(*) as total'))
+                    ->where('CATEGORIA', 'RESIDENCIAL')
+                    ->where('FECHA', $fecha)
+                    ->where('state', 1)
+                    ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
+                    ->whereIn('MUNICIPIO', function ($query) use ($zona) {
+                        $query->select('nombre')
+                            ->from('tbl_localidades_municipios')
+                            ->where('id_zona', $zona->id);
+                    })
+                    ->first();
 
-    //             // Subconsulta para obtener los contratos comerciales
-    //             $contratosComerciales = DB::table('tbl_bitacora_contratos')
-    //                 ->select(DB::raw('count(*) as total'))
-    //                 ->where('CATEGORIA', 'COMERCIAL')
-    //                 ->where('FECHA', $fecha)
-    //                 ->where('state', 1)
-    //                 ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
-    //                 ->whereIn('MUNICIPIO', function ($query) use ($zona) {
-    //                     $query->select('nombre')
-    //                         ->from('tbl_localidades_municipios')
-    //                         ->where('id_zona', $zona->id);
-    //                 })
-    //                 ->first();
+                // Subconsulta para obtener los contratos comerciales
+                $contratosComerciales = DB::table('tbl_bitacora_contratos')
+                    ->select(DB::raw('count(*) as total'))
+                    ->where('CATEGORIA', 'COMERCIAL')
+                    ->where('FECHA', $fecha)
+                    ->where('state', 1)
+                    ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
+                    ->whereIn('MUNICIPIO', function ($query) use ($zona) {
+                        $query->select('nombre')
+                            ->from('tbl_localidades_municipios')
+                            ->where('id_zona', $zona->id);
+                    })
+                    ->first();
 
-    //             $ContratosPorZonaReidencial[$fecha] = $contratosResidenciales->total;
-    //             $ContratosPorZonaComercial[$fecha] = $contratosComerciales->total;
-    //         }
+                $ContratosPorZonaReidencial[$fecha] = $contratosResidenciales->total;
+                $ContratosPorZonaComercial[$fecha] = $contratosComerciales->total;
+            }
 
-    //         $conteoContratosResidencial[] = $ContratosPorZonaReidencial;
-    //         $conteoContratosComercial[] = $ContratosPorZonaComercial;
-    //     }
+            $conteoContratosResidencial[] = $ContratosPorZonaReidencial;
+            $conteoContratosComercial[] = $ContratosPorZonaComercial;
+        }
 
-    //     $response = [
-    //         'diasIntermedios' => $diasIntermedios,
-    //         'residencial' => $conteoContratosResidencial,
-    //         'comercial' => $conteoContratosComercial
-    //     ];
+        $response = [
+            'diasIntermedios' => $diasIntermedios,
+            'residencial' => $conteoContratosResidencial,
+            'comercial' => $conteoContratosComercial
+        ];
 
-    //     // Retornar la respuesta JSON
-    //     return response()->json($response);
-    // }
+        // Retornar la respuesta JSON
+        return response()->json($response);
+    }
 
-    public function guardarNoDobles(Request $request) {
+    public function guardarNoDobles(Request $request)
+    {
         // Obtener datos desde la sesión y la solicitud
         $corte = session('corteEnviar');
         $fecha = $request->input('fecha');
@@ -1095,7 +1085,8 @@ class ProduccionController extends Controller
         $sqlProHis->save();
     }
 
-    public function contarDobles(Request $request){
+    public function contarDobles(Request $request)
+    {
         $corte = session('corteEnviar');
         $fecha = $request->input('fecha');
         $inspector = $request->input('ccInspector');
@@ -1114,200 +1105,9 @@ class ProduccionController extends Controller
                 // Reindexamos el array de fechas para evitar índices huecos
                 $datos['datos']['fechas'] = array_values($datos['datos']['fechas']);
             }
-        }   
+        }
 
         $sqlProHis->no_dobles = json_encode($corteHisJson);
         $sqlProHis->save();
-    }
-
-    public function storeNotDoublesHolidays(Request $request) {
-        // Recibimos las variables
-        $corte = session('corteEnviar');
-        $inspector = $request->input('ccInspector');
-        $fecha = $request->input('fecha');
-    
-        // Consultar la tabla `tbl_produccion_historico` usando el id del corte
-        $sqlProHis = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
-    
-        // Obtener el total de inspecciones para la fecha y el inspector especificado
-        $contratosDomingo = tbl_bitacora_contrato::where('FECHA', $fecha)
-            ->where('state', '=', 1)
-            ->selectRaw('DATE(FECHA) as fecha, COUNT(*) as total_contratos')
-            ->groupBy('fecha')
-            ->where('CC_OPERARIO', '=', $inspector)
-            ->first(); // Usamos `first()` en lugar de `get()` para obtener un solo resultado
-    
-        // Convertir el resultado en un array para incluirlo en `totalInspecciones`
-        $inspeccionData = [
-            'fecha' => $contratosDomingo->fecha,
-            'total_contratos' => $contratosDomingo->total_contratos
-        ];
-    
-        // Decodificar el campo `no_dobles_festivos` para manipularlo como un array asociativo
-        $corteHisJson = json_decode($sqlProHis->no_dobles_festivos, true);
-    
-        // Si `noDoblesFestivos` aún no contiene datos, inicializar el array
-        if (!isset($corteHisJson['noDoblesFestivos'])) {
-            $corteHisJson['noDoblesFestivos'] = [];
-        }
-    
-        // Variable para rastrear si ya existe el inspector
-        $inspectorEncontrado = false;
-    
-        // Recorrer `noDoblesFestivos` para buscar el inspector
-        foreach ($corteHisJson['noDoblesFestivos'] as &$registro) {
-            if ($registro['datos']['cc_inspector'] == $inspector) {
-                // Si el inspector ya existe, verifica si la fecha está en `totalInspecciones`
-                $fechaExiste = false;
-    
-                foreach ($registro['datos']['totalInspecciones'] as $inspeccion) {
-                    if ($inspeccion['fecha'] == $fecha) {
-                        $fechaExiste = true;
-                        break;
-                    }
-                }
-    
-                // Si la fecha no existe, agregarla al array `totalInspecciones`
-                if (!$fechaExiste) {
-                    $registro['datos']['totalInspecciones'][] = $inspeccionData;
-                }
-    
-                $inspectorEncontrado = true;
-                break;
-            }
-        }
-    
-        // Si el inspector no fue encontrado, agregar un nuevo registro con el array de fechas
-        if (!$inspectorEncontrado) {
-            $nuevoRegistro = [
-                'datos' => [
-                    'cc_inspector' => $inspector,
-                    'totalInspecciones' => [$inspeccionData], // Nuevo array con la primera inspección
-                ]
-            ];
-    
-            // Agregar el nuevo registro al array de `noDoblesFestivos`
-            $corteHisJson['noDoblesFestivos'][] = $nuevoRegistro;
-        }
-    
-        // Codificar el array actualizado como JSON y guardarlo en la base de datos
-        $sqlProHis->no_dobles_festivos = json_encode($corteHisJson);
-        $sqlProHis->save();
-        return response()->json(['success' => true]);
-    }
-    
-    public function countDoublesHolidays(Request $request){
-        $corte = session('corteEnviar');
-        $fecha = $request->input('fecha');
-        $inspector = $request->input('ccInspector');
-
-        $sqlProHis = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
-
-        $corteHisJson = json_decode($sqlProHis->no_dobles_festivos, true);
-
-        foreach ($corteHisJson['noDoblesFestivos'] as &$datos) {
-            if ($inspector == $datos['datos']['cc_inspector']) {
-                foreach ($datos['datos']['totalInspecciones'] as $key => $fechaExistente) {
-                    if ($fecha == $fechaExistente['fecha']) {
-                        unset($datos['datos']['totalInspecciones'][$key]);
-                    }
-                }
-                // Reindexamos el array de fechas para evitar índices huecos
-                $datos['datos']['totalInspecciones'] = array_values($datos['datos']['totalInspecciones']);
-            }
-        }
-
-        $sqlProHis->no_dobles_festivos = json_encode($corteHisJson);
-        $sqlProHis->save();
-        return response()->json(['success' => true]);
-    }
-
-    public function countDoublesSaturday(Request $request){
-        $corte = session('corteEnviar');
-        $ccInspector = $request->input('ccInspector');
-        $fecha = $request->input('fecha');
-        $diasContados = $request->input('diasContados');
-
-        $sqlProHis = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
-
-        $inspeccionData = [
-            'fecha' => $fecha,
-            'total_contratos' => $diasContados,
-        ];
-
-        $corteHisJson = json_decode($sqlProHis->dobles_sabados, true);
-
-        if(!isset($corteHisJson['doblesSabados'])){
-            $corteHisJson['doblesSabados'] = [];
-        }
-
-        // Variable para rastrear si ya existe el inspector
-        $inspectorEncontrado = false;
-
-        foreach($corteHisJson['doblesSabados'] as &$registro){
-            if($registro['datos']['cc_inspector'] == $ccInspector){
-                // Si el inspector ya existe, verifica si la fecha está en `totalInspeccionesContadas`
-                foreach($registro['datos']['totalInspecciones'] as $inspeccion){
-                    if($inspeccion['fecha'] == $fecha){
-                        $inspectorEncontrado = true;
-                        break;
-                    }
-                }
-
-                // Si la fecha no existe, agregarla al array `totalInspeccionesContadas`
-                if(!$inspectorEncontrado){
-                    $registro['datos']['totalInspecciones'][] = $inspeccionData;
-                }
-
-                $inspectorEncontrado = true;
-
-                break;
-            }
-        }
-
-        // Si el inspector no fue encontrado, agregar un nuevo registro con el array de fechas
-        if(!$inspectorEncontrado){
-            $nuevoRegistro = [
-                'datos' => [
-                    'cc_inspector' => $ccInspector,
-                    'totalInspecciones' => [$inspeccionData], // Nuevo array con la primera inspección
-                ]
-            ];
-            // Agregar el nuevo registro al array de `noDoblesFestivos`
-            $corteHisJson['doblesSabados'][] = $nuevoRegistro;
-        }
-
-        $sqlProHis->dobles_sabados = json_encode($corteHisJson);
-        $sqlProHis->save();
-        return response()->json(['success' => true]);
-    }
-
-    public function noContarDoblesSaturday(Request $request){
-
-        $corte = session('corteEnviar');
-        $fecha = $request->input('fecha');
-        $inspector = $request->input('ccInspector');
-
-        $sqlProHis = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
-
-        $corteHisJson = json_decode($sqlProHis->dobles_sabados, true);
-
-        if($corteHisJson != null){
-            foreach ($corteHisJson['doblesSabados'] as &$datos) {
-                if ($inspector == $datos['datos']['cc_inspector']) {
-                    foreach ($datos['datos']['totalInspecciones'] as $key => $fechaExistente) {
-                        if ($fecha == $fechaExistente['fecha']) {
-                            unset($datos['datos']['totalInspecciones'][$key]);
-                        }
-                    }
-                    // Reindexamos el array de fechas para evitar índices huecos
-                    $datos['datos']['totalInspecciones'] = array_values($datos['datos']['totalInspecciones']);
-                }
-            }
-        }
-
-        $sqlProHis->dobles_sabados = json_encode($corteHisJson);
-        $sqlProHis->save();
-        return response()->json(['success' => true]);
     }
 }

@@ -19,7 +19,7 @@ class InspectorController extends Controller
     {
         $supervisores = User::role('Supervisor')->get();
         return view('inspectores.index', compact('supervisores'));
-   
+
 
     public function store(){
         $validatedData = request()->validate([
@@ -137,7 +137,7 @@ class InspectorController extends Controller
             'nombres' => 'required',
             'apellidos' => 'required',
             'supervisor' => 'required',
-            
+
         ],[
             'nombres.required' => 'El campo nombres es obligatorio',
             'apellidos.required' => 'El campo apellidos es obligatorio',
