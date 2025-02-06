@@ -171,6 +171,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             nestedHeaders: [headers, headers[5]],
             height: '650px',
             data: rows,
+            dropdownMenu: true,
+            filters: true,
             autoWrapRow: true,
             autoWrapCol: true,
             fixedColumnsStart: 2,
@@ -228,6 +230,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         $('#loader').hide();
         $('#overlay').hide();
     }
+    
     // Insertar fila para promedios
     hot.setDataAtCell(hot.countRows(), 1, 'TOTAL');
     // Insertar fila para sumas (arriba de la de promedios)
@@ -449,7 +452,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 cellStyle();
                 cargarDatos();
-
+                
                 Swal.fire({
                     position: "top-end",
                     icon: "success",

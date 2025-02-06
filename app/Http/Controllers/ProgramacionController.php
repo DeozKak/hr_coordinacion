@@ -1125,7 +1125,7 @@ class ProgramacionController extends Controller
                 }
                 $existe = 0;
                 foreach (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M'] as $columna) {
-
+                    
                     $valorCelda = $worksheet->getCell($columna . $row->getRowIndex())->getValue();
 
                     switch ($columna) {
@@ -1314,7 +1314,6 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
 
     public function PlantillaStore(Request $request)
     {
-
         try {
             $programacion = new tbl_programacion_contrato();
             $programacion->CONTRATO = $request->data['CONTRATO'];

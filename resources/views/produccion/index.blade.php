@@ -7,6 +7,7 @@
 @endsection
 
 @section('content')
+
 {{-- <script src="{{asset('js/produccionIndex.js')}}"></script> --}}
 <div class="card">
     <div class="card-body">

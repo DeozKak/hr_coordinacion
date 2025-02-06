@@ -76,7 +76,6 @@ class ProduccionController extends Controller
                 ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
                 ->where('CATEGORIA', '=', 'COMERCIAL')
                 ->count();
-
             // Contratos residenciales
             $contratosResidenciales = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
                 ->where('FECHA', '>=', $corte->fecha_inicio)
@@ -108,7 +107,6 @@ class ProduccionController extends Controller
                 'cedula' => $inspector->cedula
             ];
         }
-        // dd($produccionInspector);
         // sacar categorias de los contratos
         $contratosCategoria = tbl_bitacora_contrato::select('CATEGORIA', 'CC_OPERARIO')
             ->where('FECHA', '>=', $corte->fecha_inicio)
@@ -696,7 +694,7 @@ class ProduccionController extends Controller
                 $totalContratos += $contrato->total_contratos;
                 /*  } */
             }
-
+            
             // Ajustar los límites de las condicionales si hay un festivo en la semana
             $limiteContratos = $hayFestivoEnSemana ? $valDobles - 10 : $valDobles;
             $limiteContratosBajo = $hayFestivoEnSemana ? $valDobles - 12 : $valDobles - 2;
