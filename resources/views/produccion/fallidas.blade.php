@@ -12,7 +12,7 @@
 
 
     <a class="btn btn-primary" href="javascript:history.go(-1)" style="margin-bottom: 10px;">Ir Atrás</a>
-    <button type="button" class="btn btn-success" id="exportar" style="margin-bottom: 10px;">Exportar</button>
+  
     <x-adminlte-card title="Fallidas por dia" theme="info" icon="fas fa-code-branch" header-class="text-uppercase rounded-bottom border-info" collapsible>
         <div id="detalles" style="width: '100px'"></div>
     </x-adminlte-card>

@@ -35,6 +35,7 @@ Route::middleware('web')->group(function () {
                 'ccOperario' => $request->cc_inspector
             ]);
         })->name('obtener-url-bitacoras');
+        Route::post('/produccion/getCorteData', [ProduccionController::class, 'getCorteData'])->name('produccion.getCorteData')->middleware(CheckPermission::class . ':ver_residente');
         Route::post('/crear-session-corte', [ProduccionController::class, 'crearSession'])->name('produccion.crearSession')->middleware(CheckPermission::class . ':ver_residente');
         Route::post('/produccion/guardar_no_dobles', [ProduccionController::class, 'guardarNoDobles'])->name('produccion.guardarNoDobles')->middleware(CheckPermission::class . ':ver_residente');
         Route::post('/produccion/contarDobles', [ProduccionController::class, 'contarDobles'])->name('produccion.contarDobles')->middleware(CheckPermission::class . ':ver_residente');

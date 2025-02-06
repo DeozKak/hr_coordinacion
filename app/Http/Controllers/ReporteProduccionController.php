@@ -201,8 +201,10 @@ class ReporteProduccionController extends Controller
                     WHERE tbl_bitacora_contratos.FECHA = ?
                     AND tbl_bitacora_contratos.state = ?
                     AND tbl_bitacora_contratos.TIPO_TRABAJO != ?
+                     AND tbl_bitacora_contratos.TIPO_TRABAJO != ?
                     GROUP BY tbl_bitacora_contratos.CC_OPERARIO
-                ", [1, 2, 3, 1, 2, 3, $dateString, 1, 'FI-29 revisión periódica línea matriz']);
+                ", [1, 2, 3, 1, 2, 3, $dateString, 1, 'FI-29 revisión periódica línea matriz', 'FI-31 REVISIÓN NUEVA LINEA MATRIZ']);
+
 
 
             // Convertir la colección de $counts a un array

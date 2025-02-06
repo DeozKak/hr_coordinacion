@@ -592,7 +592,7 @@ class BitacoraController extends Controller
                         }
                     }
                     $consultaPrioridad = Movilidad::select('Prioridad')->where('NroSitio', $datos['contrato'])->where('IdTarea', $datos['no_acta'])->first();
-                    $datos['prioridad'] =  $consultaPrioridad->Prioridad;
+                    $datos['prioridad'] = $consultaPrioridad->Prioridad ?? 'Sin prioridad'; 
                     $contrato = new tbl_bitacora_contrato();
                     $contrato->CC_OPERARIO = $datos['cc_operario'];
                     $contrato->MUNICIPIO = $datos['municipio'];
@@ -680,16 +680,16 @@ class BitacoraController extends Controller
                     }
                 }
             }
-            try{
+             try{
             // Obtener los usuarios que deben recibir la notificación
-            $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN', 'Auxiliar_coordinacion'])->get();
+            $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN', 'Auxiliar_coordinacion','Auxiliar_metrologia'])->get();
             $usuarioLog = Auth::user();
 
             // Enviar la notificación a cada usuario
             foreach ($usuarios as $usuario) {
                 $usuario->notify(new Bitacora($usuarioLog->name, $bitacora->id));
             }
-        }catch(\Exception $e){
+             }catch(\Exception $e){
             Log::error($e);
         }
         } else {

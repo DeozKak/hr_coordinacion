@@ -12,7 +12,7 @@
 
 <input type="hidden" id="fecha_inicio" value="{{session('fecha_inicio')}}">
 <link rel="stylesheet" href="{{asset('css/produccion/produccionV2.css')}}">
-<script src="{{asset('js/producciondetallesV4.js')}}?v={{ time()}}"></script>
+<script src="{{asset('js/producciondetallesV5.js')}}?v={{ time()}}"></script>
 
 
 <input type="hidden" id="id_corte_detalles" value="">
@@ -39,8 +39,9 @@
             </div>
             <div class="modal-body" style="margin-bottom: 10px;">
                 <div id="mensajeNoDatos" style="display: none;" class="alert alert-warning">No hay datos</div>
+                <div>Cantidad Prioridades</div>
                 <div id="contadores_dia"  style=" width: '100px';"></div>
-
+                <div>Inspecciones</div>
                 <div id="contratos_dia" style=" width: '100px'; margin-bottom: 10px;"></div>
             </div>
             <div class="modal-footer">
@@ -128,7 +129,9 @@
                             <option value="SA 12164">SA 12164</option>
                         </select>
                     </div>
+
                     <br>
+
                     <div class="col-md-6">
                         <label for="contrato">Contrato</label>
                         <input type="text" class="form-control" name="contrato" id="contrato" value=":">
@@ -140,7 +143,9 @@
                         <label for="orden_trabajo">Orden de trabajo</label>
                         <input type="text" class="form-control" name="orden_trabajo" id="orden_trabajo">
                     </div>
+
                     <br>
+
                     <div class="col-md-6">
                         <label for="categoria">Categoria</label>
                         <select class="form-control" name="categoria" id="categoria">
@@ -282,6 +287,7 @@
                     },
                     minimumInputLength: 2 // Mínimo de caracteres para iniciar la búsqueda
                 });
+
             });
         });
     </script>

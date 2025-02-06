@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Notifications\Mod_Devolucion;
 use App\Notifications\Bitacora;
-use App\Notifications\Programada;
 use Illuminate\Http\Request;
 
 class NotificationsController extends Controller
@@ -20,14 +19,11 @@ class NotificationsController extends Controller
     {
         // Obtener todas las notificaciones no leídas de tipo Mod_Devolucion para el usuario autenticado
         $notifications = auth()->user()->unreadNotifications()
-        ->where(function ($query) {
-            $query->where('type', Mod_Devolucion::class)
-                  ->orWhere('type', Bitacora::class)
-                  ->orWhere('type', Programada::class);
-           
-        })
-        ->get();
-
+            ->where(function ($query) {
+                $query->where('type', Mod_Devolucion::class)
+                    ->orWhere('type', Bitacora::class);
+            })
+            ->get();
 
         // Crear contenido para el dropdown
         $dropdownHtml = '';

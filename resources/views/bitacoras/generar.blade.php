@@ -100,7 +100,6 @@
         });
     </script>
     @endif
- 
     @if (session('warning'))
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -157,7 +156,6 @@
         });
     </script>
     @endif
-    
 </body>
 
 

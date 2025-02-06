@@ -1,13 +1,13 @@
 /* Estilos para hacer la tabla más pequeña */
-#table_users, #table_desactivar {
+#table_users {
     font-size: 0.875rem; /* Reducir el tamaño de la fuente */
 }
 
-#table_users, #table_desactivar th, #table_users, #table_desactivar td {
+#table_users th, #table_users td {
     padding: 0.5rem; /* Reducir el espaciado interno de las celdas */
 }
 
-#table_users, #table_desactivar thead th {
+#table_users thead th {
     padding-top: 0.25rem; /* Reducir el espaciado superior de las celdas de encabezado */
     padding-bottom: 0.25rem; /* Reducir el espaciado inferior de las celdas de encabezado */
 }
@@ -23,8 +23,4 @@
 
 .btn {
     margin-right: 5px; /* Espacio entre los botones */
-}
-
-#table_desactivar {
-    width: 100% !important;
 }

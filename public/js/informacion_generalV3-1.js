@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         $('#nombreMunicipio').val('');
                         $('#sedeMunicipio').val('');
                         $('#zonaMunicipio').val('');
-                       
+                        console.log(response)
 
                         let nuevaFila = `
                             <tr data-id="${response.success.id}">

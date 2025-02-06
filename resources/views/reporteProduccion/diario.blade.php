@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', 'Produccion diario')
+@section('title', 'Nomina')
 
 @section('content_header')
 <div class="d-flex align-items-center">
@@ -13,7 +13,7 @@
 
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/reporteProduccion/reporteDiarioProduccion.css') }}?v={{ time() }}">
+<link rel="stylesheet" href="{{ asset('css/reporteProduccion/reporteDiarioProduccion.css') }}">
 
 <div class="row align-items-center">
     <div class="col-md-2">
@@ -56,9 +56,6 @@
             <div id="example" style="display: none">
                 <!--Reporte diario de produccion  -->
             </div>
-            <div class="loaderTablaDiario" style="display: none">
-                <span class="loaderDiario"></span>
-            </div>
         </x-adminlte-card>
     </div>
     <div class="row">
@@ -79,5 +76,5 @@
 @endsection
 
 @section('js')
-<script src="{{ asset('js/reporteProduccion/reporteDiarioProduccion.js') }}?v={{ time() }}"></script>
+<script src="{{ asset('js/reporteProduccion/reporteDiarioProduccion.js') }}"></script>
 @endsection

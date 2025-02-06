@@ -61,15 +61,16 @@
                                         @haspermission('mod_devoluciones')
                                         <th>Acciones</th>
                                         @endhaspermission
+
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($devoluciones as $dato)
                                     <tr style="<?php if ($dato->vence === "60 meses") {
-                                                    echo "background-color: rgb(251,201,255);";
+                                                    echo ("background-color: rgb(251,201,255);");
                                                 } ?>">
 
-                                        <td> {{$dato->Supervisor->name}}</td>
+                                        <td>{{$dato->Supervisor->name}}</td>
                                         <td> {{$dato->Inspector->nombres}} {{$dato->Inspector->apellidos}}</td>
                                         <td> {{$dato->FECHA_INSP}} </td>
                                         <td> {{$dato->TIPO_TRABAJO}} </td>
@@ -93,7 +94,7 @@
                                         @endif
                                         @haspermission('mod_devoluciones')
                                         @if ($dato->GESTIONADO === 0 )
-                                            @if($dato->CAUSAL === "ORDEN YA REGISTRADA" || $dato->CAUSAL === "INFORMACION ERRADA"|| $dato->CAUSAL === "CONTRATO ERRADO")
+                                            @if($dato->CAUSAL === "ORDEN YA REGISTRADA" || $dato->CAUSAL === "INFORMACION ERRADA" || $dato->CAUSAL === "CONTRATO ERRADO" || $dato->CAUSAL === "NUMERO DE CUOTAS" || $dato->CAUSAL === "FALTA CARTA")
                                                 <td>
                                                     <form action="{{route('bitacoras.actualizar_devolucion',['id' => $dato->id])}}" method="POST">
                                                     @csrf
@@ -141,7 +142,7 @@
                                 <tbody>
                                     @foreach ($gestionados as $dato)
                                     <tr style="<?php if ($dato->vence === "60 meses") {
-                                                    echo "background-color: rgb(251,201,255);";
+                                                    echo ("background-color: rgb(251,201,255);");
                                                 } ?>">
                                         <td>{{$dato->Supervisor->name}}</td>
                                         <td> {{$dato->Inspector->nombres}} {{$dato->Inspector->apellidos}}</td>

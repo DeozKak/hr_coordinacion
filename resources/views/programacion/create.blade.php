@@ -79,7 +79,9 @@
             <label for="fecha">Fecha:</label>
             <input type="date" class="form-control" name="fecha" id="FECHA" placeholder="dd-mm-yy" readonly>
           </div>
+
           <br>
+
           <div class="col-md-6">
             <label for="celular">Celular</label>
             <input type="text" class="form-control" name="celular" id="CELULAR">
@@ -103,10 +105,11 @@
           <div class="col-md-6">
             <label for="direccion">Dirección</label>
             <input type="text" class="form-control" id="DIRECCION" style="text-align: center;">
+
           </div>
           <br>
           <div class="col-md-6">
-            <label for="barrio">Barrio</label>
+            <label for="direccion">Barrio</label>
             <input type="text" class="form-control" id="BARRIO" style="text-align: center;">
           </div>
         </div>
@@ -203,7 +206,7 @@ $tabla = isset($tabla) ? $tabla : []; // Si $tabla no está definida, se asigna 
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/es.js"></script>
 <script>
-  const view = "{{$view ?? false }}";
+  const view = "{{ $view ?? false }}";
 </script>
 
 <script>

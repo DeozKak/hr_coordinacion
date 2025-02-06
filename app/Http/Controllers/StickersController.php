@@ -78,8 +78,8 @@ class StickersController extends Controller
     public function getData($id)
     {
         
-         $fecha_actual = date('Y-m-d');
-       /*  $fecha_actual = "2024-12-16"; */
+         $fecha_actual = date('Y-m-d'); 
+        //$fecha_actual = "2025-01-31"; 
         $verf_semana = tbl_controlstick_semana::find($id);
         if ($fecha_actual >= $verf_semana->fecha_inicio && $fecha_actual <= $verf_semana->fecha_fin) {
         } else {

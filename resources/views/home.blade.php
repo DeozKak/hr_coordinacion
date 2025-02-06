@@ -15,7 +15,7 @@
         Swal.fire({
             title: "Error",
             text: "{{session('error')}}",
-            icon: "error"
+            type: "error"
         });
     });
 </script>
@@ -25,7 +25,7 @@
      document.addEventListener('DOMContentLoaded', function() {
             Swal.fire({
                 position: "top-end",
-                icon: "success",
+                type: "success",
                 title: "{{ session('success') }}",
                 showConfirmButton: false,
                 toast: true,

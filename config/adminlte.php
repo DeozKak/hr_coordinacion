@@ -318,11 +318,11 @@ return [
             'dropdown_flabel' => 'todas las notificaciones',
             'update_cfg' => [
                 'url' => 'notifications/get',
-                'period' => 75,
+                'period' => 15,
             ],
         ],
 
-
+       
 
         // Sidebar items:
         [
@@ -334,7 +334,7 @@ return [
             'url' => 'admin/blog',
             'can' => 'manage-blog',
         ],
-        ['header' => 'Resvisiones Nuevas', 'can' => 'ver_coordinacion_RN',],
+        ['header' => 'Resvisiones Periódicas', 'can' => 'ver_coordinacion_RP',],
         [
             'text' => 'Cargues',
             'icon' => 'fas fa-upload',
@@ -346,12 +346,6 @@ return [
                     'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
-                [
-                    'text' => 'Recepcion',
-                    'url' => 'receptionLoad',
-                    'icon' => 'far fa-circle',
-                    'label_color' => 'success',
-                ],
 
             ],
         ],
@@ -359,7 +353,7 @@ return [
         [
             'text' => 'Gestión',
             'icon' => 'fas fa-tasks',
-            'can' => 'ver_coordinacion_RN',
+            'can' => 'ver_coordinacion_RP',
             'submenu' => [
                 [
                     'text' => 'Coordinación',
@@ -397,18 +391,12 @@ return [
                     'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
-                [
-                    'text' => 'Recepcion',
-                    'url' => '/gestion/viewReception',
-                    'icon' => 'far fa-circle',
-                    'label_color' => 'success',
-                ],
             ],
         ],
         [
             'text' => 'Seguimiento',
             'icon' => 'fas fa-walking',
-            'can' => 'ver_coordinacion_RN',
+            'can' => 'ver_coordinacion_RP',
             'submenu' => [
                 [
                     'text' => 'App',
@@ -437,6 +425,12 @@ return [
                 [
                     'text' => 'Orca',
                     'url' => 'orca',
+                    'icon' => 'far fa-circle',
+                    'label_color' => 'success',
+                ],
+                [
+                    'text' => 'Nómina',
+                    'url' => 'nomina',
                     'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
@@ -484,7 +478,7 @@ return [
                     'icon' => 'far fa-circle',
                     'can' => 'generar_bitacoras',
                     'label_color' => 'success',
-                ]
+                ],
             ]
         ],
 
@@ -522,7 +516,7 @@ return [
                     'text' => 'Parametrizar precios',
                     'url' => 'fechasParametros',
                     'icon' => 'far fa-circle',
-                    'can' => ['ver_residente', 'ver_coordinacion_RP'],
+                    'can' => ['reporte_produccion'],
                     'label_color' => 'success',
 
                 ],
@@ -582,23 +576,6 @@ return [
             ]
         ],
 
-        ['header' => 'Nomina', 'can' => ['gestion_nomina'],],
-
-        [
-            'text' => 'Nomina',
-            'can' => ['gestion_nomina'],
-            'icon' => 'fas fa-money-check-alt',
-            'submenu' => [
-                [
-                    'text' => 'Nomina',
-                    'url' => '/nomina/reporteNomina',
-                    'icon' => 'far fa-circle',
-                    'can' => 'gestion_nomina',
-                    'label_color' => 'success',
-                ]
-            ]
-        ],
-
       /*   ['header' => 'Programación', 'can' => ['generar_programacion','ver_programacion'],],
  */
         [
@@ -623,6 +600,24 @@ return [
                 
             ]
         ],
+        
+        ['header' => 'Nomina', 'can' => ['gestion_nomina'],],
+
+        [
+            'text' => 'Nomina',
+            'can' => ['gestion_nomina'],
+            'icon' => 'fas fa-money-check-alt',
+            'submenu' => [
+                [
+                    'text' => 'Nomina',
+                    'url' => '/nomina/reporteNomina',
+                    'icon' => 'far fa-circle',
+                    'can' => 'gestion_nomina',
+                    'label_color' => 'success',
+                ]
+            ]
+        ],
+
         /*  [
             'text' => 'change_password',
             'url' => 'admin/settings',
@@ -755,6 +750,21 @@ return [
                 ], */
             ],
         ],
+         'TomSelect' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => '//cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js',
+                ],
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => '//cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.bootstrap4.min.css',
+                ],
+            ]
+        ],
         'Handsontable' => [
             'active' => true,
             'files' => [
@@ -775,7 +785,16 @@ return [
                 ],
             ],
         ],
-      
+        'ExcelXLSX' => [
+            'active' => true,
+            'files' => [
+                [
+                  'type'=> 'js',
+                  'asset' => true,
+                  'location' => '//cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js',
+                ]
+            ]
+        ],
        /*  'Select2' => [
             'active' => true,
             'files' => [

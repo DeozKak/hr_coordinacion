@@ -3,8 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let headers = [];
     let rows = [];
     let fechas = [];
-
-    function cellStyle(){
+     function cellStyle(){
         Handsontable.renderers.registerRenderer('customStylesRenderer', (hotInstance, TD, row, col, prop, value, cellProperties) => {
             Handsontable.renderers.TextRenderer(hotInstance, TD, row, col, prop, value, cellProperties);
             let columNameColor = hotInstance.getColHeader(col);
@@ -18,7 +17,6 @@ document.addEventListener('DOMContentLoaded', async () => {
            
         });
     }
-    
     const fetchData = () => {
         return new Promise((resolve, reject) => {
             $.ajax({
@@ -35,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         return;
                     }
                     resolve(response);
-                       cellStyle()
+                     cellStyle() 
                     $('#loader').hide();
                     $('#overlay').hide();
                 },
@@ -106,11 +104,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         autoWrapCol: true,
         fixedColumnsStart: 2,
         licenseKey: 'non-commercial-and-evaluation', // for non-commercial use only
-         cells: function (row, col) {
+          cells: function (row, col) {
              const cellProperties = {};
              cellProperties.renderer = 'customStylesRenderer';
              return cellProperties;
-         },
+         }, 
         afterChange: function (changes, source) {
             if (source === 'edit') {
                 changes.forEach(([row, prop, oldValue, newValue]) => {
@@ -265,7 +263,9 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             url: urlDetalles, // Ruta al archivo PHP que realiza la consulta a la base de datos
             type: 'GET',
             success: function (response) {
-            // Asigna los datos obtenidos a la variable
+               
+           
+                // Asigna los datos obtenidos a la variable
             const array2D = convertirJSONaArray2D(response);
             hot_dia.loadData(array2D);
             if (array2D && array2D.length > 0) {

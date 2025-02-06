@@ -50,14 +50,13 @@ class ProgramacionController extends Controller
     public function create()
     {
         $programacion = tbl_programacion_usuario::where('finished', 0)->where('id_usuario', Auth::id())->first();
-
+       
         if (is_null($programacion)) {
             $fechaActual = Carbon::now();
             $soloFecha = $fechaActual->format('Y-m-d');
             $programacion =  new tbl_programacion_usuario;
             $programacion->nombre = "Programación " . $soloFecha;
             $programacion->id_usuario = Auth::id();
-            $programacion->created_at;
             $programacion->save();
 
             $tecnicos = tbl_insp_cali::select('id', 'apellidos', 'nombres')
@@ -70,12 +69,14 @@ class ProgramacionController extends Controller
             return view('programacion.create', compact('tecnicos', 'user', 'programacion'));
         } else {
             return $this->index();
-            /*  $tecnicos = tbl_insp_cali::select('id', 'apellidos', 'nombres')
+           /*  $tecnicos = tbl_insp_cali::select('id', 'apellidos', 'nombres')
                 ->where('state', 1)
                 ->orderBy('apellidos') // Ordenar por apellidos ascendente
                 ->get();
 
             $user = Auth::user(); */
+
+           
         }
     }
 
@@ -84,7 +85,7 @@ class ProgramacionController extends Controller
         $action = $request->query('action');
 
         $programacion = tbl_programacion_usuario::find($id);
-        $tabla = tbl_programacion_contrato::where('id_programacion', $id)->get();
+        $tabla = tbl_programacion_contrato::where( 'id_programacion', $id)->get();
 
         if ($action === 'edit') {
             if (auth()->user()->haspermissionTo('generar_programacion')) {
@@ -111,7 +112,7 @@ class ProgramacionController extends Controller
             return view('programacion.create', compact('tecnicos', 'user', 'programacion', 'tabla', 'view', 'user'));
         }
         if ($action === 'edit') {
-
+        
             return view('programacion.create', compact('tecnicos', 'user', 'programacion', 'tabla', 'user'));
         }
     }
@@ -204,6 +205,7 @@ class ProgramacionController extends Controller
     {
         $registros = []; // Array para almacenar los registros en lotes
         $tamañoLote = 2000; // Puedes ajustar el tamaño del lote según tus necesidades
+
         tbl_programacion_base::truncate();
 
         DB::beginTransaction(); // Iniciar una transacción
@@ -278,6 +280,10 @@ class ProgramacionController extends Controller
                     }
                 }
 
+                if ($filaVacia) {
+                    continue; // Saltar la fila si está vacía
+                }
+                
                 if ($rowData["ID_TECNICO"] !== null) {
                     if ($rowData["ID_TECNICO"] !== "0") {
 
@@ -286,7 +292,6 @@ class ProgramacionController extends Controller
                         if ($programacion->count() > 0) {
                             foreach ($programacion as $pro) {
                                 try {
-
                                     $inspector = tbl_insp_cali::where('id', $rowData["ID_TECNICO"])->first();
                                     if ($pro->FECHA_AGENDAMIENTO >= date('Y-m-d')) {
                                         $pro->TECNICO = $rowData["ID_TECNICO"] . '. ' . $inspector->apellidos . ' ' . $inspector->nombres;
@@ -298,11 +303,6 @@ class ProgramacionController extends Controller
                             }
                         }
                     }
-                }
-
-
-                if ($filaVacia) {
-                    continue; // Saltar la fila si está vacía
                 }
 
                 $registros[] = $rowData;
@@ -318,11 +318,13 @@ class ProgramacionController extends Controller
             }
 
             DB::commit(); // Confirmar la transacción si todo tiene éxito
-            
             return true;
         } catch (QueryException $e) {
-            Log::error("Error al insertar datos: " . $e->getMessage()); // Registrar el error para depuración
             throw $e;
+
+            DB::rollback(); // Revertir la transacción si ocurre un error
+            Log::error("Error al insertar datos: " . $e->getMessage()); // Registrar el error para depuración
+            return false;
         }
     }
 
@@ -344,27 +346,25 @@ class ProgramacionController extends Controller
         }
 
         $datos = tbl_programacion_base::where('CONTRATO', $contrato)->first();
-        if ($datos == null) {
+         if($datos == null){
             return null;
         }
-        if ($datos->ESTADO_RECEPCION !== null) {
+
+         if ($datos?->ESTADO_RECEPCION !== null) {
             if ($datos->ESTADO_RECEPCION == '1' || $datos->ESTADO_RECEPCION == '2') {
                 return response()->json(['errors' => 'El contrato ya ha sido ejecutado']);
             }
         }
-
         if ($datos) {
-
-            $id_inspector = $datos->ID_TECNICO;
+              $id_inspector = $datos->ID_TECNICO;
 
             $inspector = tbl_insp_cali::where('id', $datos->ID_TECNICO)->first();
-            if ($inspector !== null) {
-                // Modificar la propiedad ID_TECNICO con el resultado de la consulta
+            if($inspector !== null){
+                 // Modificar la propiedad ID_TECNICO con el resultado de la consulta
                 $datos->ID_TECNICO = $id_inspector . '. ' . $inspector->apellidos . ' ' . $inspector->nombres;
-            } else {
+            }else{
                 $datos->ID_TECNICO = null;
             }
-
             return response()->json($datos);
         } else {
             return response()->json(['errors' => 'No se encontraron registros'], 422);
@@ -381,12 +381,10 @@ class ProgramacionController extends Controller
             ->where('TIPO_TRABAJO', $request->data[2])
             ->first();
         if ($exist) {
-            return response()->json([
-                'exist' => 'Ya existe una programación con estos datos',
-                'id' => $exist->id,
-                'usuario' => $exist->PORQUE_PROGRAMO,
-                'agendamiento' => $exist->FECHA_AGENDAMIENTO
-            ]);
+            return response()->json(['exist' => 'Ya existe una programación con estos datos',
+                                    'id' => $exist->id,
+                                    'usuario' => $exist->PORQUE_PROGRAMO,
+                                    'agendamiento' => $exist->FECHA_AGENDAMIENTO]);
         }
 
         try {
@@ -422,9 +420,12 @@ class ProgramacionController extends Controller
 
     public function update($id, Request $request)
     {
+
         try {
             $programacion = tbl_programacion_contrato::find($id);
+
             $campo = $request->propiedad;
+
             $programacion->$campo = $request->valor;
             $programacion->save();
         } catch (QueryException $e) {
@@ -436,7 +437,7 @@ class ProgramacionController extends Controller
 
     public function destroy(Request $request)
     {
-
+       
         try {
             $id = $request->data;
             $programacion = tbl_programacion_contrato::find($id);
@@ -504,10 +505,10 @@ class ProgramacionController extends Controller
 
                 //quitar numero al tecnico
 
-                /*  $tecnico = $programada->TECNICO;
+                $tecnico = $programada->TECNICO;
                 $tecnico_sin_numero = substr($tecnico, strpos($tecnico, ". ") + 2);
 
-                 $bodyData = [
+                /* $bodyData = [
                     'typing_time' => 0,
                     'to' => '57' . $programada->CELULAR,
                     'body' => $saludo . ', Sr./Sra. ' . $programada->NOMBRE_USUARIO . '. 👋' .
@@ -522,7 +523,7 @@ class ProgramacionController extends Controller
                         'authorization' => 'Bearer bGBktWXeKxgX1syNGKtT8al4rfZHRemt',
                         'content-type' => 'application/json',
                     ],
-                ]); */
+                ]);*/
                 $programada->mensaje = 1;
                 $programada->save();
             }
@@ -541,7 +542,7 @@ class ProgramacionController extends Controller
 
     public function agendamiento(Request $request)
     {
-
+     
         $request->validate([
             'fechaInicio' => 'required|date',
             'fechaFin' => 'nullable|date|after_or_equal:fechaInicio',
@@ -561,7 +562,7 @@ class ProgramacionController extends Controller
                     ->join('tbl_programacion_usuarios AS pu', 'pc.id_programacion', '=', 'pu.id')
                     ->where('pc.FECHA_AGENDAMIENTO', '=', $fecha_inicio)
                     ->where('pu.finished', 1)
-                    ->where('pb.ESTADO_RECEPCION', '=', 0)
+                    ->where( 'pb.ESTADO_RECEPCION', '=', 0)
                     ->select(
                         'pc.id',
                         'pc.CONTRATO',
@@ -613,17 +614,17 @@ class ProgramacionController extends Controller
                 $columnasAExcluir = ['updated_at', 'created_at'];
                 $columnasAIncluir = array_diff($columnasTabla, $columnasAExcluir);
 
-                $busqueda = DB::table('tbl_programacion_contratos AS pc')
-                    ->join('tbl_programacion_base AS pb', 'pc.CONTRATO', '=', 'pb.CONTRATO')
-                    ->join('tbl_programacion_usuarios AS pu', 'pc.id_programacion', '=', 'pu.id')
-                    ->where(function ($query) use ($fecha_inicio, $fecha_fin) {  // Agrupamos las condiciones
-                        $query->whereBetween('FECHA_AGENDAMIENTO', [$fecha_inicio, $fecha_fin])
-                            ->where(function ($subquery) {
-                                $subquery->where('pb.ESTADO_RECEPCION', '=', 0)
-                                    ->orWhereNull('pb.ESTADO_RECEPCION');
-                            });
-                    })
-                    ->where('pu.finished', 1)
+              $busqueda = DB::table('tbl_programacion_contratos AS pc')
+                ->join('tbl_programacion_base AS pb', 'pc.CONTRATO', '=', 'pb.CONTRATO')
+                ->join('tbl_programacion_usuarios AS pu', 'pc.id_programacion', '=', 'pu.id')
+                ->where(function ($query) use ($fecha_inicio, $fecha_fin) {  // Agrupamos las condiciones
+                    $query->whereBetween('FECHA_AGENDAMIENTO', [$fecha_inicio, $fecha_fin])
+                          ->where(function ($subquery) {
+                              $subquery->where('pb.ESTADO_RECEPCION', '=', 0)
+                                       ->orWhereNull('pb.ESTADO_RECEPCION');
+                          });
+                })
+                ->where('pu.finished', 1)
                     ->select(
                         'pc.id',
                         'pc.CONTRATO',
@@ -644,7 +645,7 @@ class ProgramacionController extends Controller
                         'pc.TECNICO',
                         'pc.HORA_INICIO',
                         'pc.HORA_FINAL',
-                    ); // Agrupamos por los campos deseados;
+                    );
 
                 $plantilla = DB::table('tbl_programacion_contratos')
                     ->where('FECHA_AGENDAMIENTO', '>=', $fecha_inicio)
@@ -677,18 +678,18 @@ class ProgramacionController extends Controller
             $busqueda = $busqueda->get();
             $uniqueData = [];
             $uniqueKeys = [];
-
+            
             foreach ($busqueda as $item) {
                 $key = $item->ORDEN_TRABAJO . $item->FECHA_AGENDAMIENTO . $item->PORQUE_PROGRAMO;
-
+            
                 if (!in_array($key, $uniqueKeys)) {
                     $uniqueData[] = $item;
                     $uniqueKeys[] = $key;
                 }
             }
-
+            
             $busqueda = $uniqueData;
-
+      
             foreach ($plantilla as $registro) {
                 $busqueda[] = $registro; // Agregamos cada elemento de $plantilla al array $busqueda
             }
@@ -1017,13 +1018,13 @@ class ProgramacionController extends Controller
                             break;
                     }
                 }
-                $exist = tbl_programacion_contrato::where('ORDEN_TRABAJO', $programada->ORDEN_TRABAJO)
+                  $exist = tbl_programacion_contrato::where('ORDEN_TRABAJO', $programada->ORDEN_TRABAJO)
                     ->where('TIPO_TRABAJO', $programada->TIPO_TRABAJO)
                     ->where('FECHA_AGENDAMIENTO',  $programada->FECHA_AGENDAMIENTO)
                     ->exists();
                 if ($exist) {
                     continue;
-                }
+                } 
                 $programada->save();
             }
             return true;
@@ -1033,8 +1034,8 @@ class ProgramacionController extends Controller
             return false;
         }
     }
-
-    public function programacionGDO(Request $request)
+    
+     public function programacionGDO(Request $request)
     {
 
         $request->validate([
@@ -1057,7 +1058,7 @@ class ProgramacionController extends Controller
 
         $datos = $this->ExtdatosGDO($worksheet);
         //$indicador = $this->notificacion($datos);
-
+      
 
         if ($datos !== false) {
             session()->flash('success', 'Archivo subido exitosamente');
@@ -1121,7 +1122,7 @@ class ProgramacionController extends Controller
         $tabla->id_usuario = Auth::id();
         $tabla->finished = 1;
         $tabla->mensaje = 1;
-        $tabla->save();
+        $tabla->save(); 
 
         try {
             foreach ($worksheet->getRowIterator() as $row) {
@@ -1144,6 +1145,7 @@ class ProgramacionController extends Controller
                 $programada->mensaje = 1;
 
                 $jornada = $worksheet->getCell('L' . $row->getRowIndex())->getValue();
+                $fecha_visita = $worksheet->getCell('K' . $row->getRowIndex())->getValue();
 
                 // Expresión regular para encontrar "JORNADA VISITA" seguido de dos letras
                 $patron = '/JORNADA VISITA (\w{2})/';
@@ -1152,18 +1154,18 @@ class ProgramacionController extends Controller
                 if (preg_match($patron, $jornada, $coincidencias)) {
                     // Si hay coincidencia, la jornada se encuentra en $coincidencias[1]
                     $jornadaVisita = $coincidencias[1];
-                    if ($jornadaVisita == "AM") {
+                    if($jornadaVisita == "AM"){
                         $programada->HORA_INICIO = "07:59:00 a.m.";
                         $programada->HORA_FINAL = "11:59:00 a.m.";
                     }
-                    if ($jornadaVisita == "PM") {
+                    if($jornadaVisita == "PM"){
                         $programada->HORA_INICIO = "01:59:00 p.m.";
                         $programada->HORA_FINAL = "04:59:00 p.m.";
                     }
                 } else {
-                    return false;
+                  return false;
                 }
-                $existe = 0;
+                   $existe = 0;
                 foreach (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M'] as $columna) {
 
                     $valorCelda = $worksheet->getCell($columna . $row->getRowIndex())->getValue();
@@ -1171,7 +1173,7 @@ class ProgramacionController extends Controller
                     switch ($columna) {
                         case 'A':
                             $exist = tbl_programacion_contrato::where('CONTRATO', $valorCelda)->exists();
-                            if ($exist) {
+                            if($exist){
                                 $existe = $existe + 1;
                             }
                             $programada->CONTRATO = $valorCelda;
@@ -1186,8 +1188,8 @@ class ProgramacionController extends Controller
                             $programada->NOMBRE_USUARIO = $valorCelda;
                             break;
                         case 'E':
-                            $exist = tbl_programacion_contrato::where('ORDEN_TRABAJO', $valorCelda)->exists();
-                            if ($exist) {
+                             $exist = tbl_programacion_contrato::where('ORDEN_TRABAJO', $valorCelda)->exists();
+                            if($exist){
                                 $existe = $existe + 1;
                             }
                             $programada->ORDEN_TRABAJO = $valorCelda;
@@ -1206,15 +1208,15 @@ class ProgramacionController extends Controller
                             break;
                         case 'K':
                             $patron = '/FECHA DE VISITA (\d{4}-\d{2}-\d{2})/';
-                            preg_match($patron, $jornada, $coincidencias);
-
+                            preg_match($patron, $fecha_visita, $coincidencias);
+                         
                             $programada->FECHA_AGENDAMIENTO = $coincidencias[1];
                             break;
                         case 'L':
                             $programada->OBSERVACIONES = $valorCelda;
                             break;
                         case 'M':
-                            if ($valorCelda == null || $valorCelda == "") {
+                            if($valorCelda == null || $valorCelda == ""){
                                 break;
                             }
                             $inspector = tbl_insp_cali::where('id', $valorCelda)->first();
@@ -1230,9 +1232,7 @@ class ProgramacionController extends Controller
                 if ($exist) {
                     continue;
                 } */
-                if ($existe >= 2) {
-                    continue;
-                }
+                 if($existe >= 2){continue;}
                 $programada->save();
             }
             return true;
@@ -1242,6 +1242,7 @@ class ProgramacionController extends Controller
             return false;
         }
     }
+
 
 
     private function notificacion($datos)
@@ -1325,38 +1326,38 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
         return true;
     }
 
-    public function buscarPorContrato(Request $request)
-    {
+    public function buscarPorContrato(Request $request){
 
         $contrato = $request->input('contrato');
         $array = array();
 
-        try {
-            $programadas = tbl_programacion_usuario::whereIn(
-                'id',
-                tbl_programacion_contrato::select('id_programacion')
-                    ->where('CONTRATO', 'LIKE', '%' . $contrato . '%')
-            )->get();
+        try{
+        $programadas = tbl_programacion_usuario::whereIn(
+            'id',
+            tbl_programacion_contrato::select('id_programacion')
+                ->where('CONTRATO', 'LIKE', '%' . $contrato . '%')
+        )->get();
 
-            foreach ($programadas as $programada) {
-                $usuario = User::find($programada->id_usuario);
+        foreach ($programadas as $programada) {
+            $usuario = User::find($programada->id_usuario);
 
-                $array[] = [
-                    'id' => $programada->id,
-                    'nombre' => $programada->nombre,
-                    'usuario' => $usuario->name,
-                ];
-            }
-        } catch (Exception $e) {
-            Log::error($e);
-            return response()->json(['error' => $e], 422);
+            $array[] = [
+                'id' => $programada->id,
+                'nombre' => $programada->nombre,
+                'usuario' => $usuario->name,
+            ];
+        
         }
+    }catch (Exception $e) {
+        Log::error($e);
+        return response()->json(['error' => $e], 422);
+
+    }
         return response()->json($array);
     }
 
-    public function PlantillaStore(Request $request)
-    {
-
+    public function PlantillaStore(Request $request){
+     
         try {
             $programacion = new tbl_programacion_contrato();
             $programacion->CONTRATO = $request->data['CONTRATO'];
@@ -1384,7 +1385,11 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
 
             log::error($e);
             return response()->json(['error' => $e]);
+
         }
-        return response()->json(['message' => 'Registro guardado correctamente', 'id' => $programacion->id], 200);
+        return response()->json(['message' => 'Registro guardado correctamente','id' => $programacion->id],200);
     }
+
+
+    
 }

@@ -34,7 +34,7 @@
     const id_semana = {{ $id }};
    
 </script>
-<script src="{{ asset('js/Stickers/show.js') }}?v={{ time() }}"></script>
+<script src="{{ asset('js/stickers/show.js') }}?v={{ time() }}"></script>
 
  @stop
 @stop

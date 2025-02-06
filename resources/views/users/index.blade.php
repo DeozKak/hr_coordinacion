@@ -304,7 +304,7 @@ $(document).ready(function() {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
-                        text: 'Hubo un problema al actualizar el inspector',
+                        text: 'Hubo un problema al actualizar el Usuario',
                     });
                 }
             })
