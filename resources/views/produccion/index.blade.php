@@ -38,6 +38,9 @@
                             <select id="cortesComparisonSelectStackedbar" class="form-control" multiple style="display:none;">
                                 <option value="">Seleccione un corte a comparar</option>
                                 @foreach ($cortes as $opcionCorte)
+                                @if($corte === null)
+                                    @continue
+                                @endif
                                     @if ($opcionCorte->id !== $corte->id)
                                         <?php
                                         $añoInicio = explode('-', $opcionCorte->fecha_inicio)[0];
@@ -47,6 +50,7 @@
                                     @endif
                                 @endforeach
                             </select>
+                            @if ($corte !== null)
                             <!-- Selector de cortes -->
                             <select class="form-control" id="cortesSelect" data-corte-actual="{{ $corte->id }}">
                                 <option value="{{ $corte->id }}">Corte actual</option>
@@ -60,6 +64,7 @@
                                     @endif
                                 @endforeach
                             </select>
+                            @endif
                         </div>
                         <div class="col-md-6">
                             <!-- Selector de inspectores -->
@@ -84,7 +89,9 @@
                     <select id="cortesComparisonSelect" multiple>
                         <option value="">Seleccione un corte a comparar</option>
                         @foreach ($cortes as $opcionCorte)
-
+                            @if($corte === null)
+                            @continue
+                            @endif
 
                             @if ($opcionCorte->id !== $corte->id)
                                 <?php
@@ -132,20 +139,20 @@
     </div>
 </div>
 @stop
-
 @if($warning)
 <script>
 
     document.addEventListener('DOMContentLoaded', function() {
         Swal.fire({
-            title: "",
-            text: "{{$warning}}",
-            type: "warning"
+            title: "{{$warning}}",
+            text: "",
+            icon: "warning"
         });
     });
 </script>
  {{$warning = null;}}
 @endif
+
 
 @if(isset($municipiosNoEncontrados) && $municipiosNoEncontrados->isNotEmpty())
 <script>

@@ -6,6 +6,7 @@ use App\Models\tbl_localidades_municipio;
 use App\Models\tbl_localidades_sede;
 use App\Models\tbl_produccion_zona;
 use App\Models\tbl_bitacoras_causal;
+use App\Models\tbl_produccion_historico;
 use Illuminate\Http\Request;
 
 class CorteProduccionController extends Controller
@@ -75,6 +76,10 @@ class CorteProduccionController extends Controller
         }
 
         $corte->save();
+
+        $historios = new tbl_produccion_historico();
+        $historios->id_corte = $corte->id;
+        $historios->save();
 
         return response()->json(['success' => $corte]);
     }

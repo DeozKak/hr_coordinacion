@@ -25,6 +25,8 @@ class ProduccionController extends Controller
 {
     public function index(Request $request)
     {
+        $inpectores = [];
+        $arrayInspectores = [];
         $cortes = tbl_produccion_corte::all();
         if ($request->id) {
             $corte = tbl_produccion_corte::find($request->id);
@@ -35,18 +37,20 @@ class ProduccionController extends Controller
                 ->where('fecha_fin', '>=', $fecha_resta_un_dia)
                 ->first();
         }
-        // Guardar el ID del corte actual en la sesión
-        session(['corte_actual_id' => $corte->id]);
 
         $warning = null;
         $error = false;
         // sacar cortes activos
-
+    
         if ($corte === null && !$error) {
             $error = true;
             $warning = 'No hay corte activo';
-            return view('produccion.index', ['produccionInspector' => "produccionInspector", 'contratosCategoria' => "contratosCategoria", 'conteoContratosPorZona' => " conteoContratosPorZona", 'corte' => $corte, 'warning' => $warning]);
+            return view('produccion.index', ['produccionInspector' => "produccionInspector", 'contratosCategoria' => "contratosCategoria", 'conteoContratosPorZona' => " conteoContratosPorZona", 'corte' => $corte, 'warning' => $warning, 'cortes' => $cortes, 'arrayInspectores' => $arrayInspectores, 'inpectores' => $inpectores]);
         }
+        // Guardar el ID del corte actual en la sesión
+        session(['corte_actual_id' => $corte->id]);
+
+       
         // sacar contratos del corte activo
         $contratosCorte = tbl_bitacora_contrato::where('FECHA', '>=', $corte->fecha_inicio)
             ->where('FECHA', '<=', $corte->fecha_fin)->where('state', '=', 1)
@@ -196,7 +200,7 @@ class ProduccionController extends Controller
             ->groupBy('CC_OPERARIO')
             ->get();
 
-        $arrayInspectores = [];
+      
         foreach ($inspectoresContratos as $val) {
             $queryInsp = tbl_insp_cali::where('cedula', $val->CC_OPERARIO)->first();
             // dd($queryInsp);
