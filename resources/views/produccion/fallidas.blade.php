@@ -42,7 +42,7 @@
 </div>
 
 @section('js')
-<script src="{{ asset('js/fallidas/detallesFallidas.js') . '?v=' . time() }}"></script>
+<script src="{{ asset('js/fallidas/detallesFallidasV2.js') . '?v=' . time() }}"></script>
 <script>
 const urlObtenerDetalles = "{{ route('obtener-url-detalles-fallidas') }}"; // Usando el helper route()
 </script>

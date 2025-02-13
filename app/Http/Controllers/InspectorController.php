@@ -23,7 +23,6 @@ class InspectorController extends Controller
 
     public function store(Request $request, tbl_insp_cali $inspector)
     {
-
         $nombres = $request->input('nombres');
         $apellidos = $request->input('apellidos');
         $type_id = $request->input('type_id');
@@ -85,6 +84,7 @@ class InspectorController extends Controller
                 'status' => 'error',
                 'message' => 'Los nombres y apellidos son obligatorios'
             ]);
+            
         } else {
             $inspector = tbl_insp_cali::find($id);
             $inspector->nombres = $nombre;

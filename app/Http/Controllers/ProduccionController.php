@@ -288,7 +288,6 @@ class ProduccionController extends Controller
 
     public function detallesCorte($id)
     {
-
         session(['id_corte' => $id]);
 
         return $this->detalles();
@@ -353,9 +352,11 @@ class ProduccionController extends Controller
         }
 
         $diasIntermedios = $this->DiasIntermedios($corte);
+
         if ($diasIntermedios == null) {
             return response()->json(['error' => 'No hay corte activo']);
         }
+
         $cantidad_dias = count($diasIntermedios);
 
         $fechaInicio = new DateTime($corte->fecha_inicio);
@@ -391,8 +392,6 @@ class ProduccionController extends Controller
             $referenciaInicio = $fechaInicio->copy();
             $referenciaFin = $fechaFin->copy();
 
-
-
             // Calcular la duración del corte en minutos
             $duracionCorte = $fechaInicio->diffInMinutes($fechaFin);
 
@@ -407,8 +406,7 @@ class ProduccionController extends Controller
             $diasFestivosRango = Cache::get($cacheKeyRango);
          
             /* Cache::forget($cacheKeyRango); */
-            //dd($fechaInicioRango.' '.$fechaFinRango);
-           // dd($diasFestivosRango);
+
             if (!$diasFestivosRango) {
                 $diasFestivosRango = [];
                 // Calcular y almacenar los días festivos en el rango de fechas
@@ -430,7 +428,6 @@ class ProduccionController extends Controller
                     $fechas[$date->format('Y-m-d')] = ""; // Inicializa todas las fechas con 0 contratos
                 }
             }
-
 
             // Realizar la consulta
             $contratosPorDia = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
@@ -469,7 +466,7 @@ class ProduccionController extends Controller
                           ->orWhere('TIPO_TRABAJO', '=', 'FI-31 REVISIÓN NUEVA LINEA MATRIZ');
                 })
                 ->count();
-
+                
             $diseñosEspeciales = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
                 ->where('state', '=', 1)
                 ->whereBetween('FECHA', [$corte->fecha_inicio, $corte->fecha_fin])
@@ -589,8 +586,7 @@ class ProduccionController extends Controller
             $datosInspector['4_recintos'] = $contratos4recintosRedondeado;
             $datosInspector['comerciales'] = $contadorComerciales;
 
-
-            $datosInspector['total'] =
+                $datosInspector['total'] =
                 $datosInspector['comerciales'] +
                 $datosInspector['4_recintos'] +
                 $datosInspector['festivos'] +

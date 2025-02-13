@@ -7,9 +7,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         Handsontable.renderers.registerRenderer('customStylesRenderer', (hotInstance, TD, row, col, prop, value, cellProperties) => {
             Handsontable.renderers.TextRenderer(hotInstance, TD, row, col, prop, value, cellProperties);
             let columNameColor = hotInstance.getColHeader(col);
-       
+            const lastRow = hotInstance.countRows() - 1;
             if (col !== 0 && col !== 1 && columNameColor !== 'META POR INSPECTOR' && columNameColor !== 'DIAS LABORADOS') {
                 TD.style.backgroundColor = 'rgb(215, 232, 255)';
+            }
+            
+            if (columNameColor == 'TOTAL'){
+                TD.style.backgroundColor = 'rgb(250, 243, 152)';
+
+            }
+            
+            if(row ==  lastRow){
+                 TD.style.backgroundColor = 'rgb(250, 243, 152)';
             }
           
             const columnName = hotInstance.getColHeader(col);
@@ -79,8 +88,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         colspan: conteoRepeticiones[nombreMes]
     }));
 
-    for (const col of resultados) {
-        totalColspan += col.colspan;
+   for (const col of resultados) {
+            totalColspan += col.colspan;
     }
 
     // Primera fila de encabezados (Meses)
@@ -89,15 +98,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     headers.push(primeraFila); // Agregar la primera fila a headers
     // Segunda fila de encabezados (Días)
     const datosAdicionales = ['CC', 'INSPECTORES CONTRATO CALI'];
+    const columnasFinales = ['TOTAL'];
     const datosDias = response.diasIntermedios.map(item => item.nombreDia + ' ' + item.dias);
     const segundaFila = [...datosAdicionales, ...datosDias]; // Usar spread operator para crear un nuevo array
     headers.push(segundaFila); // Agregar la segunda fila a headers
-
+    
+    const lastIndex = headers.length - 1;
+    headers[lastIndex].push(...columnasFinales);
+   
     hot = new Handsontable(detalles, {
         readOnly: true,
         manualColumnMove: false,
         rowHeaders: true,
-        nestedHeaders: headers,
+        nestedHeaders: [headers[0],headers[lastIndex]],
         height: '650px',
         data: rows,
         autoWrapRow: true,
@@ -147,8 +160,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     });
-
- 
+    
+    // Insertar fila para promedios
+    hot.setDataAtCell(hot.countRows(), 1, 'TOTAL');
+    totalColspan = totalColspan + 1;
+  
+  for (let i = 0; i < totalColspan; i++) {
+        hot.updateSettings({
+            columnSummary: [
+                {
+                    destinationRow: hot.countRows() - 1, // Última fila (sumas)
+                    destinationColumn: i + 2,
+                    sourceColumn: i + 2,
+                    type: 'sum'
+                }
+            ]
+        });
+    }
 
 });
 

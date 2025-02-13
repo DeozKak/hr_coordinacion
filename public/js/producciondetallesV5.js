@@ -1,5 +1,3 @@
-
-
 let hot;
 let hot_dia;
 let hot_contadores;
@@ -280,6 +278,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             ]
         });
     }
+    
     // Calcular sumas
     for (let i = 0; i < totalColspan; i++) {
         hot.updateSettings({

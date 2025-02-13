@@ -74,6 +74,7 @@ class FallidasController extends Controller
              $fechaInicio = Carbon::parse($corte->fecha_inicio);
              $fechaFin = Carbon::parse($corte->fecha_fin);
              $fechas = [];
+             $sumaFallidas = 0;
 
             for ($date = $fechaInicio; $date->lte($fechaFin); $date->addDay()) {
                 $fechas[$date->format('Y-m-d')] = ""; // Inicializa todas las fechas con 0 contratos
@@ -92,6 +93,7 @@ class FallidasController extends Controller
 
              foreach ($contratosPorDia as $contrato) {
                 $fechas[$contrato->fecha] = $contrato->total_contratos;
+                $sumaFallidas = $sumaFallidas + $contrato->total_contratos;
             }
 
                 // Crear el array final para el inspector
@@ -104,6 +106,7 @@ class FallidasController extends Controller
               foreach ($fechas as $fecha => $total_contratos) {
                 $datosInspector[$fecha] = $total_contratos;
             }
+            $datosInspector['total'] = $sumaFallidas;
             $fallidas[] = $datosInspector;
         }
         $response = [
