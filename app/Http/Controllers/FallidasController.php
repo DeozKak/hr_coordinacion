@@ -81,7 +81,7 @@ class FallidasController extends Controller
             }
              // Realizar la consulta
              $contratosPorDia = tbl_bitacora_fallida::where('CC_OPERARIO', '=', $inspector->cedula)
-             ->where('FECHA', '>=', $corte->fecha_inicio)
+             ->where( 'FECHA', '>=', $corte->fecha_inicio)
              ->where('FECHA', '<=', $corte->fecha_fin)
              ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
              ->select(DB::raw('DATE(FECHA) as fecha, COUNT(*) as total_contratos'))
@@ -95,7 +95,7 @@ class FallidasController extends Controller
                 $fechas[$contrato->fecha] = $contrato->total_contratos;
                 $sumaFallidas = $sumaFallidas + $contrato->total_contratos;
             }
-
+       
                 // Crear el array final para el inspector
             $datosInspector = [
                 'cedula' => $inspector->cedula,
@@ -160,8 +160,8 @@ class FallidasController extends Controller
         tbl_bitacora_fallidas.No_ACTA, tbl_bitacora_fallidas.TIPO_TRABAJO, tbl_bitacora_fallidas.CONTRATO, tbl_bitacora_fallidas.ORDEN_TRABAJO, tbl_bitacora_fallidas.ORDEN_EXT, tbl_bitacora_fallidas.CATEGORIA, tbl_bitacora_fallidas.RESULTADO_CIERRE")
         ->join('tbl_insp_cali', 'tbl_insp_cali.cedula', '=', 'tbl_bitacora_fallidas.CC_OPERARIO')
         ->where('tbl_bitacora_fallidas.CC_OPERARIO', '=', $inspector)
-            ->where('tbl_bitacora_fallidas.FECHA', '=', $fecha)
-            ->get();
+        ->where('tbl_bitacora_fallidas.FECHA', '=', $fecha)
+        ->get();
 
 
         return response()->json($contratosDia);

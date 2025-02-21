@@ -117,10 +117,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 type: 'time',
                 timeFormat: 'hh:mm:ss a',
                 correctFormat: true,
-                defaultDate: '07:59:00 a.m.',
+                defaultDate: '06:59:00 a.m.',
                 readOnly: true, // Permitimos la edición para el combobox
                 editor: 'select', // Usamos el editor 'select' para el combobox
-                selectOptions: ['07:59:00 a.m.', '01:59:00 p.m.'], // Opciones predefinidas
+                selectOptions: ['06:59:00 a.m.', '11:59:00 a.m.'], // Opciones predefinidas
             },
             {
                 data: 'HORA_FINAL',
@@ -319,10 +319,34 @@ function guardarProgramacion(row) {
                 _token: token
             },
             success: function (response) {
+
+                if (response.movilidad) {
+
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Advertencia',
+                        text: response.movilidad+" por "+response.usuario+" fecha: "+response.agendamiento,
+                        showConfirmButton: true,
+                        allowOutsideClick: false,
+                        confirmButtonText: 'Aceptar'
+                    }).then((result) => {
+                        if (result.value) {
+                            const numCols = H_tabla.countCols(); // Obtener el número de columnas
+                            H_tabla.setDataAtCell(row, 0, '');
+                            for (let col = 2; col < numCols; col++) {
+                                H_tabla.setDataAtCell(row, col, '');
+                            }
+                            H_tabla.setDataAtCell(row, 1, '');
+                        }
+                    })
+
+                }
                 if (response.exist) {
                     const id = response.id;
                     Swal.fire({
-                        title: "Este contrato ya tiene una programacion para el " + response.agendamiento + " por " + response.usuario + ", ¿desea reprogramar?",
+                        icon: 'warning',
+                        title: 'Advertencia',
+                        text: "Este contrato ya tiene una programación para el " + response.agendamiento + " por " + response.usuario + ", ¿desea reprogramar?",
                         showDenyButton: true,
                         showCancelButton: false,
                         allowOutsideClick: false,
@@ -503,6 +527,7 @@ function validarFilasCompletas() {
             }
         }
 
+        // Validación de filas con datos completas
         if (filaTieneDatos) {
             for (let j = 0; j < fila.length; j++) {
                 if (fila[j] === '' || fila[j] === null || fila[j] === undefined) {
@@ -511,7 +536,7 @@ function validarFilasCompletas() {
             }
 
             // Nueva validación para las horas
-            if (fila[17] === '01:59:00 p.m.' && fila[18] === '11:59:00 a.m.') {
+            if (fila[17] === '11:59:00 a.m.' && fila[18] === '11:59:00 a.m.') {
                 return false;
             }
         }

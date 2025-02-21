@@ -72,7 +72,7 @@ class AutoGuardadoController extends Controller
             'PROGRAMADA.',
             'USUARIO NO AUTORIZA.'
         ];
-        $columnas = ['A', 'B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K', 'M', 'N', 'O', 'Q'];
+        $columnas = ['A', 'B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K', 'M', 'N', 'O', 'Q','R'];
         foreach ($nombres as $nombre) {
             foreach ($spreadsheet->getSheetNames() as $sheetName) {
                 $sheet = $spreadsheet->getSheetByName($sheetName);
@@ -112,6 +112,13 @@ class AutoGuardadoController extends Controller
                                 $valor = ($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m')) ? "60 meses" : "";
                             }
 
+                            if ($columna === 'R'){
+                                if($valor === 'Si'){
+                                    $valor = 1;
+                                }else{
+                                    $valor = 0;
+                                }
+                            }
                             $filaDatos[$columna] = $valor;
                         }
 
@@ -183,7 +190,7 @@ class AutoGuardadoController extends Controller
                     }
                 }
             }
-
+          
             foreach ($datos as $cc => $inspecciones) {
           
                 foreach ($inspecciones as $inspeccion) {
@@ -212,6 +219,7 @@ class AutoGuardadoController extends Controller
                             'HORA_INICIO' => $inspeccion['N'],
                             'HORA_FINAL' => $inspeccion['O'],
                             'VENCE' => $inspeccion['Q'],
+                            'PERIODO_GRACIA' => $inspeccion['R'],
                             'id_bitacora' => $bitacora->id,
                             'id_usuario' => $usuario->id,
                             'id_super' => $super ?? 1

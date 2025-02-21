@@ -7,7 +7,12 @@ document.addEventListener('DOMContentLoaded', () => {
         Handsontable.renderers.registerRenderer('customStylesRenderer', (hotInstance, TD, row, col, prop, value, cellProperties) => {
             Handsontable.renderers.TextRenderer(hotInstance, TD, row, col, prop, value, cellProperties);
             const columnName = hotInstance.getColHeader(col); // Obtener el nombre de la columna
-
+            if(value === 'PERIODO DE GRACIA'){
+                for (let i = 0; i < hotInstance.countCols(); i++) {
+                    cellProperties = hotInstance.getCellMeta(row, i); // Obtener las propiedades de la celda
+                    cellProperties.className = 'fila-gracia'; // Agregar la clase CSS a la celda
+                }
+            }
 
             if (value === '60 meses') {
                 // Pintar toda la fila si la duración es 60 meses
@@ -37,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
             rowHeaders: true,
             colHeaders: true,
             height: '550px',
+            contextMenu: true, 
             autoWrapRow: true,
             autoWrapCol: true,
             manualRowResize: true,
@@ -46,10 +52,14 @@ document.addEventListener('DOMContentLoaded', () => {
             ],
             filters: true,
             dropdownMenu: true, // Habilita los filtros en la tabla
-            colHeaders: ['id', 'vence', 'OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION INSP', 'Causal rechazo', ' '],
+            colHeaders: ['id', 'OBSERVACIÓN', 'OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE', 'HORA INICIO', 'HORA FINAL', 'DURACION INSP', 'Causal rechazo', ' '],
             licenseKey: 'non-commercial-and-evaluation',
             hiddenColumns: {
                 columns: [0],
+            },
+            copyPaste: {
+                copyColumnGroupHeaders: true,
+                copyColumnHeaders: true,
             },
         },
 
@@ -59,7 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
             url: id_bitacora, // Ruta al archivo PHP que realiza la consulta a la base de datos
             type: 'GET',
             success: function (response) {
-
                 const datosBaseDatos = response.contratos; // Asigna los datos obtenidos a la variable
                 const array2D = convertirJSONaArray2D(datosBaseDatos);
                 hot.loadData(array2D);

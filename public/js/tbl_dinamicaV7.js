@@ -34,6 +34,10 @@ $(document).ready(function () {
             {
                 "targets": [19], // 
                 "visible": false
+            },
+            {
+                "targets": [20], 
+                "visible": false
             }
         ]
     });

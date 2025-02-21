@@ -55,6 +55,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     hiddenColumns: {
                         columns: [0,19,20],
                     },
+                    copyPaste: {
+                        copyColumnGroupHeaders: true,
+                        copyColumnHeaders: true,
+                    },
                     licenseKey: 'non-commercial-and-evaluation'
                 });
             },

@@ -318,7 +318,7 @@ return [
             'dropdown_flabel' => 'todas las notificaciones',
             'update_cfg' => [
                 'url' => 'notifications/get',
-                'period' => 15,
+                'period' => 60,
             ],
         ],
 

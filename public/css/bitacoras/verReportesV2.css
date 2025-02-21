@@ -2,6 +2,10 @@
     background-color: rgb(251, 201, 255) ; /* Lila claro */
 }
 
+.handsontable table .fila-gracia {
+    background-color: rgb(236, 243, 132) ; /* Lila claro */
+}
+
 .handsontable table .fila-acta-p {
     background-color: rgb(184, 250, 195); /* Color para filas donde N° ACTA empieza con "P" */
 }

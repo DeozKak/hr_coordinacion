@@ -14,7 +14,7 @@
     <link rel="stylesheet" type="text/css" href="{{asset('css/bitacoras/Tablas.css')}}">
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="{{asset('js/tbl_dinamicaV6.js')}}"></script>
+    <script src="{{asset('js/tbl_dinamicaV7.js')}}"></script>
 </head>
 
 <body>
@@ -112,6 +112,7 @@
                                             <th></th>
                                             <th></th>
                                             <th></th>
+                                            <th></th>
                                         </tr>
                                         @php                                       
                                         $datosFiltrados = array_filter($response->toArray(), function ($row) use ($nombre) {                                                                                                                
@@ -124,6 +125,7 @@
                                         @foreach ($datosFiltrados as $row)
                                         <tr style='<?php
                                                     echo ($row['vence'] === "60 meses") ? "background-color: rgb(251,201,255);" : "";
+                                                    echo ($row['PERIODO_GRACIA'] === 1) ? "background-color: rgb(236, 243, 132);" : "";
                                                     ?>'>
                                             @php
                                             $horaInicialObj = null;
@@ -201,6 +203,9 @@
                                                 {{$row['vence']}}
                                             </td>
                                             <td>
+                                            </td>
+                                            <td>
+                                                {{ $row['PERIODO_GRACIA'] }}
                                             </td>
                                         </tr>
                                         @endforeach

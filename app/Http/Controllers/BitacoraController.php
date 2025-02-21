@@ -161,7 +161,7 @@ class BitacoraController extends Controller
         unlink($excelFilePath);
         $causales = tbl_bitacoras_causal::all();
 
-        $response = $Guardado->guardar($spreadsheet, $nombres, $id_super ,$cierre);
+        $response = $Guardado->guardar($spreadsheet, $nombres, $id_super, $cierre);
 
 
         if ($response->isEmpty()) {
@@ -243,11 +243,11 @@ class BitacoraController extends Controller
                     $indiceColumna = 1;
 
                     foreach ($fila as $celda) {
-
                         $contenidoCelda = $celda;
                         // obtener datos complementarios 60 meses y rechazos
                         $vence = $fila[18];
                         $rechazo = $fila[19];
+                        $periodo_gracia = $fila[20];
                         // Obtener el identificador único del combobox y checkbox
                         $idCheckbox = $indicador_checkbox;
                         $idCombobox1 = $indicador_combobox1;
@@ -276,6 +276,14 @@ class BitacoraController extends Controller
                                 $celda_color = $hoja_OK->getCell([7, $indiceFila_ok]);
 
                                 $celda_color->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('92D050');
+                            }
+
+                            if ($indiceColumna === 21) {
+                                $hoja_OK->setCellValue([17, $indiceFila_ok], $contenidoCelda);
+                                $celda_color = $hoja_OK->getCell([7, $indiceFila_ok]);
+
+                                $celda_color->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('92D050');
+
                             }
 
                             if ($indiceColumna < 16) {
@@ -323,7 +331,8 @@ class BitacoraController extends Controller
                                     'hora_fin' => $hoja->getCell([14, $indiceFila])->getValue(),
                                     '4_recintos' => $hoja->getCell([16, $indiceFila])->getValue(),
                                     'vence' => $vence,
-                                    'rechazo' => $rechazo
+                                    'rechazo' => $rechazo,
+                                    'periodo_gracia' => $periodo_gracia
                                 );
                             } else {
 
@@ -555,7 +564,7 @@ class BitacoraController extends Controller
                 $bitacoraFallidas->delete();
                 tbl_temp_contrato::where('id_bitacora', $bitacora->id)->delete();
             } catch (\Exception $e) {
-                return response()->json(['error' => 'Error al insertar Fallidas '.$e]);
+                return response()->json(['error' => 'Error al insertar Fallidas ' . $e]);
             }
 
             foreach ($datos_array_OK as $datos) {
@@ -592,7 +601,7 @@ class BitacoraController extends Controller
                         }
                     }
                     $consultaPrioridad = Movilidad::select('Prioridad')->where('NroSitio', $datos['contrato'])->where('IdTarea', $datos['no_acta'])->first();
-                    $datos['prioridad'] = $consultaPrioridad->Prioridad ?? 'Sin prioridad'; 
+                    $datos['prioridad'] = $consultaPrioridad->Prioridad ?? 'Sin prioridad';
                     $contrato = new tbl_bitacora_contrato();
                     $contrato->CC_OPERARIO = $datos['cc_operario'];
                     $contrato->MUNICIPIO = $datos['municipio'];
@@ -610,6 +619,7 @@ class BitacoraController extends Controller
                     $contrato->PRIORIDAD = $datos['prioridad'];
                     $contrato->setAttribute('4_RECINTOS', $datos['4_recintos']);
                     $contrato->vence = $datos['vence'];
+                    $contrato->PERIODO_GRACIA = $datos['periodo_gracia'];
                     $contrato->CAUSAL_RECHAZO = $datos['rechazo'];
                     $contrato->id_bitacora = $bitacora->id;
                     $contrato->state = 1;
@@ -680,18 +690,18 @@ class BitacoraController extends Controller
                     }
                 }
             }
-             try{
-            // Obtener los usuarios que deben recibir la notificación
-            $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN', 'Auxiliar_coordinacion','Auxiliar_metrologia'])->get();
-            $usuarioLog = Auth::user();
+            try {
+                // Obtener los usuarios que deben recibir la notificación
+                $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN', 'Auxiliar_coordinacion', 'Auxiliar_metrologia'])->get();
+                $usuarioLog = Auth::user();
 
-            // Enviar la notificación a cada usuario
-            foreach ($usuarios as $usuario) {
-                $usuario->notify(new Bitacora($usuarioLog->name, $bitacora->id));
+                // Enviar la notificación a cada usuario
+                foreach ($usuarios as $usuario) {
+                    $usuario->notify(new Bitacora($usuarioLog->name, $bitacora->id));
+                }
+            } catch (\Exception $e) {
+                Log::error($e);
             }
-             }catch(\Exception $e){
-            Log::error($e);
-        }
         } else {
 
             $user = Auth::user();
@@ -966,7 +976,12 @@ class BitacoraController extends Controller
     {
         //contratos asignados a la bitacora
         $contratos = tbl_bitacora_contrato::selectRaw("CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.id,tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP,
-        tbl_bitacora_contratos.`vence`,tbl_bitacora_contratos.`CAUSAL_RECHAZO`")
+                        CASE
+                        WHEN tbl_bitacora_contratos.vence IS NOT NULL THEN tbl_bitacora_contratos.vence
+                        WHEN tbl_bitacora_contratos.PERIODO_GRACIA = 1 THEN 'PERIODO DE GRACIA'
+                        ELSE NULL  -- o '' si prefieres un valor vacío
+                        END AS vence,
+                        tbl_bitacora_contratos.CAUSAL_RECHAZO")
             ->join('tbl_insp_cali', 'tbl_insp_cali.cedula', '=', 'tbl_bitacora_contratos.CC_OPERARIO')
             ->where('tbl_bitacora_contratos.id_bitacora', $id_bitacora)
             ->get();
