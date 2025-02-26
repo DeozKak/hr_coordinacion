@@ -979,15 +979,15 @@ class ProgramacionController extends Controller
                 $programada->mensaje = 1;
 
                 if ($worksheet->getCell('O' . $row->getRowIndex())->getValue() === "MAÑANA") {
-                    $programada->HORA_INICIO = "07:59:00 a.m.";
+                    $programada->HORA_INICIO = "06:59:00 a.m.";
                     $programada->HORA_FINAL = "11:59:00 a.m.";
                 }
                 if ($worksheet->getCell('O' . $row->getRowIndex())->getValue() === " TARDE") {
-                    $programada->HORA_INICIO = "01:59:00 p.m.";
+                    $programada->HORA_INICIO = "11:59:00 a.m.";
                     $programada->HORA_FINAL = "04:59:00 p.m.";
                 }
                 if ($worksheet->getCell('O' . $row->getRowIndex())->getValue() === " TRANSCURSO DEL DIA") {
-                    $programada->HORA_INICIO = "07:59:00 a.m.";
+                    $programada->HORA_INICIO = "06:59:00 a.m.";
                     $programada->HORA_FINAL = "04:59:00 p.m.";
                 }
 
@@ -1056,6 +1056,37 @@ class ProgramacionController extends Controller
                             break;
                     }
                 }
+
+                $cierres = [
+                    'CERTIFICADA',
+                    'CERTIFICADA CON NOVEDADES',
+                    'INSPECCIONADA CON DEFECTO CRITICO VALLE',
+                    'INSPECCIONADA CON DEFECTO NO CRITICO VALLE'
+                ];
+        
+                $tipos_trabajo_rp = array("10444", "12161");
+                $tipos_trabajo_sa = array("12163", "12164");
+        
+                if (in_array( $programada->TIPO_TRABAJO, $tipos_trabajo_rp)) {
+                    $tipo_trabajo = ["RP 10444", "RP 12161"];
+                } elseif (in_array( $programada->TIPO_TRABAJO, $tipos_trabajo_sa)) {
+                    $tipo_trabajo = ["SA " .  $programada->TIPO_TRABAJO];
+                } elseif ( $programada->TIPO_TRABAJO == "12162") {
+                    $tipo_trabajo = ["RN " .  $programada->TIPO_TRABAJO];
+                }
+                $contrato = ':' . $programada->CONTRATO;
+
+                $movilidad = Movilidad::select('NombreOperario', 'FechaRealInicio')
+                    ->where('NroSitio',  $contrato)
+                    ->whereIn('TipoTarea', $tipo_trabajo)
+                    ->where('Grupo', 'INSP-VALLE')
+                    ->whereIn('Cierre1', $cierres)
+                    ->first();
+        
+                if ($movilidad) {
+                    continue;
+                }
+
                 $exist = tbl_programacion_contrato::where('ORDEN_TRABAJO', $programada->ORDEN_TRABAJO)
                     ->where('CONTRATO', $programada->CONTRATO)
                     ->where('FECHA_AGENDAMIENTO',  $programada->FECHA_AGENDAMIENTO)
@@ -1179,6 +1210,7 @@ class ProgramacionController extends Controller
                     $programada->ACTIVA = "No";
                     $programada->SUSPENDIDO = "Si";
                 }
+                $programada->FECHA = date('Y-m-d');
                 $programada->PORQUE_PROGRAMO = "PROGRAMACION GDO";
                 $programada->id_programacion = $tabla->id;
                 $programada->mensaje = 1;
@@ -1194,11 +1226,11 @@ class ProgramacionController extends Controller
                     // Si hay coincidencia, la jornada se encuentra en $coincidencias[1]
                     $jornadaVisita = $coincidencias[1];
                     if ($jornadaVisita == "AM") {
-                        $programada->HORA_INICIO = "07:59:00 a.m.";
+                        $programada->HORA_INICIO = "06:59:00 a.m.";
                         $programada->HORA_FINAL = "11:59:00 a.m.";
                     }
                     if ($jornadaVisita == "PM") {
-                        $programada->HORA_INICIO = "01:59:00 p.m.";
+                        $programada->HORA_INICIO = "11:59:00 a.m.";
                         $programada->HORA_FINAL = "04:59:00 p.m.";
                     }
                 } else {
@@ -1274,6 +1306,38 @@ class ProgramacionController extends Controller
                 if ($existe >= 2) {
                     continue;
                 }
+
+                $cierres = [
+                    'CERTIFICADA',
+                    'CERTIFICADA CON NOVEDADES',
+                    'INSPECCIONADA CON DEFECTO CRITICO VALLE',
+                    'INSPECCIONADA CON DEFECTO NO CRITICO VALLE'
+                ];
+        
+                $tipos_trabajo_rp = array("10444", "12161");
+                $tipos_trabajo_sa = array("12163", "12164");
+        
+                if (in_array( $programada->TIPO_TRABAJO, $tipos_trabajo_rp)) {
+                    $tipo_trabajo = ["RP 10444", "RP 12161"];
+                } elseif (in_array( $programada->TIPO_TRABAJO, $tipos_trabajo_sa)) {
+                    $tipo_trabajo = ["SA " .  $programada->TIPO_TRABAJO];
+                } elseif ( $programada->TIPO_TRABAJO == "12162") {
+                    $tipo_trabajo = ["RN " .  $programada->TIPO_TRABAJO];
+                }
+                $contrato = ':' . $programada->CONTRATO;
+
+                $movilidad = Movilidad::select('NombreOperario', 'FechaRealInicio')
+                    ->where('NroSitio',  $contrato)
+                    ->whereIn('TipoTarea', $tipo_trabajo)
+                    ->where('Grupo', 'INSP-VALLE')
+                    ->whereIn('Cierre1', $cierres)
+                    ->first();
+        
+                if ($movilidad) {
+                    continue;
+                }
+
+
                 $programada->save();
             }
             return true;

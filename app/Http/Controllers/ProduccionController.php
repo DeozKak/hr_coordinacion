@@ -585,7 +585,6 @@ class ProduccionController extends Controller
             $datosInspector['diseños_especiales'] = $contadorDiseñosEspeciales;
             $datosInspector['4_recintos'] = $contratos4recintosRedondeado;
             $datosInspector['comerciales'] = $contadorComerciales;
-
                 $datosInspector['total'] =
                 $datosInspector['comerciales'] +
                 $datosInspector['4_recintos'] +
@@ -594,7 +593,7 @@ class ProduccionController extends Controller
                 $datosInspector['matrices'] +
                 $datosInspector['diseños_especiales'];
             $datosInspector['dias_laborados'] = $contadorDiasLaborados;
-            $datosInspector['promedio'] = number_format($datosInspector['total'] / $cantidad_dias, 1);
+            $datosInspector['promedio'] = number_format($datosInspector['sub_total'] / $datosInspector['dias_laborados'], 1);
             $datosInspector['meta'] = $corte->meta;
             $datosInspector['porcentaje_meta'] = '%' . number_format(($datosInspector['sub_total'] / $datosInspector['meta']) * 100, 2);
 
@@ -1045,7 +1044,6 @@ class ProduccionController extends Controller
 
     public function consultarBitacora($fecha, $ccOperario)
     {
-
         // Consultar la tabla tbl_insp_cali para obtener el nombre del supervisor
         $inspector = tbl_insp_cali::select('users.name AS supervisor')
             ->join('users', 'users.id', '=', 'tbl_insp_cali.SUPERVISOR')
@@ -1056,7 +1054,6 @@ class ProduccionController extends Controller
             // Manejar el caso donde no se encuentra el supervisor
             return ['error' => 'Supervisor no encontrado.'];
         }
-
         $nombreSupervisor = $inspector->supervisor;
         $nombreSupervisorSinEspacios = str_replace(' ', '', $nombreSupervisor);
 

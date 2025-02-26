@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const columnName = hotInstance.getColHeader(col);
             const ccOperario = hotInstance.getDataAtCell(row, 0);
+
             if (diasFestivos.includes(columnName)) {
                 TD.style.backgroundColor = 'rgb(147, 255, 134)';
             }
