@@ -322,7 +322,7 @@ return [
             ],
         ],
 
-       
+
 
         // Sidebar items:
         [
@@ -482,53 +482,53 @@ return [
             ]
         ],
 
-        ['header' => 'Gestión usuarios', 'can' => ['gestion_usuarios', 'gestion_inspectores'],],
+        // ['header' => 'Gestión usuarios', 'can' => ['gestion_usuarios', 'gestion_inspectores'],],
 
 
-        [
-            'text' => 'Configuración',
-            'can' => ['gestion_usuarios', 'gestion_inspectores', 'ver_residente'],
-            'icon' => 'fas fa-wrench',
-            'submenu' => [
-                [
-                    'text' => 'Usuarios',
-                    'url' => 'admin/users',
-                    'icon' => 'far fa-circle',
-                    'can' => 'gestion_usuarios',
-                    'label_color' => 'success',
-                ],
-                [
-                    'text' => 'Inspectores',
-                    'url' => 'inspectores',
-                    'icon' => 'far fa-circle',
-                    'can' => 'gestion_inspectores',
-                    'label_color' => 'success',
-                ],
-                [
-                    'text' => 'Cortes Producción',
-                    'url' => 'cortes_produccion',
-                    'icon' => 'far fa-circle',
-                    'can' => ['ver_residente', 'ver_coordinacion_RP'],
-                    'label_color' => 'success',
+        // [
+        //     'text' => 'Configuración',
+        //     'can' => ['gestion_usuarios', 'gestion_inspectores', 'ver_residente'],
+        //     'icon' => 'fas fa-wrench',
+        //     'submenu' => [
+        //         [
+        //             'text' => 'Usuarios',
+        //             'url' => 'admin/users',
+        //             'icon' => 'far fa-circle',
+        //             'can' => 'gestion_usuarios',
+        //             'label_color' => 'success',
+        //         ],
+        //         [
+        //             'text' => 'Inspectores',
+        //             'url' => 'inspectores',
+        //             'icon' => 'far fa-circle',
+        //             'can' => 'gestion_inspectores',
+        //             'label_color' => 'success',
+        //         ],
+        //         [
+        //             'text' => 'Cortes Producción',
+        //             'url' => 'cortes_produccion',
+        //             'icon' => 'far fa-circle',
+        //             'can' => ['ver_residente', 'ver_coordinacion_RP'],
+        //             'label_color' => 'success',
 
-                ],
-                [
-                    'text' => 'Parametrizar precios',
-                    'url' => 'fechasParametros',
-                    'icon' => 'far fa-circle',
-                    'can' => ['reporte_produccion'],
-                    'label_color' => 'success',
+        //         ],
+        //         [
+        //             'text' => 'Parametrizar precios',
+        //             'url' => 'fechasParametros',
+        //             'icon' => 'far fa-circle',
+        //             'can' => ['reporte_produccion'],
+        //             'label_color' => 'success',
 
-                ],
-                [
-                    'text' => 'Sal.Minimo - Aux.Transporte',
-                    'url' => 'nomina/parametrizarSalarioAux',
-                    'icon' => 'far fa-circle',
-                    'can' => ['ver_residente', 'ver_coordinacion_RP'],
-                    'label_color' => 'success',
-                ],
-            ]
-        ],
+        //         ],
+        //         [
+        //             'text' => 'Sal.Minimo - Aux.Transporte',
+        //             'url' => 'nomina/parametrizarSalarioAux',
+        //             'icon' => 'far fa-circle',
+        //             'can' => ['ver_residente', 'ver_coordinacion_RP'],
+        //             'label_color' => 'success',
+        //         ],
+        //     ]
+        // ],
 
         ['header' => 'Supervisión Producción', 'can' => ['ver_residente','ver_produccion'],],
 
@@ -597,10 +597,10 @@ return [
                     'can' => ['ver_programacion'],
                     'label_color' => 'success',
                 ],
-                
+
             ]
         ],
-        
+
         ['header' => 'Nomina', 'can' => ['gestion_nomina'],],
 
         [
