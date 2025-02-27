@@ -7,15 +7,13 @@
 
 @section('content')
 
-
-
 @if (session('error'))
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         Swal.fire({
             title: "Error",
             text: "{{session('error')}}",
-            type: "error"
+            icon: "error"
         });
     });
 </script>

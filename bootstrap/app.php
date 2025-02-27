@@ -3,7 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\CheckUserStatus;
 use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -29,8 +29,9 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
        )
-    ->withMiddleware(function (Middleware $middleware) {
+    ->withMiddleware(callback: function (Middleware $middleware) {
         $middleware->group('public', []);
+        $middleware->group('auth', [CheckUserStatus::class]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

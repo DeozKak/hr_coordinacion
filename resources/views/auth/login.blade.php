@@ -67,7 +67,7 @@
         Swal.fire({
             title: "",
             text: "{{session('error')}}",
-            type: "warning"
+            icon: "warning"
         });
     });
 </script>
