@@ -16,10 +16,14 @@ class CheckUserStatus
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (  Auth::check() && Auth::user()->state == 0) {
-            //middleware encargado de chekear si el usuario esta activo
-            Auth::logout();
-            return redirect('/login')->with('error', 'Tu cuenta se encuentra inactiva. Por favor contacta al administrador.');
+        if (Auth::user()) {
+            if (Auth::check() && Auth::user()->state == 0) {
+                //middleware encargado de chekear si el usuario esta activo
+                Auth::logout();
+                return redirect('/login')->with('error', 'Tu cuenta se encuentra inactiva. Por favor contacta al administrador.');
+            }
+        } else {
+            return redirect('login');
         }
         return $next($request);
     }
