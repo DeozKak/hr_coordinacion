@@ -24,7 +24,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-
+use App\Jobs\CorreoProgramacion;
 
 class ProgramacionController extends Controller
 {
@@ -404,7 +404,7 @@ class ProgramacionController extends Controller
             $tipo_trabajo = ["RN " . $request->data[2]];
         }
         $contrato = ':' . $request->data[1];
-        $movilidad = Movilidad::select('NombreOperario', 'FechaRealInicio')
+        $movilidad = Movilidad::select('NombreOperario', 'FechaRealInicio','Cierre1','TipoTarea')
             ->where('NroSitio',  $contrato)
             ->whereIn('TipoTarea', $tipo_trabajo)
             ->where('Grupo', 'INSP-VALLE')
@@ -412,6 +412,9 @@ class ProgramacionController extends Controller
             ->first();
 
         if ($movilidad) {
+            if(in_array($movilidad->Cierre1, ['INSPECCIONADA CON DEFECTO CRITICO VALLE','INSPECCIONADA CON DEFECTO NO CRITICO VALLE','INSPECCIONADA CON DEFECTO CRITICO VALLE']) && $movilidad->TipoTarea === 'SA 12164'){
+                
+            }else{
             $fecha_completa = $movilidad->FechaRealInicio;
             $partes = explode(' ', $fecha_completa);
             $fecha = $partes[0];
@@ -419,7 +422,8 @@ class ProgramacionController extends Controller
                 'movilidad' => 'Contrato ya ejecutado',
                 'usuario' => $movilidad->NombreOperario,
                 'agendamiento' => $fecha
-            ]);
+                ]);
+            }
         }
 
         try {
@@ -507,10 +511,7 @@ class ProgramacionController extends Controller
 
                 $programacion->mensaje = 1;
                 $programacion->save();
-                $usuarios = User::role(['admin', 'PQRS', 'Coordinador_RP', 'Coordinador_RN'])->where('state', 1)->get();
-                foreach ($usuarios as $usuario) {
-                    $usuario->notify(new Programada($user->name, $programacion->id));
-                }
+                CorreoProgramacion::dispatch($user, $id);
             }
 
             foreach ($programadas as $programada) {

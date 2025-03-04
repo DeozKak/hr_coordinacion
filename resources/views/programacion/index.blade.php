@@ -143,7 +143,7 @@
                                     <span class="visually-hidden">Cargando...</span>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-primary">Subir</button>
+                            <button id="submit-programacion" type="submit" class="btn btn-primary">Subir</button>
                         </form>
                     </div>
                 </div>
@@ -173,7 +173,7 @@
                                 </div>
 
                             </div>
-                            <button class="btn btn-primary" type="submit">Cargar</button>
+                            <button id="submit-masivo" class="btn btn-primary" type="submit">Cargar</button>
                         </form>
                     </div>
                 </div>
@@ -202,7 +202,7 @@
                                 </div>
 
                             </div>
-                            <button class="btn btn-primary" type="submit">Cargar</button>
+                            <button id="submit-GDO" class="btn btn-primary" type="submit">Cargar</button>
                         </form>
                     </div>
                 </div>
@@ -211,7 +211,7 @@
     </div>
 </body>
 @section('js')
-<script src="{{ asset('js/indexProgramacionV3-5.js') }}" type="text/javascript"></script>
+<script src="{{ asset('js/indexProgramacionV3-6.js') }}" type="text/javascript"></script>
 
 
 @if (session('success'))

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Notifications\Mod_Devolucion;
 use App\Notifications\Bitacora;
+use App\Notifications\Programada;
+use App\Notifications\Produccion;
 use Illuminate\Http\Request;
 
 class NotificationsController extends Controller
@@ -21,7 +23,9 @@ class NotificationsController extends Controller
         $notifications = auth()->user()->unreadNotifications()
             ->where(function ($query) {
                 $query->where('type', Mod_Devolucion::class)
-                    ->orWhere('type', Bitacora::class);
+                ->orWhere('type', Bitacora::class)
+                ->orWhere('type', Programada::class)
+                ->orWhere('type', Produccion::class);
             })
             ->get();
 

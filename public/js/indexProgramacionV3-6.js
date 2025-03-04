@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
         event.preventDefault();
         loaderMasivo.style.display = 'block'; // Mostrar animación de carga
         // Limpiar mensajes de error anteriores antes de enviar el formulario
-
+        document.getElementById('submit-masivo').disabled = true;
         
         const formData = new FormData(this);
         const url = document.getElementById('url_masivo').value; // Ruta Laravel para procesar el formulario
@@ -60,6 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
             processData: false,
             contentType: false,
             success: function (response) {
+            document.getElementById('submit-masivo').disabled = false;
+
                 // Manejo de la respuesta exitosa (opcional)
                 errorContainerMasivo.innerHTML = '';
                 errorContainerMasivo.classList.remove('alert', 'alert-danger');
@@ -67,7 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 location.reload(); 
             },
             error: function (xhr, status, error) {
-               
+                document.getElementById('submit-masivo').disabled = false;
+
                 if (xhr.status === 422) {
                    
                     const errors = xhr.responseJSON.errors;
@@ -110,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         event.preventDefault();
         loader.style.display = 'block'; // Mostrar animación de carga
         // Limpiar mensajes de error anteriores antes de enviar el formulario
-       
+       document.getElementById('submit-programacion').disabled = true;
 
         const formData = new FormData(this);
         const url = document.getElementById('url_base').value; // Ruta Laravel para procesar el formulario
@@ -123,6 +126,8 @@ document.addEventListener('DOMContentLoaded', () => {
             processData: false,
             contentType: false,
             success: function (response) {
+                document.getElementById('submit-programacion').disabled = false;
+
                 // Manejo de la respuesta exitosa (opcional)
                 Swal.fire({
                     position: "top-end",
@@ -137,6 +142,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 modal.hide();
             },
             error: function (xhr, status, error) {
+                document.getElementById('submit-programacion').disabled = false;
+
                 console.log(xhr.responseText);
                 if (xhr.status === 422) {
                     const errors = xhr.responseJSON.errors;
@@ -176,7 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
         event.preventDefault();
         loaderGDO.style.display = 'block'; // Mostrar animación de carga
         // Limpiar mensajes de error anteriores antes de enviar el formulario
-       
+        document.getElementById('submit-GDO').disabled = true;
 
         const formData = new FormData(this);
         const url = document.getElementById('url_GDO').value; // Ruta Laravel para procesar el formulario
@@ -189,6 +196,8 @@ document.addEventListener('DOMContentLoaded', () => {
             processData: false,
             contentType: false,
             success: function (response) {
+            document.getElementById('submit-GDO').disabled = false;
+
                 // Manejo de la respuesta exitosa (opcional)
                 Swal.fire({
                     position: "top-end",
@@ -203,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 GDO.hide();
             },
             error: function (xhr, status, error) {
-                console.log(xhr.responseText);
+                document.getElementById('submit-GDO').disabled = false;
                 if (xhr.status === 422) {
                     const errors = xhr.responseJSON.errors;
                     showValidationErrors(errors,addGDOModal,errorContainerGDO); // Mostrar errores en el modal

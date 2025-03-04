@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Rmunate\Calendario\CalendarioColombia;
 use App\Notifications\Produccion;
+use App\Jobs\CorreoProduccion;
 
 class ProduccionController extends Controller
 {
@@ -1032,13 +1033,10 @@ class ProduccionController extends Controller
             return response()->json(['error' => 'Error al insertar el contrato']);
         }
         // Obtener los usuarios que deben recibir la notificación
-        $usuarios = User::role(['admin', 'Director', 'Residente'])->get();
         $usuarioLog = Auth::user();
 
+        CorreoProduccion::dispatch($request->data[7], $usuarioLog->name, $fechaDB, $nomInspector);
         // Enviar la notificación a cada usuario
-        foreach ($usuarios as $usuario) {
-            $usuario->notify(new Produccion($request->data[7], $usuarioLog->name, $fechaDB, $nomInspector));
-        }
         return response()->json(['ok' => 'Insertado correctamente.']);
     }
 
