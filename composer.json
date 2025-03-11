@@ -8,7 +8,7 @@
         "php": "^8.2",
         "guzzlehttp/guzzle": "^7.8",
         "jeroennoten/laravel-adminlte": "^3.11",
-        "laravel/framework": "^11.0",
+        "laravel/framework": "^12.0",
         "laravel/tinker": "^2.9",
         "laravel/ui": "^4.5",
         "nesbot/carbon": "^3.7",
@@ -16,8 +16,8 @@
         "rmunate/calendario-colombia": "^1.0",
         "spatie/laravel-permission": "^6.4",
         "waapi/waapi-php-sdk": "^1.0",
-        "yajra/laravel-datatables-buttons": "^11.0",
-        "yajra/laravel-datatables-oracle": "^11.1"
+        "yajra/laravel-datatables-buttons": "^12.0",
+        "yajra/laravel-datatables-oracle": "^12.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

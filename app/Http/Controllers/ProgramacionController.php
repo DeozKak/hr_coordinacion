@@ -8,7 +8,6 @@ use App\Models\tbl_insp_cali;
 use App\Models\tbl_programacion_contrato;
 use App\Models\User;
 use App\Models\Movilidad;
-use App\Notifications\Programada;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Database\QueryException;
@@ -23,8 +22,8 @@ use Illuminate\Support\Facades\Schema;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use App\Jobs\CorreoProgramacion;
+use App\Jobs\ActualizacionAsignacionTec;
 
 class ProgramacionController extends Controller
 {
@@ -287,20 +286,9 @@ class ProgramacionController extends Controller
                     if ($rowData["ID_TECNICO"] !== "0") {
 
                         //modificar el tecnico asignado de la base dependiendo de la base en excel
-                        $programacion = tbl_programacion_contrato::where('ORDEN_TRABAJO', $rowData["NUMERO_ORDEN"])->where('CONTRATO', $rowData["CONTRATO"])->get();
-                        if ($programacion->count() > 0) {
-                            foreach ($programacion as $pro) {
-                                try {
-                                    $inspector = tbl_insp_cali::where('id', $rowData["ID_TECNICO"])->first();
-                                    if ($pro->FECHA_AGENDAMIENTO >= date('Y-m-d')) {
-                                        $pro->TECNICO = $rowData["ID_TECNICO"] . '. ' . $inspector->apellidos . ' ' . $inspector->nombres;
-                                        $pro->save();
-                                    }
-                                } catch (\Throwable $th) {
-                                    Log::error($th);
-                                }
-                            }
-                        }
+                        //se manda a segundo plano
+                        ActualizacionAsignacionTec::dispatch($rowData)->onQueue('Asignacion_tec');
+
                     }
                 }
 

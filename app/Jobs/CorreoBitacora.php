@@ -28,7 +28,7 @@ class CorreoBitacora implements ShouldQueue
     public function handle(): void
     {
         // Obtener los usuarios que deben recibir la notificación
-        $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP','Coordinador_RN','Auxiliar_coordinacion','Auxiliar_metrologia'])->get();
+        $usuarios = User::role(['admin'])->get();
         // Enviar la notificación a cada usuario
         foreach ($usuarios as $usuario) {
             $usuario->notify(new Bitacora($this->user->name, $this->id_bitacora));

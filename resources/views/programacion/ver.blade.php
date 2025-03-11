@@ -60,9 +60,12 @@
                     <div class="form-group" id="fechaFinContainer" style="display: none;">
                         <input type="date" class="form-control" id="fechaFin" name="fechaFin">
                     </div>
-
+                    <br>
                     <div class="text-center">
                         <button type="submit" id="btnBuscar" class="btn btn-success">Buscar</button>
+                    </div>
+                    <br>
+                    <div id="mensaje-programaciones">
                     </div>
                 </div>
             </div>
@@ -95,5 +98,29 @@
         }
     });
 </script>
+<script>
+    const url_jobs = "{{ route('jobs.pnd') }}";
+    function verificarProgramaciones() {
+        fetch(url_jobs)
+            .then(response => response.json())
+            .then(data => {
+                const mensajeDiv = document.getElementById('mensaje-programaciones');
+                if (data) {
+                    document.getElementById('btnBuscar').disabled = true;
+                    mensajeDiv.innerHTML = '<div class="alert alert-info">Sincronizando asignaciones tecnicos faltan ' + data + ' registros, espere por favor...</div>';
+                } else {
+                    document.getElementById('btnBuscar').disabled = false;
+                    mensajeDiv.innerHTML = ''; // Limpiar el mensaje si no hay jobs en cola
+                }
+            });
+    }
+
+    // Verificar cada 5 segundos (ajusta el intervalo según tus necesidades)
+    setInterval(verificarProgramaciones, 5000);
+
+    // Ejecutar la verificación inicial al cargar la página
+    verificarProgramaciones();
+</script>
+
 @stop
 @endsection
