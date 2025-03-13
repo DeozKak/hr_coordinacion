@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Mail;
 use Spatie\Permission\Traits\HasRoles;
+use App\Models\Notificacion;
 use App\Mail\ResetPasswordMail;
 use Illuminate\Database\Eloquent\Model;
 
@@ -54,7 +55,7 @@ class User extends Authenticatable
         ];
     }
 
-    public function notifications()
+    public function notificationsMail()
     {
     return $this->belongsToMany(
         Notificacion::class,  // Modelo de Notificacion
@@ -65,16 +66,4 @@ class User extends Authenticatable
     }
 }
 
-class Notification extends Model
-{
-    use HasFactory;
 
-    protected $table = 'notifications'; // Asegúrate de que el nombre coincide con tu tabla
-
-    protected $fillable = ['nombre', 'id_user'];
-
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'id_user');
-    }
-}

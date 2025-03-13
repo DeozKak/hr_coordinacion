@@ -14,6 +14,7 @@ class CorreoProgramacion implements ShouldQueue
 
     protected $user;
     protected $programacion;
+    protected $notification = 'Programacion';
     /**
      * Create a new job instance.
      */
@@ -28,7 +29,10 @@ class CorreoProgramacion implements ShouldQueue
      */
     public function handle(): void
     {
-        $usuarios = User::role(['admin', 'PQRS', 'Coordinador_RP', 'Coordinador_RN'])->where('state', 1)->get();
+        $usuarios = User::whereHas('notificationsMail', function ($query) {
+            $query->where('Nombre', $this->notification);
+        })->get();
+        
         foreach ($usuarios as $usuario) {
             $usuario->notify(new Programada($this->user->name, $this->programacion));
         }

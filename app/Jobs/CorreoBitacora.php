@@ -13,6 +13,8 @@ class CorreoBitacora implements ShouldQueue
     use Dispatchable, Queueable;
     protected $id_bitacora;
     protected $user;
+
+    protected $notification = "Bitacora";
     /**
      * Create a new job instance.
      */
@@ -28,7 +30,10 @@ class CorreoBitacora implements ShouldQueue
     public function handle(): void
     {
         // Obtener los usuarios que deben recibir la notificación
-        $usuarios = User::role(['admin'])->get();
+        $usuarios = User::whereHas('notificationsMail', function ($query) {
+            $query->where('Nombre', $this->notification);
+        })->get();
+
         // Enviar la notificación a cada usuario
         foreach ($usuarios as $usuario) {
             $usuario->notify(new Bitacora($this->user->name, $this->id_bitacora));

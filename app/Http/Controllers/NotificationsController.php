@@ -9,6 +9,7 @@ use App\Notifications\Produccion;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Notificacion;
+use Illuminate\Support\Facades\Auth;
 
 
 class NotificationsController extends Controller
@@ -16,7 +17,8 @@ class NotificationsController extends Controller
 
     public function index()
     {
-        $notifications = auth()->user()->notifications()->paginate(10);
+        
+        $notifications = Auth::user()->notifications()->paginate(10);
         return view('notifications.notificaciones', compact('notifications'));
     }
 
@@ -87,7 +89,9 @@ class NotificationsController extends Controller
 
     public function manage()
     {
-        $users = User::with(['roles', 'notifications'])->get();
+        $users = User::with(['roles', 'notifications'])
+        ->where('state', 1)
+        ->get();
         return view('notifications.gestionNotificaciones', compact('users'));
     }
 

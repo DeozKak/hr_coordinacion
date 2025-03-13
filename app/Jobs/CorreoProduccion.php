@@ -16,6 +16,7 @@ class CorreoProduccion implements ShouldQueue
     protected $contrato;
     protected $fecha;
     protected $inspector;
+    protected $notification = "Produccion";
     /**
      * Create a new job instance.
      */
@@ -32,7 +33,9 @@ class CorreoProduccion implements ShouldQueue
      */
     public function handle(): void
     {
-        $usuarios = User::role(['admin', 'Director', 'Residente'])->get();
+        $usuarios = User::whereHas('notificationsMail', function ($query) {
+            $query->where('Nombre', $this->notification);
+        })->get();
 
         foreach ($usuarios as $usuario) {
             $usuario->notify(new Produccion($this->contrato, $this->user, $this->fecha, $this->inspector));
