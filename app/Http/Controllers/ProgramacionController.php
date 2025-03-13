@@ -8,7 +8,6 @@ use App\Models\tbl_insp_cali;
 use App\Models\tbl_programacion_contrato;
 use App\Models\User;
 use App\Models\Movilidad;
-use App\Notifications\Programada;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Database\QueryException;
@@ -23,8 +22,8 @@ use Illuminate\Support\Facades\Schema;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-
+use App\Jobs\CorreoProgramacion;
+use App\Jobs\ActualizacionAsignacionTec;
 
 class ProgramacionController extends Controller
 {
@@ -287,20 +286,9 @@ class ProgramacionController extends Controller
                     if ($rowData["ID_TECNICO"] !== "0") {
 
                         //modificar el tecnico asignado de la base dependiendo de la base en excel
-                        $programacion = tbl_programacion_contrato::where('ORDEN_TRABAJO', $rowData["NUMERO_ORDEN"])->where('CONTRATO', $rowData["CONTRATO"])->get();
-                        if ($programacion->count() > 0) {
-                            foreach ($programacion as $pro) {
-                                try {
-                                    $inspector = tbl_insp_cali::where('id', $rowData["ID_TECNICO"])->first();
-                                    if ($pro->FECHA_AGENDAMIENTO >= date('Y-m-d')) {
-                                        $pro->TECNICO = $rowData["ID_TECNICO"] . '. ' . $inspector->apellidos . ' ' . $inspector->nombres;
-                                        $pro->save();
-                                    }
-                                } catch (\Throwable $th) {
-                                    Log::error($th);
-                                }
-                            }
-                        }
+                        //se manda a segundo plano
+                        ActualizacionAsignacionTec::dispatch($rowData)->onQueue('Asignacion_tec');
+
                     }
                 }
 
@@ -404,7 +392,7 @@ class ProgramacionController extends Controller
             $tipo_trabajo = ["RN " . $request->data[2]];
         }
         $contrato = ':' . $request->data[1];
-        $movilidad = Movilidad::select('NombreOperario', 'FechaRealInicio')
+        $movilidad = Movilidad::select('NombreOperario', 'FechaRealInicio','Cierre1','TipoTarea')
             ->where('NroSitio',  $contrato)
             ->whereIn('TipoTarea', $tipo_trabajo)
             ->where('Grupo', 'INSP-VALLE')
@@ -412,6 +400,9 @@ class ProgramacionController extends Controller
             ->first();
 
         if ($movilidad) {
+            if(in_array($movilidad->Cierre1, ['INSPECCIONADA CON DEFECTO CRITICO VALLE','INSPECCIONADA CON DEFECTO NO CRITICO VALLE','INSPECCIONADA CON DEFECTO CRITICO VALLE']) && $movilidad->TipoTarea === 'SA 12164'){
+                
+            }else{
             $fecha_completa = $movilidad->FechaRealInicio;
             $partes = explode(' ', $fecha_completa);
             $fecha = $partes[0];
@@ -419,7 +410,8 @@ class ProgramacionController extends Controller
                 'movilidad' => 'Contrato ya ejecutado',
                 'usuario' => $movilidad->NombreOperario,
                 'agendamiento' => $fecha
-            ]);
+                ]);
+            }
         }
 
         try {
@@ -507,10 +499,7 @@ class ProgramacionController extends Controller
 
                 $programacion->mensaje = 1;
                 $programacion->save();
-                $usuarios = User::role(['admin', 'PQRS', 'Coordinador_RP', 'Coordinador_RN'])->where('state', 1)->get();
-                foreach ($usuarios as $usuario) {
-                    $usuario->notify(new Programada($user->name, $programacion->id));
-                }
+                CorreoProgramacion::dispatch($user, $id);
             }
 
             foreach ($programadas as $programada) {

@@ -108,19 +108,68 @@
     @yield('adminlte_js')
 
     @if (session('error'))
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        Swal.fire({
-            title: "Error",
-            text: "{{session('error')}}",
-            icon: "error"
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                title: "Error",
+                text: "{{session('error')}}",
+                icon: "error"
+            });
         });
-    });
-</script>
-@endif
+    </script>
+    @endif
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+
+            setTimeout(function() {
+                const enlaces = document.querySelectorAll('a.text-muted.text-sm');
+
+
+                enlaces.forEach((enlace, index) => {
+                    enlace.setAttribute('id', `enlace`); // Agrega un id único a cada enlace
+                });
+                let notificationId = 0;
+
+                $(document).on('click', '[id^="notificationTrash_"], #enlace', function(event) {
+
+                    if ($(this).attr('id') === 'enlace') {
+                        let parent = $(this).parent(); // Obtiene el elemento padre inmediato
+                        let grandparent = parent.parent(); // Obtiene el padre del padre (abuelo)
+                         notificationId = grandparent.attr('id');
+                    }else{
+                         notificationId = this.id.split('_')[1];
+                    }
+
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    const data = 1;
+                    $.ajax({
+                        url: "{{route('notifications.markAsRead')}}",
+                        type: "GET",
+                        data: {
+                            notification_id: notificationId,
+                             data: data,
+                        },
+                        success: function(response) {
+                            console.log(response);
+                            if (response.success) {
+                                $('.adminlte-dropdown-content').html(response.notifications.dropdown);
+                                $('.navbar-badge').text(response.notifications.label);
+                            } else {
+                                console.error("Error:", response.message);
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error(xhr.responseText);
+                        }
+                    });
+                });
+
+
+            }, 800)
+
             const makeRead = document.getElementById('makeRead').value;
             setTimeout(() => {
                 document.addEventListener('click', function(event) {
@@ -148,32 +197,6 @@
                 });
             }, 10);
 
-            $(document).on('click', '[id^="notificationTrash_"]', function(event) {
-                event.stopPropagation();
-
-                const notificationId = this.id.split('_')[1];
-                const data = 1;
-
-                $.ajax({
-                    url: "{{route('notifications.markAsRead')}}",
-                    type: "GET",
-                    data: {
-                        notification_id: notificationId,
-                         data: data,
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            $('.adminlte-dropdown-content').html(response.notifications.dropdown);
-                            $('.navbar-badge').text(response.notifications.label);
-                        } else {
-                            console.error("Error:", response.message);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error("AJAX error:", error);
-                    }
-                });
-            });
 
             $(document).on('click', '.adminlte-dropdown-content', function(event) {
                 event.stopPropagation();

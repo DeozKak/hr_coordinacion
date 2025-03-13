@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use App\Models\User;
-use Faker\Provider\ar_EG\Person;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 

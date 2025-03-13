@@ -8,3 +8,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote')->hourly();
 
 Schedule::command('app:ejecutadas-programacion')->hourly();
+
+Schedule::command('app:dev_clean')->daily();
+
+Schedule::command('app:update_stickers')->dailyAt('10:00');

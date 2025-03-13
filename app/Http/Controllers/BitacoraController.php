@@ -12,6 +12,7 @@ use App\Models\tbl_bitacora_contrato;
 use App\Models\Movilidad;
 use App\Notifications\Mod_Devolucion;
 use App\Notifications\Bitacora;
+use App\Jobs\CorreoBitacora;
 use DateTime;
 use DOMDocument;
 use Illuminate\Http\Request;
@@ -691,14 +692,9 @@ class BitacoraController extends Controller
                 }
             }
             try {
-                // Obtener los usuarios que deben recibir la notificación
-                $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN', 'Auxiliar_coordinacion', 'Auxiliar_metrologia'])->get();
-                $usuarioLog = Auth::user();
+                $userLogged = Auth::user();
+                CorreoBitacora::dispatch($bitacora->id, $userLogged);
 
-                // Enviar la notificación a cada usuario
-                foreach ($usuarios as $usuario) {
-                    $usuario->notify(new Bitacora($usuarioLog->name, $bitacora->id));
-                }
             } catch (\Exception $e) {
                 Log::error($e);
             }
