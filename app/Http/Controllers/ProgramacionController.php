@@ -149,7 +149,6 @@ class ProgramacionController extends Controller
         }
     }
 
-
     public function validacion($worksheet)
     {
         $indicador = true;
@@ -1123,7 +1122,7 @@ class ProgramacionController extends Controller
             session()->flash('success', 'Archivo subido exitosamente');
             return response()->json(['message' => 'Archivo subido exitosamente']);
         } else {
-            return response()->json(['errors' => 'Error al subir el archivo'], 422);
+            return response()->json(['errors' => 'Error al subir el archivo, fila: '.$datos], 422);
         }
     }
 
@@ -1188,6 +1187,9 @@ class ProgramacionController extends Controller
                 if ($row->getRowIndex() === 1) {
                     continue; // Saltar la primera fila (encabezados)
                 }
+                if($worksheet->getCell('A' . $row->getRowIndex())->getValue() === null){
+                    continue;
+                }
 
                 $programada = new tbl_programacion_contrato;
 
@@ -1223,7 +1225,7 @@ class ProgramacionController extends Controller
                         $programada->HORA_FINAL = "04:59:00 p.m.";
                     }
                 } else {
-                    return false;
+                    return $row->getRowIndex();
                 }
                 $existe = 0;
                 foreach (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M'] as $columna) {
@@ -1333,11 +1335,9 @@ class ProgramacionController extends Controller
         } catch (Exception $e) {
             //$tabla->delete();
             Log::error("Error al insertar datos: " . $e->getMessage()); // Registrar el error para depuración
-            return false;
+            return $row->getRowIndex();
         }
     }
-
-
 
     private function notificacion($datos)
     {

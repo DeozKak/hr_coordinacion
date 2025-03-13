@@ -245,8 +245,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Calcular promedios (considerando celdas vacías)
     const promedios = []; // Array para guardar los promedios
     const filaPromedios = hot.countRows() - 2; // Penúltima fila (promedios)
-    totalColspan = totalColspan + 7;
-    colProm = totalColspan - 7;
+    totalColspan = totalColspan + 9;
+    colProm = totalColspan;
     // Calcular promedios (considerando celdas vacías)
     for (let i = 0; i < colProm; i++) {
         hot.updateSettings({
@@ -293,6 +293,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             ]
         });
     }
+
+    hot.updateSettings({
+        colWidths: [100, 300], // ajustar ancho de las primeras dos columnas
+      });
 
     $(document).on('click', '#noContar, #noContarDoblesFestivos', function(){
         let dataUrl;
