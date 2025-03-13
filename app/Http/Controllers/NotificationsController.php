@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Notifications\Mod_Devolucion;
 use App\Notifications\Bitacora;
 use Illuminate\Http\Request;
+use App\Models\User;
+use App\Models\Notificacion;
+
 
 class NotificationsController extends Controller
 {
@@ -77,4 +80,98 @@ class NotificationsController extends Controller
             return response()->json(['success' => true]);
         }
     }
+
+    public function manage()
+    {
+        $users = User::with(['roles', 'notifications'])->get();
+        return view('notifications.gestionNotificaciones', compact('users'));
+    }
+
+    public function getUserNotifications(Request $request)
+    {
+        $id = $request->input('id');
+
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json(['error' => 'Usuario no encontrado'], 404);
+        }
+
+        // Obtener todas las notificaciones disponibles en la base de datos
+        $allNotifications = Notificacion::all()->map(function ($notification) {
+            return ['Nombre' => $notification->Nombre, 'label' => $notification->Nombre];
+        });
+
+        // Obtener las notificaciones ya asignadas al usuario
+        $userNotifications = $user->notifications->map(function ($notification) {
+            return ['Nombre' => $notification->Nombre, 'label' => $notification->Nombre];
+        });
+
+        // Determinar las notificaciones disponibles que aún no están asignadas
+        $assignedNames = $userNotifications->pluck('Nombre')->toArray();
+        $availableNotifications = $allNotifications->reject(function ($notification) use ($assignedNames) {
+            return in_array($notification['Nombre'], $assignedNames);
+        });
+
+        return response()->json([
+            'asignadas' => $userNotifications,
+            'disponibles' => $availableNotifications->values(),
+        ]);
+    }
+
+    public function update(Request $request)
+    {
+        try {
+            $user = User::findOrFail($request->id);
+
+            // Obtener notificaciones seleccionadas en el formulario
+            $assignedNotifications = $request->assignedNotifications ?? [];
+            $revokedNotifications = $request->revokedNotifications ?? [];
+
+            // Obtener IDs de las notificaciones seleccionadas
+            $assignedNotificationIds = Notificacion::whereIn('Nombre', $assignedNotifications)->pluck('id')->toArray();
+            $revokedNotificationIds = Notificacion::whereIn('Nombre', $revokedNotifications)->pluck('id')->toArray();
+
+            // Asignar nuevas notificaciones
+            $user->notifications()->syncWithoutDetaching($assignedNotificationIds);
+
+            // Revocar notificaciones eliminadas
+            $user->notifications()->detach($revokedNotificationIds);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Notificaciones actualizadas correctamente',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error al actualizar las notificaciones: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function store(Request $request)
+    {
+        try {
+            $request->validate([
+                'nombre' => 'required|string|max:255|unique:tbl_notificaciones,nombre',
+            ]);
+
+            $notificacion = new Notificacion();
+            $notificacion->Nombre = $request->nombre;
+            $notificacion->save();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Notificación creada correctamente',
+                'user_id' => auth()->id(), // Opcional, para actualizar la tabla sin recargar
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error al crear la notificación: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
 }

@@ -269,6 +269,13 @@
                 </a>
                 @endcan
 
+                @role('admin')
+                    <a href="{{ url('/admin/notifications/manage') }}" class="item" target="_self">
+                        <div class="item-icon"><i class="fas fa-bell"></i></div>
+                        <div class="item-label">Gestión Notificaciones</div>
+                    </a>
+                @endrole
+
                 @canany(['ver_residente', 'ver_coordinacion_RP'])
                 <a href="{{ url('/nomina/parametrizarSalarioAux') }}" class="item" target="_self">
                     <div class="item-icon"><i class="fas fa-money-bill-wave"></i></div>

@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Mail;
 use Spatie\Permission\Traits\HasRoles;
 use App\Mail\ResetPasswordMail;
+use Illuminate\Database\Eloquent\Model;
 
 class User extends Authenticatable
 {
@@ -19,14 +20,14 @@ class User extends Authenticatable
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
-     */  
+     */
     protected $fillable = [
         'name',
         'email',
         'password',
-        'type_id', 
-        'identification', 
-        'state', 
+        'type_id',
+        'identification',
+        'state',
         'login_attempts',
     ];
 
@@ -51,5 +52,29 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function notifications()
+    {
+    return $this->belongsToMany(
+        Notificacion::class,  // Modelo de Notificacion
+        'tbl_notifications_has_users', // Tabla pivote
+        'id_user', // Clave foránea en la tabla pivote que referencia a User
+        'id_notification' // Clave foránea en la tabla pivote que referencia a Notificacion
+    );
+    }
+}
+
+class Notification extends Model
+{
+    use HasFactory;
+
+    protected $table = 'notifications'; // Asegúrate de que el nombre coincide con tu tabla
+
+    protected $fillable = ['nombre', 'id_user'];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'id_user');
     }
 }
