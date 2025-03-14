@@ -17,7 +17,6 @@ class NotificationsController extends Controller
 
     public function index()
     {
-        
         $notifications = Auth::user()->notifications()->paginate(10);
         return view('notifications.notificaciones', compact('notifications'));
     }
@@ -25,7 +24,7 @@ class NotificationsController extends Controller
     public function getNotificationsData()
     {
         // Obtener todas las notificaciones no leídas de tipo Mod_Devolucion para el usuario autenticado
-        $notifications = auth()->user()->unreadNotifications()
+        $notifications = Auth::user()->unreadNotifications()
             ->where(function ($query) {
                 $query->where('type', Mod_Devolucion::class)
                 ->orWhere('type', Bitacora::class)
@@ -89,7 +88,7 @@ class NotificationsController extends Controller
 
     public function manage()
     {
-        $users = User::with(['roles', 'notifications'])
+        $users = User::with(['roles', 'notificationsMail'])
         ->where('state', 1)
         ->get();
         return view('notifications.gestionNotificaciones', compact('users'));
@@ -111,7 +110,7 @@ class NotificationsController extends Controller
         });
 
         // Obtener las notificaciones ya asignadas al usuario
-        $userNotifications = $user->notifications->map(function ($notification) {
+        $userNotifications = $user->notificationsMail->map(function ($notification) {
             return ['Nombre' => $notification->Nombre, 'label' => $notification->Nombre];
         });
 
@@ -141,10 +140,10 @@ class NotificationsController extends Controller
             $revokedNotificationIds = Notificacion::whereIn('Nombre', $revokedNotifications)->pluck('id')->toArray();
 
             // Asignar nuevas notificaciones
-            $user->notifications()->syncWithoutDetaching($assignedNotificationIds);
+            $user->notificationsMail()->syncWithoutDetaching($assignedNotificationIds);
 
             // Revocar notificaciones eliminadas
-            $user->notifications()->detach($revokedNotificationIds);
+            $user->notificationsMail()->detach($revokedNotificationIds);
 
             return response()->json([
                 'status' => 'success',

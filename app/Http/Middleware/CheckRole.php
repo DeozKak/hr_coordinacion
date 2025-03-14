@@ -18,6 +18,9 @@ class CheckRole
     {
         $user = Auth::user();
         try{
+        if(!$user){
+            return redirect('/login');
+        }
         if ($user->hasRole('admin') === false || $user->hasPermissionTo('gestion_usuarios') === false){
             return redirect('/home')->with('error', 'Acción no autorizada.');
         }

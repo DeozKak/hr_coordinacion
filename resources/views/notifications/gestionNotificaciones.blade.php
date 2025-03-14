@@ -35,7 +35,7 @@
                                     @endforeach
                                 </td>
                                 <td class="user-notifications">
-                                    @foreach($user->notifications as $notification)
+                                    @foreach($user->notificationsMail as $notification)
                                         <span class="badge badge-primary">{{ $notification->Nombre }}</span>
                                     @endforeach
                                 </td>

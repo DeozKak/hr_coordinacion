@@ -5,6 +5,8 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\tbl_programacion_contrato;
 use App\Models\Movilidad;
+use Carbon\Carbon;
+
 
 class EjecutadasProgramacion extends Command
 {
@@ -52,16 +54,28 @@ class EjecutadasProgramacion extends Command
             }
 
             $contrato = ":" . $programada->CONTRATO;
-
-            $movilidad = Movilidad::where('NroSitio', $contrato)
+            $dosAnosAtras = Carbon::now()->subYears(2)->toDateString();
+            $movilidad = Movilidad::select('Cierre1','TipoTarea','FechaRealInicio')
+                ->where('NroSitio', $contrato)
                 ->whereIn('TipoTarea', $tipo_trabajo)
                 ->whereIn('Cierre1', $cierres)
                 ->where('Grupo', 'INSP-VALLE')
-                ->exists();
+                ->first();
 
             if($movilidad){
-                $programada->EJECUTADA = 1;
-                $programada->save();
+                 if(in_array($movilidad->Cierre1, ['INSPECCIONADA CON DEFECTO CRITICO VALLE','INSPECCIONADA CON DEFECTO NO CRITICO VALLE']) && $movilidad->TipoTarea === 'SA 12164'){
+                
+                }else{
+                    $fecha_completa = $movilidad->FechaRealInicio;
+                    $partes = explode(' ', $fecha_completa);
+                    $fecha = $partes[0];
+                    if($fecha >= $dosAnosAtras){
+                    
+                    }else{
+                        $programada->EJECUTADA = 1;
+                        $programada->save();
+                    }
+                }
             }
         }
 
