@@ -1,5 +1,65 @@
 $(document).ready(function(){
 
+    let selectChoices = $('#ccOperario');
+    let totalResults = $('.totalResults');
+
+    new TomSelect(selectChoices, {
+        plugins: ['remove_button'],
+        maxItems: null,
+        render: {
+            no_results: function () {
+                return `<div class="create">No hay resultados</div>`;
+            },
+        },
+    });
+
+    let inputsFilters = $('#ordenTrabajo, #ordenExterna, #numeroSolicitud, #contrato, #numActa');
+
+    inputsFilters.each(function () {
+        new TomSelect(this, {
+            plugins: ['remove_button'],
+            persist: false,
+            delimiter: ',',
+            create: true,
+            maxItems: null,
+            render: {
+                no_results: function () {
+                    return '';
+                },
+                option_create: function (data, escape) {
+                    return `<div class="create">Añadir <strong>${escape(data.input)}</strong></div>`;
+                },
+            },
+            createFilter: (input) => {
+                return /^\d+$/.test(input);
+            },
+            onInitialize: function() {
+                // Agregar evento paste al input de control
+                this.control_input.addEventListener('paste', (e) => {
+                    e.preventDefault();
+                    
+                    // Obtener el texto pegado
+                    let pastedText = (e.clipboardData || window.clipboardData).getData('text');
+                    
+                    // Separar el texto por espacios o comas
+                    let valores = pastedText.split(/[\s,]+/);
+                    
+                    // Filtrar valores vacíos y agregar cada valor
+                    valores.forEach(valor => {
+                        valor = valor.trim();
+                        if (valor && /^\d+$/.test(valor)) {
+                            this.addOption({
+                                value: valor,
+                                text: valor
+                            });
+                            this.addItem(valor);
+                        }
+                    });
+                });
+            }
+        });
+    });
+
     let nestedHeaders = [
         [
             "#",
@@ -46,17 +106,13 @@ $(document).ready(function(){
     let currentPage = 1;
     let cantScrollDown = 0;
     let cantScrollUp = 0;
-    let falseTrue = $('#nextScroll');
 
     function scrollPage() {
         hotReception.addHook(
             "afterScrollVertically",
             debounce(function () {
-                // let value = buscador.val();
-                // let tipe = columnasBuscar.val();
                 const currentScrollTop = hotReception.view._wt.wtOverlays.topOverlay.getScrollPosition();
                 const totalRows = hotReception.countRows();
-                // let ruta = "";
 
                 // Scroll hacia abajo
                 if (currentScrollTop > lastScrollTop && hotReception.view._wt.wtTable.getLastVisibleRow() >= totalRows - 1) {
@@ -92,17 +148,36 @@ $(document).ready(function(){
 
     scrollPage();
 
-    function cargarPagina(pagina, esScrollHaciaArriba, valor, tipo) {
+    function cargarPagina(pagina, esScrollHaciaArriba) {
         const overlay = document.getElementById('overlay');
-        overlay.style.display = 'block'; // Mostrar el overlay
+        overlay.style.display = 'block';
+
+        let datosFormulario = {};
+        $('#formSearchReception :input').not(':button, #codeTechnician-ts-control').each(function() {
+            let value = $(this).val();
+            if (typeof value === 'string') {
+                value = value.trim();
+            }
+            if(value != ""){
+                datosFormulario[$(this).attr('id')] = value;
+            }
+        });
+
+        let url;
+        if(Object.keys(datosFormulario).length === 0){
+            url = urlReception
+        }else{
+            url = urlFilter
+        }
+
         $.get({
             url: url,
             data: {
                 pagina: pagina,
+                datosFormulario: datosFormulario
             },
             success: function (response) {
                 const nuevosDatos = response.data;
-                console.log(nuevosDatos)
                 if(nuevosDatos.length > 0){
 
                     let datosExistentes = hotReception.getData();
@@ -167,13 +242,66 @@ $(document).ready(function(){
     setTimeout(() => {
         loaderPageReception.show()
     },500)
+
     $.get({
-        url: url,
+        url: urlReception,
         success: function (response) {
-            // console.log(response)
             cardReception.show()
             loaderPageReception.hide()
             hotReception.loadData(response.data);
+            totalResults.text(`Total registros: ${response.totalResults}`)
         }
+    })
+
+    // funcion de filtrar
+    $(document).on('click', '.btnSearchReception', function(){
+
+        const overlay = document.getElementById('overlay');
+        overlay.style.display = 'block';
+
+        let datosFormulario = {};
+        $('#formSearchReception :input').not(':button, #codeTechnician-ts-control').each(function() {
+            let value = $(this).val()
+            if(value != ""){
+                datosFormulario[$(this).attr('id')] = value;
+            }
+        });
+
+        $.get({
+            url: urlFilter,
+            data: {
+                datosFormulario: datosFormulario,
+            },
+            success: function (response) {
+
+                hotReception.loadData(response.data);
+                totalResults.text(`Total registros: ${response.totalResults}`)
+
+                if(response.data.length === 0){
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Advertencia',
+                        text: 'No se encontraron datos con los filtros seleccionados'
+                    })
+                    totalResults.text(`Total registros: 0`)
+                }
+                
+                loaderPageReception.hide()
+                overlay.style.display = 'none';
+            }
+        })  
+    })
+
+    $(document).on('click', '.btnClearReception', function(){
+        $('#formSearchReception :input').not(':button, #codeTechnician-ts-control').each(function() {
+            $(this).val('');
+        });
+
+        $('#formSearchReception .ts-wrapper').each(function() {
+            let tomSelect = $(this).prev()[0].tomselect;
+            if(tomSelect) {
+                tomSelect.clear();
+            }
+        });
     })
 })

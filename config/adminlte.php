@@ -369,7 +369,7 @@ return [
                 ],
                 [
                     'text' => 'Planilla',
-                    'url' => 'planilla',
+                    'url' => 'gestion/planilla',
                     'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
@@ -403,6 +403,12 @@ return [
                     'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
+                [
+                    'text' => 'Aplicación',
+                    'url' => 'gestion/aplicacion',
+                    'icon' => 'far fa-circle',
+                    'label_color' => 'success',
+                ],
             ],
         ],
         [
@@ -430,7 +436,7 @@ return [
                 ],
                 [
                     'text' => 'Historico',
-                    'url' => 'historico',
+                    'url' => '/seguimiento/historico',
                     'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
@@ -740,6 +746,21 @@ return [
                     'location' => '//cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css',
                 ], */
             ],
+        ],
+        'TomSelect' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => '//cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js',
+                ],
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => '//cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.bootstrap4.min.css',
+                ],
+            ]
         ],
         'Handsontable' => [
             'active' => true,

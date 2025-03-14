@@ -67,22 +67,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.getElementById('btnExportar').addEventListener('click', function() {
            
-          $.ajax({
-            url: document.getElementById('url_exportar').value, 
-            method: 'POST',
-            data: {
-                _token: document.getElementById('token').value,
-                data: hot.getData()
-            },
-            success: function(response) {
-              
-                window.location.href = response.url;
-            },
-            error: function(xhr, status, error) {
-                console.error(xhr.responseText);
-                alert('Ocurrió un error al exportar los datos.');
-          }
-        }); 
+            $.ajax({
+              url: document.getElementById("url_exportar").value,
+              method: "POST",
+              data: {
+                  _token: document.getElementById("token").value,
+                  data: hot.getData(),
+              },
+              success: function (response) {
+                  window.location.href = response.url;
+              },
+              error: function (xhr, status, error) {
+                  console.error(xhr.responseText);
+                  alert("Ocurrió un error al exportar los datos.");
+              },
+            }); 
 
         }); 
     });

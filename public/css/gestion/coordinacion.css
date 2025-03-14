@@ -3,20 +3,31 @@
     overflow-y: auto; /* Esto permite el scroll */
 }
 
-.overlay {
-    position: absolute; /* Posiciona el ícono de carga en relación al contenedor */
-    top: 50%; /* Centrado verticalmente */
-    left: 50%; /* Centrado horizontalmente */
-    transform: translate(-50%, -50%); /* Ajusta la posición para centrar */
-    z-index: 10; /* Asegúrate de que esté por encima de la tabla */
-    display: none; /* Ocultar por defecto */
-}
-
 .handsontable td.tecnico {
     background-color: white !important;
 }
 
-#loader1 {
+.loaderCoordination {
+    width: 48px;
+    height: 48px;
+    border: 5px solid orangered;
+    border-bottom-color: #00bfff;
+    border-radius: 50%;
+    display: inline-block;
+    box-sizing: border-box;
+    animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+#loaderPageCoordination {
     border: 16px solid rgba(0, 0, 0, 0.1);
     /* Borde transparente */
     border-top: 16px solid #3498db;
@@ -43,4 +54,15 @@
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+.ts-wrapper {
+    height: 38px !important; /* O el valor que prefieras */
+}
+
+.ts-wrapper.multi .ts-control {
+    height: 38px !important;
+    overflow-y: auto;
+    min-height: 38px !important;
+    max-height: 38px !important;
 }
