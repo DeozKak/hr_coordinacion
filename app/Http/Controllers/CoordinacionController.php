@@ -37,7 +37,7 @@ class CoordinacionController extends Controller
 
         $query = asignadas::select("*")
             ->whereIn('asignadas.tipo_trabajo', [10444, 12161])
-            ->where('status', 1);
+            ->where('asignadas.status', 1);
         $completeData = $query->get();
 
         $fechaActual = new DateTime();
@@ -268,19 +268,19 @@ class CoordinacionController extends Controller
 
             // Obtenemos la sede directamente desde la consulta anterior
             $querySede = tbl_localidades_sede::where('id', $queryMunicipio->id_sede)->first();
-            
+
             // Consultamos primero el municipio
             $queryLugar = $queryMunicipio;
             $columnaLugar = 'id_mun';
-            
+
             // Si no se encuentra el detalle por municipio, buscamos por barrio
             $queryDetalle = TblGruposDetalle::where($columnaLugar, $queryLugar->id)->first();
-            
+
             if ($queryDetalle == null) {
                 // Ahora buscamos por barrio si no encontramos el detalle por municipio
                 $queryLugar = TblBarrios::where('barrio', $item->sector_operativo)->first();
                 $columnaLugar = 'id_barrio';
-            
+
                 if ($queryLugar != null) {
                     $queryDetalle = TblGruposDetalle::where($columnaLugar, $queryLugar->id)->first();
                 }
@@ -457,7 +457,7 @@ class CoordinacionController extends Controller
             ];
         });
 
-        // retornamos los tecnicos y el datosConIndice 
+        // retornamos los tecnicos y el datosConIndice
         return response()->json(
             [
                 'estadoProgramacion' => $arrayEstPro,
@@ -479,7 +479,7 @@ class CoordinacionController extends Controller
 
         $query = asignadas::select('*')
             ->whereIn('asignadas.tipo_trabajo', [10444, 12161])
-            ->where('status', 1);
+            ->where('asignadas.status', 1);
 
         $arrayEstPro = [
             'Aplaza visita',
@@ -546,14 +546,14 @@ class CoordinacionController extends Controller
                         }
                     }
 
-                    
+
                     if (isset($value['id_grupo'])) {
                         foreach ($value['id_grupo'] as $valGroup) {
                             $arrayIdGroup[] = intval($valGroup);
                         }
                         $queryDetails->wherein('id_grupo', $arrayIdGroup);
                     }
-                    
+
                     if (isset($value['id_subGrupo'])) {
                         foreach ($value['id_subGrupo'] as $valSubGroup) {
                             $arrayIdSubGroup[] = intval($valSubGroup);
@@ -561,11 +561,11 @@ class CoordinacionController extends Controller
                         $queryDetails->wherein('id_subgrupo', $arrayIdSubGroup);
                     }
                     $dataDetail = $queryDetails->groupBy('id_mun')->get();
-                    
+
                     foreach ($dataDetail as $detail) {
                         $arrayIdMun[] = $detail->id_mun;
                     }
-                    
+
                     foreach ($arrayIdMun as $idMun) {
                         // consultamos el nombre del municipio con el id del municipio
                         $sqlMunQuery = tbl_localidades_municipio::where('id', $idMun)
@@ -577,7 +577,7 @@ class CoordinacionController extends Controller
                     }
 
                     $arrayValues = $arrayNomMun;
-                    
+
                     $key = "localidad";
                     $flag = true;
                 }
@@ -744,19 +744,19 @@ class CoordinacionController extends Controller
 
             // Obtenemos la sede directamente desde la consulta anterior
             $querySede = tbl_localidades_sede::where('id', $queryMunicipio->id_sede)->first();
-            
+
             // Consultamos primero el municipio
             $queryLugar = $queryMunicipio;
             $columnaLugar = 'id_mun';
-            
+
             // Si no se encuentra el detalle por municipio, buscamos por barrio
             $queryDetalle = TblGruposDetalle::where($columnaLugar, $queryLugar->id)->first();
-            
+
             if ($queryDetalle == null) {
                 // Ahora buscamos por barrio si no encontramos el detalle por municipio
                 $queryLugar = TblBarrios::where('barrio', $item->sector_operativo)->first();
                 $columnaLugar = 'id_barrio';
-            
+
                 if ($queryLugar != null) {
                     $queryDetalle = TblGruposDetalle::where($columnaLugar, $queryLugar->id)->first();
                 }
@@ -986,9 +986,9 @@ class CoordinacionController extends Controller
         }
 
         $asignadas = DB::update(
-            "UPDATE asignadas 
+            "UPDATE asignadas
                     SET {$campoActualizar} = ?,
-                    {$campoNombre} = ? 
+                    {$campoNombre} = ?
                     {$campoFecha}
                     WHERE orden = ?",
             $parametros
@@ -1457,12 +1457,12 @@ class CoordinacionController extends Controller
 
             if ($item->fecha_asignacion_inspector != null) {
                 $fechaAsignacion = new DateTime($item->fecha_asignacion_inspector);
-               
+
                 $diferencia = $fechaActual->diff($fechaAsignacion);
 
-                $diferenciaDias = $diferencia->days; 
+                $diferenciaDias = $diferencia->days;
             } else {
-                $diferenciaDias = ""; 
+                $diferenciaDias = "";
             }
 
             return [
@@ -1976,7 +1976,7 @@ class CoordinacionController extends Controller
 
         $orden = $request->input('ordenEnviar');
 
-        // consultamos la orden en asignadas 
+        // consultamos la orden en asignadas
         $queryAsignadas = asignadas::where('orden', $orden)->first();
         if($queryAsignadas->marca == 0){
             $queryAsignadas->marca = 1;
@@ -2003,7 +2003,7 @@ class CoordinacionController extends Controller
         }
 
         $marca = $request->input('marca');
-        
+
         $query = asignadas::select('*')
             ->whereIn('asignadas.tipo_trabajo', [10444, 12161])
             ->where('status', 1);
@@ -2058,14 +2058,14 @@ class CoordinacionController extends Controller
                         }
                     }
 
-                    
+
                     if (isset($value['id_grupo'])) {
                         foreach ($value['id_grupo'] as $valGroup) {
                             $arrayIdGroup[] = intval($valGroup);
                         }
                         $queryDetails->wherein('id_grupo', $arrayIdGroup);
                     }
-                    
+
                     if (isset($value['id_subGrupo'])) {
                         foreach ($value['id_subGrupo'] as $valSubGroup) {
                             $arrayIdSubGroup[] = intval($valSubGroup);
@@ -2073,11 +2073,11 @@ class CoordinacionController extends Controller
                         $queryDetails->wherein('id_subgrupo', $arrayIdSubGroup);
                     }
                     $dataDetail = $queryDetails->groupBy('id_mun')->get();
-                    
+
                     foreach ($dataDetail as $detail) {
                         $arrayIdMun[] = $detail->id_mun;
                     }
-                    
+
                     foreach ($arrayIdMun as $idMun) {
                         // consultamos el nombre del municipio con el id del municipio
                         $sqlMunQuery = tbl_localidades_municipio::where('id', $idMun)
@@ -2089,7 +2089,7 @@ class CoordinacionController extends Controller
                     }
 
                     $arrayValues = $arrayNomMun;
-                    
+
                     $key = "localidad";
                     $flag = true;
                 }
@@ -2162,7 +2162,7 @@ class CoordinacionController extends Controller
     }
 
     public function generarExcelPdf(Request $request){
-        
+
         require '../vendor/autoload.php';
 
         set_time_limit(400);
@@ -2195,7 +2195,7 @@ class CoordinacionController extends Controller
 
         $sheet->mergeCells('A1:O1');
 
-        // consultamos el nombre del inspector con el id que enviamos 
+        // consultamos el nombre del inspector con el id que enviamos
         $queryInspector = tbl_insp_cali::where('id', $inspector)->first();
 
         if($expExcel == "on"){
@@ -2250,7 +2250,7 @@ class CoordinacionController extends Controller
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
             ]);
-    
+
             $sheet->getStyle('O1')->getAlignment()->applyFromArray([
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
@@ -2269,7 +2269,7 @@ class CoordinacionController extends Controller
                     $size = 12;
                     $colorFont = 'FFFFFFFF';
                 }
-    
+
                 // asigamos el estilo al rango de celdas
                 $sheet->getStyle($rango)->applyFromArray([
                     'font' => [
@@ -2285,17 +2285,17 @@ class CoordinacionController extends Controller
                         'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
                     ],
                 ]);
-    
+
                 // asognamos los demas encabezados
                 $sheet->setCellValue($key, $header);
-    
+
                 // sacamos solo la letra de la columna para dimensionar la columna
                 if (strpos($key, "2")) {
                     $key = explode("2", $key)[0];
                 }else {
                     $key = explode("1", $key)[0];
                 }
-    
+
                 if ($key === 'G' || $key === 'I' || $key === 'O') {
                     $sheet->getColumnDimension($key)->setWidth(30); // Ancho personalizado
                 }else{
@@ -2312,26 +2312,26 @@ class CoordinacionController extends Controller
         } elseif ($parametro === "2") {
             // Caso 2: Con marca
             $query = asignadas::where('marca', 1)->where('status', 1);
-        
+
             if ($tipoOrden === "1") {
                 $query->where('tipo_trabajo', 10444);
             } else {
                 $query->whereIn('tipo_solicitud_externa', [12161, 12163, 12164]);
             }
-        
+
             $queryAsignadas = $query->get();
         } elseif ($parametro === "1") {
             // Caso 3: Con fecha de asignación
             if ($fechaAsignacion === null) {
                 return redirect()->route('planilla')->with('error', 'Por favor seleccione una fecha');
             }
-        
+
             $queryAsignadas = asignadas::where('codigo_tecnico', $inspector)
                 ->where('fecha_asignacion_inspector', $fechaAsignacion)
                 ->where('status', 1)
                 ->get();
         }
-        
+
 
         if($queryAsignadas->isEmpty()){
             return redirect()->route('planilla')->with('error', 'No hay resultados en la busqueda');
@@ -2384,19 +2384,19 @@ class CoordinacionController extends Controller
                 $contrato = $asignada->contrato;
 
                 $queryMunicipio = tbl_localidades_municipio::where('nombre', $asignada->localidad)->first();
-                
+
                 // Consultamos primero el municipio
                 $queryLugar = $queryMunicipio;
                 $columnaLugar = 'id_mun';
-                
+
                 // Si no se encuentra el detalle por municipio, buscamos por barrio
                 $queryDetalle = TblGruposDetalle::where($columnaLugar, $queryLugar->id)->first();
-                
+
                 if ($queryDetalle == null) {
                     // Ahora buscamos por barrio si no encontramos el detalle por municipio
                     $queryLugar = TblBarrios::where('barrio', $asignada->sector_operativo)->first();
                     $columnaLugar = 'id_barrio';
-                
+
                     if ($queryLugar != null) {
                         $queryDetalle = TblGruposDetalle::where($columnaLugar, $queryLugar->id)->first();
                     }
@@ -2410,7 +2410,7 @@ class CoordinacionController extends Controller
                 $fechaUltCert = strtotime($asignada->fecha_ult_cert);
                 $fechaUltCert = gmdate('d-M-y', $fechaUltCert);
                 $fechaUltCert = strtolower($fechaUltCert);
-                
+
                 $catMedUltRev = "1)Categoría: ".$asignada->categoria."//"."2)Medidor: ".$asignada->medidor."//"."3)Ultima rev: ".$fechaUltCert;
 
                 // CALCULO DE LOS MESES
@@ -2465,7 +2465,7 @@ class CoordinacionController extends Controller
                         $queryDetalleVne = TblRecepcionVneDetalle::where('ordenTrabajo', $asignada->orden)
                                                                     ->orderBy('id', 'desc')->limit(1)
                                                                     ->get();
-                        
+
                         if($queryDetalleVne->isNotEmpty()){
                             $observaciones = $queryDetalleVne[0]->comObservacion;
                         }else{
@@ -2536,19 +2536,19 @@ class CoordinacionController extends Controller
                 }
                 $fila++;
             }
-            
+
             unset($arrayExcel);
-            
+
             $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spread, 'Xlsx');
             $tempFile = tempnam(sys_get_temp_dir(), 'reporte');
             $writer->save($tempFile);
-            
+
             header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
             header('Content-Disposition: attachment;filename="Planilla_asignacion.xlsx"');
             header('Cache-Control: max-age=0');
             readfile($tempFile);
             unlink($tempFile);
-            
+
             exit;
 
         }else if($expPdf == "on" && $expExcel == null){
@@ -2592,7 +2592,7 @@ class CoordinacionController extends Controller
                         width: 10%;
                     }
                 </style>";
-        
+
             foreach($arrayExcel as $values){
 
                 // direccion y usuario
@@ -2672,7 +2672,7 @@ class CoordinacionController extends Controller
                     </table>
                     <hr>";
             }
-            
+
             // Generar el PDF con mPDF
             $mpdf->WriteHTML($html);
             $mpdf->Output('reporte.pdf', 'D'); // Descargar el PDF
@@ -2835,15 +2835,15 @@ class CoordinacionController extends Controller
                     </table>
                     <hr>";
             }
-            
+
             $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spread, 'Xlsx');
             $excelTempFile = tempnam(sys_get_temp_dir(), 'reporte_excel');
             $writer->save($excelTempFile);
-            
+
             $mpdf->WriteHTML($html);
             $pdfTempFile = tempnam(sys_get_temp_dir(), 'reporte_pdf');
             $mpdf->Output($pdfTempFile, 'F'); // Guardar el PDF temporalmente
-    
+
             // Crear archivo ZIP
             $zip = new ZipArchive();
             $zipFile = tempnam(sys_get_temp_dir(), 'reporte_zip');
@@ -2852,18 +2852,18 @@ class CoordinacionController extends Controller
                 $zip->addFile($pdfTempFile, 'archivo.pdf');
                 $zip->close();
             }
-        
+
             // Enviar el archivo ZIP al usuario
             header('Content-Type: application/zip');
             header('Content-Disposition: attachment; filename="reportes.zip"');
             header('Content-Length: ' . filesize($zipFile));
             readfile($zipFile);
-        
+
             // Eliminar archivos temporales
             unlink($excelTempFile);
             unlink($pdfTempFile);
             unlink($zipFile);
-        
+
             exit;
         }
     }
@@ -2881,7 +2881,7 @@ class CoordinacionController extends Controller
         $fechaImpMasiva = $request->input('fechaImpMasiva');
         $expExcel = $request->input('expExcel');
         $expPdf = $request->input('expPdf');
-       
+
         // consultamos la tabla asignadas con la sede que llega
         $queryAsignadas = DB::table('asignadas')
         ->join('tbl_localidades_municipios', 'asignadas.localidad', '=', 'tbl_localidades_municipios.nombre')
@@ -2889,11 +2889,11 @@ class CoordinacionController extends Controller
         ->where('asignadas.status', 1)
         ->whereNotNull('codigo_tecnico') // Validar que no sea NULL
         ->where('codigo_tecnico', '!=', ''); // Validar que no sea una cadena vacía
-        
+
         if($fechaAsigna == "si"){
             $queryAsignadas->where('fecha_asignacion_inspector', $fechaImpMasiva);
         }
-        
+
         $queryAsignadas->select('asignadas.*');
 
         $queryAsignadas = $queryAsignadas->get();
@@ -2966,7 +2966,7 @@ class CoordinacionController extends Controller
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
             ]);
-    
+
             $sheet->getStyle('O1')->getAlignment()->applyFromArray([
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
@@ -2985,7 +2985,7 @@ class CoordinacionController extends Controller
                     $size = 12;
                     $colorFont = 'FFFFFFFF';
                 }
-    
+
                 // asigamos el estilo al rango de celdas
                 $sheet->getStyle($rango)->applyFromArray([
                     'font' => [
@@ -3001,17 +3001,17 @@ class CoordinacionController extends Controller
                         'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
                     ],
                 ]);
-    
+
                 // asognamos los demas encabezados
                 $sheet->setCellValue($key, $header);
-    
+
                 // sacamos solo la letra de la columna para dimensionar la columna
                 if (strpos($key, "2")) {
                     $key = explode("2", $key)[0];
                 }else {
                     $key = explode("1", $key)[0];
                 }
-    
+
                 if ($key === 'G' || $key === 'I' || $key === 'O') {
                     $sheet->getColumnDimension($key)->setWidth(30); // Ancho personalizado
                 }else{
@@ -3067,15 +3067,15 @@ class CoordinacionController extends Controller
 
                 $queryLugar = $queryMunicipio;
                 $columnaLugar = 'id_mun';
-                
+
                 // Si no se encuentra el detalle por municipio, buscamos por barrio
                 $queryDetalle = TblGruposDetalle::where($columnaLugar, $queryLugar->id)->first();
-                
+
                 if ($queryDetalle == null) {
                     // Ahora buscamos por barrio si no encontramos el detalle por municipio
                     $queryLugar = TblBarrios::where('barrio', $val->sector_operativo)->first();
                     $columnaLugar = 'id_barrio';
-                
+
                     if ($queryLugar != null) {
                         $queryDetalle = TblGruposDetalle::where($columnaLugar, $queryLugar->id)->first();
                     }
@@ -3088,7 +3088,7 @@ class CoordinacionController extends Controller
                 $fechaUltCert = strtotime($val->fecha_ult_cert);
                 $fechaUltCert = gmdate('d-M-y', $fechaUltCert);
                 $fechaUltCert = strtolower($fechaUltCert);
-                
+
                 $catMedUltRev = "1)Categoría: ".$val->categoria."//"."2)Medidor: ".$val->medidor."//"."3)Ultima rev: ".$fechaUltCert;
 
                 // CALCULO DE LOS MESES
@@ -3126,7 +3126,7 @@ class CoordinacionController extends Controller
                 }else{
                     $fechaAsignacionPro = "";
                 }
-                
+
                 // consultamos la tabla de contratos con el numero de contraro
                 $queryProgramacionContrato = tbl_programacion_contrato::where('CONTRATO', $val->contrato)->first();
 
@@ -3143,7 +3143,7 @@ class CoordinacionController extends Controller
                         $queryDetalleVne = TblRecepcionVneDetalle::where('ordenTrabajo', $val->orden)
                                                                     ->orderBy('id', 'desc')->limit(1)
                                                                     ->get();
-                        
+
                         if($queryDetalleVne->isNotEmpty()){
                             $observaciones = $queryDetalleVne[0]->comObservacion;
                         }else{
@@ -3186,11 +3186,11 @@ class CoordinacionController extends Controller
         $anioActual = substr($partesFecha[2], -2);
 
         $fechaCompleta = $partesFecha[0]."".$partesFecha[1]."".$anioActual;
-        
+
         if ($expExcel == "on" && $expPdf == null) {
             $zip = new ZipArchive();
             $zipFile = tempnam(sys_get_temp_dir(), 'Planillas') . '.zip';
-        
+
             if ($zip->open($zipFile, ZipArchive::CREATE) === TRUE) {
                 foreach ($arrayExcel as $index => $values) {
 
@@ -3198,13 +3198,13 @@ class CoordinacionController extends Controller
 
                     $sheet = $spread->getActiveSheet();
                     $sheet->setTitle("Coordinacion RP");
-            
+
                     $sheet->mergeCells('A1:O1');
 
                     $fila = 3; // Reiniciar fila para cada archivo de Excel
-        
+
                     foreach ($values as $value) {
-                        
+
                         // consultamos los inspectores
                         $nombreTecnico = tbl_insp_cali::where('id', $value['P'])->first();
 
@@ -3228,7 +3228,7 @@ class CoordinacionController extends Controller
                                 "N2" => "Jornada",
                                 "O2" => "Observaciones solicitud o programación",
                             ];
-                            
+
                             // Crear la primera imagen
                             $drawing1 = new Drawing();
                             $drawing1->setName('Logo');
@@ -3240,7 +3240,7 @@ class CoordinacionController extends Controller
                             $drawing1->setWidth(120); // Ancho de la primera imagen
                             $drawing1->setHeight(50); // Altura de la primera imagen
                             $drawing1->setWorksheet($sheet);
-                
+
                             // Crear la segunda imagen
                             $drawing2 = new Drawing();
                             $drawing2->setName('Logo adicional');
@@ -3252,21 +3252,21 @@ class CoordinacionController extends Controller
                             $drawing2->setWidth(120); // Ancho de la segunda imagen
                             $drawing2->setHeight(50); // Altura de la segunda imagen
                             $drawing2->setWorksheet($sheet);
-                
+
                             // Ajustar la altura de la fila
                             $sheet->getRowDimension(1)->setRowHeight(50);
-                
+
                             // Alinear contenido de A1 si es necesario
                             $sheet->getStyle('A1')->getAlignment()->applyFromArray([
                                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                                 'vertical' => Alignment::VERTICAL_CENTER,
                             ]);
-                    
+
                             $sheet->getStyle('O1')->getAlignment()->applyFromArray([
                                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                                 'vertical' => Alignment::VERTICAL_CENTER,
                             ]);
-                
+
                             foreach ($arrayHeader as $key => $header) {
                                 // asignamos el rango de columnas a lque queremos aplicar el color asigado en $color
                                 if ($key == "A1") {
@@ -3280,7 +3280,7 @@ class CoordinacionController extends Controller
                                     $size = 12;
                                     $colorFont = 'FFFFFFFF';
                                 }
-                    
+
                                 // asigamos el estilo al rango de celdas
                                 $sheet->getStyle($rango)->applyFromArray([
                                     'font' => [
@@ -3296,17 +3296,17 @@ class CoordinacionController extends Controller
                                         'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
                                     ],
                                 ]);
-                    
+
                                 // asognamos los demas encabezados
                                 $sheet->setCellValue($key, $header);
-                    
+
                                 // sacamos solo la letra de la columna para dimensionar la columna
                                 if (strpos($key, "2")) {
                                     $key = explode("2", $key)[0];
                                 }else {
                                     $key = explode("1", $key)[0];
                                 }
-                    
+
                                 if ($key === 'G' || $key === 'I' || $key === 'O') {
                                     $sheet->getColumnDimension($key)->setWidth(30); // Ancho personalizado
                                 }else{
@@ -3350,25 +3350,25 @@ class CoordinacionController extends Controller
                         }
                         $fila++;
                     }
-        
+
                     // Crear un archivo Excel temporal único
                     $tempExcel = tempnam(sys_get_temp_dir(), 'excel_') . "_{$index}.xlsx";
                     $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spread, 'Xlsx');
                     $writer->save($tempExcel);
-        
+
                     // Agregar el archivo al ZIP con un nombre único
                     $zip->addFile($tempExcel, "Planilla ".$nombreTecnico->apellidos." ".$nombreTecnico->nombres." ".$fechaCompleta.".xlsx");
                 }
-        
+
                 $zip->close();
-        
+
                 header('Content-Type: application/zip');
                 header('Content-Disposition: attachment; filename="Planillas.zip"');
                 header('Cache-Control: no-cache, no-store, must-revalidate');
                 header('Pragma: no-cache');
                 header('Expires: 0');
                 readfile($zipFile);
-        
+
                 // Limpiar archivos temporales
                 unlink($zipFile);
                 foreach (glob(sys_get_temp_dir() . "/excel_*") as $tempExcelFile) {
@@ -3380,7 +3380,7 @@ class CoordinacionController extends Controller
 
             $zip = new ZipArchive();
             $zipFile = tempnam(sys_get_temp_dir(), 'Planillas') . '.zip';
-        
+
             $htmlTemplate = "
                 <style>
                     table {
@@ -3420,13 +3420,13 @@ class CoordinacionController extends Controller
                         width: 10%;
                     }
                 </style>";
-        
+
             if ($zip->open($zipFile, ZipArchive::CREATE) === TRUE) {
                 foreach ($arrayExcel as $index => $val) {
 
                     $mpdf = new Mpdf();
                     $html = $htmlTemplate;
-        
+
                     foreach ($val as $values) {
 
                         $queryInspector = tbl_insp_cali::where('id', $values['P'])->first();
@@ -3435,15 +3435,15 @@ class CoordinacionController extends Controller
                         $partesDireccionUsuario = explode("//", $values['G']);
                         $partesDireccion = explode("1)Dir: ", $partesDireccionUsuario[0]);
                         $direccion = $partesDireccion[1];
-        
+
                         $partesUsuario = explode("2)Usu: ", $partesDireccionUsuario[1]);
                         $usuario = $partesUsuario[1];
-        
+
                         $partesCatMedUlt = explode("//", $values['I']);
                         $categoria = explode(" ", $partesCatMedUlt[0]);
                         $medidor = explode(" ", $partesCatMedUlt[1]);
                         $ultRevision = explode(" ", $partesCatMedUlt[2]);
-        
+
                         // Construir HTML
                         $html .= "
                             <table>
@@ -3504,14 +3504,14 @@ class CoordinacionController extends Controller
                             </table>
                             <hr>";
                     }
-        
+
                     // Generar PDF para cada índice
                     $mpdf->WriteHTML($html);
                     $filename = "Planilla ".$queryInspector->apellidos." ".$queryInspector->nombres." ".$fechaCompleta.".pdf";
                     $zip->addFromString($filename, $mpdf->Output('', 'S')); // Agregar al ZIP
                 }
                 $zip->close();
-        
+
                 header('Content-Type: application/zip');
                 header('Content-disposition: attachment; filename=Planillas.zip');
                 readfile($zipFile);
@@ -3602,7 +3602,7 @@ class CoordinacionController extends Controller
                             "N2" => "Jornada",
                             "O2" => "Observaciones solicitud o programación",
                         ];
-                        
+
                         // Crear la primera imagen
                         $drawing1 = new Drawing();
                         $drawing1->setName('Logo');
@@ -3614,7 +3614,7 @@ class CoordinacionController extends Controller
                         $drawing1->setWidth(120); // Ancho de la primera imagen
                         $drawing1->setHeight(50); // Altura de la primera imagen
                         $drawing1->setWorksheet($sheet);
-            
+
                         // Crear la segunda imagen
                         $drawing2 = new Drawing();
                         $drawing2->setName('Logo adicional');
@@ -3626,21 +3626,21 @@ class CoordinacionController extends Controller
                         $drawing2->setWidth(120); // Ancho de la segunda imagen
                         $drawing2->setHeight(50); // Altura de la segunda imagen
                         $drawing2->setWorksheet($sheet);
-            
+
                         // Ajustar la altura de la fila
                         $sheet->getRowDimension(1)->setRowHeight(50);
-            
+
                         // Alinear contenido de A1 si es necesario
                         $sheet->getStyle('A1')->getAlignment()->applyFromArray([
                             'horizontal' => Alignment::HORIZONTAL_CENTER,
                             'vertical' => Alignment::VERTICAL_CENTER,
                         ]);
-                
+
                         $sheet->getStyle('O1')->getAlignment()->applyFromArray([
                             'horizontal' => Alignment::HORIZONTAL_CENTER,
                             'vertical' => Alignment::VERTICAL_CENTER,
                         ]);
-            
+
                         foreach ($arrayHeader as $key => $header) {
                             // asignamos el rango de columnas a lque queremos aplicar el color asigado en $color
                             if ($key == "A1") {
@@ -3654,7 +3654,7 @@ class CoordinacionController extends Controller
                                 $size = 12;
                                 $colorFont = 'FFFFFFFF';
                             }
-                
+
                             // asigamos el estilo al rango de celdas
                             $sheet->getStyle($rango)->applyFromArray([
                                 'font' => [
@@ -3670,24 +3670,24 @@ class CoordinacionController extends Controller
                                     'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
                                 ],
                             ]);
-                
+
                             // asognamos los demas encabezados
                             $sheet->setCellValue($key, $header);
-                
+
                             // sacamos solo la letra de la columna para dimensionar la columna
                             if (strpos($key, "2")) {
                                 $key = explode("2", $key)[0];
                             }else {
                                 $key = explode("1", $key)[0];
                             }
-                
+
                             if ($key === 'G' || $key === 'I' || $key === 'O') {
                                 $sheet->getColumnDimension($key)->setWidth(30); // Ancho personalizado
                             }else{
                                 $sheet->getColumnDimension($key)->setAutoSize(true);
                             }
                         }
-                        
+
                         foreach ($value as $key => $val) {
                             if($key == 'P') continue;
                             if ($key == "G" || $key == "I") {
@@ -3725,15 +3725,15 @@ class CoordinacionController extends Controller
                         $partesDireccionUsuario = explode("//", $value['G']);
                         $partesDireccion = explode("1)Dir: ", $partesDireccionUsuario[0]);
                         $direccion = $partesDireccion[1];
-        
+
                         $partesUsuario = explode("2)Usu: ", $partesDireccionUsuario[1]);
                         $usuario = $partesUsuario[1];
-        
+
                         $partesCatMedUlt = explode("//", $value['I']);
                         $categoria = explode(" ", $partesCatMedUlt[0]);
                         $medidor = explode(" ", $partesCatMedUlt[1]);
                         $ultRevision = explode(" ", $partesCatMedUlt[2]);
-        
+
                         // Construir HTML
                         $html .= "
                             <table>
@@ -3793,15 +3793,15 @@ class CoordinacionController extends Controller
                                 </tr>
                             </table>
                             <hr>";
-                        
+
                         $fila++;
                     }
-        
+
                     // Crear un archivo Excel temporal único
                     $tempExcel = tempnam(sys_get_temp_dir(), 'excel_') . "_reporte.xlsx";
                     $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spread, 'Xlsx');
                     $writer->save($tempExcel);
-        
+
                     // Agregar el archivo al ZIP con un nombre único
                     $zip->addFile($tempExcel, "Planilla ".$nombreTecnico->apellidos." ".$nombreTecnico->nombres." ".$fechaCompleta.".xlsx");
 
@@ -3812,14 +3812,14 @@ class CoordinacionController extends Controller
                 }
 
                 $zip->close();
-        
+
                 header('Content-Type: application/zip');
                 header('Content-Disposition: attachment; filename="Planillas.zip"');
                 header('Cache-Control: no-cache, no-store, must-revalidate');
                 header('Pragma: no-cache');
                 header('Expires: 0');
                 readfile($zipFile);
-        
+
                 // Limpiar archivos temporales
                 unlink($zipFile);
                 foreach (glob(sys_get_temp_dir() . "/excel_*") as $tempExcelFile) {
@@ -3847,15 +3847,15 @@ class CoordinacionController extends Controller
             // Consultamos primero el municipio
             $queryLugar = $queryMunicipio;
             $columnaLugar = 'id_mun';
-            
+
             // Si no se encuentra el detalle por municipio, buscamos por barrio
             $queryDetalle = TblGruposDetalle::where($columnaLugar, $queryLugar->id)->first();
-            
+
             if ($queryDetalle == null) {
                 // Ahora buscamos por barrio si no encontramos el detalle por municipio
                 $queryLugar = TblBarrios::where('barrio', $asignada->sector_operativo)->first();
                 $columnaLugar = 'id_barrio';
-            
+
                 if ($queryLugar != null) {
                     $queryDetalle = TblGruposDetalle::where($columnaLugar, $queryLugar->id)->first();
                 }
@@ -3918,12 +3918,12 @@ class CoordinacionController extends Controller
             }
         }
 
-        foreach($asignaciones as $asignar){            
+        foreach($asignaciones as $asignar){
             // consultamos el nombre del inspector con el id
             $queryInspectorAsignar = tbl_insp_cali::where('id', $asignar['inspector'])->first();
-            
+
             $nombreInspectorAsignar = $queryInspectorAsignar->apellidos." ".$queryInspectorAsignar->nombres;
-            
+
             // asignamos las ordenes a los inspectores
             asignadas::where('id', $asignar['id'])
                         ->where('status', 1)
