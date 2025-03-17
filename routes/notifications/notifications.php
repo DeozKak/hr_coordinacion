@@ -13,6 +13,7 @@ Route::middleware('web')->group(function () {
     Route::middleware('auth')->group(function () {
         Route::get('notifications/get', [NotificationsController::class, 'getNotificationsData'])->name('notifications.get');
         Route::get('notifications/markAsRead', [NotificationsController::class, 'markAsRead'])->name('notifications.markAsRead');
+        Route::get('notifications/markAllAsRead', [NotificationsController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
         Route::get('notifications', [NotificationsController::class, 'index'])->name('notifications.index');
     });
 });
