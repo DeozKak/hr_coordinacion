@@ -363,7 +363,7 @@ return [
                 ],
                 [
                     'text' => 'Planilla',
-                    'url' => 'planilla',
+                    'url' => '/gestion/planilla',
                     'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
@@ -385,12 +385,7 @@ return [
                     'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
-                [
-                    'text' => 'Asignador',
-                    'url' => 'asignador',
-                    'icon' => 'far fa-circle',
-                    'label_color' => 'success',
-                ],
+
             ],
         ],
         [
@@ -400,7 +395,7 @@ return [
             'submenu' => [
                 [
                     'text' => 'App',
-                    'url' => 'app',
+                    'url' => '/gestion/aplicacion',
                     'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
@@ -418,7 +413,7 @@ return [
                 ],
                 [
                     'text' => 'Historico',
-                    'url' => 'historico',
+                    'url' => '/seguimiento/historico',
                     'icon' => 'far fa-circle',
                     'label_color' => 'success',
                 ],
