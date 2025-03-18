@@ -1156,7 +1156,7 @@ class CoordinacionController extends Controller
             "AZ2" => "Cumplimiento politicas",
             "BA2" => "Cartera",
             "BB2" => "Consumo",
-            "BB2" => "Fecha ultimo certificado",
+            "BC2" => "Fecha ultimo certificado",
             "BD2" => "Estado gestion",
             "BE2" => "Observación OSF",
             "BF2" => "Nombre inspector",
@@ -2867,6 +2867,7 @@ class CoordinacionController extends Controller
 
             exit;
         }
+        return null;
     }
 
     public function generarImpMasiva(Request $request){
@@ -3829,6 +3830,7 @@ class CoordinacionController extends Controller
 
             }
         }
+        return null;
     }
 
     public function asignarOrdCercania(){
