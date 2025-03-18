@@ -13,7 +13,8 @@
 
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/nomina/nomina.css') }}?v={{ time() }}">
+
+    <link rel="stylesheet" href="{{ asset('css/nomina/nomina.css') }}?v={{ time() }}">
 
 <div class="row align-items-center">
     <div class="col-md-2">

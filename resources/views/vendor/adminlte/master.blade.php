@@ -119,6 +119,10 @@
             });
         </script>
     @endif
+    <script>
+        const Mark_notification = "{{route('notifications.markAsRead')}}";
+        const Mark_all_notification = "{{route('notifications.markAllAsRead')}}";
+    </script>
     <script src="{{ asset('js/master/master.js') }}"></script>
 </body>
 

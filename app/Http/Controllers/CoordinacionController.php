@@ -337,6 +337,7 @@ class CoordinacionController extends Controller
             // Estados gestion
             // En campo
             if ($item->codigo_tecnico != null) {
+                $fechaActual = new DateTime();
                 //consultamos la tabla programacion contratos con el contrato
                 $queryProgramacionContrato = tbl_programacion_contrato::where('CONTRATO', $item->contrato)->first();
                 // consultamos la tabla de recepcion vne detalle para saber si la orden tiene volantes

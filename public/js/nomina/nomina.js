@@ -1,5 +1,5 @@
 $(document).ready(function(){
-
+    let url_multa = $('#guardarMultaRodamiento').val();
     const formatter = new Intl.NumberFormat('es-CO', {
         style: 'currency',
         currency: 'COP',
@@ -9,11 +9,12 @@ $(document).ready(function(){
     $(document).on('click', '#generarReporte', function(){
         let mesAnio = $('#mesAnio').val();
         let url = $(this).attr('data-url')
+
         let token = $(this).attr('data-token')
         let loaderNomina = $('.loaderDivNomina')
         let tablaNomina = $('#tablaNomina')
         let tablaCostosProyecto = $('#tablaCostosProyecto')
-        let loaderTablaNomina = $('.loaderTablaNomina') 
+        let loaderTablaNomina = $('.loaderTablaNomina')
         let loaderTablaCostosProyecto = $('.loaderTablaCostosProyecto')
         let [year, month] = mesAnio.split('-');
         // Creamos un objeto de fecha con el primer día del mes actual
@@ -24,7 +25,7 @@ $(document).ready(function(){
         fechaActual.setMonth(fechaActual.getMonth() - 1); // Restamos 1 mes
         // Obtenemos el nombre del mes anterior
         let nombreMesAnterior = fechaActual.toLocaleString('es-ES', { month: 'long' });
-        
+
         if(mesAnio == ""){
             Swal.fire({
                 icon: 'warning',
@@ -44,7 +45,7 @@ $(document).ready(function(){
                 success:function(response){
                     if(response.length > 0){
                         loaderNomina.hide()
-                        
+
                         if (window.handNomina && !window.handNomina.isDestroyed) {
                             window.handNomina.destroy();
                             window.handNomina = null;
@@ -54,15 +55,15 @@ $(document).ready(function(){
                             window.handCostosProyecto.destroy();
                             window.handCostosProyecto = null;
                         }
-    
+
                         $('.reporteNominaTitulo .card-title').text('Reporte de nómina Corte: '+nombreMesAnterior+'-'+nombreMesActual+' '+year)
                         $('.cardReporteProduccion').show()
-    
+
                         let data = []
                         let multasArray = []
                         let inspectoresAprendiz = []
                         let arraySalarioAux = []
-    
+
                         if(response.length > 0){
                             data = response[0].data.produccionInspector
                             multasArray = response[0].multas
@@ -87,13 +88,12 @@ $(document).ready(function(){
                             height: 'auto',
                             licenseKey: 'non-commercial-and-evaluation',
                         })
-    
                         let arrayNomina = data.map(item => {
-                            
+
                             let bonificacion = 0;
                             let diferencia = 0;
                             let copas = 0;
-    
+
                             if(item.total > 199 && item.total < 250){
                                 copas = 180000
                             }else if(item.total >= 250 && item.total < 300){
@@ -103,35 +103,33 @@ $(document).ready(function(){
                             }else{
                                 copas = 0
                             }
-    
+
                             if(item.total > 180){
                                 diferencia = item.total - 180;
                                 bonificacion = diferencia * 13000;
                             }else{
                                 bonificacion = 0;
                             }
-                            
+
                             let totalBonitifacion = Math.trunc(bonificacion + copas);
-    
+
                             let multas = 0;
-                            let rodamiento = 325000;
-    
+
                             let bonoComecial = 0;
                             let totalNomina = 0;
-    
+
                             if(multasArray.length > 0){
                                 multasArray.forEach(multa => {
                                     if(multa.cc_operario == item.cedula){
                                         multas = multa.multa
-                                        rodamiento = multa.rodamiento
                                     }
                                 })
                             }
-    
+
                             bonoComecial = Math.trunc(totalBonitifacion - multas)
-    
-                            totalNomina = Math.trunc(bonoComecial + rodamiento)
-    
+
+                            totalNomina = Math.trunc(bonoComecial )
+
                             return [
                                 item.cedula,
                                 item.nombres,
@@ -141,13 +139,11 @@ $(document).ready(function(){
                                 totalBonitifacion,
                                 multas,
                                 bonoComecial,
-                                rodamiento,
                                 totalNomina
                             ]
                         });
-    
-                        arrayNomina.push(['TOTAL', '', '', '', '', '', '', '', '', '']);
-    
+
+                        arrayNomina.push(['TOTAL', '', '', '', '', '', '', '', '']);
                         // Actualizar los datos en la tabla Handsontable
                         handNomina.updateSettings({
                             data: arrayNomina,
@@ -160,50 +156,45 @@ $(document).ready(function(){
                                 'TOTAL BONIFICACION',
                                 'MULTAS',
                                 'BONO COMERCIAL',
-                                'VALOR RODAMIENTO',
                                 'TOTAL'
                             ],
                         });
-                        
+
                         let totalFilas = handNomina.countRows() - 1;
 
                         let totalBonifSum = 0;
                         let totalMultasSum = 0;
                         let totalBonoComercialSum = 0;
-                        let totalRodamientoSum = 0;
                         let totalNominaSum = 0;
 
-                        // sumamos las columnas 
+                        // sumamos las columnas
                         for(let i = 0; i < totalFilas; i++ ){
                             totalBonifSum += parseFloat(handNomina.getDataAtCell(i, 5)) || 0;
                             totalMultasSum += parseFloat(handNomina.getDataAtCell(i, 6)) || 0;
                             totalBonoComercialSum += parseFloat(handNomina.getDataAtCell(i, 7)) || 0;
-                            totalRodamientoSum += parseFloat(handNomina.getDataAtCell(i, 8)) || 0;
-                            totalNominaSum += parseFloat(handNomina.getDataAtCell(i, 9)) || 0;
+                            totalNominaSum += parseFloat(handNomina.getDataAtCell(i, 8)) || 0;
                         }
 
                         handNomina.setDataAtCell(totalFilas, 5, totalBonifSum);
                         handNomina.setDataAtCell(totalFilas, 6, totalMultasSum);
                         handNomina.setDataAtCell(totalFilas, 7, totalBonoComercialSum);
-                        handNomina.setDataAtCell(totalFilas, 8, totalRodamientoSum);
-                        handNomina.setDataAtCell(totalFilas, 9, totalNominaSum);
-            
+                        handNomina.setDataAtCell(totalFilas, 8, totalNominaSum);
+
                         handNomina.updateSettings({
                             cells: function (rowIndex, colIndex) {
                                 let cellProperties = {};
-                            
+
                                 // Columnas con formato numérico y pattern de dinero
-                                const columnasNumericas = [5, 6, 7, 8, 9];
-                            
+                                const columnasNumericas = [5, 6, 7, 8];
+
                                 // Asignar clase según la columna
                                 const classMap = {
                                     4: 'cell-copas',
                                     5: 'cell-total-bonif',
                                     6: 'cell-multas',
                                     7: 'cell-bono-comercial',
-                                    8: 'cell-rodamiento'
                                 };
-                            
+
                                 // Asignar formato numérico en las columnas específicas
                                 if (columnasNumericas.includes(colIndex)) {
                                     cellProperties.type = 'numeric';
@@ -212,30 +203,30 @@ $(document).ready(function(){
                                         culture: 'en-US'
                                     };
                                 }
-                            
+
                                 // Asignar clase a las celdas basadas en colIndex
                                 if (classMap[colIndex]) {
                                     cellProperties.className = classMap[colIndex];
                                 }
-                            
+
                                 // Columna 6 y 8 son editables excepto en la fila total
-                                if ((colIndex === 6 || colIndex === 8) && rowIndex !== totalFilas) {
+                                if ((colIndex === 6) && rowIndex !== totalFilas) {
                                     cellProperties.readOnly = false;
-                                } 
-                                // Columnas 5, 7, 9 son solo de lectura excepto en la fila total
-                                else if ((colIndex === 5 || colIndex === 7 || colIndex === 9) && rowIndex !== totalFilas) {
+                                }
+                                // Columnas 5, 7, 8 son solo de lectura excepto en la fila total
+                                else if ((colIndex === 5 || colIndex === 7 || colIndex === 8) && rowIndex !== totalFilas) {
                                     cellProperties.readOnly = true;
                                 }
-                            
+
                                 // Todas las columnas son solo de lectura en la fila total
                                 if (rowIndex === totalFilas && columnasNumericas.includes(colIndex)) {
                                     cellProperties.readOnly = true;
                                 }
-                                
+
                                 if(colIndex >=0 && colIndex <= 3 || colIndex === 9){
                                     cellProperties.className = 'celdasGeneral';
                                 }
-                            
+
                                 return cellProperties;
                             },
                             afterOnCellMouseDown: function(event, coords, TD) {
@@ -250,7 +241,7 @@ $(document).ready(function(){
                                 }
                             },
                         });
-    
+
                         handNomina.addHook('afterChange', function(changes, source) {
                             if (source === 'programmatic') {
                                 return;
@@ -264,18 +255,15 @@ $(document).ready(function(){
                                     newValue = parseInt(newValue) || 0; // Asignar 0 si es NaN
                                     // asignamos el nuevo valor a la celda
                                     handNomina.setDataAtCell(row, col, newValue, 'programmatic');
-                        
-                                    if ((col === 6 || col === 8) && row !== totalFilas) {
+
+                                    if ((col === 6 ) && row !== totalFilas) {
                                         let ccOperario = handNomina.getDataAtCell(row, 0);
                                         let token = $('#tokenReporteNomina').val();
-                                        let url = $('#guardarMultaRodamiento').val();
                                         let multa = null;
-                                        let rodamiento = null;
-                        
+
                                         if (col === 6) {
                                             multa = newValue; // Se toma el nuevo valor directamente
                                         } else if (col === 8) {
-                                            rodamiento = newValue; // Se toma el nuevo valor directamente
                                         }
                                         tablaNomina[0].style.opacity = '0.5';
                                         tablaCostosProyecto[0].style.opacity = '0.5';
@@ -283,11 +271,10 @@ $(document).ready(function(){
                                         loaderTablaCostosProyecto.show();
                                         // Enviar los datos al servidor
                                         $.post({
-                                            url: url,
+                                            url: url_multa,
                                             data: {
                                                 ccOperario: ccOperario,
                                                 multa: multa,
-                                                rodamiento: rodamiento,
                                                 fecha: mesAnio,
                                                 _token: token
                                             },
@@ -297,41 +284,34 @@ $(document).ready(function(){
                                                     let totalBoni = handNomina.getDataAtCell(row, 5); // Total bonos
                                                     let totalMultas = handNomina.getDataAtCell(row, 6); // Se usa el nuevo valor de multas
                                                     let totalBonoComercial = totalBoni - totalMultas; // Calcular bono comercial
-                                                    let totalRodamiento = handNomina.getDataAtCell(row, 8); // Total rodamiento
                                                     let totalNomina = totalBonoComercial; // Calcular total de nómina
 
                                                     // Actualizar los valores en la tabla
                                                     handNomina.setDataAtCell(row, 7, totalBonoComercial, 'programmatic'); // Actualiza bono comercial
-                                                    handNomina.setDataAtCell(row, 9, totalNomina + totalRodamiento, 'programmatic'); // Actualiza total nómina
-                        
+                                                    handNomina.setDataAtCell(row, 8, totalNomina, 'programmatic'); // Actualiza total nómina
+
                                                     // Poner en 0 la última fila de las columnas 7, 8 y 9
                                                     handNomina.setDataAtCell(totalFilas, 7, 0, 'programmatic');
                                                     handNomina.setDataAtCell(totalFilas, 8, 0, 'programmatic');
-                                                    handNomina.setDataAtCell(totalFilas, 9, 0, 'programmatic');
 
                                                     // Actualizar los totales
                                                     let totalMultasSum = 0;
                                                     let totalBonoComercialSum = 0;
-                                                    let totalRodamientoSum = 0;
                                                     let totalNominaSum = 0;
-                        
+
                                                     setTimeout(function() {
                                                         for (let i = 0; i < totalFilas; i++) {
                                                             totalMultasSum += parseFloat(handNomina.getDataAtCell(i, 6)) || 0; // Total multas
                                                             totalBonoComercialSum += parseFloat(handNomina.getDataAtCell(i, 7)) || 0; // Total bono comercial
-                                                            totalRodamientoSum += parseFloat(handNomina.getDataAtCell(i, 8)) || 0; // Total rodamiento
-                                                            totalNominaSum += parseFloat(handNomina.getDataAtCell(i, 9)) || 0; // Total nómina
+                                                            totalNominaSum += parseFloat(handNomina.getDataAtCell(i, 8)) || 0; // Total nómina
                                                         }
                                                         // Actualizar la fila TOTAL
                                                         handNomina.setDataAtCell(totalFilas, 6, totalMultasSum, 'programmatic');
                                                         handNomina.setDataAtCell(totalFilas, 7, totalBonoComercialSum, 'programmatic');
-                                                        handNomina.setDataAtCell(totalFilas, 8, totalRodamientoSum, 'programmatic');
-                                                        handNomina.setDataAtCell(totalFilas, 9, totalNominaSum, 'programmatic');
+                                                        handNomina.setDataAtCell(totalFilas, 8, totalNominaSum, 'programmatic');
                                                     },0);
 
-                                                    if(rodamiento != null){
-                                                        handCostosProyecto.setDataAtCell(row, 4, formatter.format(rodamiento));
-                                                    }
+
 
                                                     let cedulaOperario = handNomina.getDataAtCell(row, 0);
                                                     let aprendiz;
@@ -348,9 +328,9 @@ $(document).ready(function(){
                                                     let total = 0;
 
                                                     inspectoresAprendiz.forEach(inspector => {
-                                                        if(inspector.cedula == cedulaOperario){
+                                                        if(inspector.cedula === cedulaOperario){
                                                             // validamos si el inspector es aprendiz o no
-                                                            if(inspector.aprendiz == 1){
+                                                            if(inspector.aprendiz === 1){
                                                                 aprendiz = "SI";
                                                                 salario = totalNomina +  arraySalarioAux.salarioMinimo
                                                             }else{
@@ -373,33 +353,32 @@ $(document).ready(function(){
                                                             intCesantias = Math.trunc(salario * arraySalarioAux.intCesantias / 100);
                                                             vacaciones = Math.trunc(salario * arraySalarioAux.vacaciones / 100);
 
-                                                            total = salario + salud + rodamiento + 
-                                                                    pension + arl + caja + 
-                                                                    prima + cesantias + 
+                                                            total = salario + salud  +
+                                                                    pension + arl + caja +
+                                                                    prima + cesantias +
                                                                     intCesantias + vacaciones;
-                                                            
+
                                                         }
                                                     })
-                                                   
-                                                    // establecemos el salario y el auxilio de transporte a la 
+
+                                                    // establecemos el salario y el auxilio de transporte a la
                                                     // celda correspondiente en la tabla de costos proyecto
                                                     handCostosProyecto.setDataAtCell(row, 2, aprendiz);
                                                     handCostosProyecto.setDataAtCell(row, 3, formatter.format(salario));
-                                                    handCostosProyecto.setDataAtCell(row, 5, formatter.format(auxilioTransporte));
-                                                    handCostosProyecto.setDataAtCell(row, 6, formatter.format(salud));
-                                                    handCostosProyecto.setDataAtCell(row, 7, formatter.format(pension));
-                                                    handCostosProyecto.setDataAtCell(row, 8, formatter.format(arl));
-                                                    handCostosProyecto.setDataAtCell(row, 9, formatter.format(caja));
-                                                    handCostosProyecto.setDataAtCell(row, 10, formatter.format(prima));
-                                                    handCostosProyecto.setDataAtCell(row, 11, formatter.format(cesantias));
-                                                    handCostosProyecto.setDataAtCell(row, 12, formatter.format(intCesantias));
-                                                    handCostosProyecto.setDataAtCell(row, 13, formatter.format(vacaciones));
-                                                    handCostosProyecto.setDataAtCell(row, 14, formatter.format(total));
+                                                    handCostosProyecto.setDataAtCell(row, 4, formatter.format(auxilioTransporte));
+                                                    handCostosProyecto.setDataAtCell(row, 5, formatter.format(salud));
+                                                    handCostosProyecto.setDataAtCell(row, 6, formatter.format(pension));
+                                                    handCostosProyecto.setDataAtCell(row, 7, formatter.format(arl));
+                                                    handCostosProyecto.setDataAtCell(row, 8, formatter.format(caja));
+                                                    handCostosProyecto.setDataAtCell(row, 9, formatter.format(prima));
+                                                    handCostosProyecto.setDataAtCell(row, 10, formatter.format(cesantias));
+                                                    handCostosProyecto.setDataAtCell(row, 11, formatter.format(intCesantias));
+                                                    handCostosProyecto.setDataAtCell(row, 12, formatter.format(vacaciones));
+                                                    handCostosProyecto.setDataAtCell(row, 13, formatter.format(total));
 
                                                     let ultimafila = handCostosProyecto.countRows() - 1;
 
                                                     let sumaTotalSalario = 0;
-                                                    let sumaTotalRodamiento = 0;
                                                     let sumaTotalAuxTransporte = 0;
                                                     let sumaTotalSalud = 0;
                                                     let sumaTotalPension = 0;
@@ -414,20 +393,18 @@ $(document).ready(function(){
                                                     for(let i = 0; i < ultimafila; i++){
                                                         // recorremos las filas de la tabla de costos proyecto
                                                         let celdaSalario = formtaterNumber(handCostosProyecto.getDataAtCell(i, 3));
-                                                        let celdaRodamiento = formtaterNumber(handCostosProyecto.getDataAtCell(i, 4));
-                                                        let celdaAuxTransporte = formtaterNumber(handCostosProyecto.getDataAtCell(i, 5));
-                                                        let celdaSalud = formtaterNumber(handCostosProyecto.getDataAtCell(i, 6));
-                                                        let celdaPension = formtaterNumber(handCostosProyecto.getDataAtCell(i, 7));
-                                                        let celdaArl = formtaterNumber(handCostosProyecto.getDataAtCell(i, 8));
-                                                        let celdaCaja = formtaterNumber(handCostosProyecto.getDataAtCell(i, 9));
-                                                        let celdaPrima = formtaterNumber(handCostosProyecto.getDataAtCell(i, 10));
-                                                        let celdaCesantias = formtaterNumber(handCostosProyecto.getDataAtCell(i, 11));
-                                                        let celdaIntCesantias = formtaterNumber(handCostosProyecto.getDataAtCell(i, 12));
+                                                        let celdaAuxTransporte = formtaterNumber(handCostosProyecto.getDataAtCell(i, 4));
+                                                        let celdaSalud = formtaterNumber(handCostosProyecto.getDataAtCell(i, 5));
+                                                        let celdaPension = formtaterNumber(handCostosProyecto.getDataAtCell(i, 6));
+                                                        let celdaArl = formtaterNumber(handCostosProyecto.getDataAtCell(i, 7));
+                                                        let celdaCaja = formtaterNumber(handCostosProyecto.getDataAtCell(i, 8));
+                                                        let celdaPrima = formtaterNumber(handCostosProyecto.getDataAtCell(i, 9));
+                                                        let celdaCesantias = formtaterNumber(handCostosProyecto.getDataAtCell(i, 10));
+                                                        let celdaIntCesantias = formtaterNumber(handCostosProyecto.getDataAtCell(i, 11));
                                                         let celdaVacaciones = formtaterNumber(handCostosProyecto.getDataAtCell(i, 12));
-                                                        let celdaTotal = formtaterNumber(handCostosProyecto.getDataAtCell(i, 14));
+                                                        let celdaTotal = formtaterNumber(handCostosProyecto.getDataAtCell(i, 13));
 
                                                         sumaTotalSalario += celdaSalario
-                                                        sumaTotalRodamiento += celdaRodamiento
                                                         sumaTotalAuxTransporte += celdaAuxTransporte
                                                         sumaTotalSalud += celdaSalud
                                                         sumaTotalPension += celdaPension
@@ -441,20 +418,19 @@ $(document).ready(function(){
                                                     }
 
                                                     // establecemos el total de la tabla de costos proyecto
-                                                  
+
                                                     handCostosProyecto.setDataAtCell(ultimafila, 3, formatter.format(sumaTotalSalario));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 4, formatter.format(sumaTotalRodamiento));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 5, formatter.format(sumaTotalAuxTransporte));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 6, formatter.format(sumaTotalSalud));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 7, formatter.format(sumaTotalPension));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 8, formatter.format(sumaTotalArl));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 9, formatter.format(sumaTotalCaja));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 10, formatter.format(sumaTotalPrima));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 11, formatter.format(sumaTotalCesantias));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 12, formatter.format(sumaTotalIntCesantias));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 13, formatter.format(sumaTotalVacaciones));
-                                                    handCostosProyecto.setDataAtCell(ultimafila, 14, formatter.format(sumaTotalTotal));
-                                                   
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 4, formatter.format(sumaTotalAuxTransporte));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 5, formatter.format(sumaTotalSalud));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 6, formatter.format(sumaTotalPension));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 7, formatter.format(sumaTotalArl));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 8, formatter.format(sumaTotalCaja));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 9, formatter.format(sumaTotalPrima));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 10, formatter.format(sumaTotalCesantias));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 11, formatter.format(sumaTotalIntCesantias));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 12, formatter.format(sumaTotalVacaciones));
+                                                    handCostosProyecto.setDataAtCell(ultimafila, 13, formatter.format(sumaTotalTotal));
+
                                                 } else if (response == 2) {
                                                     Swal.fire({
                                                         icon: 'error',
@@ -468,6 +444,7 @@ $(document).ready(function(){
                                                 loaderTablaCostosProyecto.hide();
                                             },
                                             error: function(xhr, status, error) {
+                                                console.log(xhr.responseText);
                                                 Swal.fire({
                                                     icon: 'error',
                                                     title: 'Error',
@@ -479,7 +456,6 @@ $(document).ready(function(){
                                 }
                             });
                         });
-
                         // Fin de la función ---------------------------------------------
                         let arrayCostosProyecto = data.map(item => {
                             let aprendiz;
@@ -494,17 +470,17 @@ $(document).ready(function(){
                             let intCesantias = 0;
                             let vacaciones = 0;
                             let total = 0;
-                            let valorRod = 0;
 
-                           
+
+
                             inspectoresAprendiz.forEach(inspector => {
-                                if (item.cedula == inspector.cedula) {
-                                    let filaInspector = handNomina.getData().findIndex(fila => fila[0] == inspector.cedula);
+                                if (item.cedula === inspector.cedula) {
+                                    let filaInspector = handNomina.getData().findIndex(fila => fila[0] === inspector.cedula);
                                     if (filaInspector !== -1) {
 
                                         // traemos el total de la nomina del inspector
-                                        let salarioInspectorTotal = handNomina.getDataAtCell(filaInspector, 9);
-                                        valorRod = handNomina.getDataAtCell(filaInspector, 8);
+                                        let salarioInspectorTotal = handNomina.getDataAtCell(filaInspector, 8);
+
 
                                         // validamos si es aprendiz o no
                                         if (inspector.aprendiz === 1) {
@@ -514,14 +490,13 @@ $(document).ready(function(){
                                             aprendiz = "NO"
                                             salario = salarioInspectorTotal + arraySalarioAux.salarioMinimo + 150000;
                                         }
-                        
+
                                         // Verificar si el salario supera el doble del salario mínimo
                                         if (salario > arraySalarioAux.salarioMinimo * 2) {
                                             auxTransPorte = 0;
                                         } else {
                                             auxTransPorte = arraySalarioAux.auxilioTransporte;
                                         }
-
                                         salud = salario * arraySalarioAux.salud / 100;
                                         pension = salario * arraySalarioAux.pension / 100;
                                         arl = salario * arraySalarioAux.arl / 100;
@@ -531,11 +506,12 @@ $(document).ready(function(){
                                         intCesantias = salario * arraySalarioAux.intCesantias / 100
                                         vacaciones = salario * arraySalarioAux.vacaciones / 100;
 
-                                        total = salario + auxTransPorte + 
-                                                salud + pension + arl + 
-                                                caja + prima + 
-                                                cesantias + intCesantias + 
+                                        total = salario + auxTransPorte +
+                                                salud + pension + arl +
+                                                caja + prima +
+                                                cesantias + intCesantias +
                                                 vacaciones;
+                                        console.log(total);
                                     }
                                 }
                             });
@@ -544,7 +520,6 @@ $(document).ready(function(){
                                 item.nombres,
                                 aprendiz,
                                 parseInt(salario),
-                                parseInt(valorRod),
                                 parseInt(auxTransPorte),
                                 parseInt(salud),
                                 parseInt(pension),
@@ -559,7 +534,7 @@ $(document).ready(function(){
                         });
 
                         arrayCostosProyecto.push(['TOTAL', '', '', '', '', '', '', '', '', '']);
-
+                       // console.log(arrayCostosProyecto);
                         handCostosProyecto.updateSettings({
                             data: arrayCostosProyecto,
                             colHeaders: [
@@ -567,7 +542,6 @@ $(document).ready(function(){
                                 'NOMBRE DEL EMPLEADO',
                                 'APRENDIZ',
                                 'SALARIO <br>'+formatter.format(arraySalarioAux.salarioMinimo)+'',
-                                'VALOR <br> RODAMIENTO',
                                 'AUX TRA <br>'+formatter.format(arraySalarioAux.auxilioTransporte)+'',
                                 'SALUD <br>'+arraySalarioAux.salud+'%',
                                 'PENSION <br>'+arraySalarioAux.pension+'%',
@@ -584,7 +558,6 @@ $(document).ready(function(){
                         let ultimafila = handCostosProyecto.countRows() - 1;
 
                         let totalSalario = 0;
-                        let totalValorRod = 0;
                         let totalAuxTrans = 0;
                         let totalSalud = 0;
                         let totalPension = 0;
@@ -595,19 +568,19 @@ $(document).ready(function(){
                         let totalIntCesantias = 0;
                         let totalVacaciones = 0;
                         let totalGeneral = 0;
-                        
+
                         for (let i = 0; i < ultimafila; i++) {
                             // asignamos el valor al salario
                             let salarioInsFila = handCostosProyecto.getDataAtCell(i, 3);
-                            let valorRodFila = handCostosProyecto.getDataAtCell(i, 4);
+                           // let valorRodFila = handCostosProyecto.getDataAtCell(i, 4);
 
 
                             // volvemos a setear el valor de rodamiento
                            /*  handCostosProyecto.setDataAtCell(i, 2, "nas"); */
-                            handCostosProyecto.setDataAtCell(i, 4, formatter.format(valorRodFila));
-                            handCostosProyecto.setDataAtCell(i, 3, formatter.format(salarioInsFila - valorRodFila));
+                          //  handCostosProyecto.setDataAtCell(i, 4, formatter.format(valorRodFila));
+                           // handCostosProyecto.setDataAtCell(i, 3, formatter.format(salarioInsFila - valorRodFila));
                             // volvemos a tomar el valor de la celda
-                            salarioInsFila = salarioInsFila - valorRodFila
+                           //salarioInsFila = salarioInsFila - valorRodFila
 
                             // volvemos a calcular los valores con el salario actualziado
                             if(salarioInsFila > arraySalarioAux.salarioMinimo * 2){
@@ -620,38 +593,38 @@ $(document).ready(function(){
                             let pension = salarioInsFila * arraySalarioAux.pension / 100;
                             let arl = salarioInsFila * arraySalarioAux.arl / 100;
                             let caja = salarioInsFila * arraySalarioAux.caja / 100;
-                            let prima = salarioInsFila * arraySalarioAux.prima / 100
-                            let cesantias = salarioInsFila * arraySalarioAux.cesantias / 100
-                            let intCesantias = salarioInsFila * arraySalarioAux.intCesantias / 100
+                            let prima = salarioInsFila * arraySalarioAux.prima / 100;
+                            let cesantias = salarioInsFila * arraySalarioAux.cesantias / 100;
+                            let intCesantias = salarioInsFila * arraySalarioAux.intCesantias / 100;
                             let vacaciones = salarioInsFila * arraySalarioAux.vacaciones / 100;
-                                        
-                            auxTrans = Math.trunc(auxTrans)
-                            salud =  Math.trunc(salud)
-                            pension =  Math.trunc(pension)
-                            arl =  Math.trunc(arl)
-                            caja =  Math.trunc(caja)
-                            prima =  Math.trunc(prima)
-                            cesantias =  Math.trunc(cesantias)
-                            intCesantias =  Math.trunc(intCesantias)
-                            vacaciones =  Math.trunc(vacaciones)
-                            let total = salarioInsFila + valorRodFila + auxTrans + salud + 
-                                        pension + arl + caja + prima + 
+
+                            auxTrans = Math.trunc(auxTrans);
+                            salud =  Math.trunc(salud);
+                            pension =  Math.trunc(pension);
+                            arl =  Math.trunc(arl);
+                            caja =  Math.trunc(caja);
+                            prima =  Math.trunc(prima);
+                            cesantias =  Math.trunc(cesantias);
+                            intCesantias =  Math.trunc(intCesantias);
+                            vacaciones =  Math.trunc(vacaciones);
+                            let total = salarioInsFila + auxTrans + salud +
+                                        pension + arl + caja + prima +
                                         cesantias + intCesantias + vacaciones;
 
-                            handCostosProyecto.setDataAtCell(i, 5, formatter.format(auxTrans));
-                            handCostosProyecto.setDataAtCell(i, 6, formatter.format(salud));
-                            handCostosProyecto.setDataAtCell(i, 7, formatter.format(pension));
-                            handCostosProyecto.setDataAtCell(i, 8, formatter.format(arl));
-                            handCostosProyecto.setDataAtCell(i, 9, formatter.format(caja));
-                            handCostosProyecto.setDataAtCell(i, 10, formatter.format(prima));
-                            handCostosProyecto.setDataAtCell(i, 11, formatter.format(cesantias));
-                            handCostosProyecto.setDataAtCell(i, 12, formatter.format(intCesantias));
-                            handCostosProyecto.setDataAtCell(i, 13, formatter.format(vacaciones));
-                            handCostosProyecto.setDataAtCell(i, 14, formatter.format(total));
-                        
+                            handCostosProyecto.setDataAtCell(i, 3, formatter.format(salarioInsFila));
+                            handCostosProyecto.setDataAtCell(i, 4, formatter.format(auxTrans));
+                            handCostosProyecto.setDataAtCell(i, 5, formatter.format(salud));
+                            handCostosProyecto.setDataAtCell(i, 6, formatter.format(pension));
+                            handCostosProyecto.setDataAtCell(i, 7, formatter.format(arl));
+                            handCostosProyecto.setDataAtCell(i, 8, formatter.format(caja));
+                            handCostosProyecto.setDataAtCell(i, 9, formatter.format(prima));
+                            handCostosProyecto.setDataAtCell(i, 10, formatter.format(cesantias));
+                            handCostosProyecto.setDataAtCell(i, 11, formatter.format(intCesantias));
+                            handCostosProyecto.setDataAtCell(i, 12, formatter.format(vacaciones));
+                            handCostosProyecto.setDataAtCell(i, 13, formatter.format(total));
+
                             // Acumular los valores
                             totalSalario += salarioInsFila;
-                            totalValorRod += valorRodFila;
                             totalAuxTrans += auxTrans;
                             totalSalud += salud;
                             totalPension += pension;
@@ -664,23 +637,22 @@ $(document).ready(function(){
                             totalGeneral += total;
                         }
 
-                        // establecemos los valores en la ultima fila 
+                        // establecemos los valores en la ultima fila
                         handCostosProyecto.setDataAtCell(ultimafila, 3, formatter.format(totalSalario));
-                        handCostosProyecto.setDataAtCell(ultimafila, 4, formatter.format(totalValorRod));
-                        handCostosProyecto.setDataAtCell(ultimafila, 5, formatter.format(totalAuxTrans));
-                        handCostosProyecto.setDataAtCell(ultimafila, 6, formatter.format(totalSalud));
-                        handCostosProyecto.setDataAtCell(ultimafila, 7, formatter.format(totalPension));
-                        handCostosProyecto.setDataAtCell(ultimafila, 8, formatter.format(totalArl));
-                        handCostosProyecto.setDataAtCell(ultimafila, 9, formatter.format(totalCaja));
-                        handCostosProyecto.setDataAtCell(ultimafila, 10, formatter.format(totalPrima));
-                        handCostosProyecto.setDataAtCell(ultimafila, 11, formatter.format(totalCesantias));
-                        handCostosProyecto.setDataAtCell(ultimafila, 12, formatter.format(totalIntCesantias));
-                        handCostosProyecto.setDataAtCell(ultimafila, 13, formatter.format(totalVacaciones));
-                        handCostosProyecto.setDataAtCell(ultimafila, 14, formatter.format(totalGeneral));
+                        handCostosProyecto.setDataAtCell(ultimafila, 4, formatter.format(totalAuxTrans));
+                        handCostosProyecto.setDataAtCell(ultimafila, 5, formatter.format(totalSalud));
+                        handCostosProyecto.setDataAtCell(ultimafila, 6, formatter.format(totalPension));
+                        handCostosProyecto.setDataAtCell(ultimafila, 7, formatter.format(totalArl));
+                        handCostosProyecto.setDataAtCell(ultimafila, 8, formatter.format(totalCaja));
+                        handCostosProyecto.setDataAtCell(ultimafila, 9, formatter.format(totalPrima));
+                        handCostosProyecto.setDataAtCell(ultimafila, 10, formatter.format(totalCesantias));
+                        handCostosProyecto.setDataAtCell(ultimafila, 11, formatter.format(totalIntCesantias));
+                        handCostosProyecto.setDataAtCell(ultimafila, 12, formatter.format(totalVacaciones));
+                        handCostosProyecto.setDataAtCell(ultimafila, 13, formatter.format(totalGeneral));
 
                         handCostosProyecto.updateSettings({
                             cells: function (rowIndex, colIndex) {
-                                
+
                                 let cellProperties = {};
 
                                 if(colIndex >= 0 && colIndex <= 13){
@@ -727,7 +699,7 @@ $(document).ready(function(){
             })
         }
     })
-    
+
     // Descargar excel
     $(document).on('click', '#descargarExcelNomina', function(){
         // Obtener encabezados y datos de la primera tabla (handNomina)
@@ -772,7 +744,7 @@ $(document).ready(function(){
 
         // Añadir una fila vacía para separar las tablas
         datos1.push([],[]);
-        
+
         // Unir las dos tablas (datos de handNomina y handCostosProyecto)
         let datosCombinados = datos1.concat(datos2);
 
@@ -787,7 +759,7 @@ $(document).ready(function(){
         XLSX.writeFile(workbook, 'Reporte_nomina_costos.xlsx');
     });
 
-    
+
     function regex(str) {
         return str === null || str === "" || /^\d+$/.test(str);
     }

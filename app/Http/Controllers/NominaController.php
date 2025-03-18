@@ -18,6 +18,8 @@ class NominaController extends Controller
 
     public function postReporteNomina(Request $request)
     {
+        //dd($request->all());
+
         $mesAnio = $request->input('mesAnio');
         $produccionFiltrada = [];
         $arrayMultasRod = [];
@@ -29,7 +31,7 @@ class NominaController extends Controller
         ->get();
 
         // consultamos la tabla de nomina multas con el mes y anio correspondiente
-        $multasRodamiento = TblNominaMultas::where('fecha',$mesAnio) 
+        $multasRodamiento = TblNominaMultas::where('fecha',$mesAnio)
         ->get();
 
         // consultamos todos los inspectores
@@ -39,7 +41,6 @@ class NominaController extends Controller
         $parametroSalMinAux = TblParametroSalAux::where('fecha_inicio', '<=', $mesAnio)
         ->where('fecha_fin', '>=', $mesAnio)
         ->first();
-
         if ($parametroSalMinAux) {
             $arraySalAux = [
                 'salarioMinimo' => $parametroSalMinAux->salario_minimo,
@@ -79,7 +80,6 @@ class NominaController extends Controller
             $arrayMultasRod[] = [
                 'cc_operario' => $item->cc_operario,
                 'multa' => $item->multa,
-                'rodamiento' => $item->rodamiento
             ];
         }
 
@@ -99,7 +99,6 @@ class NominaController extends Controller
         $multa = $request->input('multa');
         $fecha = $request->input('fecha');
         $cedulaOperario = $request->input('ccOperario');
-        $rodamiento = $request->input('rodamiento');
 
         $multasRodamiento = TblNominaMultas::where('fecha', $fecha)
         ->where('cc_operario', $cedulaOperario)
@@ -111,11 +110,7 @@ class NominaController extends Controller
             }else{
                 $multasRodamiento->multa = $multa;
             }
-            if($rodamiento == null){
-                $multasRodamiento->rodamiento = $multasRodamiento['rodamiento'];
-            }else{
-                $multasRodamiento->rodamiento = $rodamiento;
-            }
+
         } else {
             $multasRodamiento = new TblNominaMultas();
             $multasRodamiento->cc_operario = $cedulaOperario;
@@ -126,11 +121,7 @@ class NominaController extends Controller
                 $multasRodamiento->multa = $multa;
             }
 
-            if($rodamiento == null){
-                $multasRodamiento->rodamiento = 325000;
-            }else{
-                $multasRodamiento->rodamiento = $rodamiento;
-            }
+
             $multasRodamiento->fecha = $fecha;
         }
 
@@ -184,7 +175,7 @@ class NominaController extends Controller
 
         // Validar si las fechas cruzan con los registros existentes
         $fechaParametros = DB::select(
-            "SELECT * FROM tbl_parametro_sal_aux 
+            "SELECT * FROM tbl_parametro_sal_aux
             WHERE (fecha_inicio <= ? AND fecha_fin >= ?)",
             [$fechaFin, $fechaInicio]
         );
@@ -248,15 +239,15 @@ class NominaController extends Controller
             return response()->json(['status' => 2]); // La fecha de inicio no puede ser mayor a la de fin
         }
 
-        if (!is_numeric($salMin) || !is_numeric($auxTrans) || $salud == "" || 
-            $pension == "" || $arl == "" || $caja == "" || $prima == "" || 
+        if (!is_numeric($salMin) || !is_numeric($auxTrans) || $salud == "" ||
+            $pension == "" || $arl == "" || $caja == "" || $prima == "" ||
             $cesantias == "" || $intCesantias == "" || $vacaciones == "") {
             return response()->json(['status' => 3]); // Datos inválidos
         }
 
         // Validar si las fechas cruzan con los registros existentes
         $fechaParametros = DB::select(
-            "SELECT * FROM tbl_parametro_sal_aux 
+            "SELECT * FROM tbl_parametro_sal_aux
             WHERE (fecha_inicio <= ? AND fecha_fin >= ?) AND id != ?",
             [$fechaFin, $fechaInicio, $id]
         );
@@ -303,7 +294,7 @@ class NominaController extends Controller
                     'prima' => $prima,
                     'cesantias' => $cesantias,
                     'intCesantias' => $intCesantias,
-                    'vacaciones' => $vacaciones 
+                    'vacaciones' => $vacaciones
                 ]);
 
                 if ($actualizar) {

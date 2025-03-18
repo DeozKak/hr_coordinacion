@@ -24,9 +24,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     }, 800);
 
+
     function marcarComoLeida(notificationId, callback = null) {
         $.ajax({
-            url: "{{ route('notifications.markAsRead') }}",
+            url: Mark_notification,
             type: "GET",
             data: { notification_id: notificationId },
             success: function (response) {
@@ -88,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function () {
     $(document).ready(function () {
         $('body').on('shown.bs.dropdown', '.nav-item.dropdown', function () {
             $.ajax({
-                url: "{{ route('notifications.markAllAsRead') }}",
+                url: Mark_all_notification,
                 type: "GET",
                 success: function (response) {
                     if (response.success) {
