@@ -1,11 +1,11 @@
 <?php
 
 namespace App\Jobs;
+use App\Models\Programacion\tbl_programacion_contrato;
 use App\Models\tbl_insp_cali;
-use App\Models\tbl_programacion_contrato;
 use Illuminate\Bus\Queueable;
-use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
 
 //use Illuminate\Foundation\Queue\Queueable;
@@ -16,7 +16,7 @@ class ActualizacionAsignacionTec implements ShouldQueue
 
 
     protected $rowData;
-    
+
     /**
      * Create a new job instance.
      */

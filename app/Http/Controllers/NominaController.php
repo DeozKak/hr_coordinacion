@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Nomina\TblNominaMultas;
+use App\Models\Nomina\TblParametroSalAux;
+use App\Models\Produccion\tbl_produccion_corte;
 use App\Models\tbl_insp_cali;
-use App\Models\tbl_produccion_corte;
-use App\Models\TblNominaMultas;
-use App\Models\TblParametroSalAux;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 

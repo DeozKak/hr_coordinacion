@@ -2,28 +2,28 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\tbl_programacion_usuario;
-use App\Models\tbl_programacion_base;
-use App\Models\tbl_insp_cali;
-use App\Models\tbl_programacion_contrato;
-use App\Models\User;
+use App\Jobs\ActualizacionAsignacionTec;
+use App\Jobs\CorreoProgramacion;
 use App\Models\Movilidad;
+use App\Models\Programacion\tbl_programacion_base;
+use App\Models\Programacion\tbl_programacion_contrato;
+use App\Models\Programacion\tbl_programacion_usuario;
+use App\Models\tbl_insp_cali;
+use App\Models\User;
 use Carbon\Carbon;
 use DateTime;
-use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Dotenv\Exception\ValidationException;
 use Exception;
 use GuzzleHttp\Client;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
-use App\Jobs\CorreoProgramacion;
-use App\Jobs\ActualizacionAsignacionTec;
 
 class ProgramacionController extends Controller
 {
@@ -399,15 +399,15 @@ class ProgramacionController extends Controller
             ->whereIn('Cierre1', $cierres)
             ->first();
         if ($movilidad) {
-           
+
             if(in_array($movilidad->Cierre1, ['INSPECCIONADA CON DEFECTO CRITICO VALLE','INSPECCIONADA CON DEFECTO NO CRITICO VALLE','INSPECCIONADA CON DEFECTO CRITICO VALLE']) && $movilidad->TipoTarea === 'SA 12164'){
-                
+
             }else{
             $fecha_completa = $movilidad->FechaRealInicio;
             $partes = explode(' ', $fecha_completa);
             $fecha = $partes[0];
             if($fecha >= $dosAnosAtras){
-                
+
             }else{
             return response()->json([
                 'movilidad' => 'Contrato ya ejecutado',
@@ -708,7 +708,7 @@ class ProgramacionController extends Controller
             $busqueda = $busqueda->get();
             $uniqueData = [];
             $uniqueKeys = [];
-            
+
             foreach ($busqueda as $item) {
                 //unificar en un solo array
                 $key = $item->ORDEN_TRABAJO . $item->FECHA_AGENDAMIENTO . $item->PORQUE_PROGRAMO;
@@ -1056,10 +1056,10 @@ class ProgramacionController extends Controller
                     'INSPECCIONADA CON DEFECTO CRITICO VALLE',
                     'INSPECCIONADA CON DEFECTO NO CRITICO VALLE'
                 ];
-        
+
                 $tipos_trabajo_rp = array("10444", "12161");
                 $tipos_trabajo_sa = array("12163", "12164");
-        
+
                 if (in_array( $programada->TIPO_TRABAJO, $tipos_trabajo_rp)) {
                     $tipo_trabajo = ["RP 10444", "RP 12161"];
                 } elseif (in_array( $programada->TIPO_TRABAJO, $tipos_trabajo_sa)) {
@@ -1075,7 +1075,7 @@ class ProgramacionController extends Controller
                     ->where('Grupo', 'INSP-VALLE')
                     ->whereIn('Cierre1', $cierres)
                     ->first();
-        
+
                 if ($movilidad) {
                     continue;
                 }
@@ -1309,10 +1309,10 @@ class ProgramacionController extends Controller
                     'INSPECCIONADA CON DEFECTO CRITICO VALLE',
                     'INSPECCIONADA CON DEFECTO NO CRITICO VALLE'
                 ];
-        
+
                 $tipos_trabajo_rp = array("10444", "12161");
                 $tipos_trabajo_sa = array("12163", "12164");
-        
+
                 if (in_array( $programada->TIPO_TRABAJO, $tipos_trabajo_rp)) {
                     $tipo_trabajo = ["RP 10444", "RP 12161"];
                 } elseif (in_array( $programada->TIPO_TRABAJO, $tipos_trabajo_sa)) {
@@ -1328,7 +1328,7 @@ class ProgramacionController extends Controller
                     ->where('Grupo', 'INSP-VALLE')
                     ->whereIn('Cierre1', $cierres)
                     ->first();
-        
+
                 if ($movilidad) {
                     continue;
                 }

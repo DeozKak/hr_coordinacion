@@ -148,7 +148,7 @@
 
                 @can('gestion_inspectores')
                 <a href="{{ url('/inspectores') }}" class="item" target="_self">
-                    <div class="item-icon"><i class="fas fa-user-tie"></i></div>
+                    <div class="item-icon"><i class="fas fa-hard-hat"></i></div>
                     <div class="item-label">Inspectores</div>
                 </a>
                 @endcan
@@ -174,11 +174,17 @@
                     </a>
                 @endrole
 
-                @canany(['ver_residente', 'ver_coordinacion_RP'])
+                @can('gestion_nomina')
                 <a href="{{ url('/nomina/parametrizarSalarioAux') }}" class="item" target="_self">
                     <div class="item-icon"><i class="fas fa-money-bill-wave"></i></div>
                     <div class="item-label">Sal. Mínimo - Aux. Transporte</div>
                 </a>
+                @endcan
+                @can('ver_coordinacion_RP')
+                        <a href="{{ route('zonas.index') }}" class="item" target="_self">
+                            <div class="item-icon"><i class="fas fa-map-marked-alt"></i></div>
+                            <div class="item-label">Zonificación</div>
+                        </a>
                 @endcan
             </div>
         </div>

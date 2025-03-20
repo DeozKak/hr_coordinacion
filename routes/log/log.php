@@ -1,9 +1,9 @@
 <?php
 
+use App\Http\Controllers\Bitacoras\BitacoraController;
 use App\Http\Middleware\CheckPermission;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\BitacoraController;
 
 Route::middleware('web')->group(function () {
 

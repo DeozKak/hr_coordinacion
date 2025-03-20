@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Zonificacion\tblGrupo;
 use Illuminate\Database\Seeder;
-use App\Models\tblGrupo;
 
 class TblGrupoSeeder extends Seeder
 {

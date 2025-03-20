@@ -2,9 +2,8 @@
 
 namespace App\Notifications;
 
+use App\Models\Programacion\tbl_programacion_usuario;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use App\Models\tbl_programacion_usuario;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -32,7 +31,7 @@ class Programada extends Notification
     public function via(object $notifiable): array
     {
         return ['mail','database'];
-   
+
     }
 
     /**
@@ -41,7 +40,7 @@ class Programada extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $archivo = tbl_programacion_usuario::where('id',$this->programacion)->first();
-        
+
         return (new MailMessage)
         ->subject( 'Tabla '.$archivo->nombre.' | Generada')
         ->view('mail.programada', [
@@ -57,11 +56,11 @@ class Programada extends Notification
      */
     public function toArray(object $notifiable): array
     {
-        
+
         return [
-            'icon' => 'fas fa-file-alt', 
+            'icon' => 'fas fa-file-alt',
             'text' => 'Tabla Programacion Generada.',
-            'user' => $this->user, 
+            'user' => $this->user,
             'link' => route('programacion.show',['id'=>$this->programacion]).'?action=view'
         ];
     }

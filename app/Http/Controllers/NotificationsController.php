@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Notifications\Mod_Devolucion;
-use App\Notifications\Bitacora;
-use App\Notifications\Programada;
-use App\Notifications\Produccion;
-use Illuminate\Http\Request;
-use App\Models\User;
 use App\Models\Notificacion;
+use App\Models\User;
+use App\Notifications\Bitacora;
+use App\Notifications\Mod_Devolucion;
+use App\Notifications\Produccion;
+use App\Notifications\Programada;
+use Illuminate\Http\Request;
 
 
 class NotificationsController extends Controller
@@ -93,7 +93,7 @@ class NotificationsController extends Controller
 
     public function manage()
     {
-        $users = User::with(['roles', 'notifications'])->get();
+        $users = User::with(['roles', 'notificationsMail'])->get();
         return view('notifications.gestionNotificaciones', compact('users'));
     }
 
@@ -113,7 +113,7 @@ class NotificationsController extends Controller
         });
 
         // Obtener las notificaciones ya asignadas al usuario
-        $userNotifications = $user->notifications->map(function ($notification) {
+        $userNotifications = $user->notificationsMail->map(function ($notification) {
             return ['Nombre' => $notification->Nombre, 'label' => $notification->Nombre];
         });
 
@@ -143,10 +143,10 @@ class NotificationsController extends Controller
             $revokedNotificationIds = Notificacion::whereIn('Nombre', $revokedNotifications)->pluck('id')->toArray();
 
             // Asignar nuevas notificaciones
-            $user->notifications()->syncWithoutDetaching($assignedNotificationIds);
+            $user->notificationsMail()->syncWithoutDetaching($assignedNotificationIds);
 
             // Revocar notificaciones eliminadas
-            $user->notifications()->detach($revokedNotificationIds);
+            $user->notificationsMail()->detach($revokedNotificationIds);
 
             return response()->json([
                 'status' => 'success',

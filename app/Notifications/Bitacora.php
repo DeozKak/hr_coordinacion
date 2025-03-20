@@ -2,21 +2,19 @@
 
 namespace App\Notifications;
 
-use DateTime;
-use DateTimeZone;
+use App\Models\Bitacoras\tbl_bitacora_archivo;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Models\tbl_bitacora_archivo;
+
 class Bitacora extends Notification
 {
     use Queueable;
 
     private $user;
     private $bitacora;
-    
-    
+
+
 
     /**
      * Create a new notification instance.
@@ -24,12 +22,12 @@ class Bitacora extends Notification
     public function __construct($user,$bitacora)
     {
         $this->user = $user;
-       
+
         $this->bitacora = $bitacora;
-    
+
     }
 
-    
+
 
     /**
      * Get the notification's delivery channels.
@@ -47,7 +45,7 @@ class Bitacora extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $archivo = tbl_bitacora_archivo::where('id',$this->bitacora)->first();
-        
+
         return (new MailMessage)
         ->subject($archivo->nombre_archivo . '| Generada')
         ->view('mail.bitacora', [
@@ -64,11 +62,11 @@ class Bitacora extends Notification
      */
     public function toArray(object $notifiable): array
     {
-       
+
         return [
-            'icon' => 'fas fa-file-alt', 
+            'icon' => 'fas fa-file-alt',
             'text' => 'Bitacora Generada.',
-            'user' => $this->user, 
+            'user' => $this->user,
             'link' => route('bitacoras.ver_reporte',['id_bitacora'=>$this->bitacora])
         ];
     }

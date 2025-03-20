@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Zonificacion\TblSubgrupo;
 use Illuminate\Database\Seeder;
-use App\Models\TblSubgrupo;
 
 class TblSubgrupoSeeder extends Seeder
 {

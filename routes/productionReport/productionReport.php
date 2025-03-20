@@ -1,10 +1,9 @@
 <?php
 
+use App\Http\Controllers\Produccion\ReporteProduccionController;
 use App\Http\Middleware\CheckPermission;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\ReporteProduccionController;
 
 Route::middleware('web')->group(function () {
 

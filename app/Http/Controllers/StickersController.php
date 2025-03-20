@@ -3,15 +3,14 @@
 namespace App\Http\Controllers;
 
 
-use Illuminate\Http\Request;
-use App\Models\tbl_controlstick_semana;
-use App\Models\tbl_controlstick_historico;
+use App\Models\Bitacoras\tbl_bitacora_contrato;
+use App\Models\ControlStickers\tbl_controlstick_historico;
+use App\Models\ControlStickers\tbl_controlstick_semana;
 use App\Models\tbl_insp_cali;
-use App\Models\tbl_bitacora_contrato;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use IntlDateFormatter;
-use Illuminate\Support\Facades\Auth;
-use App\Models\User;
 
 class StickersController extends Controller
 {
@@ -78,13 +77,13 @@ class StickersController extends Controller
     public function getData($id)
     {
 
-        $fecha_actual = date('Y-m-d'); 
-        //$fecha_actual = "2025-01-31"; 
+        $fecha_actual = date('Y-m-d');
+        //$fecha_actual = "2025-01-31";
         $verf_semana = tbl_controlstick_semana::find($id);
         if ($fecha_actual >= $verf_semana->fecha_inicio && $fecha_actual <= $verf_semana->fecha_fin) {
         } else {
             $historico = tbl_controlstick_historico::where('id_semana', $id)->first();
-            
+
             // Obtener las fechas de la semana
             $lunes = date('Y-m-d', strtotime($verf_semana->fecha_inicio));
             $martes = date('Y-m-d', strtotime($lunes . ' + 1 day'));
@@ -100,7 +99,7 @@ class StickersController extends Controller
 
             // Agregar el nuevo registro como una propiedad del objeto
             $response->indicador_lectura = 1;
-           
+
              /*  $response = [
                 'nestedHeaders' => $nestedHeaders,
                 'registros' => $historico,
@@ -273,15 +272,15 @@ class StickersController extends Controller
             $saldoAmarillo = $amarillos - array_sum($certificados);
             $saldoRojo = $rojos - array_sum($rechazados);
             $saldoRojo_matriz = $saldoRojo - array_sum($matrices);
-        
+
             $registros[$inspector->cedula] = [
                 'cc_operario' => $inspector->cedula,
                 'nombre_completo' => $inspector->nombre_completo,
-                'saldoAnteriorAmarillo' => isset($registro_anterior->registros->{$inspector->cedula}->saldoAmarillo) 
-                            ? $registro_anterior->registros->{$inspector->cedula}->saldoAmarillo 
+                'saldoAnteriorAmarillo' => isset($registro_anterior->registros->{$inspector->cedula}->saldoAmarillo)
+                            ? $registro_anterior->registros->{$inspector->cedula}->saldoAmarillo
                             : 0,
-                'saldoAnteriorRojo' => isset($registro_anterior->registros->{$inspector->cedula}->saldoRojo) 
-                ? $registro_anterior->registros->{$inspector->cedula}->saldoRojo 
+                'saldoAnteriorRojo' => isset($registro_anterior->registros->{$inspector->cedula}->saldoRojo)
+                ? $registro_anterior->registros->{$inspector->cedula}->saldoRojo
                 : 0,
                 'AMARILLOS' => $amarillos,
                 'ROJOS' =>  $rojos,

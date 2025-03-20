@@ -204,13 +204,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Agregar evento paste al input de control
                 this.control_input.addEventListener('paste', (e) => {
                     e.preventDefault();
-                    
+
                     // Obtener el texto pegado
                     let pastedText = (e.clipboardData || window.clipboardData).getData('text');
-                    
+
                     // Separar el texto por espacios o comas
                     let valores = pastedText.split(/[\s,]+/);
-                    
+
                     // Filtrar valores vacíos y agregar cada valor
                     valores.forEach(valor => {
                         valor = valor.trim();
@@ -460,7 +460,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 datosFormulario[$(this).attr('id')] = value;
             }
         });
-        
+
         // Reorganizar los datos en el formato deseado
         let datosCombinados = {
             datos: {
@@ -476,7 +476,7 @@ document.addEventListener("DOMContentLoaded", function () {
             ...datosFormulario,
             ...datosCombinados
         };
-       
+
         let url;
         if(Object.keys(datosFormulario).length === 1){
             url = url1
@@ -487,7 +487,7 @@ document.addEventListener("DOMContentLoaded", function () {
         $.ajax({
             url: url,
             method: "GET",
-            data: { 
+            data: {
                 pagina: pagina,
                 datosFormulario: datosFormulario
             },
@@ -514,16 +514,16 @@ document.addEventListener("DOMContentLoaded", function () {
                                         JSON.stringify(nuevaFila)
                                 )
                         );
-    
+
                         // Concatenar nuevos datos al inicio
                         datosExistentes =
                             nuevosDatosSinDuplicados.concat(datosExistentes);
-    
+
                         // Limitar a un máximo de maxFilas
                         if (datosExistentes.length > maxFilas) {
                             datosExistentes = datosExistentes.slice(0, maxFilas);
                         }
-    
+
                         hot.scrollViewportTo({ row: 124 }); // Ajustar el valor según sea necesario
                     } else {
                         // Agregar nuevos datos al final y verificar duplicados
@@ -535,21 +535,21 @@ document.addEventListener("DOMContentLoaded", function () {
                                         JSON.stringify(nuevaFila)
                                 )
                         );
-    
+
                         datosExistentes = datosExistentes.concat(
                             nuevosDatosSinDuplicados
                         );
-    
+
                         // Eliminar filas excedentes si supera el límite
                         if (datosExistentes.length > maxFilas) {
                             const filasAEliminar =
                                 datosExistentes.length - maxFilas;
                             datosExistentes = datosExistentes.slice(filasAEliminar);
                         }
-    
+
                         hot.scrollViewportTo({ row: 75 }); // Ajustar el valor según sea necesario
                     }
-    
+
                     // Primero, mapea el array a un objeto con claves más descriptivas
                     datosExistentes = datosExistentes.map((fila) => {
                         return {
@@ -583,7 +583,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             27:fila[27],
                             28:fila[28],
                             "estado_programacion":fila[29],
-                            "codigo_tecnico":fila[30], 
+                            "codigo_tecnico":fila[30],
                             31:fila[31],
                             // 5. RECEPCIÓN GESTIÓN REALIZADA EN CAMPO
                             32:fila[32],
@@ -619,7 +619,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             'fecha_actual':fila[60],
                         };
                     });
-    
+
                     datosExistentes = datosExistentes.map((fila) => {
                         let codigoCausa = fila["causa_cierre"];
                         let codigoActual = "" + fila['codigo_tecnico'];
@@ -639,30 +639,30 @@ document.addEventListener("DOMContentLoaded", function () {
 
                             let fechaAsignacion = new Date(fila[31])
                             let fechaActual = new Date(hoy)
-                            let diferenciaMilisegundos = fechaActual - fechaAsignacion 
-        
+                            let diferenciaMilisegundos = fechaActual - fechaAsignacion
+
                             let diferenciaDias = diferenciaMilisegundos / (1000 * 60 * 60 * 24);
-        
+
                             fila['dias_gestion_actual'] = diferenciaDias
                         }else{
                             fila['dias_gestion_actual'] = ""
                         }
-        
+
                         fila['fecha_actual'] = hoy;
 
                         return fila;
                     });
-    
+
                     hot.updateSettings({
                         columns: [
                             // 1. ASIGNACION BASE OSF
-                            {}, {}, {}, {}, {}, {}, {}, {}, {}, 
-                            {}, {}, {}, {}, {}, {}, {}, {}, {}, 
+                            {}, {}, {}, {}, {}, {}, {}, {}, {},
+                            {}, {}, {}, {}, {}, {}, {}, {}, {},
                             {},{},
                             // 2. INFORMACIÓN COMPLEMENTARIA 12161
                             {}, {}, {}, {}, {},
                             // 3. PROGRAMACIÓN DE ORDENES
-                            {}, {}, {}, {}, 
+                            {}, {}, {}, {},
                             {
                                 data: 'estado_programacion',
                                 type: 'dropdown',
@@ -671,7 +671,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                 strict: true,
                                 allowInvalid: false,
                                 filter: false,
-                            }, 
+                            },
                             // 4. ASIGNACIÓN INSPECTOR
                             {
                                 data: 'codigo_tecnico',
@@ -712,7 +712,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             {
                                 data: 'fecha_actual',
                                 type: 'text',
-                                readOnly: true, 
+                                readOnly: true,
                             },
                             {
                                 data: 'marca',
@@ -720,7 +720,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             }
                         ],
                     });
-    
+
                     // Cargar los datos actualizados y renderizar
                     hot.loadData(datosExistentes);
                 }else{
@@ -792,7 +792,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     27:fila[27],
                     28:fila[28],
                     "estado_programacion":fila[29],
-                    "codigo_tecnico":fila[30], 
+                    "codigo_tecnico":fila[30],
                     31:fila[31],
                     // 5. RECEPCIÓN GESTIÓN REALIZADA EN CAMPO
                     32:fila[32],
@@ -849,7 +849,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     let fechaAsignacion = new Date(fila[31])
                     let fechaActual = new Date(hoy)
-                    let diferenciaMilisegundos = fechaActual - fechaAsignacion 
+                    let diferenciaMilisegundos = fechaActual - fechaAsignacion
 
                     let diferenciaDias = diferenciaMilisegundos / (1000 * 60 * 60 * 24);
 
@@ -868,13 +868,13 @@ document.addEventListener("DOMContentLoaded", function () {
             hot.updateSettings({
                 columns: [
                         // 1. ASIGNACION BASE OSF
-                        {}, {}, {}, {}, {}, {}, {}, {}, {}, 
-                        {}, {}, {}, {}, {}, {}, {}, {}, {}, 
+                        {}, {}, {}, {}, {}, {}, {}, {}, {},
+                        {}, {}, {}, {}, {}, {}, {}, {}, {},
                         {},{},
                         // 2. INFORMACIÓN COMPLEMENTARIA 12161
                         {}, {}, {}, {}, {},
                         // 3. PROGRAMACIÓN DE ORDENES
-                        {}, {}, {}, {}, 
+                        {}, {}, {}, {},
                         {
                             data: 'estado_programacion',
                             type: 'dropdown',
@@ -883,7 +883,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             strict: true,
                             allowInvalid: false,
                             filter: false,
-                        }, 
+                        },
                         // 4. ASIGNACIÓN INSPECTOR
                         {
                             data: 'codigo_tecnico',
@@ -924,7 +924,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         {
                             data: 'fecha_actual',
                             type: 'text',
-                            readOnly: true, 
+                            readOnly: true,
                         },
                         {
                             data: 'marca',
@@ -957,16 +957,16 @@ document.addEventListener("DOMContentLoaded", function () {
                     codigoTecnico = valorSeleccion.split('-');
                     if(codigoTecnico[0] != ""){
                         if(valorSeleccion.includes(codigoTecnico[0])){
-                           
+
                             let tiempoTranscurrido = Date.now();
                             let hoy = new Date(tiempoTranscurrido);
                             let fechaActual = hoy.toISOString().split('T')[0];
                             let nombrePartes = codigoTecnico[1].split(' ')
-                            
+
                             console.log(nombrePartes)
 
                             let nombreInspector = "";
-                            
+
                             if(nombrePartes.length == 4){
                                 nombreInspector = nombrePartes[2]+" "+nombrePartes[3]+" "+nombrePartes[0]+" "+nombrePartes[1]
                             }else{
@@ -1023,7 +1023,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                 _token: token
                             },
                             success: function (response) {
-                                
+
                             },
                             error(xhr, status, error) {
                                 Swal.fire({
@@ -1141,7 +1141,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 datosFormulario[$(this).attr('id')] = value;
             }
         });
-        
+
         // Reorganizar los datos en el formato deseado
         let datosCombinados = {
             datos: {
@@ -1171,7 +1171,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 datosFormulario: datosFormulario,
             },
             success: function (response) {
-                
+
                 let tiempoTranscurrido = Date.now();
                 let hoy = new Date(tiempoTranscurrido).toISOString().split('T')[0];
                 let datos = convertirJSONaArray2D(response.data);
@@ -1215,7 +1215,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         27:fila[27],
                         28:fila[28],
                         "estado_programacion":fila[29],
-                        "codigo_tecnico":fila[30], 
+                        "codigo_tecnico":fila[30],
                         31:fila[31],
                         // 5. RECEPCIÓN GESTIÓN REALIZADA EN CAMPO
                         32:fila[32],
@@ -1263,7 +1263,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (tecnicoSeleccionado) {
                         fila['codigo_tecnico'] = tecnicoSeleccionado.split('-')[0];
                     }
-    
+
                     if(causaSeleccionada){
                         fila['causa_cierre'] = causaSeleccionada;
                     }
@@ -1272,17 +1272,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
                         let fechaAsignacion = new Date(fila[31])
                         let fechaActual = new Date(hoy)
-                        let diferenciaMilisegundos = fechaActual - fechaAsignacion 
-    
+                        let diferenciaMilisegundos = fechaActual - fechaAsignacion
+
                         let diferenciaDias = diferenciaMilisegundos / (1000 * 60 * 60 * 24);
-    
+
                         fila['dias_gestion_actual'] = diferenciaDias
                     }else{
                         fila['dias_gestion_actual'] = ""
                     }
 
                     fila['marca'] = fila['marca'] === 1 ? true : false;
-    
+
                     fila['fecha_actual'] = hoy;
 
                     return fila;
@@ -1291,13 +1291,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 hot.updateSettings({
                     columns: [
                         // 1. ASIGNACION BASE OSF
-                        {}, {}, {}, {}, {}, {}, {}, {}, {}, 
-                        {}, {}, {}, {}, {}, {}, {}, {}, {}, 
+                        {}, {}, {}, {}, {}, {}, {}, {}, {},
+                        {}, {}, {}, {}, {}, {}, {}, {}, {},
                         {},{},
                         // 2. INFORMACIÓN COMPLEMENTARIA 12161
                         {}, {}, {}, {}, {},
                         // 3. PROGRAMACIÓN DE ORDENES
-                        {}, {}, {}, {}, 
+                        {}, {}, {}, {},
                         {
                             data: 'estado_programacion',
                             type: 'dropdown',
@@ -1306,7 +1306,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             strict: true,
                             allowInvalid: false,
                             filter: false,
-                        }, 
+                        },
                         // 4. ASIGNACIÓN INSPECTOR
                         {
                             data: 'codigo_tecnico',
@@ -1347,7 +1347,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         {
                             data: 'fecha_actual',
                             type: 'text',
-                            readOnly: true, 
+                            readOnly: true,
                         },
                         {
                             data: 'marca',
@@ -1371,11 +1371,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     })
                     totalResults.text(`Total registros: 0`)
                 }
-                
+
                 loaderPageCoordination.style.display = "none";
                 overlay.style.display = 'none';
             }
-        })  
+        })
     })
 
     // funcion que limpia el formulario
@@ -1399,7 +1399,7 @@ document.addEventListener("DOMContentLoaded", function () {
     })
 
     $(document).on('input', '.inputNumericoDias', function(){
-        var valor = $(this).val(); 
+        var valor = $(this).val();
         var regex = /^-?\d*$/;
 
         if (!regex.test(valor)) {
@@ -1424,7 +1424,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 datosFormulario[$(this).attr('id')] = value;
             }
         });
-        
+
         // Reorganizar los datos en el formato deseado
         let datosCombinados = {
             datos: {
@@ -1519,7 +1519,7 @@ document.addEventListener("DOMContentLoaded", function () {
     $(document).on('click', '#asignarOrdCercania', function(){
 
         let token = $('#tokenCoordinacionRP').val();
-        
+
         $.post({
             url:url11,
             data:{
@@ -1549,4 +1549,9 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         })
     })
+    //por si el overlay no desaparece
+    setTimeout(() => {
+        loaderPageCoordination.style.display = "none";
+    },500)
+
 });

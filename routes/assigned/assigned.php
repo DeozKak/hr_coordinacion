@@ -1,8 +1,9 @@
 <?php
+
+use App\Http\Controllers\Coordinacion\AsignadasController;
 use App\Http\Middleware\CheckPermission;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AsignadasController;
 
 Route::middleware('web')->group(function () {
 
@@ -19,6 +20,6 @@ Route::middleware('web')->group(function () {
         Route::get('/gestion/viewReception', [AsignadasController::class, 'getReceptions'])->middleware(CheckPermission::class . ':ver_coordinacion_RN');
         Route::get('/gestion/reception', [AsignadasController::class, 'getDataReception'])->name('management.reception')->middleware(CheckPermission::class . ':ver_coordinacion_RN');
         Route::get('/gestion/filterDataReception', [AsignadasController::class, 'filterData'])->name('management.filterDataReception')->middleware(CheckPermission::class . ':ver_coordinacion_RN');
-        
+
     });
 });

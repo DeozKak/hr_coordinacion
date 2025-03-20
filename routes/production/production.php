@@ -1,10 +1,10 @@
 <?php
 
-use App\Http\Controllers\ProduccionController;
+use App\Http\Controllers\Produccion\ProduccionController;
 use App\Http\Middleware\CheckPermission;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
 
 Route::middleware('web')->group(function () {
 

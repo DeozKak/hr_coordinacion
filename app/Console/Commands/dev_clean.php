@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Console\Commands;
-use App\Models\tbl_dv_insp;
+use App\Models\Bitacoras\tbl_dv_insp;
 use Illuminate\Console\Command;
 
 class dev_clean extends Command

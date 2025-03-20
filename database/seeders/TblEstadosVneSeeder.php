@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\TblEstadosVne;
+use App\Models\Coordinacion\TblEstadosVne;
 use Illuminate\Database\Seeder;
 
 class TblEstadosVneSeeder extends Seeder

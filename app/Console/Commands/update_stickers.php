@@ -1,8 +1,8 @@
 <?php
 
 namespace App\Console\Commands;
-use App\Models\tbl_controlstick_semana;
 use App\Http\Controllers\StickersController;
+use App\Models\ControlStickers\tbl_controlstick_semana;
 use Illuminate\Console\Command;
 
 class update_stickers extends Command

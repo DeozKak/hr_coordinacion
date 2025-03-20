@@ -1,8 +1,9 @@
 <?php
+
+use App\Http\Controllers\Bitacoras\AutoGuardadoController;
 use App\Http\Middleware\CheckPermission;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AutoGuardadoController;
 
 Route::middleware('web')->group(function () {
 

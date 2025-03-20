@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use App\Models\tbl_programacion_contrato;
 use App\Models\Movilidad;
+use App\Models\Programacion\tbl_programacion_contrato;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
 
 
 class EjecutadasProgramacion extends Command
@@ -64,13 +64,13 @@ class EjecutadasProgramacion extends Command
 
             if($movilidad){
                  if(in_array($movilidad->Cierre1, ['INSPECCIONADA CON DEFECTO CRITICO VALLE','INSPECCIONADA CON DEFECTO NO CRITICO VALLE']) && $movilidad->TipoTarea === 'SA 12164'){
-                
+
                 }else{
                     $fecha_completa = $movilidad->FechaRealInicio;
                     $partes = explode(' ', $fecha_completa);
                     $fecha = $partes[0];
                     if($fecha >= $dosAnosAtras){
-                    
+
                     }else{
                         $programada->EJECUTADA = 1;
                         $programada->save();

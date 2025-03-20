@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\TblCausasCierre;
+use App\Models\Coordinacion\TblCausasCierre;
 use Illuminate\Database\Seeder;
 
 class TblCausaCierreSeeder extends Seeder

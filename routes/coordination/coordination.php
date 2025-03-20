@@ -1,9 +1,9 @@
 <?php
 
+use App\Http\Controllers\Coordinacion\CoordinacionController;
 use App\Http\Middleware\CheckPermission;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\CoordinacionController;
 
 Route::middleware('web')->group(function () {
 

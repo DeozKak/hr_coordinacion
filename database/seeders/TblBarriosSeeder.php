@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Zonificacion\TblBarrios;
 use Illuminate\Database\Seeder;
-use App\Models\TblBarrios;
 
 class TblBarriosSeeder extends Seeder
 {
