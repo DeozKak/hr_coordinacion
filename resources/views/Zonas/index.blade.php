@@ -72,7 +72,10 @@
                         @foreach ($barrios as $barrio)
                             <tr data-id="{{$barrio->id}}">
                                 <td>{{ $barrio->barrio }}</td>
-                                <td> MUN </td>
+                                <td>
+                                    {{ $barrio->municipios ? ($barrio->municipios->first() ? $barrio->municipios->first()->nombre : "N/A") : "N/A" }}
+                                </td>
+
                                 <td>
                                     <div style="display: flex; gap: 5px; justify-content: center;">
                                         <button class="btn btn-info btn-sm abrirMunicipioModal" data-municipio-id="{{ $barrio->id }}">Editar</button>
@@ -179,7 +182,7 @@
             Swal.fire({
                 icon: 'error',
                 title: 'Oops...',
-                text: '{{ session('warning') }}',
+                text: '{{ session('error') }}',
             })
         </script>
 

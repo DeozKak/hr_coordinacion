@@ -69,7 +69,7 @@ class EjecutadasProgramacion extends Command
                     $fecha_completa = $movilidad->FechaRealInicio;
                     $partes = explode(' ', $fecha_completa);
                     $fecha = $partes[0];
-                    if($fecha >= $dosAnosAtras){
+                    if($fecha <= $dosAnosAtras){
 
                     }else{
                         $programada->EJECUTADA = 1;

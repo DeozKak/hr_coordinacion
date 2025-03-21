@@ -12,7 +12,7 @@ class TblSubgrupo extends Model
     use HasFactory;
 
     protected $table = 'tbl_subgrupos';
-    public function tbl_localidades_sede(){
-        return $this->hasOne(tbl_localidades_sede::class,'id_sede','id');
+    public function sede(){
+        return $this->hasOne(tbl_localidades_sede::class,'id','id_sede');
     }
 }

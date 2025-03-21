@@ -11,8 +11,8 @@ class TblGrupo extends Model
     use HasFactory;
 
     protected $table = 'tbl_grupos';
-    public function tbl_localidades_sede(){
-        return $this->hasOne(tbl_localidades_sede::class,'id_sede','id');
+    public function sede(){
+        return $this->hasOne(tbl_localidades_sede::class,'id','id_sede');
     }
 
 }
