@@ -1,6 +1,7 @@
+
 document.addEventListener('DOMContentLoaded', () => {
 
-    $('#municipios, #sedes').DataTable({
+    $('#municipios,#Barrios,#sedes').DataTable({
         paging: false,
         scrollCollapse: true,
         scrollY: '230px',
@@ -212,7 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         })
     })
-
 
 
 })

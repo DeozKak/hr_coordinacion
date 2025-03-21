@@ -15,16 +15,11 @@ class ZonificacionController extends Controller
     {
 
         $municipios = tbl_localidades_municipio::all();
-        $barrios = TblBarrios::with('municipios')->get();
+        $barrios = TblBarrios::all();
         $sedes = tbl_localidades_sede::all();
         $zonas = tbl_produccion_zona::all();
 
-        $array = array();
 
-        foreach ($barrios as $barrio) {
-            array_push($array, $barrio->municipios);
-        }
-        dd($array);
         return view('zonas.index', compact('municipios', 'sedes', 'zonas','barrios'));
     }
 

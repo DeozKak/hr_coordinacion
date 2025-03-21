@@ -71,8 +71,8 @@
                         <tbody>
                         @foreach ($barrios as $barrio)
                             <tr data-id="{{$barrio->id}}">
-                                <td>{{ $barrio->nombre }}</td>
-                                <td>{{ $barrio->municipios }}</td>
+                                <td>{{ $barrio->barrio }}</td>
+                                <td> MUN </td>
                                 <td>
                                     <div style="display: flex; gap: 5px; justify-content: center;">
                                         <button class="btn btn-info btn-sm abrirMunicipioModal" data-municipio-id="{{ $barrio->id }}">Editar</button>

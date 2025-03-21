@@ -715,12 +715,12 @@ return [
                 [
                     'type' => 'js',
                     'asset' => true,
-                    'location' => '//cdn.datatables.net/2.0.7/js/dataTables.js',
+                    'location' => '//cdn.datatables.net/2.2.2/js/dataTables.min.js',
                 ],
                 [
                     'type' => 'css',
                     'asset' => true,
-                    'location' => '//cdn.datatables.net/2.0.7/css/dataTables.dataTables.css',
+                    'location' => '//cdn.datatables.net/2.2.2/css/dataTables.dataTables.min.css',
                 ],
                 [
                     'type' => 'js',
