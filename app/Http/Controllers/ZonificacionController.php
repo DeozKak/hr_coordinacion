@@ -13,26 +13,40 @@ use App\Models\Zonificacion\tbl_localidades_municipio;
 use App\Models\Zonificacion\TblBarrios;
 use Illuminate\Support\Facades\Validator;
 use App\Services\BarrioService;
+use App\Services\MunicipioService;
 use Illuminate\Support\Facades\Log;
 
 class ZonificacionController extends Controller
 {
 
     protected BarrioService $barrioService;
+    protected MunicipioService $municipioService;
 
-    public function __construct(BarrioService $barrioService)
+    public function __construct(BarrioService $barrioService, MunicipioService $municipioService)
     {
         $this->barrioService = $barrioService;
+        $this->municipioService = $municipioService;
     }
 
     public function index()
     {
+        //consulta Municipios sin grupos o subgrupos asignados
+        $mun_sin_grupo = $this->municipioService->VerificarGrupo();
+
+        //consultas de todos los registros con  sus relaciones
         $municipios = tbl_localidades_municipio::all();
         $barrios = TblBarrios::with('municipios')->get();
         $grupos = TblGrupo::all();
         $subgrupos = TblSubgrupo::all();
         $sedes = tbl_localidades_sede::all();
         $zonas = tbl_produccion_zona::all();
+
+        if (!empty($mun_sin_grupo))
+        {
+            session()->flash('warning', 'Existen municipios sin grupo o sub grupo relacionado. ');
+            return view('zonas.index', compact('municipios', 'sedes', 'zonas', 'barrios', 'grupos', 'subgrupos', 'mun_sin_grupo'));
+        }
+
 
         return view('zonas.index', compact('municipios', 'sedes', 'zonas', 'barrios', 'grupos', 'subgrupos'));
     }
@@ -297,10 +311,13 @@ class ZonificacionController extends Controller
             //devuelve cambios hechos
             Log::error($e->getMessage());
             DB::rollBack();
-            return response()->json(['error' => $e->getMessage()]);
+            return response()->json(['error' => $e->getMessage(),],500);
         }
 
-        return response()->json(['success' => $grupo], 201);
+        return response()->json([
+            'ok' => $grupo,
+            'success' => 'Guardado exitosamente'
+        ], 201);
     }
 
     public function editGrupo($id): \Illuminate\Http\JsonResponse
@@ -355,7 +372,10 @@ class ZonificacionController extends Controller
         }
 
 
-        return response()->json(['success' => $grupo],200);
+        return response()->json([
+            'ok' => $grupo,
+            'success' => 'Actualizado exitosamente'
+        ],200);
     }
     //------------------------------------------------------------------------------------------
 
@@ -400,7 +420,10 @@ class ZonificacionController extends Controller
             return response()->json(['error' => $e->getMessage()]);
         }
 
-        return response()->json(['success' => $sub_grupo], 201);
+        return response()->json([
+            'ok' => $sub_grupo,
+            'success' => 'Guardado exitosamente'
+        ], 201);
     }
 
     public function editSubGrupo($id): \Illuminate\Http\JsonResponse
@@ -455,7 +478,10 @@ class ZonificacionController extends Controller
         }
 
 
-        return response()->json(['success' => $sub_grupo],200);
+        return response()->json([
+            'ok' => $sub_grupo,
+            'success' => 'Actualizado exitosamente'
+        ],200);
     }
     //------------------------------------------------------------------------------------------
 

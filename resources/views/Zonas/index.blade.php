@@ -8,6 +8,8 @@
 
 @section('content')
     <script src="{{ asset('js/Zonas/zonas.js') }}"></script>
+    <script src="{{ asset('js/Zonas/alerts.js') }}"></script>
+    <script src="{{ asset('js/Zonas/asignador.js') }}"></script>
     <link rel="stylesheet" href="{{ asset ('css/zonas/zonas.css')}}">
     <input type="hidden" id="token" value="{{ csrf_token() }}">
     <div class="card">
@@ -279,9 +281,27 @@
         </div>
     </div>
 
+        {{-- Modal de asignacion de grupos --}}
+        <div class="modal fade" id="AsignadorModal" aria-labelledby="asignadorModalLabel" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="asignadorModalLabel">Asignador</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="selectores-container">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                    </div>
+                </div>
+            </div>
+        </div>
 
     @if (session('error'))
-
         <script>
             Swal.fire({
                 icon: 'error',
@@ -289,19 +309,21 @@
                 text: '{{ session('warning') }}',
             })
         </script>
-
     @endif
 
     @if(session('warning'))
-
         <script>
-            Swal.fire({
-                icon: 'warning',
-                title: 'Oops...',
-                text: '{{ session('warning') }}',
-            })
+            let mun_sin_grupo = '{{json_encode($mun_sin_grupo)}}';
+            let municipios = '{{json_encode($municipios->toArray())}}';
+            let barrios = '{{json_encode($barrios->toArray())}}';
+            let grupos = '{{json_encode($grupos->toArray())}}';
+            let subgrupos = '{{json_encode($subgrupos->toArray())}}';
+
+            let warning = '{{ session('warning') }}';
         </script>
-
+    @else
+            <script>
+                let warning = '';
+            </script>
     @endif
-
 @endsection

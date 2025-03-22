@@ -1,4 +1,5 @@
 let tomSelectMunicipio;
+
 document.addEventListener('DOMContentLoaded', () => {
 
     $('#municipios,#Barrios,#sedes,#grupos,#subgrupos').DataTable({
@@ -258,7 +259,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         $('#barrio').val('');
 
 
-
                         let nuevaFila = `
                             <tr data-id="${response.ok.id}">
                                 <td>${response.ok.barrio}</td>
@@ -286,8 +286,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // ------------------------- Jquery Editar Barrios --------------------------------
-
-    let tomSelectMunicipio; // Variable global para almacenar la instancia de TomSelect
 
     $(document).on('click', '.abrirBarrioModal', function () {
         let id = $(this).attr('data-barrio-id');
@@ -367,6 +365,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
     });
+
+
+
+    // --------------------------- Asignador de grupos -----------------------------------
+
+
+
+
+        //----------------------------------------------------------------
 
 function alerta(tipo,encabezado,mensaje){
     Swal.fire({
