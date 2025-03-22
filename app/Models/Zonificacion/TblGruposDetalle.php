@@ -19,8 +19,7 @@ class TblGruposDetalle extends Model
     /**
      * @var int|mixed
      */
-    public int $id_barrio;
-    public int $id_mun;
+
 
     protected $table = 'tbl_grupos_detalle';
 

@@ -1,0 +1,7 @@
+th, td {
+    max-width: 150px !important; /* Ajusta el ancho máximo */
+    white-space: nowrap !important; /* Evita saltos de línea */
+    overflow: hidden !important; /* Oculta el contenido que sobrepasa */
+    text-overflow: ellipsis !important; /* Agrega "..." si el texto es largo */
+    text-align: left !important; /* Centra el contenido */
+}

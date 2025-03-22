@@ -1,15 +1,15 @@
-
+let tomSelectMunicipio;
 document.addEventListener('DOMContentLoaded', () => {
 
-    $('#municipios,#Barrios,#sedes').DataTable({
+    $('#municipios,#Barrios,#sedes,#grupos,#subgrupos').DataTable({
         paging: false,
         scrollCollapse: true,
         scrollY: '230px',
         lengthChange: false,
+        info: false,
         "language": {
             "lengthMenu": "Mostrar _MENU_ registros por página",
             "zeroRecords": "Nada encontrado - lo siento",
-            "info": "Mostrando la página _PAGE_ de _PAGES_",
             "infoEmpty": "No hay registros disponibles",
             "infoFiltered": "(Filtrado de _MAX_ registros totales)",
             "search": "Buscar:",
@@ -99,11 +99,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 },
                 error: function (xhr, status, error) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error al guardar',
-                        text: 'Ocurrió un error, intente de nuevo.',
-                    });
+
+                    alerta('error','Error al guardar','Ocurrió un error, intente de nuevo.')
+
                     console.log(xhr.responseText);
                 }
 
@@ -189,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     })
 
 
-    // ------------------------- Camabiar Estado Municipios -----------------------------
+    // ------------------------- Cambiar Estado Municipios -----------------------------
 
     $(document).on('click', '#btnChangeStatusMunicipio', function(){
         let id = $(this).attr('data-municipio-id')
@@ -214,6 +212,180 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     })
 
+    // ------------------------- Jquery Crear Barrios --------------------------------
+
+    $(document).on('click', '#btnCrearBarrio', function () {
+      // Variable global para almacenar la instancia
+
+        $('#idGuardarBarrio').val('');  // Limpiar el campo de ID
+        $('#barrio').val('');           // Limpiar el campo de nombre del barrio
+        if (tomSelectMunicipio) {
+            tomSelectMunicipio.clear(); // Limpiar el select correctamente
+        }
+        $('#crearBarrioModalLabel').text('Crear Barrio');  // Cambiar el título del modal
+        $('#crearBarrio').text('Crear Barrio'); // Cambiar el texto del botón
+        $('#crearBarrio').removeClass('guardarCambiosBarrio').addClass('guardarNuevoBarrio');  // Cambiar la clase para detectar el modo
+        $('#BarrioModal').modal('show');  // Mostrar el modal
+
+        if (tomSelectMunicipio) {
+            tomSelectMunicipio.clear();
+            tomSelectMunicipio.destroy();
+        }
+
+        tomSelectMunicipio =new TomSelect("#municipioBarrio", {
+            maxItems: 1,
+            create: false,  // Evita que los usuarios agreguen nuevas zonas manualmente
+            placeholder: "Seleccione un municipio",
+            persist: false
+        });
+    });
+
+    $(document).on('click', '.guardarNuevoBarrio', function () {
+        let barrio = $('#barrio').val();
+        let token = $('#token').val();
+        let municipio = $('#municipioBarrio').val();
+
+            $.ajax({
+                url: 'zonas/store/Barrio',
+                type: 'POST',
+                data: {
+                    barrio: barrio,
+                    municipio: municipio,
+                    _token: token
+                },
+                success: function (response) {
+                        $('#BarrioModal').modal('hide');
+                        $('#barrio').val('');
+
+
+
+                        let nuevaFila = `
+                            <tr data-id="${response.ok.id}">
+                                <td>${response.ok.barrio}</td>
+                                <td>
+                                    <div style="display: flex; gap: 5px; justify-content: center;">
+                                        <button class="btn btn-info btn-sm abrirBarrioModal" data-barrio-id="${response.ok.id}">Editar</button>
+                                        <button class="btn btn-danger btn-sm btnChangeStatusBarrio" data-barrio-id="${response.ok.id}">Desactivar</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                        $('#Barrios tbody').append(nuevaFila);  // Agregar la nueva fila al cuerpo de la tabla
+
+                        topAlert('success',response.success);
+                },
+                error: function (xhr,error,status) {
+
+                    alerta('error','Error',xhr.responseJSON.error);
+
+
+                }
+            });
+
+    });
+
+
+    // ------------------------- Jquery Editar Barrios --------------------------------
+
+    let tomSelectMunicipio; // Variable global para almacenar la instancia de TomSelect
+
+    $(document).on('click', '.abrirBarrioModal', function () {
+        let id = $(this).attr('data-barrio-id');
+        $('#idGuardarBarrio').val(id);
+        $('#crearBarrioModalLabel').text('Editar Barrio');
+        $('#crearBarrio').text('Guardar cambios');
+        $('#crearBarrio').removeClass('guardarNuevoBarrio').addClass('guardarCambiosBarrio');
+        let token = $('#token').val();
+        let modalBarrio = $('#BarrioModal');
+
+        // Mostrar el modal
+        modalBarrio.modal('show');
+
+        // Hacer la petición AJAX para obtener los datos del barrio
+        $.ajax({
+            url: 'zonas/' + id + '/editBarrio',
+            type: 'GET',
+            data: { _token: token },
+            success: function (response) {
+                $('#barrio').val(response[0].barrio);
+               
+                // Verificar si TomSelect ya está inicializado y limpiarlo antes de actualizar
+                if (tomSelectMunicipio) {
+                    tomSelectMunicipio.clear();
+                    tomSelectMunicipio.destroy();
+                }
+
+                // Inicializar TomSelect para Municipio y seleccionar la opción correspondiente
+                tomSelectMunicipio = new TomSelect("#municipioBarrio", {
+                    maxItems: 1,
+                    create: false,
+                    placeholder: "Seleccione un municipio",
+                    persist: false
+                });
+
+                // Establecer el valor del municipio en el select
+                tomSelectMunicipio.addOption({ value: response[0].id_municipio, text: response[0].municipio_nombre });
+                tomSelectMunicipio.setValue(response[0].municipios[0].id);
+            },error: function (xhr,error,status) {
+                alerta('error','Error',xhr.responseJSON.error)
+            }
+        });
+    });
+
+    // ------------------------- Guardar Cambios en Barrio ------------------------------
+
+    $(document).on('click', '.guardarCambiosBarrio', function () {
+        let id = $('#idGuardarBarrio').val();
+        let barrio = $('#barrio').val().trim();
+        let municipio = $('#municipioBarrio').val();
+        let token = $('#token').val();
+
+            $.ajax({
+                url: 'zonas/' + id + '/updateBarrio',
+                type: 'PUT',
+                data: {
+                    barrio: barrio,
+                    municipio: municipio,
+                    _token: token
+                },
+                success: function (response) {
+
+                        $('#BarrioModal').modal('hide');
+
+                        // Actualizar la fila en la tabla
+                        let row = $('#Barrios tbody tr[data-id="' + response.ok.id + '"]');
+                        console.log(row);
+                        row.find('td:nth-child(1)').text(response.ok.barrio);
+
+                       topAlert('success', response.success);
+
+                },
+                error: function (xhr) {
+                   alerta('error','Error',xhr.responseJSON.error);
+
+                }
+            });
+
+    });
+
+function alerta(tipo,encabezado,mensaje){
+    Swal.fire({
+        icon: tipo,
+        title: encabezado,
+        text: mensaje,
+    });
+}
+
+function topAlert(tipo,mensaje){
+    Swal.fire({
+        position: "top-end",
+        icon: tipo,
+        title: mensaje,
+        showConfirmButton: false,
+        toast: true,
+        timer: 4000
+    });
+}
 
 })
 

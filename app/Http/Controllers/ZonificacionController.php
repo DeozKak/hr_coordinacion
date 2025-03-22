@@ -124,17 +124,18 @@ class ZonificacionController extends Controller
 
     //------------------------- CRUD TABLA BARRIOS -----------------------------------------------
 
-    public function storeBarrio(Request $request): \Illuminate\Http\JsonResponse
+    public function storeBarrio(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'barrio' => 'required|string|max:255',
-            'municipio' => 'required|int|max:20'
+            'municipio' => 'required|int'
         ], [
             'barrio.required' => 'Por favor ingrese el nombre del barrio.',
             'barrio.string' => 'El nombre del barrio debe ser una cadena de texto.',
             'municipio.required' => 'Por favor ingrese el nombre del municipio.',
-            'municipio.int' => 'El nombre del municipio debe ser una cadena de texto.',
+            'municipio.int' => 'El nombre del municipio debe ser un entero.',
         ]);
+
 
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()->first()], 422);
@@ -148,7 +149,7 @@ class ZonificacionController extends Controller
             $barrio->barrio = $request->barrio;
             $barrio->save();
 
-            $duplicado = $this->barrioService->duplicado($request->barrio, $request->municipio);
+            $duplicado = $this->barrioService->duplicado($request->municipio,$request->barrio);
 
             if ($duplicado) {
                 DB::rollBack();
@@ -160,17 +161,23 @@ class ZonificacionController extends Controller
             $detalle->id_barrio = $barrio->id;
             $detalle->id_mun = $request->municipio;
             $detalle->save();
+
             //confirmar transacción
             DB::commit();
+
+            $barrio->load('municipios');
+
+            return response()->json([
+                'ok' => $barrio,
+                'success' => 'Guardado exitosamente'
+            ], 201);
+
         } catch (\Exception $e) {
             //devuelve cambios hechos
             Log::error($e->getMessage());
             DB::rollBack();
-            return response()->json(['error' => $e->getMessage()]);
+            return response()->json(['error' => $e->getMessage()],500);
         }
-        $barrio->load('municipios');
-
-        return response()->json(['success' => $barrio], 201);
     }
 
     public function editBarrio($id): \Illuminate\Http\JsonResponse
@@ -186,15 +193,16 @@ class ZonificacionController extends Controller
 
     public function updateBarrio(Request $request, $id): \Illuminate\Http\JsonResponse
     {
+       // dd($request->all());
         //valida campos con los tipo de dato correcto
         $validator = Validator::make($request->all(), [
             'barrio' => 'required|string|max:255',
-            'municipio' => 'required|int|max:20'
+            'municipio' => 'required|int'
         ], [
             'barrio.required' => 'Por favor ingrese el nombre del barrio.',
             'barrio.string' => 'El nombre del barrio debe ser una cadena de texto.',
             'municipio.required' => 'Por favor ingrese el nombre del municipio.',
-            'municipio.int' => 'El nombre del municipio debe ser una cadena de texto.',
+            'municipio.int' => 'El nombre del municipio debe ser un entero.'
         ]);
         //devuelve en caso de que no se cumpla la validacion
         if ($validator->fails()) {
@@ -220,14 +228,18 @@ class ZonificacionController extends Controller
             $detalle->save();
             //confirma
             DB::commit();
+            $barrio->load('municipios');
+
+            return response()->json([
+                'ok' => $barrio,
+                'success' => 'Registro actualizado exitosamente'
+            ],200);
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 500);
         }
-        $barrio->load('municipios');
 
-        return response()->json(['success' => $barrio],200);
     }
 
     /* public function changeStatusMunicipio(Request $request)
