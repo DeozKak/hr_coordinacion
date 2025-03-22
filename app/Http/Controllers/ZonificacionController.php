@@ -124,7 +124,7 @@ class ZonificacionController extends Controller
 
     //------------------------- CRUD TABLA BARRIOS -----------------------------------------------
 
-    public function storeBarrio(Request $request)
+    public function storeBarrio(Request $request): \Illuminate\Http\JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'barrio' => 'required|string|max:255',

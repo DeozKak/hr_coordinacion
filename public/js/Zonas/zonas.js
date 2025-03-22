@@ -308,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
             data: { _token: token },
             success: function (response) {
                 $('#barrio').val(response[0].barrio);
-               
+
                 // Verificar si TomSelect ya está inicializado y limpiarlo antes de actualizar
                 if (tomSelectMunicipio) {
                     tomSelectMunicipio.clear();
