@@ -305,6 +305,9 @@ class ZonificacionController extends Controller
             $grupo->grupo = $request->grupo;
             $grupo->id_sede = $request->id_sede;
             $grupo->save();
+
+            //consulta nombre sede para insertar en la tabla
+            $sede = tbl_localidades_sede::find($request->id_sede);
             //confirmar transacción
             DB::commit();
         } catch (\Exception $e) {
@@ -316,7 +319,8 @@ class ZonificacionController extends Controller
 
         return response()->json([
             'ok' => $grupo,
-            'success' => 'Guardado exitosamente'
+            'success' => 'Guardado exitosamente',
+            'nom_sede' => $sede->nombre,
         ], 201);
     }
 
@@ -336,7 +340,7 @@ class ZonificacionController extends Controller
         //valida campos con los tipo de dato correcto
         $validator = Validator::make($request->all(), [
             'grupo' => 'required|string|max:255',
-            'municipio' => 'required|int|max:20'
+            'id_sede' => 'required|int|max:20'
         ], [
             'grupo.required' => 'Por favor ingrese el nombre del grupo.',
             'grupo.string' => 'El nombre del grupo debe ser una cadena de texto.',
@@ -363,6 +367,9 @@ class ZonificacionController extends Controller
             $grupo->id_sede = $request->id_sede;
             $grupo->save();
 
+            //consulta nombre sede para insertar en la tabla
+            $sede = tbl_localidades_sede::find($request->id_sede);
+
             //confirma
             DB::commit();
         } catch (\Exception $e) {
@@ -374,7 +381,8 @@ class ZonificacionController extends Controller
 
         return response()->json([
             'ok' => $grupo,
-            'success' => 'Actualizado exitosamente'
+            'success' => 'Actualizado exitosamente',
+            'nom_sede' => $sede->nombre,
         ],200);
     }
     //------------------------------------------------------------------------------------------
@@ -384,12 +392,12 @@ class ZonificacionController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'subgrupo' => 'required|string|max:255',
-            'id_sede_sub' => 'required|int|max:20'
+            'id_sede' => 'required|int|max:20'
         ], [
             'subgrupo.required' => 'Por favor ingrese el nombre del subgrupo.',
             'subgrupo.string' => 'El nombre del subgrupo debe ser una cadena de texto.',
-            'id_sede_sub.required' => 'Por favor Seleccione la sede.',
-            'id_sede_sub.int' => 'la sede debe ser un numero entero.',
+            'id_sede.required' => 'Por favor Seleccione la sede.',
+            'id_sede.int' => 'la sede debe ser un numero entero.',
         ]);
 
         if ($validator->fails()) {
@@ -412,6 +420,9 @@ class ZonificacionController extends Controller
             $sub_grupo->id_sede = $request->id_sede;
             $sub_grupo->save();
             //confirmar transacción
+
+            //consulta nombre sede para insertar en la tabla
+            $sede = tbl_localidades_sede::find($request->id_sede);
             DB::commit();
         } catch (\Exception $e) {
             //devuelve cambios hechos
@@ -422,7 +433,8 @@ class ZonificacionController extends Controller
 
         return response()->json([
             'ok' => $sub_grupo,
-            'success' => 'Guardado exitosamente'
+            'success' => 'Guardado exitosamente',
+            'nom_sede' => $sede->nombre
         ], 201);
     }
 
@@ -442,7 +454,7 @@ class ZonificacionController extends Controller
         //valida campos con los tipo de dato correcto
         $validator = Validator::make($request->all(), [
             'subgrupo' => 'required|string|max:255',
-            'municipio' => 'required|int|max:20'
+            'id_sede' => 'required|int|max:20'
         ], [
             'subgrupo.required' => 'Por favor ingrese el nombre del subgrupo.',
             'subgrupo.string' => 'El nombre del grupo debe ser una cadena de texto.',
@@ -469,6 +481,9 @@ class ZonificacionController extends Controller
             $sub_grupo->id_sede = $request->id_sede;
             $sub_grupo->save();
 
+            //consulta nombre sede para insertar en la tabla
+            $sede = tbl_localidades_sede::find($request->id_sede);
+
             //confirma
             DB::commit();
         } catch (\Exception $e) {
@@ -480,7 +495,8 @@ class ZonificacionController extends Controller
 
         return response()->json([
             'ok' => $sub_grupo,
-            'success' => 'Actualizado exitosamente'
+            'success' => 'Actualizado exitosamente',
+            'nom_sede' => $sede->nombre,
         ],200);
     }
     //------------------------------------------------------------------------------------------

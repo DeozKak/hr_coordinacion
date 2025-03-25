@@ -116,7 +116,7 @@
                                 @foreach ($grupos as $grupo)
                                     <tr data-id="{{ $grupo->id }}">
                                         <td>{{ $grupo->grupo }}</td>
-                                        <td>{{ $grupo->id_sede }}</td>
+                                        <td>{{ $grupo->sede->nombre }}</td>
                                         <td>
                                             <div style="display: flex; gap: 5px; justify-content: center;">
                                                 <button class="btn btn-info btn-sm abrirGrupoModal" data-grupo-id="{{ $grupo->id }}">Editar</button>
@@ -151,7 +151,7 @@
                                 @foreach ($subgrupos as $subgrupo)
                                     <tr data-id="{{ $subgrupo->id }}">
                                         <td>{{ $subgrupo->subgrupo }}</td>
-                                        <td>{{ $subgrupo->id_sede }}</td>
+                                        <td>{{ $subgrupo->sede->nombre }}</td>
                                         <td>
                                             <div style="display: flex; gap: 5px; justify-content: center;">
                                                 <button class="btn btn-info btn-sm abrirSubGrupoModal" data-subgrupo-id="{{ $subgrupo->id }}">Editar</button>
@@ -213,7 +213,7 @@
 
     {{-- Modal para crear Barrios --}}
 
-    <div class="modal fade" id="BarrioModal" tabindex="-1" role="dialog" aria-labelledby="crearBarrioModalLabel" aria-hidden="true">
+    <div class="modal fade" id="barrioModal" tabindex="-1" role="dialog" aria-labelledby="crearBarrioModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -248,38 +248,72 @@
 
     {{-- Modal para crear Grupos --}}
 
-    <div class="modal fade" id="GrupoModal" tabindex="-1" aria-labelledby="crearGrupoModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="crearGrupoModalLabel">Crear Grupo</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="idGuardarGrupo">
-                    <div class="form-group">
-                        <label for="grupo">Nombre</label>
-                        <input type="text" class="form-control" id="grupo" placeholder="Ingrese el nombre del grupo">
+        <div class="modal fade" id="grupoModal" tabindex="-1" role="dialog" aria-labelledby="crearGrupoModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="crearGrupoModalLabel">Ingresar Grupo</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label for="sedeGrupo">Sede</label>
-                        <select id="sedeGrupo" class="form-control">
-                            <option value="">Seleccione una sede</option>
-                            @foreach($sedes as $sede)
-                                <option value="{{ $sede->id }}">{{ $sede->nombre }}</option>
-                            @endforeach
-                        </select>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="grupo">Nombre</label>
+                            <input type="text" class="form-control" id="grupo" name="grupo">
+                            <input type="hidden" id="idGuardarGrupo">
+                        </div>
+                        <div class="form-group">
+                            <label for="sede">Sede</label>
+                            <select class="form-control" name="sede" id="sedeGrupo">
+                                <option value="">Seleccione una sede</option>
+                                @foreach ($sedes as $sede)
+                                    <option value="{{ $sede->id }}">{{ $sede->nombre }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-primary" id="crearGrupo">Crear Grupo</button>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        <button type="submit" id="crearGrupo" class="btn btn-primary">Crear Grupo</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+
+        {{-- Modal para crear Sub Grupos --}}
+        <div class="modal fade" id="subGrupoModal" tabindex="-1" role="dialog" aria-labelledby="crearSubGrupoModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="crearSubGrupoModalLabel">Ingresar Sub Grupo</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="subgrupo">Nombre</label>
+                            <input type="text" class="form-control" id="subgrupo" name="subgrupo">
+                            <input type="hidden" id="idGuardarSubGrupo">
+                        </div>
+                        <div class="form-group">
+                            <label for="sede">Sede</label>
+                            <select class="form-control" name="sede" id="sedeSubGrupo">
+                                <option value="">Seleccione una sede</option>
+                                @foreach ($sedes as $sede)
+                                    <option value="{{ $sede->id }}">{{ $sede->nombre }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        <button type="submit" id="crearSubGrupo" class="btn btn-primary">Crear Sub Grupo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         {{-- Modal de asignacion de grupos --}}
         <div class="modal fade" id="AsignadorModal" aria-labelledby="asignadorModalLabel" tabindex="-1" aria-hidden="true">
@@ -300,6 +334,7 @@
                 </div>
             </div>
         </div>
+
 
     @if (session('error'))
         <script>

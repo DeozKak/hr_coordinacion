@@ -1,5 +1,4 @@
 let tomSelectMunicipio;
-
 document.addEventListener('DOMContentLoaded', () => {
 
     $('#municipios,#Barrios,#sedes,#grupos,#subgrupos').DataTable({
@@ -213,124 +212,93 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     })
 
+
     // ------------------------- Jquery Crear Barrios --------------------------------
 
     $(document).on('click', '#btnCrearBarrio', function () {
-      // Variable global para almacenar la instancia
+        $('#idGuardarBarrio').val(''); // Limpiar ID
+        $('#barrio').val(''); // Limpiar campo de barrio
+        $('#municipioBarrio').val(''); // Limpiar select de municipio
+        $('#crearBarrioModalLabel').text('Crear Barrio');
+        $('#crearBarrio').text('Crear Barrio').removeClass('guardarCambiosBarrio').addClass('guardarNuevoBarrio');
+        $('#barrioModal').modal('show'); // Mostrar modal
 
-        $('#idGuardarBarrio').val('');  // Limpiar el campo de ID
-        $('#barrio').val('');           // Limpiar el campo de nombre del barrio
-        if (tomSelectMunicipio) {
-            tomSelectMunicipio.clear(); // Limpiar el select correctamente
-        }
-        $('#crearBarrioModalLabel').text('Crear Barrio');  // Cambiar el título del modal
-        $('#crearBarrio').text('Crear Barrio'); // Cambiar el texto del botón
-        $('#crearBarrio').removeClass('guardarCambiosBarrio').addClass('guardarNuevoBarrio');  // Cambiar la clase para detectar el modo
-        $('#BarrioModal').modal('show');  // Mostrar el modal
-
-        if (tomSelectMunicipio) {
-            tomSelectMunicipio.clear();
-            tomSelectMunicipio.destroy();
-        }
-
-        tomSelectMunicipio =new TomSelect("#municipioBarrio", {
-            maxItems: 1,
-            create: false,  // Evita que los usuarios agreguen nuevas zonas manualmente
-            placeholder: "Seleccione un municipio",
-            persist: false
-        });
+        // Inicializar TomSelect si no está ya creado
+        if (tomSelectMunicipio) tomSelectMunicipio.destroy();
+        tomSelectMunicipio = new TomSelect("#municipioBarrio", { maxItems: 1, create: false, placeholder: "Seleccione un municipio" });
     });
 
     $(document).on('click', '.guardarNuevoBarrio', function () {
-        let barrio = $('#barrio').val();
-        let token = $('#token').val();
+        let barrio = $('#barrio').val().trim();
         let municipio = $('#municipioBarrio').val();
+        let token = $('#token').val();
 
-            $.ajax({
-                url: 'zonas/store/Barrio',
-                type: 'POST',
-                data: {
-                    barrio: barrio,
-                    municipio: municipio,
-                    _token: token
-                },
-                success: function (response) {
-                        $('#BarrioModal').modal('hide');
-                        $('#barrio').val('');
+        if (!barrio || !municipio) {
+            alerta('error', 'Error', 'Debe ingresar todos los campos.');
+            return;
+        }
 
+        $.ajax({
+            url: 'zonas/store/Barrio',
+            type: 'POST',
+            data: { barrio: barrio, municipio: municipio, _token: token },
+            success: function (response) {
+                $('#barrioModal').modal('hide');
 
-                        let nuevaFila = `
-                            <tr data-id="${response.ok.id}">
-                                <td>${response.ok.barrio}</td>
-                                <td>
-                                    <div style="display: flex; gap: 5px; justify-content: center;">
-                                        <button class="btn btn-info btn-sm abrirBarrioModal" data-barrio-id="${response.ok.id}">Editar</button>
-                                        <button class="btn btn-danger btn-sm btnChangeStatusBarrio" data-barrio-id="${response.ok.id}">Desactivar</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        `;
-                        $('#Barrios tbody').append(nuevaFila);  // Agregar la nueva fila al cuerpo de la tabla
-
-                        topAlert('success',response.success);
-                },
-                error: function (xhr,error,status) {
-
-                    alerta('error','Error',xhr.responseJSON.error);
-
-
-                }
-            });
-
+                let nuevaFila = `
+                    <tr data-id="${response.ok.id}">
+                        <td>${response.ok.barrio}</td>
+                        <td>${response.ok.municipios[0]?.nombre || "N/A"}</td>
+                        <td>
+                            <div style="display: flex; gap: 5px; justify-content: center;">
+                                <button class="btn btn-info btn-sm abrirBarrioModal" data-barrio-id="${response.ok.id}">Editar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                $('#Barrios tbody').append(nuevaFila); // Agregar nueva fila
+                topAlert('success', response.success);
+            },
+            error: function (xhr) {
+                alerta('error', 'Error', xhr.responseJSON.error);
+            }
+        });
     });
 
-
-    // ------------------------- Jquery Editar Barrios --------------------------------
+    // ------------------------- JQuery Editar Barrios -------------------------
 
     $(document).on('click', '.abrirBarrioModal', function () {
-        let id = $(this).attr('data-barrio-id');
+        let id = $(this).data('barrio-id');
+        let token = $('#token').val();
+
         $('#idGuardarBarrio').val(id);
         $('#crearBarrioModalLabel').text('Editar Barrio');
-        $('#crearBarrio').text('Guardar cambios');
-        $('#crearBarrio').removeClass('guardarNuevoBarrio').addClass('guardarCambiosBarrio');
-        let token = $('#token').val();
-        let modalBarrio = $('#BarrioModal');
+        $('#crearBarrio').text('Guardar cambios').removeClass('guardarNuevoBarrio').addClass('guardarCambiosBarrio');
 
-        // Mostrar el modal
-        modalBarrio.modal('show');
+        $('#barrioModal').modal('show'); // Mostrar modal
 
-        // Hacer la petición AJAX para obtener los datos del barrio
         $.ajax({
-            url: 'zonas/' + id + '/editBarrio',
+            url: `zonas/${id}/editBarrio`,
             type: 'GET',
             data: { _token: token },
             success: function (response) {
                 $('#barrio').val(response[0].barrio);
 
-                // Verificar si TomSelect ya está inicializado y limpiarlo antes de actualizar
-                if (tomSelectMunicipio) {
-                    tomSelectMunicipio.clear();
-                    tomSelectMunicipio.destroy();
-                }
+                // Inicializar TomSelect
+                if (tomSelectMunicipio) tomSelectMunicipio.destroy();
+                tomSelectMunicipio = new TomSelect("#municipioBarrio", { maxItems: 1, create: false, placeholder: "Seleccione un municipio" });
 
-                // Inicializar TomSelect para Municipio y seleccionar la opción correspondiente
-                tomSelectMunicipio = new TomSelect("#municipioBarrio", {
-                    maxItems: 1,
-                    create: false,
-                    placeholder: "Seleccione un municipio",
-                    persist: false
-                });
-
-                // Establecer el valor del municipio en el select
-                tomSelectMunicipio.addOption({ value: response[0].id_municipio, text: response[0].municipio_nombre });
+                // Establecer valor del municipio en TomSelect
+                tomSelectMunicipio.addOption({ value: response[0].municipios[0].id, text: response[0].municipios[0].nombre });
                 tomSelectMunicipio.setValue(response[0].municipios[0].id);
-            },error: function (xhr,error,status) {
-                alerta('error','Error',xhr.responseJSON.error)
+            },
+            error: function (xhr) {
+                alerta('error', 'Error', xhr.responseJSON.error);
             }
         });
     });
 
-    // ------------------------- Guardar Cambios en Barrio ------------------------------
+    // ------------------------- Guardar Cambios en Barrios -------------------------
 
     $(document).on('click', '.guardarCambiosBarrio', function () {
         let id = $('#idGuardarBarrio').val();
@@ -338,42 +306,274 @@ document.addEventListener('DOMContentLoaded', () => {
         let municipio = $('#municipioBarrio').val();
         let token = $('#token').val();
 
+
+
+        $.ajax({
+            url: `zonas/${id}/updateBarrio`,
+            type: 'PUT',
+            data: { barrio: barrio, municipio: municipio, _token: token },
+            success: function (response) {
+                $('#barrioModal').modal('hide');
+
+                // Actualizar fila en la tabla
+                let row = $('#Barrios tbody tr[data-id="' + response.ok.id + '"]');
+                row.find('td:nth-child(1)').text(response.ok.barrio);
+                row.find('td:nth-child(2)').text(response.ok.municipios[0]?.nombre || "N/A");
+
+                topAlert('success', response.success);
+            },
+            error: function (xhr) {
+                alerta('error', 'Error', xhr.responseJSON.error);
+            }
+        });
+    });
+
+
+    // ------------------------- Jquery Crear Grupos --------------------------------
+
+    $(document).on('click', '#btnCrearGrupo', function () {
+        $('#idGuardarGrupo').val('');  // Limpiar el campo de ID
+        $('#grupo').val('');     // Limpiar el campo de nombre
+        $('#sedeGrupo').val('');
+        $('#crearGrupoModalLabel').text('Crear Grupo');  // Cambiar el título del modal
+        $('#crearGrupo').text('Crear Grupo'); // Cambiar el texto del botón
+        $('#crearGrupo').removeClass('guardarCambiosGrupo').addClass('guardarNuevoGrupo');  // Cambiar la clase para detectar el modo
+        $('#grupoModal').modal('show');  // Mostrar el modal
+    });
+
+    $(document).on('click', '.guardarNuevoGrupo', function () {
+        let grupo = $('#grupo').val().trim();
+        let id_sede = $('#sedeGrupo').val();
+        let token = $('#token').val();
+
             $.ajax({
-                url: 'zonas/' + id + '/updateBarrio',
-                type: 'PUT',
+                url: 'zonas/store/Grupo',
+                type: 'POST',
                 data: {
-                    barrio: barrio,
-                    municipio: municipio,
+                    grupo: grupo,
+                    id_sede: id_sede,
                     _token: token
                 },
                 success: function (response) {
+                    console.log(response)
 
-                        $('#BarrioModal').modal('hide');
+                        $('#grupoModal').modal('hide');
+                        $('#grupo').val('');
+                        $('#sedeGrupo').val('');
+                        console.log(response)
 
-                        // Actualizar la fila en la tabla
-                        let row = $('#Barrios tbody tr[data-id="' + response.ok.id + '"]');
-                        console.log(row);
-                        row.find('td:nth-child(1)').text(response.ok.barrio);
+                        let nuevaFila = `
+                            <tr data-id="${response.ok.id}">
+                                <td>${response.ok.grupo}</td>
+                                <td>${response.nom_sede}</td>
+                                <td>
+                                    <div style="display: flex; gap: 5px; justify-content: center;">
+                                        <button class="btn btn-info btn-sm abrirGrupoModal" data-grupo-id="${response.ok.id}">Editar</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                        $('#grupos tbody').append(nuevaFila);  // Agregar la nueva fila al cuerpo de la tabla
+
+                        // Mostrar mensaje de éxito
+                      topAlert('success', response.success);
+
+                },
+                error: function (xhr, status, error) {
+
+                    alerta('error','Error al guardar',xhr.responseJSON.error)
+
+                    console.log(xhr.responseText);
+                }
+
+            })
+
+    })
+
+    // ------------------------- Jquey Editar Grupos --------------------------------
+
+    $(document).on('click', '.abrirGrupoModal', function(){
+        let id = $(this).attr('data-grupo-id');
+        $('#idGuardarGrupo').val(id);
+        $('#crearGrupoModalLabel').text('Editar Grupo');
+        $('#crearGrupo').text('Guardar cambios');
+        let token = $('#token').val();
+        $('#crearGrupo').removeClass('guardarNuevoGrupo').addClass('guardarCambiosGrupo');
+        let modalGrupo = $('#grupoModal');
+        modalGrupo.modal();
+
+        $.ajax({
+            url: 'zonas/' + id + '/editGrupo',
+            type: 'GET',
+            data: {
+                _token: token,
+            },
+            success: function(response) {
+                $('#grupo').val(response[0].grupo);
+                $('#sedeGrupo').val(response[0].id_sede);
+            },error(xhr,status,error){
+                alerta('error','Error',xhr-responseJSON.error);
+            }
+
+        })
+    })
+
+    // ------------------------- Guardar Cambios en Grupo ------------------------------
+
+    $(document).on('click', '.guardarCambiosGrupo', function(){
+        let id = $('#idGuardarGrupo').val();
+        let grupo = $('#grupo').val().trim();
+        let id_sede = $('#sedeGrupo').val();
+        let token = $('#token').val();
+
+            $.ajax({
+                url: 'zonas/' + id + '/updateGrupo',
+                type: 'PUT',
+                data: {
+                    grupo:grupo,
+                    id_sede:id_sede,
+                    _token:token,
+                },
+                success:function(response){
+                    console.log(response)
+
+                        let modalGrupo = $('#grupoModal')
+                        modalGrupo.modal('hide')
+                        let row = $('#grupos tbody tr[data-id="'+response.ok.id+'"]')
+                        row.find('td:nth-child(1)').text(response.ok.grupo)
+                        row.find('td:nth-child(2)').text(response.nom_sede)
+
+                      topAlert('success', response.success);
+
+                },error(xhr,status,error){
+                    alerta('error','Error',xhr.responseJSON.error);
+                }
+            })
+    })
+
+
+    // ------------------------- Jquery Crear Sub Grupos --------------------------------
+
+    $(document).on('click', '#btnCrearSubGrupo', function () {
+        $('#idGuardarSubGrupo').val('');  // Limpiar el campo de ID
+        $('#subgrupo').val('');     // Limpiar el campo de nombre
+        $('#sedeSubGrupo').val('');
+        $('#crearSubGrupoModalLabel').text('Crear Sub Grupo');  // Cambiar el título del modal
+        $('#crearSubGrupo').text('Crear Sub Grupo'); // Cambiar el texto del botón
+        $('#crearSubGrupo').removeClass('guardarCambiosSubGrupo').addClass('guardarNuevoSubGrupo');  // Cambiar la clase para detectar el modo
+        $('#subGrupoModal').modal('show');  // Mostrar el modal
+    });
+
+    $(document).on('click', '.guardarNuevoSubGrupo', function () {
+        let subgrupo = $('#subgrupo').val().trim();
+        let id_sede = $('#sedeSubGrupo').val();
+        let token = $('#token').val();
+
+            $.ajax({
+                url: 'zonas/store/SubGrupo',
+                type: 'POST',
+                data: {
+                    subgrupo: subgrupo,
+                    id_sede: id_sede,
+                    _token: token
+                },
+                success: function (response) {
+                    console.log(response)
+
+                        $('#subGrupoModal').modal('hide');
+                        $('#subgrupo').val('');
+                        $('#sedeSubGrupo').val('');
+                        console.log(response)
+
+                        let nuevaFila = `
+                            <tr data-id="${response.ok.id}">
+                                <td>${response.ok.subgrupo}</td>
+                                <td>${response.nom_sede}</td>
+                                <td>
+                                    <div style="display: flex; gap: 5px; justify-content: center;">
+                                        <button class="btn btn-info btn-sm abrirSubGrupoModal" data-subgrupo-id="${response.ok.id}">Editar</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                        $('#subgrupos tbody').append(nuevaFila);  // Agregar la nueva fila al cuerpo de la tabla
 
                        topAlert('success', response.success);
 
                 },
-                error: function (xhr) {
-                   alerta('error','Error',xhr.responseJSON.error);
+                error: function (xhr, status, error) {
+
+                    alerta('error','Error',xhr.responseJSON.error);
+
+                    console.log(xhr.responseText);
+                }
+
+            })
+
+    })
+
+    // ------------------------- Jquey Editar Sub Grupos --------------------------------
+
+    $(document).on('click', '.abrirSubGrupoModal', function(){
+        let id = $(this).attr('data-subgrupo-id');
+        $('#idGuardarSubGrupo').val(id);
+        $('#crearSubGrupoModalLabel').text('Editar Sub Grupo');
+        $('#crearSubGrupo').text('Guardar cambios');
+        let token = $('#token').val();
+        $('#crearSubGrupo').removeClass('guardarNuevoSubGrupo').addClass('guardarCambiosSubGrupo');
+        let modalSubGrupo = $('#subGrupoModal');
+        modalSubGrupo.modal();
+
+        $.ajax({
+            url: 'zonas/' + id + '/editSubGrupo',
+            type: 'GET',
+            data: {
+                _token: token,
+            },
+            success: function(response) {
+                $('#subgrupo').val(response[0].subgrupo);
+                $('#sedeSubGrupo').val(response[0].id_sede);
+            },error(xhr,status){
+                alerta('error','Error',xhr.responseJSON.error);
+            }
+
+        })
+    })
+
+    // ------------------------- Guardar Cambios en Sub Grupo ------------------------------
+
+    $(document).on('click', '.guardarCambiosSubGrupo', function(){
+        let id = $('#idGuardarSubGrupo').val();
+        let subgrupo = $('#subgrupo').val().trim();
+        let id_sede = $('#sedeSubGrupo').val();
+        let token = $('#token').val();
+
+            $.ajax({
+                url: 'zonas/' + id + '/updateSubGrupo',
+                type: 'PUT',
+                data: {
+                    subgrupo:subgrupo,
+                    id_sede:id_sede,
+                    _token:token,
+                },
+                success:function(response){
+                    console.log(response)
+
+                        let modalSubGrupo = $('#subGrupoModal')
+                        modalSubGrupo.modal('hide')
+                        let row = $('#subgrupos tbody tr[data-id="'+response.ok.id+'"]')
+                        row.find('td:nth-child(1)').text(response.ok.subgrupo)
+                        row.find('td:nth-child(2)').text(response.nom_sede)
+
+                        topAlert('success', response.success);
+                },error(xhr, status){
+
+                    alerta('error','Error',xhr.responseJSON.error);
 
                 }
-            });
+            })
+    })
 
-    });
-
-
-
-    // --------------------------- Asignador de grupos -----------------------------------
-
-
-
-
-        //----------------------------------------------------------------
 
 function alerta(tipo,encabezado,mensaje){
     Swal.fire({
