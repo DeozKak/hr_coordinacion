@@ -12,161 +12,195 @@
     <script src="{{ asset('js/Zonas/asignador.js') }}"></script>
     <link rel="stylesheet" href="{{ asset ('css/zonas/zonas.css')}}">
     <input type="hidden" id="token" value="{{ csrf_token() }}">
-    <div class="card">
-        <div class="row">
-            {{-- Tarjeta Municipios --}}
+    <div class="row">
 
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Municipios</h3>
-                    </div>
-                    <div class="card-body">
-                        <a class="btn btn-primary mb-2" id="btnCrearMunicipio">Crear Municipio</a>
-                        <table class="table table-striped" id="municipios">
-                            <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Sede</th>
-                                <th>Zona</th>
-                                <th>Acciones</th>
+        {{-- Tarjeta Municipios --}}
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Municipios</h3>
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-primary mb-2" id="btnCrearMunicipio">Crear Municipio</a>
+                    <table class="table table-striped" id="municipios">
+                        <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Sede</th>
+                            <th>Zona</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach ($municipios as $municipio)
+                            <tr data-id="{{$municipio->id}}">
+                                <td>{{ $municipio->nombre }}</td>
+                                <td>{{ $municipio->sede->nombre }}</td>
+                                <td>{{ $municipio->zona->nombre }}</td>
+                                <td>
+                                    <div style="display: flex; gap: 5px; justify-content: center;">
+                                        <button class="btn btn-info btn-sm abrirMunicipioModal" data-municipio-id="{{ $municipio->id }}">Editar</button>
+                                        @if ($municipio->status == 1)
+                                            <button class="btn btn-danger btn-sm" id="btnChangeStatusMunicipio" data-municipio-id="{{ $municipio->id }}">Desactivar</button>
+                                        @else
+                                            <button class="btn btn-success btn-sm" id="btnChangeStatusMunicipio" data-municipio-id="{{ $municipio->id }}">Activar</button>
+                                        @endif
+                                    </div>
+                                </td>
                             </tr>
-                            </thead>
-                            <tbody>
-                            @foreach ($municipios as $municipio)
-                                <tr data-id="{{$municipio->id}}">
-                                    <td>{{ $municipio->nombre }}</td>
-                                    <td>{{ $municipio->sede->nombre }}</td>
-                                    <td>{{ $municipio->zona->nombre }}</td>
-                                    <td>
-                                        <div style="display: flex; gap: 5px; justify-content: center;">
-                                            <button class="btn btn-info btn-sm abrirMunicipioModal" data-municipio-id="{{ $municipio->id }}">Editar</button>
-                                            @if ($municipio->status == 1)
-                                                <button class="btn btn-danger btn-sm" id="btnChangeStatusMunicipio" data-municipio-id="{{ $municipio->id }}">Desactivar</button>
-                                            @else
-                                                <button class="btn btn-success btn-sm" id="btnChangeStatusMunicipio" data-municipio-id="{{ $municipio->id }}">Activar</button>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                            </tbody>
-                        </table>
-                        <input type="hidden" id="cambiarEstadoMunicipio" value="{{route('zonas.changeStatusMunicipio')}}">
-                    </div>
-                </div>
-            </div>
-
-            {{-- Tarjeta Barrios --}}
-
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Barrios</h3>
-                    </div>
-                    <div class="card-body">
-                        <a class="btn btn-primary mb-2" id="btnCrearBarrio">Crear Barrio</a>
-                        <table class="table table-striped" id="Barrios">
-                            <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Municipio</th>
-                                <th>Acciones</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            @foreach ($barrios as $barrio)
-                                <tr data-id="{{$barrio->id}}">
-                                    <td>{{ $barrio->barrio }}</td>
-                                    <td>
-                                        {{ $barrio->municipios ? ($barrio->municipios->first() ? $barrio->municipios->first()->nombre : "N/A") : "N/A" }}
-                                    </td>
-                                    <td>
-                                        <div style="display: flex; gap: 5px; justify-content: center;">
-                                            <button class="btn btn-info btn-sm abrirBarrioModal" data-barrio-id="{{ $barrio->id }}">Editar</button>
-
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Tarjeta Grupos --}}
-
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Grupos</h3>
-                    </div>
-                    <div class="card-body">
-                        <a class="btn btn-primary mb-2" id="btnCrearGrupo">Crear Grupo</a>
-                        <table class="table table-striped" id="grupos">
-                            <thead>
-                                <tr>
-                                    <th>Nombre</th>
-                                    <th>Sede</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($grupos as $grupo)
-                                    <tr data-id="{{ $grupo->id }}">
-                                        <td>{{ $grupo->grupo }}</td>
-                                        <td>{{ $grupo->sede->nombre }}</td>
-                                        <td>
-                                            <div style="display: flex; gap: 5px; justify-content: center;">
-                                                <button class="btn btn-info btn-sm abrirGrupoModal" data-grupo-id="{{ $grupo->id }}">Editar</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Tarjeta Sub Grupos --}}
-
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Sub Grupos</h3>
-                    </div>
-                    <div class="card-body">
-                        <a class="btn btn-primary mb-2" id="btnCrearSubGrupo">Crear Sub Grupo</a>
-                        <table class="table table-striped" id="subgrupos">
-                            <thead>
-                                <tr>
-                                    <th>Nombre</th>
-                                    <th>Sede</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($subgrupos as $subgrupo)
-                                    <tr data-id="{{ $subgrupo->id }}">
-                                        <td>{{ $subgrupo->subgrupo }}</td>
-                                        <td>{{ $subgrupo->sede->nombre }}</td>
-                                        <td>
-                                            <div style="display: flex; gap: 5px; justify-content: center;">
-                                                <button class="btn btn-info btn-sm abrirSubGrupoModal" data-subgrupo-id="{{ $subgrupo->id }}">Editar</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+                        @endforeach
+                        </tbody>
+                    </table>
+                    <input type="hidden" id="cambiarEstadoMunicipio" value="{{route('zonas.changeStatusMunicipio')}}">
                 </div>
             </div>
         </div>
 
-        <div id="table"></div>
+        {{-- Tarjeta Barrios --}}
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Barrios</h3>
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-primary mb-2" id="btnCrearBarrio">Crear Barrio</a>
+                    <table class="table table-striped" id="Barrios">
+                        <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Municipio</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach ($barrios as $barrio)
+                            <tr data-id="{{$barrio->id}}">
+                                <td>{{ $barrio->barrio }}</td>
+                                <td>
+                                    {{ $barrio->municipios ? ($barrio->municipios->first() ? $barrio->municipios->first()->nombre : "N/A") : "N/A" }}
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 5px; justify-content: center;">
+                                        <button class="btn btn-info btn-sm abrirBarrioModal" data-barrio-id="{{ $barrio->id }}">Editar</button>
+
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {{-- Tarjeta Grupos --}}
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Grupos</h3>
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-primary mb-2" id="btnCrearGrupo">Crear Grupo</a>
+                    <table class="table table-striped" id="grupos">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Sede</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($grupos as $grupo)
+                                <tr data-id="{{ $grupo->id }}">
+                                    <td>{{ $grupo->grupo }}</td>
+                                    <td>{{ $grupo->sede->nombre }}</td>
+                                    <td>
+                                        <div style="display: flex; gap: 5px; justify-content: center;">
+                                            <button class="btn btn-info btn-sm abrirGrupoModal" data-grupo-id="{{ $grupo->id }}">Editar</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {{-- Tarjeta Sub Grupos --}}
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Sub Grupos</h3>
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-primary mb-2" id="btnCrearSubGrupo">Crear Sub Grupo</a>
+                    <table class="table table-striped" id="subgrupos">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Sede</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($subgrupos as $subgrupo)
+                                <tr data-id="{{ $subgrupo->id }}">
+                                    <td>{{ $subgrupo->subgrupo }}</td>
+                                    <td>{{ $subgrupo->sede->nombre }}</td>
+                                    <td>
+                                        <div style="display: flex; gap: 5px; justify-content: center;">
+                                            <button class="btn btn-info btn-sm abrirSubGrupoModal" data-subgrupo-id="{{ $subgrupo->id }}">Editar</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    {{-- Contenedor de Barras de Búsqueda y Tabla --}}
+
+    <div class="card mt-3">
+        <div class="card-header">
+            <h3 class="card-title">Buscar en Tablas</h3>
+        </div>
+        <div class="card-body">
+
+            {{-- Barras de Búsqueda --}}
+
+            <div class="row">
+                <div class="col-md-3">
+                    <input type="text" id="buscarMunicipio" class="form-control" placeholder="Buscar Municipio">
+                </div>
+                <div class="col-md-3">
+                    <input type="text" id="buscarBarrio" class="form-control" placeholder="Buscar Barrio">
+                </div>
+                <div class="col-md-3">
+                    <input type="text" id="buscarGrupo" class="form-control" placeholder="Buscar Grupo">
+                </div>
+                <div class="col-md-3">
+                    <input type="text" id="buscarSubGrupo" class="form-control" placeholder="Buscar Sub Grupo">
+                </div>
+            </div>
+
+            <div class="text-center mt-3">
+                <button class="btn btn-primary" id="btnBuscar">Buscar</button>
+            </div>
+
+            {{-- Tabla --}}
+
+            <div id="table" class="mt-4" style="display: none;"></div>
+        </div>
+    </div>
 
 
     {{-- Modal para crear Municipio --}}
@@ -250,72 +284,74 @@
 
     {{-- Modal para crear Grupos --}}
 
-        <div class="modal fade" id="grupoModal" tabindex="-1" role="dialog" aria-labelledby="crearGrupoModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="crearGrupoModalLabel">Ingresar Grupo</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+    <div class="modal fade" id="grupoModal" tabindex="-1" role="dialog" aria-labelledby="crearGrupoModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="crearGrupoModalLabel">Ingresar Grupo</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="grupo">Nombre</label>
+                        <input type="text" class="form-control" id="grupo" name="grupo">
+                        <input type="hidden" id="idGuardarGrupo">
                     </div>
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="grupo">Nombre</label>
-                            <input type="text" class="form-control" id="grupo" name="grupo">
-                            <input type="hidden" id="idGuardarGrupo">
-                        </div>
-                        <div class="form-group">
-                            <label for="sede">Sede</label>
-                            <select class="form-control" name="sede" id="sedeGrupo">
-                                <option value="">Seleccione una sede</option>
-                                @foreach ($sedes as $sede)
-                                    <option value="{{ $sede->id }}">{{ $sede->nombre }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                    <div class="form-group">
+                        <label for="sede">Sede</label>
+                        <select class="form-control" name="sede" id="sedeGrupo">
+                            <option value="">Seleccione una sede</option>
+                            @foreach ($sedes as $sede)
+                                <option value="{{ $sede->id }}">{{ $sede->nombre }}</option>
+                            @endforeach
+                        </select>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                        <button type="submit" id="crearGrupo" class="btn btn-primary">Crear Grupo</button>
-                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" id="crearGrupo" class="btn btn-primary">Crear Grupo</button>
                 </div>
             </div>
         </div>
+    </div>
 
-        {{-- Modal para crear Sub Grupos --}}
-        <div class="modal fade" id="subGrupoModal" tabindex="-1" role="dialog" aria-labelledby="crearSubGrupoModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="crearSubGrupoModalLabel">Ingresar Sub Grupo</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+    {{-- Modal para crear Sub Grupos --}}
+
+    <div class="modal fade" id="subGrupoModal" tabindex="-1" role="dialog" aria-labelledby="crearSubGrupoModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="crearSubGrupoModalLabel">Ingresar Sub Grupo</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="subgrupo">Nombre</label>
+                        <input type="text" class="form-control" id="subgrupo" name="subgrupo">
+                        <input type="hidden" id="idGuardarSubGrupo">
                     </div>
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="subgrupo">Nombre</label>
-                            <input type="text" class="form-control" id="subgrupo" name="subgrupo">
-                            <input type="hidden" id="idGuardarSubGrupo">
-                        </div>
-                        <div class="form-group">
-                            <label for="sede">Sede</label>
-                            <select class="form-control" name="sede" id="sedeSubGrupo">
-                                <option value="">Seleccione una sede</option>
-                                @foreach ($sedes as $sede)
-                                    <option value="{{ $sede->id }}">{{ $sede->nombre }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                    <div class="form-group">
+                        <label for="sede">Sede</label>
+                        <select class="form-control" name="sede" id="sedeSubGrupo">
+                            <option value="">Seleccione una sede</option>
+                            @foreach ($sedes as $sede)
+                                <option value="{{ $sede->id }}">{{ $sede->nombre }}</option>
+                            @endforeach
+                        </select>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                        <button type="submit" id="crearSubGrupo" class="btn btn-primary">Crear Sub Grupo</button>
-                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" id="crearSubGrupo" class="btn btn-primary">Crear Sub Grupo</button>
                 </div>
             </div>
         </div>
+    </div>
+
 
         {{-- Modal de asignacion de grupos --}}
         <div class="modal fade" id="AsignadorModal" aria-labelledby="asignadorModalLabel" tabindex="-1" aria-hidden="true">
@@ -340,10 +376,14 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
                         <button type="submit" id="asignarGrupo" class="btn btn-primary">Guardar</button>
+
                     </div>
+                </div>
+                <div class="modal-footer">
                 </div>
             </div>
         </div>
+    </div>
 
 
     @if (session('error'))
