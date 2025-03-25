@@ -28,6 +28,26 @@ class ZonificacionController extends Controller
         $this->municipioService = $municipioService;
     }
 
+    public function datosAsignador()
+    {
+        $municipios = tbl_localidades_municipio::all();
+        $barrios = TblBarrios::with('municipios')->get();
+        $grupos = TblGrupo::all();
+        $subgrupos = TblSubgrupo::all();
+        $sedes = tbl_localidades_sede::all();
+        $zonas = tbl_produccion_zona::all();
+
+        return response()->json(
+            [
+                'municipios' => $municipios,
+                'barrios' => $barrios,
+                'grupos' => $grupos,
+                'subgrupos' => $subgrupos,
+                'sedes' => $sedes,
+                'zonas' => $zonas,
+            ]);
+    }
+
     public function index()
     {
         //consulta Municipios sin grupos o subgrupos asignados
@@ -41,8 +61,7 @@ class ZonificacionController extends Controller
         $sedes = tbl_localidades_sede::all();
         $zonas = tbl_produccion_zona::all();
 
-        if (!empty($mun_sin_grupo))
-        {
+        if (!empty($mun_sin_grupo)) {
             session()->flash('warning', 'Existen municipios sin grupo o sub grupo relacionado. ');
             return view('zonas.index', compact('municipios', 'sedes', 'zonas', 'barrios', 'grupos', 'subgrupos', 'mun_sin_grupo'));
         }
@@ -163,7 +182,7 @@ class ZonificacionController extends Controller
             $barrio->barrio = $request->barrio;
             $barrio->save();
 
-            $duplicado = $this->barrioService->duplicado($request->municipio,$request->barrio);
+            $duplicado = $this->barrioService->duplicado($request->municipio, $request->barrio);
 
             if ($duplicado) {
                 DB::rollBack();
@@ -190,7 +209,7 @@ class ZonificacionController extends Controller
             //devuelve cambios hechos
             Log::error($e->getMessage());
             DB::rollBack();
-            return response()->json(['error' => $e->getMessage()],500);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
@@ -207,7 +226,7 @@ class ZonificacionController extends Controller
 
     public function updateBarrio(Request $request, $id): \Illuminate\Http\JsonResponse
     {
-       // dd($request->all());
+        // dd($request->all());
         //valida campos con los tipo de dato correcto
         $validator = Validator::make($request->all(), [
             'barrio' => 'required|string|max:255',
@@ -231,7 +250,7 @@ class ZonificacionController extends Controller
             $barrio->save();
 
             //verifica duplicados devuelve un bool
-            $duplicado = $this->barrioService->duplicado($request->municipio,null,$id);
+            $duplicado = $this->barrioService->duplicado($request->municipio, null, $id);
 
             if ($duplicado) {
                 DB::rollBack();
@@ -247,7 +266,7 @@ class ZonificacionController extends Controller
             return response()->json([
                 'ok' => $barrio,
                 'success' => 'Registro actualizado exitosamente'
-            ],200);
+            ], 200);
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             DB::rollBack();
@@ -291,11 +310,11 @@ class ZonificacionController extends Controller
         }
 
         try {
-            $exist = TblGrupo::where('grupo',$request->grupo)
+            $exist = TblGrupo::where('grupo', $request->grupo)
                 ->where('id_sede', $request->id_sede)
                 ->exists();
 
-            if($exist){
+            if ($exist) {
                 return response()->json(['error' => 'El grupo ya existe en la sede seleccionada.'], 422);
             }
             //preparar transacción de datos
@@ -314,7 +333,7 @@ class ZonificacionController extends Controller
             //devuelve cambios hechos
             Log::error($e->getMessage());
             DB::rollBack();
-            return response()->json(['error' => $e->getMessage(),],500);
+            return response()->json(['error' => $e->getMessage(),], 500);
         }
 
         return response()->json([
@@ -353,11 +372,11 @@ class ZonificacionController extends Controller
         }
 
         try {
-            $exist = TblGrupo::where('grupo',$request->grupo)
+            $exist = TblGrupo::where('grupo', $request->grupo)
                 ->where('id_sede', $request->id_sede)
                 ->exists();
 
-            if($exist){
+            if ($exist) {
                 return response()->json(['error' => 'El grupo ya existe en la sede seleccionada.'], 422);
             }
             //comienza transacción
@@ -383,7 +402,7 @@ class ZonificacionController extends Controller
             'ok' => $grupo,
             'success' => 'Actualizado exitosamente',
             'nom_sede' => $sede->nombre,
-        ],200);
+        ], 200);
     }
     //------------------------------------------------------------------------------------------
 
@@ -405,11 +424,11 @@ class ZonificacionController extends Controller
         }
 
         try {
-            $exist = TblSubgrupo::where('subgrupo',$request->grupo)
+            $exist = TblSubgrupo::where('subgrupo', $request->grupo)
                 ->where('id_sede', $request->id_sede)
                 ->exists();
 
-            if($exist){
+            if ($exist) {
                 return response()->json(['error' => 'El Subgrupo ya existe en la sede seleccionada.'], 422);
             }
             //preparar transacción de datos
@@ -467,11 +486,11 @@ class ZonificacionController extends Controller
         }
 
         try {
-            $exist = TblSubgrupo::where('grupo',$request->grupo)
+            $exist = TblSubgrupo::where('subgrupo', $request->subgrupo)
                 ->where('id_sede', $request->id_sede)
                 ->exists();
 
-            if($exist){
+            if ($exist) {
                 return response()->json(['error' => 'El grupo ya existe en la sede seleccionada.'], 422);
             }
             //comienza transacción
@@ -497,7 +516,7 @@ class ZonificacionController extends Controller
             'ok' => $sub_grupo,
             'success' => 'Actualizado exitosamente',
             'nom_sede' => $sede->nombre,
-        ],200);
+        ], 200);
     }
     //------------------------------------------------------------------------------------------
 
