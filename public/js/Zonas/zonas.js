@@ -575,6 +575,18 @@ document.addEventListener('DOMContentLoaded', () => {
     })
 
 
+    //----------------------   Buscador HOT ----------------------------------------
+
+    let table = document.getElementById('table');
+
+    let hot = new Handsontable(table,{
+        colHeaders: ['Nombre', 'Sede', 'Zona', 'Estado'],
+        rowHeaders: true,
+        contextMenu: true,
+        stretchH: 'all',
+        licenseKey: 'non-commercial-and-evaluation',
+    });
+
 function alerta(tipo,encabezado,mensaje){
     Swal.fire({
         icon: tipo,
