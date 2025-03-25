@@ -352,19 +352,31 @@
         </div>
     </div>
 
-    {{-- Modal de asignacion de grupos --}}
 
-    <div class="modal fade" id="AsignadorModal" aria-labelledby="asignadorModalLabel" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="asignadorModalLabel">Asignador</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div id="selectores-container">
+        {{-- Modal de asignacion de grupos --}}
+        <div class="modal fade" id="AsignadorModal" aria-labelledby="asignadorModalLabel" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="asignadorModalLabel">Asignador</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <div class="col-md-3 font-weight-bold">Municipio</div>
+                            <div class="col-md-3 font-weight-bold">Grupo</div>
+                            <div class="col-md-3 font-weight-bold">Sub Grupo</div>
+                            <div class="col-md-3 font-weight-bold">Barrio</div>
+                        </div>
+                        <div id="selectores-container">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        <button type="submit" id="asignarGrupo" class="btn btn-primary">Guardar</button>
+
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -386,12 +398,7 @@
 
     @if(session('warning'))
         <script>
-            let mun_sin_grupo = '{{json_encode($mun_sin_grupo)}}';
-            let municipios = '{{json_encode($municipios->toArray())}}';
-            let barrios = '{{json_encode($barrios->toArray())}}';
-            let grupos = '{{json_encode($grupos->toArray())}}';
-            let subgrupos = '{{json_encode($subgrupos->toArray())}}';
-
+            let municipios_sin_grupo = '<?php echo json_encode($mun_sin_grupo) ?>'
             let warning = '{{ session('warning') }}';
         </script>
     @else

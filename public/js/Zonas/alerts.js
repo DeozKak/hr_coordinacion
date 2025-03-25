@@ -1,4 +1,4 @@
-
+let data;
 document.addEventListener('DOMContentLoaded', () => {
 
     if(warning !== ''){
@@ -14,10 +14,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }).then((result) => {
             if (result.isConfirmed) {
                 // Evento para abrir el modal y generar los selectores
-                    generarSelectores();
+                    consultas();
+
             }
         });
     }
 
+    function consultas(){
+        $.ajax({
+            url: 'zonas/datosAsignador',
+            type: 'GET',
+            success:function(response){
+               data = response;
+                generarSelectores();
+            },error(xhr, status){
+                console.log(xhr.responseText);
+            }
+        })
+
+    }
 
 });

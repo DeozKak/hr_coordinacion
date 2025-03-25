@@ -30,6 +30,8 @@ Route::middleware('web')->group(function () {
         Route::post('/zonas/store/SubGrupo', [ZonificacionController::class, 'storeSubGrupo'])->name('zonas.storeSubGrupo')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
         Route::get('/zonas/{id}/editSubGrupo', [ZonificacionController::class, 'editSubGrupo'])->name('zonas.editSubGrupo')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
         Route::put('/zonas/{id}/updateSubGrupo', [ZonificacionController::class, 'updateSubGrupo'])->name('zonas.updateSubGrupo')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
+        //DATOS ASIGNADOR
+        Route::get('/zonas/datosAsignador', [ZonificacionController::class, 'datosAsignador'])->name('zonas.datosAsignador')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
 
     });
 });
