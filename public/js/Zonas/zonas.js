@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-// ------------------------- Jquey Crear Municipios --------------------------------
+    // ------------------------- Jquey Crear Municipios --------------------------------
 
     $(document).on('click', '#btnCrearMunicipio', function () {
         $('#idGuardarMunicipio').val('');  // Limpiar el campo de ID
@@ -577,34 +577,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
     //----------------------   Buscador HOT ----------------------------------------
 
-    let table = document.getElementById('table');
+    $(document).ready(function() {
+        // Ocultar la tabla al cargar la página
+        $("#table").hide();
 
-    let hot = new Handsontable(table,{
-        colHeaders: ['Nombre', 'Sede', 'Zona', 'Estado'],
-        rowHeaders: true,
-        contextMenu: true,
-        stretchH: 'all',
-        licenseKey: 'non-commercial-and-evaluation',
+        // Evento para mostrar la tabla al hacer clic en el botón Buscar
+        $("#btnBuscar").click(function() {
+            $("#table").fadeIn(); // Muestra la tabla con efecto de desvanecimiento
+        });
+
+        // Inicializar Handsontable cuando se presiona el botón Buscar
+        let table = document.getElementById('table');
+
+        let hot = new Handsontable(table, {
+            colHeaders: ['Nombre', 'Sede', 'Zona', 'Estado'],
+            rowHeaders: true,
+            contextMenu: true,
+            stretchH: 'all',
+            licenseKey: 'non-commercial-and-evaluation',
+        });
     });
 
-function alerta(tipo,encabezado,mensaje){
-    Swal.fire({
-        icon: tipo,
-        title: encabezado,
-        text: mensaje,
-    });
-}
+    function alerta(tipo,encabezado,mensaje){
+        Swal.fire({
+            icon: tipo,
+            title: encabezado,
+            text: mensaje,
+        });
+    }
 
-function topAlert(tipo,mensaje){
-    Swal.fire({
-        position: "top-end",
-        icon: tipo,
-        title: mensaje,
-        showConfirmButton: false,
-        toast: true,
-        timer: 4000
-    });
-}
+    function topAlert(tipo,mensaje){
+        Swal.fire({
+            position: "top-end",
+            icon: tipo,
+            title: mensaje,
+            showConfirmButton: false,
+            toast: true,
+            timer: 4000
+        });
+    }
 
 })
 
