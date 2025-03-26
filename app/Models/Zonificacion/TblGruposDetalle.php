@@ -29,7 +29,7 @@ class TblGruposDetalle extends Model
     }
 
     public function tbl_subgrupo(){
-        return $this->belongsTo(TblSubgrupo::class,'id_subgrupo');
+        return $this->belongsTo(TblSubgrupo::class,'id_subGrupo');
     }
     public function tbl_barrios(){
         return $this->belongsTo(TblBarrios::class,'id_barrio');

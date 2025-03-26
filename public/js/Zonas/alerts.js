@@ -1,7 +1,7 @@
 let data;
 document.addEventListener('DOMContentLoaded', () => {
 
-    if(warning !== ''){
+    if (warning !== '') {
         Swal.fire({
             title: "Advertencia",
             text: warning + ' desea asignar?',
@@ -14,24 +14,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }).then((result) => {
             if (result.isConfirmed) {
                 // Evento para abrir el modal y generar los selectores
-                    consultas();
+                consultas();
+                setTimeout(() => {
+                    generarSelectores();
+                }, 1000)
+
 
             }
         });
     }
 
-    function consultas(){
+
+});
+
+async function consultas() {
+    return new Promise((resolve, reject) => {
         $.ajax({
             url: 'zonas/datosAsignador',
             type: 'GET',
-            success:function(response){
-               data = response;
-                generarSelectores();
-            },error(xhr, status){
-                console.log(xhr.responseText);
+            success: function (response) {
+                data = response;
+                resolve(response);
+            }, error(xhr, status) {
+                //console.log(xhr.responseText);
+                reject(xhr.responseJSON.error);
             }
-        })
-
-    }
-
-});
+        });
+    });
+}

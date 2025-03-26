@@ -1,14 +1,9 @@
-// Datos de ejemplo (reemplaza con los datos reales del servidor)
-
-/*const municipios = ["Municipio 1", "Municipio 2", "Municipio 3", "Municipio 4", "Municipio 5"];
-const grupos = ["Grupo A", "Grupo B", "Grupo C"];
-const subgrupos = ["Subgrupo 1", "Subgrupo 2", "Subgrupo 3"];
-const barrios = ["Barrio X", "Barrio Y", "Barrio Z"];*/
 
 function generarSelectores() {
 
+    // convarsion String a JSON desde la vista
     municipios_sin_grupo = JSON.parse(municipios_sin_grupo);
-
+    //Guarda cada array en variables data es una variable resultado de una consulta
     let municipios = data.municipios;
     let barrios = data.barrios;
     let grupos = data.grupos;
@@ -23,14 +18,14 @@ function generarSelectores() {
 
     municipios.forEach(municipio => {
 
-        const row = $("<div>").addClass("row mb-3"); // mb-3 para margen inferior
+        const row = $("<div>").addClass("row mb-3").attr('id',municipio.id_detalle); // mb-3 para margen inferior
         container.append(row);
 
 
         // Selector de Municipio
         const municipioCol = $("<div>").addClass("col-md-3");
-        const municipioSelect = $("<select>").addClass("form-control").prop("disabled", true);
-        $("<option>").text(municipio.nombre).attr('id', municipio.id_detalle).appendTo(municipioSelect);
+        const municipioSelect = $("<select>").addClass("form-control").attr('id','municipio').prop("disabled", true);
+        $("<option>").text(municipio.nombre).attr('value', municipio.id).appendTo(municipioSelect);
         municipioCol.append(municipioSelect);
         row.append(municipioCol);
 
@@ -39,11 +34,11 @@ function generarSelectores() {
 
         // Selector de Grupo
         const grupoCol = $("<div>").addClass("col-md-3");
-        const grupoSelect = $("<select>").addClass("form-control");
-        $("<option>").text("Seleccione Grupo").appendTo(grupoSelect);
+        const grupoSelect = $("<select>").addClass("form-control").attr('id','grupo');
+        $("<option>").text("Seleccione Grupo").attr('value','').appendTo(grupoSelect);
         grupo_filter.forEach(grupo => {
-            let option_Grupo = $("<option>").text(grupo.grupo).attr('id', grupo.id);
-            if (municipio.id_grupo === grupo.id) { // Asumiendo que existe grupo.municipio_id
+            let option_Grupo = $("<option>").text(grupo.grupo).attr('value', grupo.id);
+            if (municipio.id_grupo === grupo.id) {
                 option_Grupo.prop("selected", true);
             }
             option_Grupo.appendTo(grupoSelect);
@@ -57,10 +52,10 @@ function generarSelectores() {
 
         // Selector de Subgrupo
         const subgrupoCol = $("<div>").addClass("col-md-3");
-        const subgrupoSelect = $("<select>").addClass("form-control");
-        $("<option>").text("Seleccione Subgrupo").appendTo(subgrupoSelect);
+        const subgrupoSelect = $("<select>").addClass("form-control").attr('id','subgrupo');
+        $("<option>").text("Seleccione Subgrupo").attr('value','').appendTo(subgrupoSelect);
         subgrupo_filter.forEach(subgrupo => {
-            const option_subgrupo = $("<option>").text(subgrupo.subgrupo).attr('id', subgrupo.id);
+            const option_subgrupo = $("<option>").text(subgrupo.subgrupo).attr('value', subgrupo.id);
             if (municipio.id_subGrupo === subgrupo.id) { // Asumiendo que existe grupo.municipio_id
                 option_subgrupo.prop("selected", true);
             }
@@ -73,10 +68,15 @@ function generarSelectores() {
         let barrio_filter = buscarIdsEnBarrios(barrios, municipio);
         // Selector de Barrio
         const barrioCol = $("<div>").addClass("col-md-3");
-        const barrioSelect = $("<select>").addClass("form-control").prop("disabled", true);
-        barrio_filter.forEach(barrio => $("<option>").text(barrio.barrio).appendTo(barrioSelect));
+        const barrioSelect = $("<select>").addClass("form-control").attr('id','barrio').prop("disabled", true);
+        barrio_filter.forEach(barrio => $("<option>").text(barrio.barrio).attr('value',barrio.id).appendTo(barrioSelect));
         barrioCol.append(barrioSelect);
         row.append(barrioCol);
+    });
+    //se asigna evento a boton guardar para guardar todos los cambios
+
+    $('#asignarGrupo').on('click', function () {
+        asignar(modalAsignador);
     });
 }
 
@@ -125,4 +125,31 @@ function buscarIdsEnBarrios(barrios, municipio) {
         }
     })
     return array;
+}
+
+function asignar(modal) {
+    let data = [];
+
+    let form = modal.find('.row');
+    form.each(function (index) {
+        if(index !== 0) {
+           let row = [$(this).attr('id'),
+            $(this).find('#municipio').val(),
+            $(this).find('#grupo').val(),
+            $(this).find('#subgrupo').val(),
+            $(this).find('#barrio').val()];
+            data.push(row);
+        }
+    });
+
+    $.ajax({
+        url: 'zonas/asignar',
+        type: 'POST',
+        data: {
+            data: data
+        },
+        success: function (response) {
+            console.log(response)
+        }
+    })
 }

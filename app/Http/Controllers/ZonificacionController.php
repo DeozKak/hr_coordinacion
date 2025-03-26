@@ -48,6 +48,60 @@ class ZonificacionController extends Controller
             ]);
     }
 
+    public function buscador(Request $request)
+    {
+
+        $validator = Validator::make($request->all(), [
+            'municipio' => 'sometimes|nullable|integer',
+            'barrio' => 'sometimes|nullable|integer',
+            'grupo' => 'sometimes|nullable|integer',
+            'subgrupo' => 'sometimes|nullable|integer',
+        ], [
+            'required' => 'Debe proporcionar al menos un valor para municipio, barrio, grupo o subgrupo.',
+        ]);
+
+        $validator->sometimes(['municipio', 'barrio', 'grupo', 'subgrupo'], 'required', function ($input) {
+            return empty($input->municipio) && empty($input->barrio) && empty($input->grupo) && empty($input->subgrupo);
+        });
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 422);
+        }
+
+
+        $municipio = $request->input('municipio');
+        $barrio = $request->input('barrio');
+        $grupo = $request->input('grupo');
+        $subgrupo = $request->input('subgrupo');
+        try {
+            $busqueda = TblgruposDetalle::with(['tbl_grupo', 'tbl_subgrupo',
+                'tbl_barrios', 'tbl_localidades_municipio']);
+            //$barrio = "PARQUE DE LA CAÑA";
+            if ($municipio) {
+                $busqueda->where('id_mun', $municipio); // Filtra por el nombre del municipio
+            }
+
+            if ($barrio) {
+                $busqueda->where('id_barrio', $barrio);
+            }
+            //$grupo = "CO";
+            if ($grupo) {
+                $busqueda->where('id_grupo', $grupo);
+            }
+            //$subgrupo = "CE2";
+            if ($subgrupo) {
+                $busqueda->where('id_subGrupo', $subgrupo);
+            }
+
+            $resultados = $busqueda->get();
+            return response()->json($resultados);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+
+    }
+
     public function index()
     {
         //consulta Municipios sin grupos o subgrupos asignados
@@ -70,7 +124,7 @@ class ZonificacionController extends Controller
         return view('zonas.index', compact('municipios', 'sedes', 'zonas', 'barrios', 'grupos', 'subgrupos'));
     }
 
-// ------------------- CRUD TABLA tbl_localidades_municipios ----------------------------------
+    // ------------------- CRUD TABLA tbl_localidades_municipios ----------------------------------
     public function storeMunicipio(Request $request)
     {
         // validar el nombre de la causal
@@ -159,14 +213,12 @@ class ZonificacionController extends Controller
 
     public function storeBarrio(Request $request): \Illuminate\Http\JsonResponse
     {
+
         $validator = Validator::make($request->all(), [
             'barrio' => 'required|string|max:255',
-            'municipio' => 'required|int'
         ], [
             'barrio.required' => 'Por favor ingrese el nombre del barrio.',
             'barrio.string' => 'El nombre del barrio debe ser una cadena de texto.',
-            'municipio.required' => 'Por favor ingrese el nombre del municipio.',
-            'municipio.int' => 'El nombre del municipio debe ser un entero.',
         ]);
 
 
@@ -182,18 +234,6 @@ class ZonificacionController extends Controller
             $barrio->barrio = $request->barrio;
             $barrio->save();
 
-            $duplicado = $this->barrioService->duplicado($request->municipio, $request->barrio);
-
-            if ($duplicado) {
-                DB::rollBack();
-                return response()->json(['error' => 'El barrio ya existe en el municipio seleccionado.'], 422);
-            }
-
-            //guardar relaciones en a tabla detalles
-            $detalle = new TblGruposDetalle();
-            $detalle->id_barrio = $barrio->id;
-            $detalle->id_mun = $request->municipio;
-            $detalle->save();
 
             //confirmar transacción
             DB::commit();
@@ -230,12 +270,9 @@ class ZonificacionController extends Controller
         //valida campos con los tipo de dato correcto
         $validator = Validator::make($request->all(), [
             'barrio' => 'required|string|max:255',
-            'municipio' => 'required|int'
         ], [
             'barrio.required' => 'Por favor ingrese el nombre del barrio.',
             'barrio.string' => 'El nombre del barrio debe ser una cadena de texto.',
-            'municipio.required' => 'Por favor ingrese el nombre del municipio.',
-            'municipio.int' => 'El nombre del municipio debe ser un entero.'
         ]);
         //devuelve en caso de que no se cumpla la validacion
         if ($validator->fails()) {
@@ -249,16 +286,6 @@ class ZonificacionController extends Controller
             $barrio->barrio = $request->barrio;
             $barrio->save();
 
-            //verifica duplicados devuelve un bool
-            $duplicado = $this->barrioService->duplicado($request->municipio, null, $id);
-
-            if ($duplicado) {
-                DB::rollBack();
-                return response()->json(['error' => 'El barrio ya existe en el municipio seleccionado.'], 422);
-            }
-            $detalle = TblGruposDetalle::where('id_barrio', $id)->first();
-            $detalle->id_mun = $request->municipio;
-            $detalle->save();
             //confirma
             DB::commit();
             $barrio->load('municipios');
@@ -491,7 +518,7 @@ class ZonificacionController extends Controller
                 ->exists();
 
             if ($exist) {
-                return response()->json(['error' => 'El grupo ya existe en la sede seleccionada.'], 422);
+                return response()->json(['error' => 'El sub grupo ya existe en la sede seleccionada.'], 422);
             }
             //comienza transacción
             DB::beginTransaction();

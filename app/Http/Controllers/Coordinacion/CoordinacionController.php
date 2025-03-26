@@ -44,7 +44,7 @@ class CoordinacionController extends Controller
 
         $fechaActual = new DateTime();
 
-        foreach ($completeData as $item) {
+       /* foreach ($completeData as $item) {
 
             if ($item->tipo_trabajo == "12161") {
                 $tipoOrden = "Ext." . $item->tipo_trabajo;
@@ -119,7 +119,7 @@ class CoordinacionController extends Controller
                             ->where('status', 1)
                             ->update(['dias_ejecutar' => $diferenciaDias]);
             }
-        }
+        }*/
 
         // traemos las sedes para crear el selector en el modal de impresion masiva
         $sedes = tbl_localidades_sede::all();

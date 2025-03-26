@@ -10,6 +10,7 @@
     <script src="{{ asset('js/Zonas/zonas.js') }}"></script>
     <script src="{{ asset('js/Zonas/alerts.js') }}"></script>
     <script src="{{ asset('js/Zonas/asignador.js') }}"></script>
+    <script src="{{ asset('js/Zonas/buscador.js') }}"></script>
     <link rel="stylesheet" href="{{ asset ('css/zonas/zonas.css')}}">
     <input type="hidden" id="token" value="{{ csrf_token() }}">
     <div class="row">
@@ -171,7 +172,7 @@
 
     <div class="card mt-3">
         <div class="card-header">
-            <h3 class="card-title">Buscar en Tablas</h3>
+            <h3 class="card-title">Buscar Relaciones</h3>
         </div>
         <div class="card-body">
 
@@ -179,19 +180,40 @@
 
             <div class="row">
                 <div class="col-md-3">
-                    <input type="text" id="buscarMunicipio" class="form-control" placeholder="Buscar Municipio">
+                    <select class="form-control" id="buscarMunicipio">
+                        <option value="">Seleccione un municipio</option>
+                        @foreach ($municipios as $municipio)
+                            <option value="{{ $municipio->id }}">{{ $municipio->nombre }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="col-md-3">
-                    <input type="text" id="buscarBarrio" class="form-control" placeholder="Buscar Barrio">
+                    <select class="form-control" id="buscarGrupo">
+                        <option value="">Seleccione un grupo</option>
+                        @foreach ($grupos as $grupo)
+                            <option value="{{ $grupo->id }}">{{ $grupo->grupo }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="col-md-3">
-                    <input type="text" id="buscarGrupo" class="form-control" placeholder="Buscar Grupo">
+                    <select class="form-control" id="buscarSubGrupo">
+                        <option value="">Seleccione un sub grupo</option>
+                        @foreach ($subgrupos as $subgrupo)
+                            <option value="{{ $subgrupo->id }}">{{ $subgrupo->subgrupo }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="col-md-3">
-                    <input type="text" id="buscarSubGrupo" class="form-control" placeholder="Buscar Sub Grupo">
+                    <select class="form-control" id="buscarBarrio">
+                        <option value="">Seleccione un barrio</option>
+                        @foreach ($barrios as $barrio)
+                            <option value="{{ $barrio->id }}">{{ $barrio->barrio }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
-
+                <br>
+            <div class="row" id="message"></div>
             <div class="text-center mt-3">
                 <button class="btn btn-primary" id="btnBuscar">Buscar</button>
             </div>
@@ -263,15 +285,6 @@
                         <label for="nombre">Nombre</label>
                         <input type="text" class="form-control" id="barrio" name="nombre">
                         <input type="hidden" id="idGuardarBarrio">
-                    </div>
-                    <div class="form-group">
-                        <label for="municipio">Municipio</label>
-                        <select class="form-control" id="municipioBarrio" name="municipio">
-                            <option value="">Seleccione un municipio</option>
-                            @foreach ($municipios as $municipio)
-                                <option value="{{ $municipio->id }}">{{ $municipio->nombre }}</option>
-                            @endforeach
-                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">

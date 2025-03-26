@@ -32,6 +32,7 @@ Route::middleware('web')->group(function () {
         Route::put('/zonas/{id}/updateSubGrupo', [ZonificacionController::class, 'updateSubGrupo'])->name('zonas.updateSubGrupo')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
         //DATOS ASIGNADOR
         Route::get('/zonas/datosAsignador', [ZonificacionController::class, 'datosAsignador'])->name('zonas.datosAsignador')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
-
+        //RUTA BUSCADOR
+        Route::get('/zonas/buscador', [ZonificacionController::class, 'buscador'])->name('zonas.buscador')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
     });
 });

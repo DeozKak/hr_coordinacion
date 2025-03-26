@@ -223,25 +223,18 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#crearBarrio').text('Crear Barrio').removeClass('guardarCambiosBarrio').addClass('guardarNuevoBarrio');
         $('#barrioModal').modal('show'); // Mostrar modal
 
-        // Inicializar TomSelect si no está ya creado
-        if (tomSelectMunicipio) tomSelectMunicipio.destroy();
-        tomSelectMunicipio = new TomSelect("#municipioBarrio", { maxItems: 1, create: false, placeholder: "Seleccione un municipio" });
+
     });
 
     $(document).on('click', '.guardarNuevoBarrio', function () {
         let barrio = $('#barrio').val().trim();
-        let municipio = $('#municipioBarrio').val();
         let token = $('#token').val();
 
-        if (!barrio || !municipio) {
-            alerta('error', 'Error', 'Debe ingresar todos los campos.');
-            return;
-        }
 
         $.ajax({
             url: 'zonas/store/Barrio',
             type: 'POST',
-            data: { barrio: barrio, municipio: municipio, _token: token },
+            data: { barrio: barrio,  _token: token },
             success: function (response) {
                 $('#barrioModal').modal('hide');
 
@@ -284,13 +277,6 @@ document.addEventListener('DOMContentLoaded', () => {
             success: function (response) {
                 $('#barrio').val(response[0].barrio);
 
-                // Inicializar TomSelect
-                if (tomSelectMunicipio) tomSelectMunicipio.destroy();
-                tomSelectMunicipio = new TomSelect("#municipioBarrio", { maxItems: 1, create: false, placeholder: "Seleccione un municipio" });
-
-                // Establecer valor del municipio en TomSelect
-                tomSelectMunicipio.addOption({ value: response[0].municipios[0].id, text: response[0].municipios[0].nombre });
-                tomSelectMunicipio.setValue(response[0].municipios[0].id);
             },
             error: function (xhr) {
                 alerta('error', 'Error', xhr.responseJSON.error);
@@ -303,7 +289,6 @@ document.addEventListener('DOMContentLoaded', () => {
     $(document).on('click', '.guardarCambiosBarrio', function () {
         let id = $('#idGuardarBarrio').val();
         let barrio = $('#barrio').val().trim();
-        let municipio = $('#municipioBarrio').val();
         let token = $('#token').val();
 
 
@@ -575,28 +560,6 @@ document.addEventListener('DOMContentLoaded', () => {
     })
 
 
-    //----------------------   Buscador HOT ----------------------------------------
-
-    $(document).ready(function() {
-        // Ocultar la tabla al cargar la página
-        $("#table").hide();
-
-        // Evento para mostrar la tabla al hacer clic en el botón Buscar
-        $("#btnBuscar").click(function() {
-            $("#table").fadeIn(); // Muestra la tabla con efecto de desvanecimiento
-        });
-
-        // Inicializar Handsontable cuando se presiona el botón Buscar
-        let table = document.getElementById('table');
-
-        let hot = new Handsontable(table, {
-            colHeaders: ['Nombre', 'Sede', 'Zona', 'Estado'],
-            rowHeaders: true,
-            contextMenu: true,
-            stretchH: 'all',
-            licenseKey: 'non-commercial-and-evaluation',
-        });
-    });
 
     function alerta(tipo,encabezado,mensaje){
         Swal.fire({
