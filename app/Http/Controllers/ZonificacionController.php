@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Services\BarrioService;
 use App\Services\MunicipioService;
 use Illuminate\Support\Facades\Log;
+use App\Rules\UniqueMunicipio;
 
 class ZonificacionController extends Controller
 {
@@ -28,10 +29,12 @@ class ZonificacionController extends Controller
         $this->municipioService = $municipioService;
     }
 
-    public function datosAsignador()
+    public function datosAsignador(): \Illuminate\Http\JsonResponse
     {
+        $municipios_sin_grupo = $this->municipioService->MunicipiosSinGrupo();
         $municipios = tbl_localidades_municipio::all();
-        $barrios = TblBarrios::with('municipios')->get();
+        $barrios_disponibles = TblBarrios::whereDoesntHave('detalle')->get();
+        $barrios_asignados = TblBarrios::with('municipios')->get();
         $grupos = TblGrupo::all();
         $subgrupos = TblSubgrupo::all();
         $sedes = tbl_localidades_sede::all();
@@ -39,8 +42,10 @@ class ZonificacionController extends Controller
 
         return response()->json(
             [
+                'municipios_sin_grupo' => $municipios_sin_grupo,
                 'municipios' => $municipios,
-                'barrios' => $barrios,
+                'barrios_d' => $barrios_disponibles,
+                'barrios_a' => $barrios_asignados,
                 'grupos' => $grupos,
                 'subgrupos' => $subgrupos,
                 'sedes' => $sedes,
@@ -48,7 +53,65 @@ class ZonificacionController extends Controller
             ]);
     }
 
-    public function buscador(Request $request)
+    public function asignar(Request $request): \Illuminate\Http\JsonResponse
+    {
+        //validación de datos
+        $validator = Validator::make($request->all(), [
+            'asignaciones' => 'required|array',
+            'asignaciones.*.id' => 'required|integer',
+            'asignaciones.*.municipio' => 'required|integer',
+            'asignaciones.*.grupo' => 'required|integer',
+            'asignaciones.*.subgrupo' => 'required|integer',
+            'asignaciones.*.barrio' => 'nullable|integer',
+        ],
+            [
+                'asignaciones.required' => 'Por favor, ingrese las asignaciones.',
+                'asignaciones.array' => 'El dato ingresado debe ser un array.',
+                'asignaciones.*.id.required' => 'El campo ID es requerido.',
+                'asignaciones.*.id.integer' => 'El campo ID debe ser un número entero.',
+                'asignaciones.*.municipio.required' => 'El campo Municipio es requerido.',
+                'asignaciones.*.municipio.integer' => 'El campo Municipio debe ser un número entero.',
+                'asignaciones.*.grupo.required' => 'El campo Grupo es requerido.',
+                'asignaciones.*.grupo.integer' => 'El campo Grupo debe ser un número entero.',
+                'asignaciones.*.subgrupo.required' => 'El campo Subgrupo es requerido.',
+                'asignaciones.*.subgrupo.integer' => 'El campo Subgrupo debe ser un número entero.',
+                'asignaciones.*.barrio.integer' => 'El campo Barrio debe ser un número entero.',
+            ]);
+        // genera mensaje si los requisitos no se cumplen
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 422);
+        }
+        //asigna a una variable los datos del formulario
+        $asignaciones = $request->asignaciones;
+        // $ids = array_column($asignaciones, 'id'); // Obtener un array solo con los IDs
+        try {
+            //comienza transacción Base de datos
+            DB::beginTransaction();
+            //guarda en otro array los valores para asignación masiva
+            foreach ($asignaciones as $asignacion) {
+                $updates[$asignacion['id']] = [
+                    'id_mun' => $asignacion['municipio'],
+                    'id_grupo' => $asignacion['grupo'],
+                    'id_subGrupo' => $asignacion['subgrupo'],
+                    'id_barrio' => empty($asignacion['barrio']) ? null : $asignacion['barrio'],
+                ];
+            }
+            //asignación masiva
+            foreach ($updates as $id => $data) {
+                TblGruposDetalle::where('id', $id)
+                    ->update($data);
+            }
+            DB::commit();
+            return response()->json(['success' => 'Asignaciones realizadas exitosamente.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error($e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+
+    }
+
+    public function buscador(Request $request): \Illuminate\Http\JsonResponse
     {
 
         $validator = Validator::make($request->all(), [
@@ -102,7 +165,7 @@ class ZonificacionController extends Controller
 
     }
 
-    public function index()
+    public function index(): object
     {
         //consulta Municipios sin grupos o subgrupos asignados
         $mun_sin_grupo = $this->municipioService->VerificarGrupo();
@@ -115,95 +178,134 @@ class ZonificacionController extends Controller
         $sedes = tbl_localidades_sede::all();
         $zonas = tbl_produccion_zona::all();
 
-        if (!empty($mun_sin_grupo)) {
+        if ($mun_sin_grupo) {
             session()->flash('warning', 'Existen municipios sin grupo o sub grupo relacionado. ');
-            return view('zonas.index', compact('municipios', 'sedes', 'zonas', 'barrios', 'grupos', 'subgrupos', 'mun_sin_grupo'));
         }
-
 
         return view('zonas.index', compact('municipios', 'sedes', 'zonas', 'barrios', 'grupos', 'subgrupos'));
     }
 
     // ------------------- CRUD TABLA tbl_localidades_municipios ----------------------------------
-    public function storeMunicipio(Request $request)
+    public function storeMunicipio(Request $request): \Illuminate\Http\JsonResponse
     {
-        // validar el nombre de la causal
-        $sqlMunicipio = tbl_localidades_municipio::where('nombre', '=', $request->nombre)
-            ->where('id_sede', '=', $request->sede)
-            ->where('id_zona', '=', $request->zona)
-            ->first();
-
-        if ($sqlMunicipio) {
-            return response()->json([
-                'status' => 'exist',
-                'message' => 'El municipio ya existe con la misma sede y zona.',
+        //validador de formulario
+        $validator = Validator::make($request->all(), [
+            'nombre' => ['required', 'string', 'max:100', new UniqueMunicipio($request->sede, $request->zona)],
+            'sede' => 'required|integer',
+            'zona' => 'required|integer',
+        ],
+            [
+                'nombre.required' => 'Por favor ingrese el nombre del municipio.',
+                'nombre.string' => 'El nombre del municipio debe ser una cadena de texto.',
+                'sede.required' => 'Por favor Seleccione la sede.',
+                'sede.integer' => 'la sede debe ser un numero entero.',
+                'zona.required' => 'Por favor Seleccione la zona.',
+                'zona.integer' => 'la zona debe ser un numero entero.',
             ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 422);
         }
+        try {
+            DB::beginTransaction();
+            $municipio = new tbl_localidades_municipio();
+            $municipio->nombre = $request->nombre;
+            $municipio->id_sede = $request->sede;
+            $municipio->id_zona = $request->zona;
+            $municipio->save();
 
-        $municipio = new tbl_localidades_municipio();
-        $municipio->nombre = $request->nombre;
-        $municipio->id_sede = $request->sede;
-        $municipio->id_zona = $request->zona;
-        $municipio->save();
+            $municipio->load('sede', 'zona');
 
-        $sqlMun = tbl_localidades_municipio::with(['sede', 'zona'])
-            ->where('id', $municipio->id)->first();
-
-        return response()->json(['success' => $sqlMun]);
+            $detalle = new TblGruposDetalle();
+            $detalle->id_mun = $municipio->id;
+            $detalle->save();
+            DB::commit();
+            return response()->json([
+                'ok' => $municipio,
+                'success' => 'Municipio creado exitosamente.',
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error($e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
-    public function editMunicipio($id)
+    public function editMunicipio($id): \Illuminate\Http\JsonResponse
     {
-        $municipio = tbl_localidades_municipio::find($id);
-        return response()->json([$municipio]);
-    }
-
-    public function updateMunicipio(Request $request, $id)
-    {
-        $sqlMunicipio = tbl_localidades_municipio::where('nombre', '=', $request->nombre)
-            ->where('id_sede', '=', $request->sede)
-            ->where('id_zona', '=', $request->zona)
-            ->first();
-
-        if ($sqlMunicipio) {
-            return response()->json([
-                'status' => 'exist',
-                'message' => 'El municipio ya existe con la misma sede y zona.',
-            ]);
+        try {
+            $municipio = tbl_localidades_municipio::find($id);
+            return response()->json([$municipio]);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
         }
 
-        if ($sqlMunicipio != null && $sqlMunicipio['id'] != $id) {
-            return response()->json([
-                'status' => 'exist',
-                'message' => 'El municipio ya existe.',
-            ]);
-        }
-
-        $municipio = tbl_localidades_municipio::find($id);
-        $municipio->nombre = $request->nombre;
-        $municipio->id_sede = $request->sede;
-        $municipio->id_zona = $request->zona;
-        $municipio->save();
-
-        $sqlMun = tbl_localidades_municipio::with(['sede', 'zona'])
-            ->where('id', $municipio->id)->first();
-
-        return response()->json(['success' => $sqlMun]);
     }
 
-    public function changeStatusMunicipio(Request $request)
+    public function updateMunicipio(Request $request, $id): \Illuminate\Http\JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'nombre' => ['required', 'string', 'max:100', new UniqueMunicipio($request->sede, $request->zona)],
+            'sede' => 'required|integer',
+            'zona' => 'required|integer',
+        ],
+            [
+                'nombre.required' => 'Por favor ingrese el nombre del municipio.',
+                'nombre.string' => 'El nombre del municipio debe ser una cadena de texto.',
+                'sede.required' => 'Por favor Seleccione la sede.',
+                'sede.integer' => 'la sede debe ser un numero entero.',
+                'zona.required' => 'Por favor Seleccione la zona.',
+                'zona.integer' => 'la zona debe ser un numero entero.',
+            ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+            $municipio = tbl_localidades_municipio::find($id);
+            $municipio->nombre = $request->nombre;
+            $municipio->id_sede = $request->sede;
+            $municipio->id_zona = $request->zona;
+            $municipio->save();
+
+            $municipio->load('sede', 'zona');
+            DB::commit();
+            return response()->json([
+                'ok' => $municipio,
+                'success' => 'Municipio actualizado exitosamente.',
+            ]);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+
+    }
+
+    public function changeStatusMunicipio(Request $request): \Illuminate\Http\JsonResponse
     {
         $id = $request->input('id');
-        $municipio = tbl_localidades_municipio::find($id);
+        try {
+            DB::beginTransaction();
+            $municipio = tbl_localidades_municipio::find($id);
 
-        if ($municipio->status == 1) {
-            $municipio->status = 0;
-        } else {
-            $municipio->status = 1;
+            if ($municipio->status == 1) {
+                $municipio->status = 0;
+            } else {
+                $municipio->status = 1;
+            }
+            $municipio->save();
+            DB::commit();
+            return response()->json(['success' => $municipio]);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 500);
         }
 
-        $municipio->save();
-        return response()->json(['success' => $municipio]);
     }
 
     //-----------------------------------------------------------------------------------------

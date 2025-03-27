@@ -1,6 +1,5 @@
 let data;
 document.addEventListener('DOMContentLoaded', () => {
-
     if (warning !== '') {
         Swal.fire({
             title: "Advertencia",
@@ -23,8 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-
 });
 
 async function consultas() {
@@ -40,5 +37,27 @@ async function consultas() {
                 reject(xhr.responseJSON.error);
             }
         });
+    });
+}
+
+function alertaMunicipio(){
+    Swal.fire({
+        title: "Aviso",
+        text: 'Desea asignar Grupo al municipios creado?, tenga en cuenta que si no se asigna ' +
+            'no se podrá asignar ordenes de trabajo a esta zona.',
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Si",
+        cancelButtonText: "No"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            consultas();
+            setTimeout(() => {
+                generarSelectores();
+            }, 1000);
+        }
+
     });
 }

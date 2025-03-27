@@ -42,13 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let zona = $('#zonaMunicipio').val();
         let token = $('#token').val();
 
-        if (nombre == '' || sede == '' || zona == '') {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Error al guardar',
-                text: 'Complete el campo vacío',
-            });
-        } else {
             $.ajax({
                 url: 'zonas/store/Municipio',
                 type: 'POST',
@@ -59,54 +52,37 @@ document.addEventListener('DOMContentLoaded', () => {
                     _token: token
                 },
                 success: function (response) {
-                    console.log(response)
-                    if (response.status == 'exist') {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Municipio duplicado',
-                            text: response.message,
-                        })
-                    } else {
                         $('#municipioModal').modal('hide');
                         $('#nombreMunicipio').val('');
                         $('#sedeMunicipio').val('');
                         $('#zonaMunicipio').val('');
-                        console.log(response)
 
                         let nuevaFila = `
-                            <tr data-id="${response.success.id}">
-                                <td>${response.success.nombre}</td>
-                                <td>${response.success.sede.nombre}</td>
-                                <td>${response.success.zona.nombre}</td>
+                            <tr data-id="${response.ok.id}">
+                                <td>${response.ok.nombre}</td>
+                                <td>${response.ok.sede.nombre}</td>
+                                <td>${response.ok.zona.nombre}</td>
                                 <td>
                                     <div style="display: flex; gap: 5px; justify-content: center;">
-                                        <button class="btn btn-info btn-sm abrirMunicipioModal" data-municipio-id="${response.success.id}">Editar</button>
-                                        <button class="btn btn-danger btn-sm" id="btnChangeStatusMunicipio" data-municipio-id="${response.success.id}">Desactivar</button>
+                                        <button class="btn btn-info btn-sm abrirMunicipioModal" data-municipio-id="${response.ok.id}">Editar</button>
+                                        <button class="btn btn-danger btn-sm" id="btnChangeStatusMunicipio" data-municipio-id="${response.ok.id}">Desactivar</button>
                                     </div>
                                 </td>
                             </tr>
                         `;
                         $('#municipios tbody').append(nuevaFila);  // Agregar la nueva fila al cuerpo de la tabla
-
-                        // Mostrar mensaje de éxito
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Éxito',
-                            text: 'El municipio se ha creado correctamente.',
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
-                    }
+                    topAlert('success', response.success);
+                    setTimeout(() => {
+                        alertaMunicipio();
+                    },2000)
                 },
                 error: function (xhr, status, error) {
-
-                    alerta('error','Error al guardar','Ocurrió un error, intente de nuevo.')
-
                     console.log(xhr.responseText);
+                    alerta('error','Error',xhr.responseJSON.error)
                 }
 
             })
-        }
+
     })
 
     // ------------------------- Jquey Editar Municipios --------------------------------
@@ -143,13 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let zona = $('#zonaMunicipio').val();
         let token = $('#token').val();
 
-        if (nombre == '' || sede == '' || zona == '') {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Error al guardar',
-                text: 'Complete el campo vacío',
-            });
-        }else{
             $.ajax({
                 url: 'zonas/' + id + '/updateMunicipio',
                 type: 'PUT',
@@ -160,30 +129,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     _token:token,
                 },
                 success:function(response){
-                    console.log(response)
-                    if(response.status== 'exist'){
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Municipio duplicado',
-                            text: response.message,
-                        })
-                    }else{
+
                         let modalMunicipio = $('#municipioModal')
                         modalMunicipio.modal('hide')
-                        let row = $('#municipios tbody tr[data-id="'+response.success.id+'"]')
-                        row.find('td:nth-child(1)').text(response.success.nombre)
-                        row.find('td:nth-child(2)').text(response.success.sede.nombre)
-                        row.find('td:nth-child(3)').text(response.success.zona.nombre)
+                        let row = $('#municipios tbody tr[data-id="'+response.ok.id+'"]')
+                        row.find('td:nth-child(1)').text(response.ok.nombre)
+                        row.find('td:nth-child(2)').text(response.ok.sede.nombre)
+                        row.find('td:nth-child(3)').text(response.ok.zona.nombre)
 
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Exito al guardar',
-                            text: 'El municipio se actualizó con éxito',
-                        });
-                    }
+                       topAlert('success', response.success);
+                },error(xhr,status,error){
+                    alerta('error','Error',xhr.responseJSON.error)
                 }
             })
-        }
+
     })
 
 
@@ -201,13 +160,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 id: id,
                 _token:token,
             },success:function(response){
-                console.log(response)
                 let row = $('#municipios tbody tr[data-id="'+response.success.id+'"]')
-                if(response.success.status == 0){
+                if(response.success.status === 0){
                     row.find('td:nth-child(4) #btnChangeStatusMunicipio').removeClass('btn btn-danger btn-sm').addClass('btn btn-success btn-sm').text('Activar')
                 }else{
                     row.find('td:nth-child(4) #btnChangeStatusMunicipio').removeClass('btn btn-success btn-sm').addClass('btn btn-danger btn-sm').text('Desactivar')
                 }
+            },error(xhr,status,error){
+                alerta('error','Error',xhr.responseJSON.error);
             }
         })
     })
@@ -558,28 +518,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             })
     })
+});
 
+function alerta(tipo,encabezado,mensaje){
+    Swal.fire({
+        icon: tipo,
+        title: encabezado,
+        text: mensaje,
+    });
+}
 
-
-    function alerta(tipo,encabezado,mensaje){
-        Swal.fire({
-            icon: tipo,
-            title: encabezado,
-            text: mensaje,
-        });
-    }
-
-    function topAlert(tipo,mensaje){
-        Swal.fire({
-            position: "top-end",
-            icon: tipo,
-            title: mensaje,
-            showConfirmButton: false,
-            toast: true,
-            timer: 4000
-        });
-    }
-
-})
+function topAlert(tipo,mensaje){
+    Swal.fire({
+        position: "top-end",
+        icon: tipo,
+        title: mensaje,
+        showConfirmButton: false,
+        toast: true,
+        timer: 4000
+    });
+}
 
 
