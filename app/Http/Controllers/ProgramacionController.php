@@ -813,7 +813,7 @@ class ProgramacionController extends Controller
                 $cc_operario->cedula,
                 $tipo_trabajo,
                 '1680',
-                $item[14],
+                'TEL: '.$item[4].' Nombre Usuario: '.$item[5].' '.$item[14], //Detalle
                 '',
                 '',
                 ''

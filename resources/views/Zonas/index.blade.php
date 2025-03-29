@@ -132,8 +132,18 @@
                                         <button class="btn btn-info btn-sm abrirGrupoModal"
                                                 data-grupo-id="{{ $grupo->id }}">Editar
                                         </button>
+                                        @if ($grupo->status == 1)
+                                            <button class="btn btn-danger btn-sm" id="btnChangeStatusGrupo"
+                                                   data-grupo-id="{{ $grupo->id }}">Desactivar
+                                            </button>
+                                        @else
+                                            <button class="btn btn-success btn-sm" id="btnChangeStatusGrupo"
+                                                   data-grupo-id="{{ $grupo->id }}">Activar
+                                            </button>
+                                        @endif
                                     </div>
                                 </td>
+
                             </tr>
                         @endforeach
                         </tbody>
@@ -169,6 +179,15 @@
                                         <button class="btn btn-info btn-sm abrirSubGrupoModal"
                                                 data-subgrupo-id="{{ $subgrupo->id }}">Editar
                                         </button>
+                                        @if ($subgrupo->status == 1)
+                                            <button class="btn btn-danger btn-sm" id="btnChangeStatusSubgrupo"
+                                                    data-subgrupo-id="{{ $subgrupo->id }}">Desactivar
+                                            </button>
+                                        @else
+                                            <button class="btn btn-success btn-sm" id="btnChangeStatusSubgrupo"
+                                                    data-subgrupo-id="{{ $subgrupo->id }}">Activar
+                                            </button>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

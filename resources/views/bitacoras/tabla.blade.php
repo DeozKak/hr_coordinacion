@@ -52,7 +52,7 @@
                 </div>
             </div>
             <div class="card-body">
-                           
+
                 <div class="nav-wrapper" style="overflow-x: auto; overflow-y: hidden; display: flex;">
                     <div class="tab-content">
                         <?php foreach ($nombres as $index => $nombre) : ?>
@@ -114,12 +114,12 @@
                                             <th></th>
                                             <th></th>
                                         </tr>
-                                        @php                                       
-                                        $datosFiltrados = array_filter($response->toArray(), function ($row) use ($nombre) {                                                                                                                
+                                        @php
+                                        $datosFiltrados = array_filter($response->toArray(), function ($row) use ($nombre) {
                                         return $row['NOMBRE'] === $nombre;
                                         });
-                                        
-                                        @endphp                                       
+
+                                        @endphp
                                     </thead>
                                     <tbody>
                                         @foreach ($datosFiltrados as $row)
@@ -131,7 +131,7 @@
                                             $horaInicialObj = null;
                                             $horaFinalObj = null;
                                             @endphp
-                
+
                                             <td>{{$row['id']}}</td>
                                             <td>{{$row['NOMBRE']}}</td>
                                             <td>{{$row['CC_OPERARIO']}}</td>
