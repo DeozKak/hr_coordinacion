@@ -24,7 +24,7 @@
 
                 <!-- Encabezado -->
                 <tr>
-                    <td style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; padding: 17px; border-radius: 8px 8px 0 0; font-size: 19px; font-weight: bold;">
+                    <td style=" color: white; padding: 17px; border-radius: 8px 8px 0 0; font-size: 19px; font-weight: bold;">
                         Reporte <?php echo ($archivo->nombre_archivo) ?> | Generado
                     </td>
                 </tr>

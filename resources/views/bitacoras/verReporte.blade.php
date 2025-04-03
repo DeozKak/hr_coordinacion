@@ -22,8 +22,8 @@
 
         <div id="indicadores"style=" margin-bottom: 10px;"></div>
         <a class="btn btn-secondary" id="devolucion" style="margin-bottom: 10px;">Pasar a devolucion</a>
-        <div id="tabla" style=" width: '100px'"></div>
-        
+        <div id="tabla" style="width: 100px;"></div>
+
         @csrf
     </div>
 </div>

@@ -14,7 +14,6 @@ $('table').DataTable( {
         "next": "Siguiente",
         "previous": "Anterior"
     }
-    
 }});
 
 const thfecha = $('th[data-dt-column="2"]');

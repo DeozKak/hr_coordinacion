@@ -285,21 +285,55 @@ class ZonificacionController extends Controller
 
     }
 
-    public function changeStatusMunicipio(Request $request): \Illuminate\Http\JsonResponse
+    public function changeStatusTable(Request $request): \Illuminate\Http\JsonResponse
     {
+
+        $validator = Validator::make($request->all(), [
+            'id' => 'required|integer',
+            'table' => 'required|string',
+        ],
+            [
+                'id.required' => 'Por favor se requiere id del registro',
+                'table.required' => 'Por favor se requiere tabla del registro',
+            ]
+        );
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 422);
+        }
+
         $id = $request->input('id');
+        $name_table = $request->input('table');
         try {
             DB::beginTransaction();
-            $municipio = tbl_localidades_municipio::find($id);
 
-            if ($municipio->status == 1) {
-                $municipio->status = 0;
-            } else {
-                $municipio->status = 1;
+            $validTables = [
+                'tbl_localidades_municipios',
+                'tbl_grupos',
+                'tbl_subgrupos', // Agrega aquí las tablas permitidas
+            ];
+
+            // Verifica si la tabla es válida
+            if (!in_array($name_table, $validTables)) {
+                return response()->json(['error' => 'La tabla especificada no es válida.'], 400);
             }
-            $municipio->save();
+
+            $table = DB::table($name_table)->find($id);
+
+            if (!$table) {
+                return response()->json(['error' => 'Registro no encontrado.'], 404);
+            }
+            // Determina el nuevo valor del campo `status`
+            if ($table->status === 1) {
+                $newStatus = 0;
+            } else {
+                $newStatus = 1;
+            }
+            // Actualiza el campo `status` del registro
+            DB::table($name_table)->where('id', $id)->update(['status' => $newStatus]);
             DB::commit();
-            return response()->json(['success' => $municipio]);
+            $registro = DB::table($name_table)->find($id);
+            return response()->json(['success' => $registro]);
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             DB::rollBack();

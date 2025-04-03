@@ -6,7 +6,6 @@ use App\Models\Bitacoras\tbl_bitacoras_causal;
 use App\Models\Produccion\tbl_produccion_corte;
 use App\Models\Produccion\tbl_produccion_historico;
 use App\Models\Produccion\tbl_produccion_zona;
-use App\Models\Zonificacion\tbl_localidades_municipio;
 use App\Models\Zonificacion\tbl_localidades_sede;
 use Illuminate\Http\Request;
 
@@ -22,7 +21,6 @@ class CorteProduccionController extends Controller
 
         return view('corte.index', compact('cortes','sedes','zonas','causales'));
     }
-
 
     public function storeCorte(Request $request)
     {
@@ -248,7 +246,6 @@ class CorteProduccionController extends Controller
         return response()->json([$zona]);
     }
 
-
     public function updateZona(Request $request, $id)
     {
         $sqlZona = tbl_produccion_zona::where('nombre', $request->nombre)->first();
@@ -281,7 +278,6 @@ class CorteProduccionController extends Controller
         return response()->json(['success' => $sede]);
     }
 
-
     public function changeStatusZona(Request $request){
         $id = $request->input('id');
         $zona = tbl_produccion_zona::find($id);
@@ -309,7 +305,6 @@ class CorteProduccionController extends Controller
         $causal->save();
         return response()->json(['success' => $causal]);
     }
-
 
 }
 

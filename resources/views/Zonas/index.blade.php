@@ -60,7 +60,7 @@
                         @endforeach
                         </tbody>
                     </table>
-                    <input type="hidden" id="cambiarEstadoMunicipio" value="{{route('zonas.changeStatusMunicipio')}}">
+                    <input type="hidden" id="cambiarEstadoTabla" value="{{route('zonas.changeStatusTable')}}">
                 </div>
             </div>
         </div>

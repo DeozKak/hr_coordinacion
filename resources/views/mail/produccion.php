@@ -29,8 +29,7 @@
                 <!-- Encabezado -->
                 <tr>
                     <td class="card-header"
-                        style="background: linear-gradient(135deg, #007bff, #0056b3);
-                                   color: white; padding: 17px; border-radius: 8px 8px 0 0;
+                        style="color: white; padding: 17px; border-radius: 8px 8px 0 0;
                                    font-size: 19px; font-weight: bold;">
                         <?php echo($user) ?> agregó el contrato <?php echo($contrato) ?> a producción
                     </td>
