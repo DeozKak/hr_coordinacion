@@ -17,7 +17,7 @@ Route::middleware('web')->group(function () {
         Route::post('/zonas/store/Municipio', [ZonificacionController::class, 'storeMunicipio'])->name('zonas.storeMunicipio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
         Route::get('/zonas/{id}/editMunicipio', [ZonificacionController::class, 'editMunicipio'])->name('zonas.editMunicipio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
         Route::put('/zonas/{id}/updateMunicipio', [ZonificacionController::class, 'updateMunicipio'])->name('zonas.updateMunicipio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
-        Route::post('/zonas/changeStatusMunicipio', [ZonificacionController::class, 'changeStatusMunicipio'])->name('zonas.changeStatusMunicipio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
+        Route::post('/zonas/changeStatusTable', [ZonificacionController::class, 'changeStatusTable'])->name('zonas.changeStatusTable')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
         //CRUD BARRIOS
         Route::post('/zonas/store/Barrio', [ZonificacionController::class, 'storeBarrio'])->name('zonas.storeBarrio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
         Route::get('/zonas/{id}/editBarrio', [ZonificacionController::class, 'editBarrio'])->name('zonas.editBarrio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');

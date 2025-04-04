@@ -579,14 +579,14 @@ class BitacoraController extends Controller
 
                     $duracion = $horaInicio->diff($horaFinal);
 
-                    if ($datos['categoria'] === null) {
+                   /* if ($datos['categoria'] === null) {
                         $consultaMovilidad = Movilidad::select('AttrCategoria')->where('NroSitio', $datos['contrato'])->where('IdTarea', $datos['no_acta'])->first();
 
                         if (!is_null($consultaMovilidad) && $consultaMovilidad->AttrCategoria !== null) {
                             $datos['categoria'] = $consultaMovilidad->AttrCategoria;
                         }
                         // Si $consultaMovilidad es null, no se ejecutará el bloque if y $datos['categoria'] seguirá siendo null
-                    }
+                    }*/
 
                     if ($datos['tipo_de_trabajo'] === 'SA 12164' || $datos['tipo_de_trabajo'] === 'SA 12163') {
                         $exist = tbl_bitacora_contrato::where('CONTRATO', $datos['contrato'])->where('ORDEN_TRABAJO', $datos['orden_de_trabajo'])->where('No_ACTA', $datos['no_acta'])->exists();
@@ -600,8 +600,8 @@ class BitacoraController extends Controller
                             continue;
                         }
                     }
-                    $consultaPrioridad = Movilidad::select('Prioridad')->where('NroSitio', $datos['contrato'])->where('IdTarea', $datos['no_acta'])->first();
-                    $datos['prioridad'] = $consultaPrioridad->Prioridad ?? 'Sin prioridad';
+                 /*   $consultaPrioridad = Movilidad::select('Prioridad')->where('NroSitio', $datos['contrato'])->where('IdTarea', $datos['no_acta'])->first();*/
+                   // $datos['prioridad'] = $consultaPrioridad->Prioridad ?? 'Sin prioridad';
                     $contrato = new tbl_bitacora_contrato();
                     $contrato->CC_OPERARIO = $datos['cc_operario'];
                     $contrato->MUNICIPIO = $datos['municipio'];
@@ -616,7 +616,7 @@ class BitacoraController extends Controller
                     $contrato->HORA_INICIO = $datos['hora_inicio'];
                     $contrato->HORA_FINAL = $datos['hora_fin'];
                     $contrato->DURACION_INSP = $duracion->format('%H:%I');
-                    $contrato->PRIORIDAD = $datos['prioridad'];
+                    $contrato->PRIORIDAD = 'Sin prioridad';
                     $contrato->setAttribute('4_RECINTOS', $datos['4_recintos']);
                     $contrato->vence = $datos['vence'];
                     $contrato->PERIODO_GRACIA = $datos['periodo_gracia'];
@@ -654,10 +654,10 @@ class BitacoraController extends Controller
                             $horaFinal->modify('+1 day'); // Añadir un día si la hora final es menor que la hora de inicio
                         }
 
-                        if ($dato['categoria'] === null) {
+                      /*  if ($dato['categoria'] === null) {
                             $consultaMovilidad = Movilidad::select('AttrCategoria')->where('NroSitio', $dato['contrato'])->where('IdTarea', $dato['No_ACTA'])->first();
                             $dato['categoria'] = $consultaMovilidad->AttrCategoria;
-                        }
+                        }*/
 
                         $duracion = $horaInicio->diff($horaFinal);
 

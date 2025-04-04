@@ -6,7 +6,6 @@ use App\Models\Bitacoras\tbl_bitacoras_causal;
 use App\Models\Produccion\tbl_produccion_corte;
 use App\Models\Produccion\tbl_produccion_historico;
 use App\Models\Produccion\tbl_produccion_zona;
-use App\Models\Zonificacion\tbl_localidades_municipio;
 use App\Models\Zonificacion\tbl_localidades_sede;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +26,9 @@ class CorteProduccionController extends Controller
         return view('corte.index', compact('cortes','sedes','zonas','causales'));
     }
 
+
     // ------------------- CRUD TABLA tbl_produccion_corte ----------------------------------
+
 
     public function storeCorte(Request $request)
     {
@@ -352,7 +353,6 @@ class CorteProduccionController extends Controller
         return response()->json([$zona]);
     }
 
-
     public function updateZona(Request $request, $id)
     {
         // Validar los datos enviados en la solicitud
@@ -460,6 +460,7 @@ class CorteProduccionController extends Controller
     }
 
 
+
     public function editCausal($id)
     {
         try {
@@ -470,6 +471,7 @@ class CorteProduccionController extends Controller
         }
         return response()->json([$causal]);
     }
+
 
 
     public function updateCausal(Request $request, $id)
@@ -577,6 +579,7 @@ class CorteProduccionController extends Controller
     }
 
 
+
     public function changeStatusCausal(Request $request)
     {
         try {
@@ -598,5 +601,6 @@ class CorteProduccionController extends Controller
             return response()->json(['error' => 'Error al cambiar el estado del causal'], 500);
         }
     }
+
 }
 

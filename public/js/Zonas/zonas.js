@@ -1,6 +1,11 @@
 let tomSelectMunicipio;
 document.addEventListener('DOMContentLoaded', () => {
 
+ $('#nombreMunicipio, #sedeMunicipio, #zonaMunicipio, #barrio, #grupo, #subgrupo').on('input', function () {
+        // Cambia el valor del campo al texto en mayúsculas
+        $(this).val($(this).val().toUpperCase());
+    });
+  
     $('#municipios,#Barrios,#sedes,#zonas,#grupos,#subgrupos').DataTable({
         paging: false, scrollCollapse: true, scrollY: '230px', lengthChange: false, info: false, "language": {
             "lengthMenu": "Mostrar _MENU_ registros por página",
@@ -26,6 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#crearMunicipio').text('Crear Municipio'); // Cambiar el texto del botón
         $('#crearMunicipio').removeClass('guardarCambiosMunicipio').addClass('guardarNuevoMunicipio');  // Cambiar la clase para detectar el modo
         $('#municipioModal').modal('show');  // Mostrar el modal
+
+
     });
 
     $(document).on('click', '.guardarNuevoMunicipio', function () {
@@ -126,12 +133,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     $(document).on('click', '#btnChangeStatusMunicipio', function () {
         let id = $(this).attr('data-municipio-id')
-        let url = $('#cambiarEstadoMunicipio').val()
+        let url = $('#cambiarEstadoTabla').val()
         let token = $('#token').val()
 
         $.ajax({
             url: url, type: 'POST', data: {
-                id: id, _token: token,
+                id: id, _token: token,table:'tbl_localidades_municipios'
             }, success: function (response) {
                 let row = $('#municipios tbody tr[data-id="' + response.success.id + '"]')
                 if (response.success.status === 0) {
@@ -354,18 +361,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     $(document).on('click', '#btnChangeStatusGrupo', function () {
         let id = $(this).attr('data-grupo-id')
-        let url = $('#cambiarEstadoMunicipio').val()
+        let url = $('#cambiarEstadoTabla').val()
         let token = $('#token').val()
 
         $.ajax({
             url: url, type: 'POST', data: {
-                id: id, _token: token,
+                id: id, _token: token, table: 'tbl_grupos'
             }, success: function (response) {
                 let row = $('#grupos tbody tr[data-id="' + response.success.id + '"]')
                 if (response.success.status === 0) {
-                    row.find('td:nth-child(4) #btnChangeStatusMunicipio').removeClass('btn btn-danger btn-sm').addClass('btn btn-success btn-sm').text('Activar')
+                    console.log(row);
+                    row.find('td:nth-child(3) #btnChangeStatusGrupo').removeClass('btn btn-danger btn-sm').addClass('btn btn-success btn-sm').text('Activar')
                 } else {
-                    row.find('td:nth-child(4) #btnChangeStatusMunicipio').removeClass('btn btn-success btn-sm').addClass('btn btn-danger btn-sm').text('Desactivar')
+                    row.find('td:nth-child(3) #btnChangeStatusGrupo').removeClass('btn btn-success btn-sm').addClass('btn btn-danger btn-sm').text('Desactivar')
                 }
             }, error(xhr, status, error) {
                 alerta('error', 'Error', xhr.responseJSON.error);
@@ -482,27 +490,31 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     })
 
-    // ------------------------- Cambiar Estado SubGrupo -----------------------------
+
+// ------------------------- Cambiar Estado SubGrupo -----------------------------
+
 
     $(document).on('click', '#btnChangeStatusSubgrupo', function () {
         let id = $(this).attr('data-subgrupo-id')
-        let url = $('#cambiarEstadoMunicipio').val()
+        let url = $('#cambiarEstadoTabla').val()
+
         let token = $('#token').val()
 
         $.ajax({
             url: url, type: 'POST', data: {
-                id: id, _token: token,
+                id: id, _token: token, table:'tbl_subgrupos'
             }, success: function (response) {
                 let row = $('#subgrupos tbody tr[data-id="' + response.success.id + '"]')
                 if (response.success.status === 0) {
-                    row.find('td:nth-child(4) #btnChangeStatusMunicipio').removeClass('btn btn-danger btn-sm').addClass('btn btn-success btn-sm').text('Activar')
+                    row.find('td:nth-child(3) #btnChangeStatusSubgrupo').removeClass('btn btn-danger btn-sm').addClass('btn btn-success btn-sm').text('Activar')
                 } else {
-                    row.find('td:nth-child(4) #btnChangeStatusMunicipio').removeClass('btn btn-success btn-sm').addClass('btn btn-danger btn-sm').text('Desactivar')
+                    row.find('td:nth-child(3) #btnChangeStatusSubgrupo').removeClass('btn btn-success btn-sm').addClass('btn btn-danger btn-sm').text('Desactivar')
                 }
             }, error(xhr, status, error) {
                 alerta('error', 'Error', xhr.responseJSON.error);
             }
         })
+
     })
 
     // ------------------------- Jquey Crear Sedes --------------------------------
@@ -837,6 +849,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         })
     })
+
 });
 
 function alerta(tipo, encabezado, mensaje) {
