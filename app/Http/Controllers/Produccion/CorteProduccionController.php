@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Produccion;
+
 use App\Http\Controllers\Controller;
 use App\Models\Bitacoras\tbl_bitacoras_causal;
 use App\Models\Produccion\tbl_produccion_corte;
@@ -23,7 +24,7 @@ class CorteProduccionController extends Controller
         $zonas = tbl_produccion_zona::all();
         $causales = tbl_bitacoras_causal::all();
 
-        return view('corte.index', compact('cortes','sedes','zonas','causales'));
+        return view('corte.index', compact('cortes', 'sedes', 'zonas', 'causales'));
     }
 
 
@@ -32,13 +33,15 @@ class CorteProduccionController extends Controller
 
     public function storeCorte(Request $request)
     {
-        $validator = Validator::make($request->all(),[
+        $validator = Validator::make($request->all(), [
             'nombre' => 'required|string|max:255',
             'fecha_inicio' => ['required', 'date'],
             'fecha_fin' => ['required', 'date', 'after_or_equal:fecha_inicio'],
             'meta' => 'required|integer|max:250',
-            'dobles' => 'required|integer|max:50'
-        ],[
+            'dobles' => 'required|integer|max:50',
+
+
+        ], [
             'nombre.required' => 'Llene por favor el campo nombre',
             'nombre.string' => 'El nombre debe ser una cadena de texto válida',
             'nombre.max' => 'El nombre no debe superar los 255 caracteres',
@@ -63,59 +66,51 @@ class CorteProduccionController extends Controller
             return response()->json(['error' => $validator->errors()->first()], 422);
         }
 
-        $corte = new tbl_produccion_corte();
-        $corte->nombre = $request->nombre;
-        $corte->fecha_inicio = $request->fecha_inicio;
-        $corte->fecha_fin = $request->fecha_fin;
-        $corte->meta = $request->meta;
-        $corte->dobles = $request->dobles;
+        try {
+            DB::beginTransaction();
+            $corte = new tbl_produccion_corte();
+            $corte->nombre = $request->nombre;
+            $corte->fecha_inicio = $request->fecha_inicio;
+            $corte->fecha_fin = $request->fecha_fin;
+            $corte->meta = $request->meta;
+            $corte->dobles = $request->dobles;
 
-        $solapamiento = new SolapamientoCorte($corte);
+            //Validación de duplicados
+            $duplicado = tbl_produccion_corte::where(function ($query) use ($corte) {
+                $query->whereBetween('fecha_inicio', [$corte->fecha_inicio, $corte->fecha_fin])
+                    ->orWhereBetween('fecha_fin', [$corte->fecha_inicio, $corte->fecha_fin])
+                    ->orWhere(function ($q) use ($corte) {
+                        $q->where('fecha_inicio', '<', $corte->fecha_inicio)
+                            ->where('fecha_fin', '>', $corte->fecha_fin);
+                    });
+            })->where('id', '!=', $corte->id)->first();
 
-        if (!$solapamiento->passes(null, null)) {
-            $validator->errors()->add('fecha_inicio', 'El rango de fechas se solapa con otro existente.');
+            if ($duplicado) {
+                return response()->json(['error' => 'El rango de fechas se solapa con otro corte existente.'], 422);
+            }
+
+            // Validación de fechas
+            // $errores = [];
+
+
+            // Si hay errores, mostrarlos y no guardar el registro
+            if (!empty($errores)) {
+                return response()->json(['errors' => $errores]);
+                // o cualquier otra forma de manejar los errores que uses
+            }
+
+            $corte->save();
+
+            $historios = new tbl_produccion_historico();
+            $historios->id_corte = $corte->id;
+            $historios->save();
+            DB::commit();
+            return response()->json(['success' => $corte]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error($e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-        // Validación de fechas
-        // $errores = [];
-
-        // 1. Validar que fecha_inicio y fecha_fin no sean iguales
-        if ($corte->fecha_inicio === $corte->fecha_fin) {
-            return response()->json([
-                'status' => 'igual',
-                'message' => 'La fecha de inicio no puede ser igual a la fecha de fin.',
-            ]);
-        }
-
-        // 2. Validar que fecha_inicio nos sea mayor a fecha_fin
-        if ($corte->fecha_inicio > $corte->fecha_fin) {
-            return response()->json([
-                'status' => 'fechaMayor',
-                'message' => 'La fecha de inicio no puede ser mayor a la fecha de fin.',
-            ]);
-        }
-
-
-
-        if ($solapamiento) {
-            return response()->json([
-                'status' => 'solapamiento',
-                'message' => 'El rango de fechas se solapa con un corte existente. solapamiento: ' . $solapamiento->nombre .' '. $solapamiento->fecha_inicio . ' '. $solapamiento->fecha_fin,
-            ]);
-        }
-
-        // Si hay errores, mostrarlos y no guardar el registro
-        if (!empty($errores)) {
-          return response()->json(['errors' => $errores]);
-          // o cualquier otra forma de manejar los errores que uses
-        }
-
-        $corte->save();
-
-        $historios = new tbl_produccion_historico();
-        $historios->id_corte = $corte->id;
-        $historios->save();
-
-        return response()->json(['success' => $corte]);
     }
 
 
@@ -153,18 +148,18 @@ class CorteProduccionController extends Controller
 
         // 3. Validar que el rango de fechas no se solape con otro existente
         $solapamiento = tbl_produccion_corte::where(function ($query) use ($corte) {
-          $query->whereBetween('fecha_inicio', [$corte->fecha_inicio, $corte->fecha_fin])
+            $query->whereBetween('fecha_inicio', [$corte->fecha_inicio, $corte->fecha_fin])
                 ->orWhereBetween('fecha_fin', [$corte->fecha_inicio, $corte->fecha_fin])
                 ->orWhere(function ($q) use ($corte) {
-                  $q->where('fecha_inicio', '<', $corte->fecha_inicio)
-                    ->where('fecha_fin', '>', $corte->fecha_fin);
+                    $q->where('fecha_inicio', '<', $corte->fecha_inicio)
+                        ->where('fecha_fin', '>', $corte->fecha_fin);
                 });
         })->where('id', '!=', $corte->id)->first(); // Excluir el registro actual si está editando
 
         if ($solapamiento) {
             return response()->json([
                 'status' => 'error',
-                'message' => "El rango de fechas se solapa con un corte existente. solapamiento: " . $solapamiento->nombre ." ". $solapamiento->fecha_inicio . " ". $solapamiento->fecha_fin,
+                'message' => "El rango de fechas se solapa con un corte existente. solapamiento: " . $solapamiento->nombre . " " . $solapamiento->fecha_inicio . " " . $solapamiento->fecha_fin,
             ]);
         }
 
@@ -460,7 +455,6 @@ class CorteProduccionController extends Controller
     }
 
 
-
     public function editCausal($id)
     {
         try {
@@ -471,7 +465,6 @@ class CorteProduccionController extends Controller
         }
         return response()->json([$causal]);
     }
-
 
 
     public function updateCausal(Request $request, $id)
@@ -577,7 +570,6 @@ class CorteProduccionController extends Controller
             return response()->json(['error' => 'Error al cambiar el estado de la zona'], 500);
         }
     }
-
 
 
     public function changeStatusCausal(Request $request)

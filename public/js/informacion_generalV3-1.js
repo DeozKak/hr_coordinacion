@@ -80,13 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let dobles = $('#dobles').val();
         let token = $('#token').val();
 
-        if (nombre == '' || fecha_inicio == '' || fecha_fin == '' || meta == '' || dobles == '') {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Error al guardar',
-                text: 'Complete el campo vacío',
-            });
-        } else {
+
             $.ajax({
                 url: 'cortes_produccion/store/Corte',
                 type: 'POST',
@@ -99,33 +93,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     _token: token
                 },
                 success: function (response) {
-                    console.log(response)
-                    if (response.status == 'igual') {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Las fechas son iguales',
-                            text: response.message,
-                        });
-                    } else if (response.status == 'fechaMayor') {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'La fecha de incio es mayor',
-                            text: response.message,
-                        });
-                    } else if (response.status == 'solapamiento') {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Aviso',
-                            text: response.message,
-                        });
-                    } else {
+
                         $('#corteModal').modal('hide');
                         $('#nombreCorte').val('');
                         $('#fecha_inicio').val('');
                         $('#fecha_fin').val('');
                         $('#meta').val('');
                         $('#dobles').val('');
-                        console.log(response)
+
 
                         let nuevaFila = `
                             <tr data-id="${response.success.id}">
@@ -153,19 +128,19 @@ document.addEventListener('DOMContentLoaded', () => {
                             timer: 2000,
                             showConfirmButton: false
                         });
-                    }
+
                 },
-                error: function (xhr, status, error) {
+                error: function (xhr) {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error al guardar',
-                        text: 'Ocurrió un error, intente de nuevo.',
+                        text: xhr.responseJSON.error,
                     });
                     console.log(xhr.responseText);
                 }
 
             })
-        }
+
     })
 
 
