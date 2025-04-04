@@ -16,6 +16,21 @@
     <input type="hidden" id="token" value="{{ csrf_token() }}">
     <div class="row">
 
+        {{-- Tarjeta Sedes y Zonas --}}
+
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Sedes y Zonas</h3>
+                </div>
+                <div class="card-body text-left">
+                    <button class="btn btn-primary" data-toggle="modal" data-target="#extraCardsModal">
+                        Gestionar Sedes y Zonas
+                    </button>
+                </div>
+            </div>
+        </div>
+
         {{-- Tarjeta Municipios --}}
 
         <div class="col-md-6">
@@ -199,7 +214,7 @@
         </div>
     </div>
 
-
+    
     {{-- Contenedor de Barras de Búsqueda y Tabla --}}
 
     <div class="card mt-3">

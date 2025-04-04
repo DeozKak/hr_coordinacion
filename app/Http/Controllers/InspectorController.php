@@ -5,9 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\tbl_insp_cali;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class InspectorController extends Controller
 {
@@ -24,205 +21,156 @@ class InspectorController extends Controller
         return view('inspectores.index', compact('supervisores'));
     }
 
-
     public function store(Request $request, tbl_insp_cali $inspector)
     {
-        // Validar los datos enviados en la solicitud
-        $validator = Validator::make(
-            $request->all(),
-            [
-                'idCrear' => 'required|integer|unique:tbl_insp_cali,id',
-                'nombres' => 'required|string|max:50',
-                'apellidos' => 'required|string|max:50',
-                'type_id' => 'required|string|max:10',
-                'cedula' => 'required|string|max:20|unique:tbl_insp_cali,cedula',
-                'supervisor' => 'required|integer'
-            ],
-            [
-                // Mensajes de error personalizados
-                'required' => 'Por favor complete todos los campos',
-                'string' => 'Por favor solo ingresar texto',
-                'nombres.max' => 'El campo nombres tiene un límite de 50 caracteres',
-                'apellidos.max' => 'El campo apellidos tiene un límite de 50 caracteres',
-                'cedula.unique' => 'Este número de identificación ya está registrado',
-                'idCrear.unique' => 'El ID ingresado ya existe'
-            ]
-        );
+        $nombres = $request->input('nombres');
+        $apellidos = $request->input('apellidos');
+        $type_id = $request->input('type_id');
+        $cedula = $request->input('cedula');
+        $supervisor = $request->input('supervisor');
 
-        // Si la validación falla, se devuelve un error en formato JSON con código 422 (Unprocessable Entity)
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()->first()], 422);
-        }
-
-        try {
-
-            // Iniciar una transacción en la base de datos
-            DB::beginTransaction();
-
-            // Crear una nueva instancia del modelo tbl_insp_cali
-            $inspector->id = $request->input('idCrear');
-            $inspector->nombres = $request->input('nombres');
-            $inspector->apellidos = $request->input('apellidos');
-            $inspector->type_id = $request->input('type_id');
-            $inspector->cedula = $request->input('cedula');
-            $inspector->SUPERVISOR = $request->input('supervisor');
-            $inspector->state = 1;
-            $inspector->save();
-
-            // Obtener el último inspector creado con su relación de supervisor
-            $inspectorGuardar = tbl_insp_cali::with('supervisor')
-                ->where('state', 1)
-                ->orderBy('id', 'desc')
-                ->first();
-
-            // Confirmar la transacción si todo salió bien
-            DB::commit();
-
-            // Retornar una respuesta JSON con mensaje de éxito y los datos del inspector recién creado
+        if ($nombres == "" || $apellidos == "" || $type_id == "" || $cedula == "" || $supervisor == "") {
             return response()->json([
-                'success' => 'Inspector creado con exito',
-                'inspector' => $inspector->load('supervisor') // Cargar la relación con el supervisor
-            ], 200);
-        } catch (\Exception $e) { // Capturar cualquier error que ocurra en el proceso
-            // Si hay un error, revertir la transacción
-            DB::rollBack();
-            // Registrar el error en el log del sistema
-            Log::error($e->getMessage());
-            // Retornar un mensaje de error en formato JSON con código 500 (Internal Server Error)
-            return response()->json(['error' => $e->getMessage()], 500);
+                'status' => 'error',
+                'message' => 'Todos los campos son obligatorios'
+            ]);
+        } else {
+            $validarCedula = tbl_insp_cali::where("cedula", $cedula)->first();
+            if ($validarCedula != null) {
+                return response()->json([
+                    'status' => 'warning',
+                    'message' => 'La cédula ya existe'
+                ]);
+            } else {
+                $inspector->nombres = $nombres;
+                $inspector->apellidos = $apellidos;
+                $inspector->type_id = $type_id;
+                $inspector->cedula = $cedula;
+                $inspector->SUPERVISOR = $supervisor;
+                $inspector->state = 1;
+                $inspector->save();
+
+                $inspectorGuardar = tbl_insp_cali::with('supervisor')
+                        ->where('state', 1)
+                        ->orderBy('id', 'desc')
+                        ->first();
+
+                if ($inspector) {
+                    return response()->json([
+                        'status' => 'success',
+                        'inspector' => $inspectorGuardar,
+                        'message' => 'El inspector se registro con exito'
+                    ]);
+                } else {
+                    return response()->json([
+                        'status' => 'errorRegistro',
+                        'message' => 'Error al registrar el inspector'
+                    ]);
+                }
+            }
         }
     }
 
     public function update(Request $request)
     {
-        // Validar los datos enviados en la solicitud
-        $validator = Validator::make(
-            $request->all(),
-            [
-                'nombres' => 'required|string|max:50',
-                'apellidos' => 'required|string|max:50',
-                'supervisor' => 'required|integer',
-                'aprendiz' => 'nullable|integer'
-            ],
-            [
-                // Mensajes de error personalizados
-                'required' => 'Por favor complete todos los campos',
-                'string' => 'Por favor solo ingresar texto',
-                'nombres.max' => 'El campo nombres tiene un límite de 50 caracteres',
-                'apellidos.max' => 'El campo apellidos tiene un límite de 50 caracteres',
-            ]
-        );
+        $id = $request->input('id');
+        $nombre = $request->input('nombres');
+        $apellidos = $request->input('apellidos');
+        $supervisor = $request->input('supervisor');
+        $aprendiz = $request->input('aprendiz');
 
-        // Si la validación falla, se devuelve un error en formato JSON con código 422
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()->first()], 422);
-        }
-
-        try {
-            // Iniciar una transacción en la base de datos
-            DB::beginTransaction();
-
-            // Buscar el inspector por ID
-            $inspector = tbl_insp_cali::findOrFail($request->input('id'));
-
-            // Actualizar los valores
-            $inspector->nombres = $request->input('nombres');
-            $inspector->apellidos = $request->input('apellidos');
-            $inspector->SUPERVISOR = $request->input('supervisor');
-            $inspector->aprendiz = $request->input('aprendiz'); // Si no se envía, se deja como null
-            $inspector->save();
-
-            // Confirmar la transacción si todo salió bien
-            DB::commit();
-
-            // Retornar una respuesta JSON con mensaje de éxito y los datos actualizados
+        if ($nombre == "" || $apellidos == "") {
             return response()->json([
-                'success' => 'Inspector actualizado con éxito',
-                'inspector' => $inspector
-            ], 200);
-        } catch (\Exception $e) { // Capturar cualquier error
-            // Si hay un error, revertir la transacción
-            DB::rollBack();
-            // Registrar el error en el log del sistema
-            Log::error($e->getMessage());
-            // Retornar un mensaje de error en formato JSON con código 500
-            return response()->json(['error' => 'Error al actualizar el inspector: ' . $e->getMessage()], 500);
-        }
-    }
-
-
-    public function change_state($id)
-    {
-        try {
-            // Busca el inspector por su ID junto con su supervisor
-            $inspector = tbl_insp_cali::with('supervisor')->find($id);
-
-            // Si no se encuentra el inspector, devuelve un error
-            if (!$inspector) {
-                return response()->json(['error' => 'Inspector no encontrado'], 422);
-            }
-
-            // Cambia el estado del inspector (si está activo lo desactiva y viceversa)
-            $inspector->state = !$inspector->state;
-            $inspector->save();
-
-            // Retorna una respuesta JSON con el mensaje de éxito y el inspector actualizado
-            return response()->json([
-                'success' => 'Estado cambiado exitosamente',
-                'inspector' => $inspector
+                'status' => 'error',
+                'message' => 'Los nombres y apellidos son obligatorios'
             ]);
-        } catch (\Exception $e) {
-            // Captura cualquier error y devuelve una respuesta JSON con un mensaje de error
-            return response()->json(['error' => 'Error al cambiar el estado ' . $e->getMessage()], 500);
+            
+        } else {
+            $inspector = tbl_insp_cali::find($id);
+            $inspector->nombres = $nombre;
+            $inspector->apellidos = $apellidos;
+            $inspector->SUPERVISOR = $supervisor;
+            $inspector->aprendiz = $aprendiz;
+            $inspector->save();
+
+            if ($inspector) {
+                return response()->json([
+                    'status' => 'success',
+                    'inspector' => $inspector,
+                    'message' => 'Inspector actualizado con éxito.'
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Error al actualizar el inspector'
+                ], 500);
+            }
         }
     }
 
+    public function change_state(Request $request, $id)
+    {
+        $inspector = tbl_insp_cali::with('supervisor')
+                        ->find($id);
+
+        if($inspector->state === 1){
+            $inspector->state = 0;
+            $inspector->save();
+            if($inspector){
+                return response()->json([
+                    'status'=>'success',
+                    'inspector'=>$inspector
+                ]);
+            }else{
+                return response()->json([
+                    'status'=>'error',
+                ]);
+            }
+        }else{
+            $inspector->state = 1;
+            $inspector->save();
+            if($inspector){
+                return response()->json([
+                    'status'=>'success',
+                    'inspector'=>$inspector
+                ]);
+            }else{
+                return response()->json([
+                    'status'=>'error',
+                ]);
+            }
+        }
+    }
 
     public function show_disabled()
     {
-        try {
-            // Obtiene todos los inspectores desactivados (state = 0) incluyendo la relación con su supervisor
-            $inspectores = tbl_insp_cali::with("supervisor")->where('state', 0)->get();
-
-            // Retorna la lista de inspectores desactivados en formato JSON
-            return response()->json([
-                'inspectores' => $inspectores
-            ]);
-        } catch (\Exception $e) {
-            // Captura cualquier error y devuelve una respuesta JSON con un mensaje de error
-            return response()->json(['error' => 'Error al obtener los inspectores desactivados ' . $e->getMessage()], 500);
-        }
+        $inspectores = tbl_insp_cali::with("supervisor")
+                            ->where('state', 0)->get();
+        return response()->json([
+            'inspector' => $inspectores
+        ]);
     }
-
 
     public function getDataInspector(Request $request)
     {
-        try {
-            // Obtiene el ID del inspector desde la solicitud y lo convierte a entero
-            $id = intval($request->input('id'));
-            // Busca el inspector por su ID junto con su supervisor
-            $inspector = tbl_insp_cali::with('supervisor')->find($id);
+        $id = intVal($request->input('id'));
 
-            // Si no se encuentra el inspector, devuelve un error
-            if (!$inspector) {
-                return response()->json(['error' => 'Inspector no encontrado'], 422);
-            }
+        $inspectorData = tbl_insp_cali::where('id',  $id)->first();
 
-            // Retorna los datos del inspector en formato JSON
+        if ($inspectorData != null) {
+            $arrayInspector = [
+                'id' => $inspectorData->id,
+                'nombres' => $inspectorData->nombres,
+                'apellidos' => $inspectorData->apellidos,
+                'type_id' => $inspectorData->type_id,
+                'cedula' => $inspectorData->cedula,
+                'supervisor' => $inspectorData->SUPERVISOR,
+                'aprendiz' => $inspectorData->aprendiz
+            ];
+
             return response()->json([
-                'inspector' => [
-                    'id' => $inspector->id,
-                    'nombres' => $inspector->nombres,
-                    'apellidos' => $inspector->apellidos,
-                    'type_id' => $inspector->type_id,
-                    'cedula' => $inspector->cedula,
-                    'supervisor' => $inspector->SUPERVISOR,
-                    'aprendiz' => $inspector->aprendiz
-                ]
+                'inspector' => $arrayInspector
             ]);
-        } catch (\Exception $e) {
-            // Captura cualquier error y devuelve una respuesta JSON con un mensaje de error
-            return response()->json(['error' => 'Error al obtener los datos del inspector ' . $e->getMessage()], 500);
         }
     }
 }

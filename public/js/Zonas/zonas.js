@@ -1,7 +1,7 @@
 let tomSelectMunicipio;
 document.addEventListener('DOMContentLoaded', () => {
 
-    $('#municipios,#Barrios,#sedes,#grupos,#subgrupos').DataTable({
+    $('#municipios,#Barrios,#sedes,#zonas,#grupos,#subgrupos').DataTable({
         paging: false, scrollCollapse: true, scrollY: '230px', lengthChange: false, info: false, "language": {
             "lengthMenu": "Mostrar _MENU_ registros por página",
             "zeroRecords": "Nada encontrado - lo siento",
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
         $.ajax({
             url: 'zonas/store/Barrio',
             type: 'POST',
-            data: {barrio: barrio, _token: token},
+            data: { barrio: barrio, _token: token },
             success: function (response) {
                 $('#barrioModal').modal('hide');
 
@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#barrioModal').modal('show'); // Mostrar modal
 
         $.ajax({
-            url: `zonas/${id}/editBarrio`, type: 'GET', data: {_token: token}, success: function (response) {
+            url: `zonas/${id}/editBarrio`, type: 'GET', data: { _token: token }, success: function (response) {
                 $('#barrio').val(response[0].barrio);
 
             }, error: function (xhr) {
@@ -224,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
         $.ajax({
             url: `zonas/${id}/updateBarrio`,
             type: 'PUT',
-            data: {barrio: barrio, municipio: municipio, _token: token},
+            data: { barrio: barrio, municipio: municipio, _token: token },
             success: function (response) {
                 $('#barrioModal').modal('hide');
 
@@ -481,31 +481,363 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         })
     })
-});
 
-// ------------------------- Cambiar Estado SubGrupo -----------------------------
+    // ------------------------- Cambiar Estado SubGrupo -----------------------------
 
-$(document).on('click', '#btnChangeStatusSubgrupo', function () {
-    let id = $(this).attr('data-subgrupo-id')
-    let url = $('#cambiarEstadoMunicipio').val()
-    let token = $('#token').val()
+    $(document).on('click', '#btnChangeStatusSubgrupo', function () {
+        let id = $(this).attr('data-subgrupo-id')
+        let url = $('#cambiarEstadoMunicipio').val()
+        let token = $('#token').val()
 
-    $.ajax({
-        url: url, type: 'POST', data: {
-            id: id, _token: token,
-        }, success: function (response) {
-            let row = $('#subgrupos tbody tr[data-id="' + response.success.id + '"]')
-            if (response.success.status === 0) {
-                row.find('td:nth-child(4) #btnChangeStatusMunicipio').removeClass('btn btn-danger btn-sm').addClass('btn btn-success btn-sm').text('Activar')
-            } else {
-                row.find('td:nth-child(4) #btnChangeStatusMunicipio').removeClass('btn btn-success btn-sm').addClass('btn btn-danger btn-sm').text('Desactivar')
+        $.ajax({
+            url: url, type: 'POST', data: {
+                id: id, _token: token,
+            }, success: function (response) {
+                let row = $('#subgrupos tbody tr[data-id="' + response.success.id + '"]')
+                if (response.success.status === 0) {
+                    row.find('td:nth-child(4) #btnChangeStatusMunicipio').removeClass('btn btn-danger btn-sm').addClass('btn btn-success btn-sm').text('Activar')
+                } else {
+                    row.find('td:nth-child(4) #btnChangeStatusMunicipio').removeClass('btn btn-success btn-sm').addClass('btn btn-danger btn-sm').text('Desactivar')
+                }
+            }, error(xhr, status, error) {
+                alerta('error', 'Error', xhr.responseJSON.error);
             }
-        }, error(xhr, status, error) {
-            alerta('error', 'Error', xhr.responseJSON.error);
-        }
+        })
     })
-})
 
+    // ------------------------- Jquey Crear Sedes --------------------------------
+
+    $(document).on('click', '#btnCrearSede', function () {
+        $('#idGuardarSede').val('');  // Limpiar el campo de ID
+        $('#nombreSede').val('');     // Limpiar el campo de nombre
+        $('#crearSedeModalLabel').text('Crear Sede');  // Cambiar el título del modal
+        $('#crearSede').text('Crear Sede'); // Cambiar el texto del botón
+        $('#crearSede').removeClass('guardarCambiosSede').addClass('guardarNuevoSede');  // Cambiar la clase para detectar el modo
+        $('#sedeModal').modal('show');  // Mostrar el modal
+    });
+
+    // Enviar el formulario para crear una nueva sede
+    $(document).on('click', '.guardarNuevoSede', function () {
+        let nombre = $('#nombreSede').val().trim();
+        let token = $('#token').val();
+
+        $.ajax({
+            url: 'cortes_produccion/store/Sede',  // URL de la ruta para almacenar la sede
+            type: 'POST',
+            data: {
+                nombre: nombre,
+                _token: token,
+            },
+            success: function (response) {
+                console.log(response)
+
+                // Ocultar el modal y limpiar campos
+                $('#sedeModal').modal('hide');
+                $('#nombreSede').val('');
+
+                // Agregar la nueva sede a la tabla sin recargar la página
+                let nuevaFila = `
+                            <tr data-id="${response.sede.id}">
+                                <td>${response.sede.nombre}</td>
+                                <td>
+                                    <div style="display: flex; gap: 5px; justify-content: center;">
+                                        <button class="btn btn-info btn-sm abrirSedeModal" data-sede-id="${response.sede.id}">Editar</button>
+                                        <button class="btn btn-danger btn-sm" id="btnChangeStatusSede" data-sede-id="${response.sede.id}">Desactivar</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                $('#sedes tbody').append(nuevaFila);  // Agregar la nueva fila al cuerpo de la tabla
+
+                // Mostrar mensaje de éxito
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Éxito',
+                    text: response.success
+                });
+            },
+            error: function (xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: xhr.responseJSON.error
+                });
+            }
+        });
+    });
+
+
+    // ------------------------- Jquey Editar Sedes --------------------------------
+
+    $(document).on('click', '.abrirSedeModal', function () {
+        let id = $(this).attr('data-sede-id')
+        $('#idGuardarSede').val(id)
+        $('#crearSedeModalLabel').text('Editar sede')
+        $('#crearSede').text('Guardar cambios')
+        let token = $('#token').val();
+        $('#crearSede').removeClass('guardarNuevoSede').addClass('guardarCambiosSede');
+        let modalSede = $('#sedeModal')
+        modalSede.modal('show')
+
+        $.ajax({
+            url: 'cortes_producction/' + id + '/editSede',
+            type: 'GET',
+            data: {
+                _token: token,
+            }, success: function (response) {
+                $('#nombreSede').val(response[0].nombre)
+            },
+            error: function (xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: xhr.responseJSON.error
+                });
+            }
+        })
+    })
+
+    // ------------------------- Guardar Cambios en Sede ------------------------------
+
+    $(document).on('click', '.guardarCambiosSede', function () {
+        let id = $('#idGuardarSede').val()
+        let nombre = $('#nombreSede').val().trim()
+        let token = $('#token').val()
+
+        $.ajax({
+            url: 'cortes_produccion/' + id + '/updateSede',
+            type: 'PUT',
+            data: {
+                nombre: nombre,
+                _token: token,
+            },
+            success: function (response) {
+                console.log(response)
+                let modalSede = $('#sedeModal')
+                modalSede.modal('hide')
+
+                let row = $('#sedes tbody tr[data-id="' + response.sede.id + '"]')
+                row.find('td:nth-child(1)').text(response.sede.nombre)
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Éxito',
+                    text: response.success
+                });
+            },
+            error: function (xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: xhr.responseJSON.error
+                });
+            }
+        })
+    })
+
+    // ------------------------- Cambiar Estado Sedes -----------------------------
+
+    $(document).on('click', '#btnChangeStatusSede', function () {
+        let id = $(this).attr('data-sede-id')
+        let url = $('#cambiarEstadoSede').val()
+        let token = $('#token').val()
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: {
+                id: id,
+                _token: token,
+            }, success: function (response) {
+                let row = $('#sedes tbody tr[data-id="' + response.sede.id + '"]')
+                // let btn = row.find('td:nth-child(2) #btnChangeStatusSede');
+
+                if (response.sede.status == 0) {
+                    row.find('td:nth-child(2) #btnChangeStatusSede').removeClass('btn btn-danger btn-sm').addClass('btn btn-success btn-sm').text('Activar')
+                } else {
+                    row.find('td:nth-child(2) #btnChangeStatusSede').removeClass('btn btn-success btn-sm').addClass('btn btn-danger btn-sm').text('Desactivar')
+                }
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Éxito',
+                    text: response.success,
+                });
+            },
+            error: function (xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: xhr.responseJSON.error
+                });
+            }
+        })
+    })
+
+    // ------------------------- Jquey Crear Zonas --------------------------------
+
+    $(document).on('click', '#btnCrearZona', function () {
+        $('#idGuardarZona').val('');  // Limpiar el campo de ID
+        $('#nombreZona').val('');     // Limpiar el campo de nombre
+        $('#crearZonaModalLabel').text('Crear Zona');  // Cambiar el título del modal
+        $('#crearZona').text('Crear Zona'); // Cambiar el texto del botón
+        $('#crearZona').removeClass('guardarCambiosZona').addClass('guardarNuevoZona');  // Cambiar la clase para detectar el modo
+        $('#zonaModal').modal('show');  // Mostrar el modal
+    });
+
+    // Enviar el formulario para crear una nueva zona
+    $(document).on('click', '.guardarNuevoZona', function () {
+        let nombre = $('#nombreZona').val().trim();
+        let token = $('#token').val();
+
+        $.ajax({
+            url: 'cortes_produccion/store/Zona',  // URL de la ruta para almacenar la zona
+            type: 'POST',
+            data: {
+                nombre: nombre,
+                _token: token,
+            },
+            success: function (response) {
+                console.log(response)
+
+                // Ocultar el modal y limpiar campos
+                $('#zonaModal').modal('hide');
+                $('#nombreZona').val('');
+
+                // Agregar la nueva zona a la tabla sin recargar la página
+                let nuevaFila = `
+                            <tr data-id="${response.zona.id}">
+                                <td>${response.zona.nombre}</td>
+                                <td>
+                                    <div style="display: flex; gap: 5px; justify-content: center;">
+                                        <button class="btn btn-info btn-sm abrirZonaModal" data-zona-id="${response.zona.id}">Editar</button>
+                                        <button class="btn btn-danger btn-sm" id="btnChangeStatusZona" data-zona-id="${response.zona.id}">Desactivar</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                $('#zonas tbody').append(nuevaFila);  // Agregar la nueva fila al cuerpo de la tabla
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Éxito',
+                    text: response.success,
+                });
+            },
+            error: function (xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: xhr.responseJSON.error
+                });
+            }
+        });
+    });
+
+
+    // ------------------------- Jquey Editar Zonas --------------------------------
+
+    $(document).on('click', '.abrirZonaModal', function () {
+        let id = $(this).attr('data-zona-id')
+        $('#idGuardarZona').val(id)
+        $('#crearZonaModalLabel').text('Editar zona')
+        $('#crearZona').text('Guardar cambios')
+        let token = $('#token').val();
+        $('#crearZona').removeClass('guardarNuevoZona').addClass('guardarCambiosZona')
+        let modalZona = $('#zonaModal')
+        modalZona.modal()
+
+        $.ajax({
+            url: 'cortes_producction/' + id + '/editZona',
+            type: 'GET',
+            data: {
+                _token: token,
+            }, success: function (response) {
+                $('#nombreZona').val(response[0].nombre)
+            },
+            error: function (xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: xhr.responseJSON.error
+                });
+            }
+        })
+    })
+
+    // ------------------------- Guardar Cambios en Zona ------------------------------
+
+    $(document).on('click', '.guardarCambiosZona', function () {
+        let id = $('#idGuardarZona').val()
+        let nombre = $('#nombreZona').val().trim()
+        let token = $('#token').val()
+
+        $.ajax({
+            url: 'cortes_produccion/' + id + '/updateZona',
+            type: 'PUT',
+            data: {
+                nombre: nombre,
+                _token: token,
+            },
+            success: function (response) {
+                console.log(response)
+                let modalZona = $('#zonaModal')
+                modalZona.modal('hide')
+
+                let row = $('#zonas tbody tr[data-id="' + response.zona.id + '"]')
+                row.find('td:nth-child(1)').text(response.zona.nombre)
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Éxito',
+                    text: response.success
+                });
+            },
+            error: function (xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: xhr.responseJSON.error
+                });
+            }
+        })
+    })
+
+
+    // ------------------------- Jquey Cambiar Estado Zona --------------------------------
+
+    $(document).on('click', '#btnChangeStatusZona', function () {
+        let id = $(this).attr('data-zona-id')
+        let url = $('#cambiarEstadoZona').val()
+        let token = $('#token').val()
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: {
+                id: id,
+                _token: token,
+            }, success: function (response) {
+                let row = $('#zonas tbody tr[data-id="' + response.zona.id + '"]')
+
+                if (response.zona.status == 0) {
+                    row.find('td:nth-child(2) #btnChangeStatusZona').removeClass('btn btn-danger btn-sm').addClass('btn btn-success btn-sm').text('Activar')
+                } else {
+                    row.find('td:nth-child(2) #btnChangeStatusZona').removeClass('btn btn-success btn-sm').addClass('btn btn-danger btn-sm').text('Desactivar')
+                }
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Éxito',
+                    text: response.success,
+                });
+            },
+            error: function (xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: xhr.responseJSON.error
+                });
+            }
+        })
+    })
+});
 
 function alerta(tipo, encabezado, mensaje) {
     Swal.fire({
