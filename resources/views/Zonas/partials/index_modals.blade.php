@@ -142,8 +142,8 @@
     </div>
 </div>
 
-
 {{-- Modal de asignacion de grupos --}}
+
 <div class="modal fade" id="AsignadorModal" aria-labelledby="asignadorModalLabel" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -173,3 +173,157 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para Sedes y Zonas -->
+
+<div class="modal fade" id="extraCardsModal" tabindex="-1" role="dialog" aria-labelledby="extraCardsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="extraCardsModalLabel">Gestionar Sedes y Zonas</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+
+                    <!-- Tarjeta Sedes -->
+
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Sedes</h3>
+                            </div>
+                            <div class="card-body">
+                                <a class="btn btn-primary mb-2" id="btnCrearSede" data-toggle="modal" data-target="#sedeModal">Crear Sede</a>
+                                <table class="table table-striped" id="sedes">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th class="text-center">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($sedes as $sede)
+                                        <tr data-id="{{$sede->id}}">
+                                            <td>{{ $sede->nombre }}</td>
+                                            <td>
+                                                <div style="display: flex; gap: 5px; justify-content: center;">
+                                                    <button class="btn btn-info btn-sm abrirSedeModal" data-sede-id="{{ $sede->id }}">Editar</button>
+                                                    @if ($sede->status == 1)
+                                                        <button class="btn btn-danger btn-sm" id="btnChangeStatusSede" data-sede-id="{{ $sede->id }}">Desactivar</button>
+                                                    @else
+                                                        <button class="btn btn-success btn-sm" id="btnChangeStatusSede" data-sede-id="{{ $sede->id }}">Activar</button>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                                <input type="hidden" id="cambiarEstadoSede" value="{{route('cortes_produccion.changeStatusSede')}}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tarjeta Zonas -->
+
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Zonas</h3>
+                            </div>
+                            <div class="card-body">
+                                <a class="btn btn-primary mb-2" id="btnCrearZona" data-toggle="modal" data-target="#zonaModal">Crear Zona</a>
+                                <table class="table table-striped" id="zonas">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th class="text-center">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($zonas as $zona)
+                                        <tr data-id="{{$zona->id}}">
+                                            <td>{{ $zona->nombre }}</td>
+                                            <td>
+                                                <div style="display: flex; gap: 5px; justify-content: center;">
+                                                    <button class="btn btn-info btn-sm abrirZonaModal" data-zona-id="{{ $zona->id }}">Editar</button>
+                                                    @if ($zona->status == 1)
+                                                        <button class="btn btn-danger btn-sm" id="btnChangeStatusZona" data-zona-id="{{ $zona->id }}">Desactivar</button>
+                                                    @else
+                                                        <button class="btn btn-success btn-sm" id="btnChangeStatusZona" data-zona-id="{{ $zona->id }}">Activar</button>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                                <input type="hidden" id="cambiarEstadoZona" value="{{route('cortes_produccion.changeStatusZona')}}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modales de Crear Sede y Crear Zona -->
+<div>
+
+    {{-- Modal para crear Sede --}}
+
+    <div class="modal fade" id="sedeModal" tabindex="-1" role="dialog" aria-labelledby="crearSedeModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="crearSedeModalLabel">Ingresar Sede</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nombreSede">Nombre</label>
+                        <input type="text" class="form-control" id="nombreSede">
+                        <input type="hidden" id="idGuardarSede">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" id="crearSede" class="btn btn-primary">Crear Sede</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal para crear Zona --}}
+
+    <div class="modal fade" id="zonaModal" tabindex="-1" role="dialog" aria-labelledby="crearZonaModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="crearZonaModalLabel">Ingresar Zona</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nombreZona">Nombre</label>
+                        <input type="text" class="form-control" id="nombreZona">
+                        <input type="hidden" id="idGuardarZona">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" id="crearZona" class="btn btn-primary">Crear Zona</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

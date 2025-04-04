@@ -1,11 +1,12 @@
 
 
 document.addEventListener('DOMContentLoaded', () => {
-    $('#cortes, #sedes, #zonas, #causal').DataTable({
+    $('#cortes, #causal').DataTable({
         paging: false,
         scrollCollapse: true,
         scrollY: '230px',
         lengthChange: false,
+        order: [[1, 'desc']],
         "language": {
             "lengthMenu": "Mostrar _MENU_ registros por página",
             "zeroRecords": "Nada encontrado - lo siento",
@@ -56,9 +57,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     });
 
-    // ------------------------- Jquey Crear Cortes --------------------------------
+    // ------------------------- JQuery Crear Cortes --------------------------------
 
-    $(document).on('click', '#btnCrearCorte', function(){
+    $(document).on('click', '#btnCrearCorte', function () {
         $('#idGuardarCorte').val('');  // Limpiar el campo de ID
         $('#nombreCorte').val('');     // Limpiar el campo de nombre
         $('#fecha_inicio').val('');
@@ -71,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#corteModal').modal('show');  // Mostrar el modal
     });
 
-    $(document).on('click', '.guardarNuevoCorte', function(){
+    $(document).on('click', '.guardarNuevoCorte', function () {
         let nombre = $('#nombreCorte').val().trim();
         let fecha_inicio = $('#fecha_inicio').val();
         let fecha_fin = $('#fecha_fin').val();
@@ -85,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 title: 'Error al guardar',
                 text: 'Complete el campo vacío',
             });
-        }else{
+        } else {
             $.ajax({
                 url: 'cortes_produccion/store/Corte',
                 type: 'POST',
@@ -97,27 +98,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     dobles: dobles,
                     _token: token
                 },
-                success:function(response){
+                success: function (response) {
                     console.log(response)
-                    if(response.status== 'igual'){
+                    if (response.status == 'igual') {
                         Swal.fire({
                             icon: 'warning',
                             title: 'Las fechas son iguales',
                             text: response.message,
                         });
-                    }else if(response.status== 'fechaMayor'){
+                    } else if (response.status == 'fechaMayor') {
                         Swal.fire({
                             icon: 'warning',
                             title: 'La fecha de incio es mayor',
                             text: response.message,
                         });
-                    }else if(response.status== 'solapamiento'){
+                    } else if (response.status == 'solapamiento') {
                         Swal.fire({
                             icon: 'warning',
                             title: 'Aviso',
                             text: response.message,
                         });
-                    }else{
+                    } else {
                         $('#corteModal').modal('hide');
                         $('#nombreCorte').val('');
                         $('#fecha_inicio').val('');
@@ -154,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                     }
                 },
-                error: function(xhr, status, error) {
+                error: function (xhr, status, error) {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error al guardar',
@@ -168,9 +169,9 @@ document.addEventListener('DOMContentLoaded', () => {
     })
 
 
-    // ------------------------- Jquey Editar Cortes --------------------------------
+    // ------------------------- JQuery Editar Cortes --------------------------------
 
-    $(document).on('click', '.abrirCorteModal', function(){
+    $(document).on('click', '.abrirCorteModal', function () {
         let id = $(this).attr('data-corte-id');
         $('#idGuardarCorte').val(id);
         $('#crearCorteModalLabel').text('Editar Corte');
@@ -186,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
             data: {
                 _token: token,
             },
-            success: function(response) {
+            success: function (response) {
                 $('#nombreCorte').val(response[0].nombre);
                 $('#fecha_inicio').val(response[0].fecha_inicio);
                 $('#fecha_fin').val(response[0].fecha_fin);
@@ -197,7 +198,9 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     })
 
-    $(document).on('click', '.guardarCambiosCorte', function(){
+    // ------------------------- Guardar Cambios en Cortes ------------------------------
+
+    $(document).on('click', '.guardarCambiosCorte', function () {
         let id = $('#idGuardarCorte').val();
         let nombre = $('#nombreCorte').val().trim();
         let fecha_inicio = $('#fecha_inicio').val();
@@ -212,42 +215,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 title: 'Error al guardar',
                 text: 'Complete el campo vacío',
             });
-        }else{
+        } else {
             $.ajax({
                 url: 'cortes_produccion/' + id + '/updateCorte',
                 type: 'PUT',
                 data: {
-                    nombre:nombre,
-                    fecha_inicio:fecha_inicio,
-                    fecha_fin:fecha_fin,
-                    meta:meta,
-                    dobles:dobles,
-                    _token:token,
+                    nombre: nombre,
+                    fecha_inicio: fecha_inicio,
+                    fecha_fin: fecha_fin,
+                    meta: meta,
+                    dobles: dobles,
+                    _token: token,
                 },
-                success:function(response){
+                success: function (response) {
                     console.log(response)
-                    if(response.status=='error'){
+                    if (response.status == 'error') {
                         Swal.fire({
                             icon: 'warning',
                             title: 'Error',
                             text: response.message
                         });
-                    }else if(response.status== 'fechaMayor'){
+                    } else if (response.status == 'fechaMayor') {
                         Swal.fire({
                             icon: 'warning',
                             title: 'La fecha de incio es mayor',
                             text: response.message,
                         });
-                    }else if(response.status=='fechas_iguales'){
+                    } else if (response.status == 'fechas_iguales') {
                         Swal.fire({
                             icon: 'warning',
                             title: 'Error',
                             text: response.message
                         });
-                    }else{
+                    } else {
                         let modalMunicipio = $('#corteModal')
                         modalMunicipio.modal('hide')
-                        let row = $('#cortes tbody tr[data-id="'+response.success.id+'"]')
+                        let row = $('#cortes tbody tr[data-id="' + response.success.id + '"]')
                         row.find('td:nth-child(1)').text(response.success.nombre)
                         row.find('td:nth-child(2)').text(response.success.fecha_inicio)
                         row.find('td:nth-child(3)').text(response.success.fecha_fin)
@@ -266,349 +269,10 @@ document.addEventListener('DOMContentLoaded', () => {
     })
 
 
-
-    // ------------------------- Jquey Crear Sedes --------------------------------
-
-    // Abrir el modal en modo creación
-    $(document).on('click', '#btnCrearSede', function(){
-        $('#idGuardarSede').val('');  // Limpiar el campo de ID
-        $('#nombreSede').val('');     // Limpiar el campo de nombre
-        $('#crearSedeModalLabel').text('Crear Sede');  // Cambiar el título del modal
-        $('#crearSede').text('Crear Sede'); // Cambiar el texto del botón
-        $('#crearSede').removeClass('guardarCambiosSede').addClass('guardarNuevoSede');  // Cambiar la clase para detectar el modo
-        $('#sedeModal').modal('show');  // Mostrar el modal
-    });
-
-    // Enviar el formulario para crear una nueva sede
-    $(document).on('click', '.guardarNuevoSede', function(){
-        let nombre = $('#nombreSede').val().trim();
-        let token = $('#token').val();
-
-        if (nombre == '') {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Error al guardar',
-                text: 'Complete el campo vacío',
-            });
-        } else {
-            $.ajax({
-                url: 'cortes_produccion/store/Sede',  // URL de la ruta para almacenar la sede
-                type: 'POST',
-                data: {
-                    nombre: nombre,
-                    _token: token,
-                },
-                success: function(response) {
-                    console.log(response)
-                    if(response.status== 'exist'){
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Sede duplicado',
-                            text: response.message,
-                        })
-                    }else{
-                        // Ocultar el modal y limpiar campos
-                        $('#sedeModal').modal('hide');
-                        $('#nombreSede').val('');
-                        console.log()
-
-                        // Agregar la nueva sede a la tabla sin recargar la página
-                        let nuevaFila = `
-                            <tr data-id="${response.success.id}">
-                                <td>${response.success.nombre}</td>
-                                <td>
-                                    <div style="display: flex; gap: 5px; justify-content: center;">
-                                        <button class="btn btn-info btn-sm abrirSedeModal" data-sede-id="${response.success.id}">Editar</button>
-                                        <button class="btn btn-danger btn-sm" id="btnChangeStatusSede" data-sede-id="${response.success.id}">Desactivar</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        `;
-                        $('#sedes tbody').append(nuevaFila);  // Agregar la nueva fila al cuerpo de la tabla
-
-                        // Mostrar mensaje de éxito
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Éxito',
-                            text: 'La sede se ha creado correctamente.',
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
-                    }
-                },
-                error: function(xhr, status, error) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error al guardar',
-                        text: 'Ocurrió un error, intente de nuevo.',
-                    });
-                    console.log(xhr.responseText);
-                }
-            });
-        }
-    });
-
-
-    // ------------------------- Jquey Editar Sedes --------------------------------
-
-    $(document).on('click', '.abrirSedeModal', function(){
-        let id = $(this).attr('data-sede-id')
-        $('#idGuardarSede').val(id)
-        $('#crearSedeModalLabel').text('Editar sede')
-        $('#crearSede').text('Guardar cambios')
-        $('#crearSede').removeClass('guardarNuevo').addClass('guardarCambios');
-        let modalSede = $('#sedeModal')
-        modalSede.modal()
-
-        $.ajax({
-            url: 'cortes_producction/' + id + '/editSede',
-            type: 'GET',
-            success:function (response){
-                $('#nombreSede').val(response[0].nombre)
-            }
-        })
-    })
-
-    $(document).on('click', '.guardarCambios', function(){
-        let nombre = $('#nombreSede').val().trim()
-        let id = $('#idGuardarSede').val()
-        let token = $('#token').val()
-
-        if(nombre == '' ){
-            Swal.fire({
-                type: 'warning',
-                title: 'Error al guardar',
-                text: 'Complete el campo vacio',
-            });
-        }else{
-            $.ajax({
-                url:'cortes_produccion/' + id + '/updateSede',
-                type: 'PUT',
-                data: {
-                    nombre:nombre,
-                    _token:token,
-                },
-                success:function(response){
-                    console.log(response)
-                    if(response.status == 'exist'){
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Sede duplicada',
-                            text: response.message,
-                        })
-                    }else{
-                        let modalSede = $('#sedeModal')
-                        modalSede.modal('hide')
-                        let row = $('#sedes tbody tr[data-id="'+response.success.id+'"]')
-                        row.find('td:nth-child(1)').text(response.success.nombre)
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Exito al guardar',
-                            text: 'La sede se actualizó con éxito',
-                        });
-                    }
-                }
-            })
-        }
-    })
-
-    // ------------------------- Camabiar Estado Sedes -----------------------------
-
-    $(document).on('click', '#btnChangeStatusSede', function(){
-        let id = $(this).attr('data-sede-id')
-        let url = $('#cambiarEstadoSede').val()
-        let token = $('#token').val()
-
-        $.ajax({
-            url: url,
-            type: 'POST',
-            data: {
-                id: id,
-                _token:token,
-            },success:function(response){
-                let row = $('#sedes tbody tr[data-id="'+response.success.id+'"]')
-                if(response.success.status == 0){
-                    row.find('td:nth-child(2) #btnChangeStatusSede').removeClass('btn btn-danger btn-sm').addClass('btn btn-success btn-sm').text('Activar')
-                }else{
-                    row.find('td:nth-child(2) #btnChangeStatusSede').removeClass('btn btn-success btn-sm').addClass('btn btn-danger btn-sm').text('Desactivar')
-                }
-            }
-        })
-    })
-
-    // ------------------------- Jquey Crear Zonas --------------------------------
+    // ------------------------- JQuery Crear Causal --------------------------------
 
     // Abrir el modal en modo creación
-    $(document).on('click', '#btnCrearZona', function(){
-        $('#idGuardarZona').val('');  // Limpiar el campo de ID
-        $('#nombreZona').val('');     // Limpiar el campo de nombre
-        $('#crearZonaModalLabel').text('Crear Zona');  // Cambiar el título del modal
-        $('#crearZona').text('Crear Zona'); // Cambiar el texto del botón
-        $('#crearZona').removeClass('guardarCambiosZona').addClass('guardarNuevoZona');  // Cambiar la clase para detectar el modo
-        $('#zonaModal').modal('show');  // Mostrar el modal
-    });
-
-    // Enviar el formulario para crear una nueva zona
-    $(document).on('click', '.guardarNuevoZona', function(){
-        let nombre = $('#nombreZona').val().trim();
-        let token = $('#token').val();
-
-        if (nombre == '') {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Error al guardar',
-                text: 'Complete el campo vacío',
-            });
-        } else {
-            $.ajax({
-                url: 'cortes_produccion/store/Zona',  // URL de la ruta para almacenar la zona
-                type: 'POST',
-                data: {
-                    nombre: nombre,
-                    _token: token,
-                },
-                success: function(response) {
-                    console.log(response)
-                    if(response.status== 'exist'){
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Zona duplicado',
-                            text: response.message,
-                        })
-                    }else{
-                        // Ocultar el modal y limpiar campos
-                        $('#zonaModal').modal('hide');
-                        $('#nombreZona').val('');
-
-                        // Agregar la nueva sede a la tabla sin recargar la página
-                        let nuevaFila = `
-                            <tr data-id="${response.success.id}">
-                                <td>${response.success.nombre}</td>
-                                <td>
-                                    <div style="display: flex; gap: 5px; justify-content: center;">
-                                        <button class="btn btn-info btn-sm abrirZonaModal" data-zona-id="${response.success.id}">Editar</button>
-                                        <button class="btn btn-danger btn-sm" id="btnChangeStatusZona" data-zona-id="${response.success.id}">Desactivar</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        `;
-                        $('#zonas tbody').append(nuevaFila);  // Agregar la nueva fila al cuerpo de la tabla
-
-                        // Mostrar mensaje de éxito
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Éxito',
-                            text: 'La zona se ha creado correctamente.',
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
-                    }
-                },
-                error: function(xhr, status, error) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error al guardar',
-                        text: 'Ocurrió un error, intente de nuevo.',
-                    });
-                    console.log(xhr.responseText);
-                }
-            });
-        }
-    });
-
-
-    // ------------------------- Jquey Editar Zonas --------------------------------
-
-    $(document).on('click', '.abrirZonaModal', function(){
-        let id = $(this).attr('data-zona-id')
-        $('#idGuardarZona').val(id)
-        $('#crearZonaModalLabel').text('Editar zona')
-        $('#crearZona').text('Guardar cambios')
-        $('#crearZona').addClass('guardarCambiosZona')
-        let modalZona = $('#zonaModal')
-        modalZona.modal()
-
-        $.ajax({
-            url: 'cortes_producction/' + id + '/editZona',
-            type: 'GET',
-            success:function(response){
-                $('#nombreZona').val(response[0].nombre)
-            }
-        })
-    })
-
-    $(document).on('click', '.guardarCambiosZona', function(){
-        let nombre = $('#nombreZona').val().trim()
-        let id = $('#idGuardarZona').val()
-        let token = $('#token').val()
-
-        if(nombre == ''){
-            Swal.fire({
-                type: 'warning',
-                title: 'Error al guardar',
-                text: 'Complete el campo vacio',
-            });
-        }else{
-            $.ajax({
-                url:'cortes_produccion/' + id + '/updateZona',
-                type: 'PUT',
-                data: {
-                    nombre:nombre,
-                    _token:token,
-                },
-                success:function(response){
-                    console.log(response)
-                    if(response.status == 'exist'){
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Zona duplicada',
-                            text: response.message,
-                        })
-                    }else{
-                        let modalZona = $('#zonaModal')
-                        modalZona.modal('hide')
-                        let row = $('#zonas tbody tr[data-id="'+response.success.id+'"]')
-                        row.find('td:nth-child(1)').text(response.success.nombre)
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Exito al guardar',
-                            text: 'La zona se actualizó con éxito',
-                        });
-                    }
-                }
-            })
-        }
-    })
-
-
-    // ------------------------- Jquey Cambiar Estado Zona --------------------------------
-
-    $(document).on('click', '#btnChangeStatusZona', function(){
-        let id = $(this).attr('data-zona-id')
-        let url = $('#cambiarEstadoZona').val()
-        let token = $('#token').val()
-
-        $.ajax({
-            url: url,
-            type: 'POST',
-            data: {
-                id: id,
-                _token:token,
-            },success:function(response){
-                let row = $('#zonas tbody tr[data-id="'+response.success.id+'"]')
-                if(response.success.status == 0){
-                    row.find('td:nth-child(2) #btnChangeStatusZona').removeClass('btn btn-danger btn-sm').addClass('btn btn-success btn-sm').text('Activar')
-                }else{
-                    row.find('td:nth-child(2) #btnChangeStatusZona').removeClass('btn btn-success btn-sm').addClass('btn btn-danger btn-sm').text('Desactivar')
-                }
-            }
-        })
-    })
-
-    // ------------------------- Jquey Crear Causal --------------------------------
-
-    // Abrir el modal en modo creación
-    $(document).on('click', '#btnCrearCausal', function(){
+    $(document).on('click', '#btnCrearCausal', function () {
         $('#idGuardarCausal').val('');  // Limpiar el campo de ID
         $('#nombreCausal').val('');     // Limpiar el campo de nombre
         $('#crearCausalModalLabel').text('Crear Causal');  // Cambiar el título del modal
@@ -618,168 +282,173 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Enviar el formulario para crear una nueva causal
-    $(document).on('click', '.guardarNuevoCausal', function(){
+    $(document).on('click', '.guardarNuevoCausal', function () {
         let nom_causal = $('#nombreCausal').val().trim();
         let token = $('#token').val();
 
-        if (nom_causal == '') {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Error al guardar',
-                text: 'Complete el campo vacío',
-            });
-        } else {
-            $.ajax({
-                url: 'cortes_produccion/store/Causal',  // URL de la ruta para almacenar la causal
-                type: 'POST',
-                data: {
-                    nom_causal: nom_causal,
-                    _token: token,
-                },
-                success: function(response) {
-                    console.log(response)
-                    if(response.status== 'exist'){
+        $.ajax({
+            url: 'cortes_produccion/store/Causal',  // URL de la ruta para almacenar la causal
+            type: 'POST',
+            data: {
+                nom_causal: nom_causal,
+                _token: token,
+            },
+            success: function (response) {
+                console.log(response)
+                // Ocultar el modal y limpiar campos
+                $('#causalModal').modal('hide');
+                $('#nombreCausal').val('');
 
+                // Agregar la nueva sede a la tabla sin recargar la página
+                let nuevaFila = `
+                    <tr data-id="${response.causal.id}">
+                        <td>${response.causal.nom_causal}</td>
+                        <td>
+                            <div style="display: flex; gap: 5px; justify-content: center;">
+                                <button class="btn btn-info btn-sm abrirCausalModal" data-causal-id="${response.causal.id}">Editar</button>
+                                <button class="btn btn-danger btn-sm" id="btnChangeStatusCausal" data-causal-id="${response.causal.id}">Desactivar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                $('#causal tbody').append(nuevaFila);  // Agregar la nueva fila al cuerpo de la tabla
 
-                    }else{
-                        // Ocultar el modal y limpiar campos
-                        $('#causalModal').modal('hide');
-                        $('#nombreCausal').val('');
-                        console.log(response)
-
-                        // Agregar la nueva sede a la tabla sin recargar la página
-                        let nuevaFila = `
-                            <tr data-id="${response.success.id}">
-                                <td>${response.success.nom_causal}</td>
-                                <td>
-                                    <div style="display: flex; gap: 5px; justify-content: center;">
-                                        <button class="btn btn-info btn-sm abrirCausalModal" data-causal-id="${response.success.id}">Editar</button>
-                                        <button class="btn btn-danger btn-sm" id="btnChangeStatusCausal" data-causal-id="${response.success.id}">Desactivar</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        `;
-                        $('#causal tbody').append(nuevaFila);  // Agregar la nueva fila al cuerpo de la tabla
-
-                        // Mostrar mensaje de éxito
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Éxito',
-                            text: 'El causal se ha creado correctamente.',
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
-                    }
-
-                },
-                error: function(xhr, status, error) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error al guardar',
-                        text: 'Ocurrió un error, intente de nuevo.',
-                    });
-                    console.log(xhr.responseText);
-                }
-            });
-        }
+                // Mostrar mensaje de éxito
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Éxito',
+                    text: response.success
+                });
+            },
+            error: function (xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: xhr.responseJSON.error
+                });
+            }
+        });
     });
 
-    // ------------------------- Jquey Editar Causal --------------------------------
+    // ------------------------- JQuery Editar Causal --------------------------------
 
-    $(document).on('click', '.abrirCausalModal', function(){
+    $(document).on('click', '.abrirCausalModal', function () {
         let id = $(this).attr('data-causal-id')
         $('#idGuardarCausal').val(id)
         $('#crearCausalModalLabel').text('Editar causal')
         $('#crearCausal').text('Guardar cambios')
-        $('#crearCausal').addClass('guardarCambiosCausal')
-        let modalCausal = $('#causalModal')
-        modalCausal.modal()
+        $('#crearCausal').removeClass('guardarNuevoCausal').addClass('guardarCambiosCausal')
+        $('#causalModal').modal('show');
 
         $.ajax({
             url: 'cortes_producction/' + id + '/editCausal',
             type: 'GET',
-            success:function(response){
+            success: function (response) {
                 $('#nombreCausal').val(response[0].nom_causal)
+            },
+            error: function (xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: xhr.responseJSON.error
+                });
             }
         })
     })
 
-    $(document).on('click', '.guardarCambiosCausal', function(){
+    // ------------------------- Guardar Cambios en Causal ------------------------------
+
+    $(document).on('click', '.guardarCambiosCausal', function () {
         let nombre = $('#nombreCausal').val().trim()
         let id = $('#idGuardarCausal').val()
         let token = $('#token').val()
 
-        if(nombre == ''){
-            Swal.fire({
-                type: 'warning',
-                title: 'Error al guardar',
-                text: 'Complete el campo vacio',
-            });
-        }else{
-            $.ajax({
-                url:'cortes_produccion/' + id + '/updateCausal',
-                type: 'PUT',
-                data: {
-                    nombre:nombre,
-                    _token:token,
-                },
-                success:function(response){
-                    console.log(response)
-                    if(response.status == 'exist'){
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Causal duplicado',
-                            text: response.message,
-                        })
-                    }else{
-                        let modalCausal = $('#causalModal')
-                        modalCausal.modal('hide')
-                        let row = $('#causal tbody tr[data-id="'+response.success.id+'"]')
-                        row.find('td:nth-child(1)').text(response.success.nom_causal)
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Exito al guardar',
-                            text: 'El causal se actualizó con éxito',
-                        });
-                    }
-                }
-            })
-        }
+        $.ajax({
+            url: 'cortes_produccion/' + id + '/updateCausal',
+            type: 'PUT',
+            data: {
+                nombre: nombre,
+                _token: token,
+            },
+            success: function (response) {
+                $('#causalModal').modal('hide')
+                console.log(response)
+
+                let row = $('#causal tbody tr[data-id="' + response.causal.id + '"]')
+                row.find('td:nth-child(1)').text(response.causal.nom_causal)
+
+                // Mostrar mensaje de éxito
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Éxito',
+                    text: response.success
+                });
+            },
+            error: function (xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: xhr.responseJSON.error
+                });
+            }
+        })
     })
 
 
-    // ------------------------- Jquey Cambiar Estado Causal --------------------------------
+    // ------------------------- Jquery Cambiar Estado Causal --------------------------------
 
-    $(document).on('click', '#btnChangeStatusCausal', function(){
-        let id = $(this).attr('data-causal-id')
-        let url = $('#cambiarEstadoCausal').val()
-        let token = $('#token').val()
+    $(document).on('click', '#btnChangeStatusCausal', function () {
+        let id = $(this).attr('data-causal-id');
+        let url = $('#cambiarEstadoCausal').val();
+        let token = $('#token').val();
 
         $.ajax({
             url: url,
             type: 'POST',
             data: {
                 id: id,
-                _token:token,
-            },success:function(response){
-                let row = $('#causal tbody tr[data-id="'+response.success.id+'"]')
-                if(response.success.status == 0){
-                    row.find('td:nth-child(2) #btnChangeStatusCausal').removeClass('btn btn-danger btn-sm').addClass('btn btn-success btn-sm').text('Activar')
-                }else{
-                    row.find('td:nth-child(2) #btnChangeStatusCausal').removeClass('btn btn-success btn-sm').addClass('btn btn-danger btn-sm').text('Desactivar')
-                }
-            }
-        })
-    })
+                _token: token,
+            },
+            success: function (response) {
+                let row = $('#causal tbody tr[data-id="' + response.causal.id + '"]');
 
-    $(document).on('input', '.inputNumericoMeta', function(){
+                if (response.causal.status == 0) {
+                    row.find('td:nth-child(2) #btnChangeStatusCausal')
+                        .removeClass('btn-danger')
+                        .addClass('btn-success')
+                        .text('Activar');
+                } else {
+                    row.find('td:nth-child(2) #btnChangeStatusCausal')
+                        .removeClass('btn-success')
+                        .addClass('btn-danger')
+                        .text('Desactivar');
+                }
+
+                // Mostrar mensaje de éxito
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Éxito',
+                    text: response.success
+                });
+            },
+            error: function (xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: xhr.responseJSON.error
+                });
+            }
+        });
+    });
+
+    $(document).on('input', '.inputNumericoMeta', function () {
         this.value = this.value.replace(/[^0-9]/g, ''); // Permitir solo números
         if (this.value.length > 3) {
             this.value = this.value.slice(0, 3); // Limitar a 3 dígitos
         }
     })
 
-    $(document).on('input', '.inputNumericoDobles', function(){
+    $(document).on('input', '.inputNumericoDobles', function () {
         this.value = this.value.replace(/[^0-9]/g, ''); // Permitir solo números
         if (this.value.length > 2) {
             this.value = this.value.slice(0, 2); // Limitar a 3 dígitos

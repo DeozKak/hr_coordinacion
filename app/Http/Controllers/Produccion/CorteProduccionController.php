@@ -8,6 +8,10 @@ use App\Models\Produccion\tbl_produccion_historico;
 use App\Models\Produccion\tbl_produccion_zona;
 use App\Models\Zonificacion\tbl_localidades_sede;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Rules\SolapamientoCorte;
+use Illuminate\Support\Facades\Validator;
 
 class CorteProduccionController extends Controller
 {
@@ -22,8 +26,43 @@ class CorteProduccionController extends Controller
         return view('corte.index', compact('cortes','sedes','zonas','causales'));
     }
 
+
+    // ------------------- CRUD TABLA tbl_produccion_corte ----------------------------------
+
+
     public function storeCorte(Request $request)
     {
+        $validator = Validator::make($request->all(),[
+            'nombre' => 'required|string|max:255',
+            'fecha_inicio' => ['required', 'date'],
+            'fecha_fin' => ['required', 'date', 'after_or_equal:fecha_inicio'],
+            'meta' => 'required|integer|max:250',
+            'dobles' => 'required|integer|max:50'
+        ],[
+            'nombre.required' => 'Llene por favor el campo nombre',
+            'nombre.string' => 'El nombre debe ser una cadena de texto válida',
+            'nombre.max' => 'El nombre no debe superar los 255 caracteres',
+
+            'fecha_inicio.required' => 'Debe seleccionar una fecha de inicio',
+            'fecha_inicio.date' => 'La fecha de inicio debe ser una fecha válida',
+
+            'fecha_fin.required' => 'Debe seleccionar una fecha de finalización',
+            'fecha_fin.date' => 'La fecha de finalización debe ser una fecha válida',
+            'fecha_fin.after_or_equal' => 'La fecha de finalización debe ser igual o posterior a la fecha de inicio',
+
+            'meta.required' => 'Debe ingresar la meta',
+            'meta.integer' => 'La meta debe ser un número entero',
+            'meta.max' => 'La meta no puede ser mayor a 250',
+
+            'dobles.required' => 'Debe ingresar la cantidad de dobles',
+            'dobles.integer' => 'La cantidad de dobles debe ser un número entero',
+            'dobles.max' => 'La cantidad de dobles no puede superar 50'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 422);
+        }
+
         $corte = new tbl_produccion_corte();
         $corte->nombre = $request->nombre;
         $corte->fecha_inicio = $request->fecha_inicio;
@@ -31,6 +70,11 @@ class CorteProduccionController extends Controller
         $corte->meta = $request->meta;
         $corte->dobles = $request->dobles;
 
+        $solapamiento = new SolapamientoCorte($corte);
+
+        if (!$solapamiento->passes(null, null)) {
+            $validator->errors()->add('fecha_inicio', 'El rango de fechas se solapa con otro existente.');
+        }
         // Validación de fechas
         // $errores = [];
 
@@ -50,15 +94,7 @@ class CorteProduccionController extends Controller
             ]);
         }
 
-        // 3. Validar que el rango de fechas no se solape con otro existente
-        $solapamiento = tbl_produccion_corte::where(function ($query) use ($corte) {
-          $query->whereBetween('fecha_inicio', [$corte->fecha_inicio, $corte->fecha_fin])
-                ->orWhereBetween('fecha_fin', [$corte->fecha_inicio, $corte->fecha_fin])
-                ->orWhere(function ($q) use ($corte) {
-                  $q->where('fecha_inicio', '<', $corte->fecha_inicio)
-                    ->where('fecha_fin', '>', $corte->fecha_fin);
-                });
-        })->where('id', '!=', $corte->id)->first(); // Excluir el registro actual si está editando
+
 
         if ($solapamiento) {
             return response()->json([
@@ -82,93 +118,13 @@ class CorteProduccionController extends Controller
         return response()->json(['success' => $corte]);
     }
 
-    public function storeSede(Request $request)
-    {
-        // validar el nombre de la causal
-        $sqlSede = tbl_localidades_sede::where('nombre', $request->nombre)->first();
-
-        if($sqlSede != null){
-            return response()->json([
-                'status' => 'exist',
-                'message' => 'La sede ya existe.',
-            ]);
-        }
-
-        $sede = new tbl_localidades_sede();
-        $sede->nombre = $request->nombre;
-        $sede->save();
-
-        return response()->json(['success' => $sede]);
-    }
-
-    public function storeZona(Request $request)
-    {
-
-        // validar el nombre de la causal
-        $sqlZona = tbl_produccion_zona::where('nombre', $request->nombre)->first();
-
-        if($sqlZona != null){
-            return response()->json([
-                'status' => 'exist',
-                'message' => 'La zona ya existe.',
-            ]);
-        }
-
-        $zona = new tbl_produccion_zona();
-        $zona->nombre = $request->nombre;
-        $zona->save();
-
-        return response()->json(['success' => $zona]);
-    }
-
-    public function storeCausal(Request $request)
-    {
-
-        // validar el nombre de la causal
-        $sqlCausal = tbl_bitacoras_causal::where('nom_causal', $request->nom_causal)->first();
-
-        if($sqlCausal != null){
-            return response()->json([
-                'status' => 'exist',
-                'message' => 'El causal ya existe.',
-            ]);
-        }
-
-        $causal = new tbl_bitacoras_causal();
-        $causal->nom_causal = $request->nom_causal;
-        $causal->save();
-
-        return response()->json(['success' => $causal]);
-    }
-
-    public function editCausal($id)
-    {
-        $causal = tbl_bitacoras_causal::find($id);
-        return response()->json([$causal]);
-    }
-
-    public function updateCausal(Request $request, $id)
-    {
-        $sqlCausal = tbl_bitacoras_causal::where('nom_causal', $request->nombre)->first();
-
-        if($sqlCausal != null && $sqlCausal['id'] != $id){
-            return response()->json([
-                'status' => 'exist',
-                'message' => 'El causal ya existe.',
-            ]);
-        }
-        $causal = tbl_bitacoras_causal::find($id);
-        $causal->nom_causal = $request->nombre;
-        $causal->save();
-
-        return response()->json(['success' => $causal]);
-    }
 
     public function editCorte($id)
     {
         $corte = tbl_produccion_corte::find($id);
         return response()->json([$corte]);
     }
+
 
     public function updateCorte(Request $request, $id)
     {
@@ -216,94 +172,434 @@ class CorteProduccionController extends Controller
         return response()->json(['success' => $corte]);
     }
 
+
+    // ------------------- CRUD TABLA tbl_localidades_sede ----------------------------------
+
+    public function storeSede(Request $request, tbl_localidades_sede $sede)
+    {
+        // Validar los datos enviados en la solicitud
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'nombre' => 'required|string|max:100|unique:tbl_localidades_sedes,nombre',
+            ],
+            [
+                'required' => 'Por favor ingrese el nombre de la sede.',
+                'string' => 'El nombre de la sede debe ser un texto.',
+                'nombre.max' => 'El nombre de la sede no puede superar los 100 caracteres.',
+                'nombre.unique' => 'La sede ya existe.',
+            ]
+        );
+
+        // Si la validación falla, devolver el primer error en formato JSON con código 422
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 422);
+        }
+
+        try {
+            // Iniciar una transacción en la base de datos
+            DB::beginTransaction();
+
+            // Crear una nueva instancia de la sede y asignar valores
+            $sede->nombre = $request->input('nombre');
+            $sede->save();
+
+            // Confirmar la transacción si todo salió bien
+            DB::commit();
+
+            // Retornar una respuesta JSON con mensaje de éxito y los datos de la sede recién creada
+            return response()->json([
+                'success' => 'Sede creada con éxito',
+                'sede' => $sede
+            ], 200);
+        } catch (\Exception $e) { // Capturar cualquier error que ocurra en el proceso
+            // Si hay un error, revertir la transacción
+            DB::rollBack();
+            // Registrar el error en el log del sistema
+            Log::error($e->getMessage());
+            // Retornar un mensaje de error en formato JSON con código 500 (Internal Server Error)
+            return response()->json(['error' => 'Error al crear la sede: ' . $e->getMessage()], 500);
+        }
+    }
+
+
     public function editSede($id)
     {
-        $sede = tbl_localidades_sede::find($id);
+        try {
+            $sede = tbl_localidades_sede::find($id);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
         return response()->json([$sede]);
     }
 
+
     public function updateSede(Request $request, $id)
     {
-        $sqlSede = tbl_localidades_sede::where('nombre', $request->nombre)->first();
+        // Validar los datos enviados en la solicitud
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'nombre' => 'required|string|max:100|unique:tbl_localidades_sedes,nombre,' . $id
+            ],
+            [
+                'required' => 'El nombre de la sede es obligatorio.',
+                'string' => 'El nombre de la sede debe ser un texto.',
+                'nombre.max' => 'El nombre de la sede no puede superar los 100 caracteres.',
+                'nombre.unique' => 'El nombre de la sede ya existe.'
+            ]
+        );
 
-        if($sqlSede != null && $sqlSede['id'] != $id){
-            return response()->json([
-                'status' => 'exist',
-                'message' => 'La sede ya existe.',
-            ]);
+        // Si la validación falla, retornar el primer error
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 422);
         }
 
-        $sede = tbl_localidades_sede::find($id);
-        $sede->nombre = $request->nombre;
-        $sede->save();
+        try {
+            // Iniciar una transacción en la base de datos
+            DB::beginTransaction();
 
-        return response()->json(['success' => $sede]);
+            // Buscar la sede por ID
+            $sede = tbl_localidades_sede::find($id);
+
+            // Verificar si la sede existe
+            if (!$sede) {
+                return response()->json(['error' => 'La sede no existe.'], 404);
+            }
+
+            // Actualizar el nombre de la sede
+            $sede->nombre = $request->nombre;
+            $sede->save();
+
+            // Confirmar la transacción
+            DB::commit();
+
+            // Retornar respuesta con éxito
+            return response()->json([
+                'success' => 'Sede actualizada correctamente.',
+                'sede' => $sede
+            ], 200);
+        } catch (\Exception $e) { // Capturar cualquier error
+            // Si hay un error, revertir la transacción
+            DB::rollBack();
+            // Registrar el error en el log
+            Log::error($e->getMessage());
+
+            // Retornar mensaje de error
+            return response()->json(['error' => 'Error al actualizar la sede: ' . $e->getMessage()], 500);
+        }
     }
+
+
+    // ------------------- CRUD TABLA tbl_produccion_zona ----------------------------------
+
+    public function storeZona(Request $request, tbl_produccion_zona $zona)
+    {
+        // Validar los datos enviados en la solicitud
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'nombre' => 'required|string|max:255|unique:tbl_produccion_zonas,nombre',
+            ],
+            [
+                'required' => 'Por favor ingrese el nombre de la zona.',
+                'string' => 'El nombre de la zona debe ser un texto.',
+                'nombre.max' => 'El nombre de la zona no puede superar los 255 caracteres.',
+                'nombre.unique' => 'La zona ya existe.',
+            ]
+        );
+
+        // Si la validación falla, devolver el primer error en formato JSON con código 422
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 422);
+        }
+
+        try {
+            // Iniciar una transacción en la base de datos
+            DB::beginTransaction();
+
+            // Crear una nueva instancia de la zona y asignar valores
+            $zona->nombre = $request->input('nombre');
+            $zona->save();
+
+            // Confirmar la transacción si todo salió bien
+            DB::commit();
+
+            // Retornar una respuesta JSON con mensaje de éxito y los datos de la zona recién creada
+            return response()->json([
+                'success' => 'Zona creada con éxito',
+                'zona' => $zona
+            ], 200);
+        } catch (\Exception $e) { // Capturar cualquier error que ocurra en el proceso
+            // Si hay un error, revertir la transacción
+            DB::rollBack();
+            // Registrar el error en el log del sistema
+            Log::error($e->getMessage());
+            // Retornar un mensaje de error en formato JSON con código 500 (Internal Server Error)
+            return response()->json(['error' => 'Error al crear la zona: ' . $e->getMessage()], 500);
+        }
+    }
+
 
     public function editZona($id)
     {
-        $zona = tbl_produccion_zona::find($id);
+        try {
+            $zona = tbl_produccion_zona::find($id);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
         return response()->json([$zona]);
     }
 
     public function updateZona(Request $request, $id)
     {
-        $sqlZona = tbl_produccion_zona::where('nombre', $request->nombre)->first();
+        // Validar los datos enviados en la solicitud
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'nombre' => 'required|string|max:255|unique:tbl_produccion_zonas,nombre,' . $id
+            ],
+            [
+                'required' => 'El nombre de la zona es obligatorio.',
+                'string' => 'El nombre de la zona debe ser un texto.',
+                'nombre.max' => 'El nombre de la zona no puede superar los 255 caracteres.',
+                'nombre.unique' => 'El nombre de la zona ya existe.'
+            ]
+        );
 
-        if($sqlZona != null && $sqlZona['id'] != $id){
+        // Si la validación falla, retornar el primer error
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 422);
+        }
+
+        try {
+            // Iniciar una transacción en la base de datos
+            DB::beginTransaction();
+
+            // Buscar la zona por ID
+            $zona = tbl_produccion_zona::find($id);
+
+            // Verificar si la zona existe
+            if (!$zona) {
+                return response()->json(['error' => 'La zona no existe.'], 404);
+            }
+
+            // Actualizar el nombre de la zona
+            $zona->nombre = $request->nombre;
+            $zona->save();
+
+            // Confirmar la transacción
+            DB::commit();
+
+            // Retornar respuesta con éxito
             return response()->json([
-                'status' => 'exist',
-                'message' => 'La zona ya existe.',
+                'success' => 'Zona actualizada correctamente.',
+                'zona' => $zona
+            ], 200);
+        } catch (\Exception $e) { // Capturar cualquier error
+            // Si hay un error, revertir la transacción
+            DB::rollBack();
+            // Registrar el error en el log
+            Log::error($e->getMessage());
+
+            // Retornar mensaje de error
+            return response()->json(['error' => 'Error al actualizar la zona: ' . $e->getMessage()], 500);
+        }
+    }
+
+
+    // ------------------- CRUD TABLA tbl_bitacoras_causal ----------------------------------
+
+    public function storeCausal(Request $request, tbl_bitacoras_causal $causal)
+    {
+        // Validar los datos enviados en la solicitud
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'nom_causal' => 'required|string|max:255|unique:tbl_bitacoras_causales,nom_causal',
+            ],
+            [
+                'required' => 'Por favor ingrese el nombre del causal.',
+                'string' => 'El nombre del causal debe ser un texto.',
+                'nom_causal.max' => 'El nombre del causal no puede superar los 255 caracteres.',
+                'nom_causal.unique' => 'El nombre del causal ya existe.',
+            ]
+        );
+
+        // Si la validación falla, devolver el primer error en formato JSON con código 422
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 422);
+        }
+
+        try {
+            // Iniciar una transacción en la base de datos
+            DB::beginTransaction();
+
+            // Crear una nueva instancia de causal y asignar valores
+            $causal->nom_causal = $request->input('nom_causal');
+            $causal->save();
+
+            // Confirmar la transacción si todo salió bien
+            DB::commit();
+
+            // Retornar una respuesta JSON con mensaje de éxito y los datos del causal recién creado
+            return response()->json([
+                'success' => 'Causal creado con éxito',
+                'causal' => $causal
+            ], 200);
+        } catch (\Exception $e) { // Capturar cualquier error que ocurra en el proceso
+            // Si hay un error, revertir la transacción
+            DB::rollBack();
+            // Registrar el error en el log del sistema
+            Log::error($e->getMessage());
+            // Retornar un mensaje de error en formato JSON con código 500 (Internal Server Error)
+            return response()->json(['error' => 'Error al crear el causal: ' . $e->getMessage()], 500);
+        }
+    }
+
+
+
+    public function editCausal($id)
+    {
+        try {
+            $causal = tbl_bitacoras_causal::find($id);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+        return response()->json([$causal]);
+    }
+
+
+
+    public function updateCausal(Request $request, $id)
+    {
+        // Validar los datos enviados en la solicitud
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'nombre' => 'required|string|max:255|unique:tbl_bitacoras_causales,nom_causal,' . $id
+            ],
+            [
+                'required' => 'El nombre del causal es obligatorio.',
+                'string' => 'El nombre debe ser un texto.',
+                'nombre.max' => 'El nombre del causal no puede superar los 255 caracteres.',
+                'nombre.unique' => 'El nombre del causal ya existe.'
+            ]
+        );
+
+        // Si la validación falla, retornar el primer error
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 422);
+        }
+
+        try {
+            // Iniciar una transacción en la base de datos
+            DB::beginTransaction();
+
+            // Buscar el causal por ID
+            $causal = tbl_bitacoras_causal::find($id);
+
+            // Verificar si el causal existe
+            if (!$causal) {
+                return response()->json(['error' => 'El causal no existe.'], 404);
+            }
+
+            // Actualizar el nombre del causal
+            $causal->nom_causal = $request->nombre;
+            $causal->save();
+
+            // Confirmar la transacción
+            DB::commit();
+
+            // Retornar respuesta con éxito
+            return response()->json([
+                'success' => 'Causal actualizado con éxito.',
+                'causal' => $causal
+            ], 200);
+        } catch (\Exception $e) { // Capturar cualquier error
+            // Si hay un error, revertir la transacción
+            DB::rollBack();
+            // Registrar el error en el log
+            Log::error($e->getMessage());
+
+            // Retornar mensaje de error
+            return response()->json(['error' => 'Error al actualizar el causal: ' . $e->getMessage()], 500);
+        }
+    }
+
+
+    // ------------------- FUNCIONES CAMBIAR ESTADO ----------------------------------
+
+    public function changeStatusSede(Request $request)
+    {
+        try {
+            $id = intval($request->input('id'));
+            $sede = tbl_localidades_sede::find($id);
+
+            if (!$sede) {
+                return response()->json(['error' => 'Sede no encontrada'], 404);
+            }
+
+            $sede->status = !$sede->status;
+            $sede->save();
+
+            return response()->json([
+                'success' => 'Estado de la sede actualizado exitosamente',
+                'sede' => $sede
             ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al cambiar el estado de la sede'], 500);
         }
-
-        $zona = tbl_produccion_zona::find($id);
-        $zona->nombre = $request->nombre;
-        $zona->save();
-
-        return response()->json(['success' => $zona]);
     }
 
-    public function changeStatusSede(Request $request){
-        $id = $request->input('id');
-        $sede = tbl_localidades_sede::find($id);
 
-        if($sede->status == 1){
-            $sede->status = 0;
-        }else{
-            $sede->status = 1;
+    public function changeStatusZona(Request $request)
+    {
+        try {
+            $id = intval($request->input('id'));
+            $zona = tbl_produccion_zona::find($id);
+
+            if (!$zona) {
+                return response()->json(['error' => 'Zona no encontrada'], 404);
+            }
+
+            $zona->status = !$zona->status;
+            $zona->save();
+
+            return response()->json([
+                'success' => 'Estado de la zona actualizado exitosamente',
+                'zona' => $zona
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al cambiar el estado de la zona'], 500);
         }
-
-        $sede->save();
-        return response()->json(['success' => $sede]);
     }
 
-    public function changeStatusZona(Request $request){
-        $id = $request->input('id');
-        $zona = tbl_produccion_zona::find($id);
 
-        if($zona->status == 1){
-            $zona->status = 0;
-        }else{
-            $zona->status = 1;
+
+    public function changeStatusCausal(Request $request)
+    {
+        try {
+            $id = intval($request->input('id'));
+            $causal = tbl_bitacoras_causal::find($id);
+
+            if (!$causal) {
+                return response()->json(['error' => 'Causal no encontrada'], 404);
+            }
+
+            $causal->status = !$causal->status;
+            $causal->save();
+
+            return response()->json([
+                'success' => 'Estado del causal actualizado exitosamente',
+                'causal' => $causal
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al cambiar el estado del causal'], 500);
         }
-
-        $zona->save();
-        return response()->json(['success' => $zona]);
-    }
-
-    public function changeStatusCausal(Request $request){
-        $id = $request->input('id');
-        $causal = tbl_bitacoras_causal::find($id);
-
-        if($causal->status == 1){
-            $causal->status = 0;
-        }else{
-            $causal->status = 1;
-        }
-
-        $causal->save();
-        return response()->json(['success' => $causal]);
     }
 
 }
