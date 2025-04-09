@@ -27,6 +27,7 @@ class InspectorController extends Controller
 
     public function store(Request $request, tbl_insp_cali $inspector)
     {
+
         // Validar los datos enviados en la solicitud
         $validator = Validator::make(
             $request->all(),

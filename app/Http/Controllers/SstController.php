@@ -22,7 +22,6 @@ class SstController extends Controller
 
     public function ExportarPreoperacional(Request $request)
     {
-       /* dd($request->all());*/
         $validator = Validator::make($request->all(), [
             'fecha_inicio' => 'required|date_format:Y-m-d|before_or_equal:fecha_fin',
             'fecha_fin' => 'required|date_format:Y-m-d|after_or_equal:fecha_inicio',

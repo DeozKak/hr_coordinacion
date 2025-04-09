@@ -101,9 +101,9 @@ class CorteProduccionController extends Controller
 
             $corte->save();
 
-            $historios = new tbl_produccion_historico();
-            $historios->id_corte = $corte->id;
-            $historios->save();
+            $historicos = new tbl_produccion_historico();
+            $historicos->id_corte = $corte->id;
+            $historicos->save();
             DB::commit();
             return response()->json(['success' => $corte]);
         } catch (\Exception $e) {
