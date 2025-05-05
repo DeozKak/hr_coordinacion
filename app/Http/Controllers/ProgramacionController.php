@@ -704,8 +704,9 @@ class ProgramacionController extends Controller
                     );
             }
 
-            $plantilla = $plantilla->get();
-            $busqueda = $busqueda->get();
+            $plantilla = $plantilla->orderBy('TECNICO')->get();
+            $busqueda = $busqueda->orderBy('TECNICO')->get();
+
             $uniqueData = [];
             $uniqueKeys = [];
 
@@ -874,14 +875,12 @@ class ProgramacionController extends Controller
 
         $indicador = $this->validacionMasivas($worksheet);
 
-
         if (!$indicador) {
             return response()->json(['errors' => 'El archivo no cumple los criterios requeridos'], 422);
         }
 
         $datos = $this->Extdatos($worksheet);
         //$indicador = $this->notificacion($datos);
-
 
         if ($datos !== false) {
             session()->flash('success', 'Archivo subido exitosamente');
@@ -971,15 +970,15 @@ class ProgramacionController extends Controller
                 $programada->id_programacion = $tabla->id;
                 $programada->mensaje = 1;
 
-                if ($worksheet->getCell('O' . $row->getRowIndex())->getValue() === "MAÑANA") {
+                if (strpos($worksheet->getCell('O' . $row->getRowIndex())->getValue(), "MAÑANA") !== false) {
                     $programada->HORA_INICIO = "06:59:00 a.m.";
                     $programada->HORA_FINAL = "11:59:00 a.m.";
                 }
-                if ($worksheet->getCell('O' . $row->getRowIndex())->getValue() === " TARDE") {
+                if (strpos($worksheet->getCell('O' . $row->getRowIndex())->getValue(), "TARDE") !== false) {
                     $programada->HORA_INICIO = "11:59:00 a.m.";
                     $programada->HORA_FINAL = "04:59:00 p.m.";
                 }
-                if ($worksheet->getCell('O' . $row->getRowIndex())->getValue() === " TRANSCURSO DEL DIA") {
+                if (strpos($worksheet->getCell('O' . $row->getRowIndex())->getValue(), "TRANSCURSO DEL DIA") !== false) {
                     $programada->HORA_INICIO = "06:59:00 a.m.";
                     $programada->HORA_FINAL = "04:59:00 p.m.";
                 }
@@ -1178,6 +1177,7 @@ class ProgramacionController extends Controller
         }
         return $indicador;
     }
+
     private function ExtdatosGDO($worksheet): bool
     {
         $tabla = new tbl_programacion_usuario;
@@ -1487,4 +1487,5 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
         }
         return response()->json(['message' => 'Registro guardado correctamente', 'id' => $programacion->id], 200);
     }
+
 }

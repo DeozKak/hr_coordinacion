@@ -1,4 +1,6 @@
 let hot;
+let municipios;
+
 //----------------------   Buscador HOT ----------------------------------------
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -10,33 +12,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
     //div para mensajes de error
     let message = $('#message');
-
     // Ocultar la tabla al cargar la página
     $("#table").hide();
 
-    // Inicializar Handsontable cuando se presiona el botón Buscar
     let table = document.getElementById('table');
 
     hot = new Handsontable(table, {
-        colHeaders: ['Municipio', 'Grupo', 'Sub Grupo', 'Barrio'],
-        columns:[
-            // declaracion de tipo de datos columnas y propiedades
-            {type: 'text', data:row => row.tbl_localidades_municipio?.nombre ?? ''},
-            {type: 'text', data:row => row.tbl_grupo?.grupo ?? ''},
-            {type: 'text', data:row => row.tbl_subgrupo?.subgrupo ?? ''},
-            {type: 'text', data:row => row.tbl_barrios?.barrio ?? ''},
-        ],
+        colHeaders: ['ID', 'Municipio', 'Grupo', 'Sub Grupo', 'Barrio'],
         rowHeaders: true,
         contextMenu: true,
         stretchH: 'all',
-        height: '350px',
+        height: 350,
+        readOnly: true,
         licenseKey: 'non-commercial-and-evaluation',
+
     });
 
     // Evento para mostrar la tabla al hacer clic en el botón Buscar
     $("#btnBuscar").click(function () {
-        message.css('display', 'block'); //
-        message.css('display', 'none');
         const b_municipio = document.getElementById('buscarMunicipio').value;
         const b_grupo = document.getElementById('buscarGrupo').value;
         const b_subgrupo = document.getElementById('buscarSubGrupo').value;
@@ -59,17 +52,76 @@ function busqueda(municipio, grupo, subgrupo, barrio) {
             barrio: barrio
         },
         success: function (response) {
-            hot.loadData(response);
-            console.log(response)
-        }, error(xhr, status) {
+            let barrios_dis = [];
+            const processedData = response.data.map(row => {
+                return {
+                    ...row,
+                    id: row.id ?? '',
+                    municipio: row.tbl_localidades_municipio?.nombre ?? '',
+                    grupo: row.tbl_grupo?.grupo ?? '',
+                    subgrupo: row.tbl_subgrupo?.subgrupo ?? '',
+                    barrio: row.tbl_barrios?.barrio ?? '',
+                };
+            });
+
+            hot.loadData(processedData)
+
+            // Actualizar la variable barrios_dis con los nuevos datos recibidos
+            let barrios_JSON = response.barrios;
+            barrios_dis = barrios_JSON.map(barrios_JSON => barrios_JSON.id + '. ' + barrios_JSON.barrio);
+            const barrios_dis_con_vacio = ['', ...barrios_dis];
+            actualizar_barrios(barrios_dis_con_vacio);
+
+        },
+        error: function (xhr, status) {
             console.log(xhr.responseText);
             let message = $('#message');
             message.css('display', 'block');
-            message.addClass('alert alert-danger'); // Agrega las clases de Bootstrap
+            message.addClass('alert alert-danger');
             message.html(xhr.responseJSON.error);
-
         }
-    })
+    });
 }
 
+function actualizar_barrios(barrios_dis_con_vacio) {
 
+    hot.updateSettings({
+        columns: [
+            { data: 'id', type: 'text' },
+            { data: 'municipio', type: 'text' },
+            { data: 'grupo', type: 'text' },
+            { data: 'subgrupo', type: 'text' },
+            {
+                data: 'barrio',
+                renderer: function (instance, td, row, col, prop, value, cellProperties) {
+                    if (value === '' || value === null) {
+                        Handsontable.renderers.DropdownRenderer.apply(this, arguments);
+                    } else {
+                        Handsontable.renderers.TextRenderer.apply(this, arguments);
+                    }
+                },
+                type: 'dropdown',
+                source: barrios_dis_con_vacio,
+                allowEmpty: true,
+            }
+        ],
+        cells: function (row, col) {
+            const cellProperties = {};
+
+            if (col === 4) { // Columna de "barrio"
+                const cellValue = hot.getDataAtCell(row, col);
+
+                if (cellValue === '' || cellValue === null) {
+                    cellProperties.readOnly = false; // Editable si está vacío
+                } else {
+                    cellProperties.readOnly = true; // Solo lectura si tiene un valor
+                }
+            }
+
+            return cellProperties;
+        }
+
+    });
+
+
+}

@@ -285,7 +285,6 @@ class ProduccionController extends Controller
         ]);
     }
 
-
     public function detallesCorte($id)
     {
         session(['id_corte' => $id]);
@@ -1103,7 +1102,6 @@ class ProduccionController extends Controller
     //         return response()->json(['error' => 'No hay corte activo']);
     //     }
     //     $diasIntermedios = $this->DiasIntermedios($corte);
-
     //     $zonas = tbl_produccion_zona::select('id', 'nombre')->get();
 
     //     foreach ($zonas as $zona) {

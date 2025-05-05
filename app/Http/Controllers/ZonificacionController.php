@@ -16,6 +16,7 @@ use App\Services\BarrioService;
 use App\Services\MunicipioService;
 use Illuminate\Support\Facades\Log;
 use App\Rules\UniqueMunicipio;
+use function PHPUnit\Framework\returnCallback;
 
 class ZonificacionController extends Controller
 {
@@ -113,6 +114,7 @@ class ZonificacionController extends Controller
 
     public function buscador(Request $request): \Illuminate\Http\JsonResponse
     {
+        $barrios_disponibles = TblBarrios::whereDoesntHave('detalle')->get();
 
         $validator = Validator::make($request->all(), [
             'municipio' => 'sometimes|nullable|integer',
@@ -157,7 +159,7 @@ class ZonificacionController extends Controller
             }
 
             $resultados = $busqueda->get();
-            return response()->json($resultados);
+            return response()->json(['data' => $resultados, 'barrios' => $barrios_disponibles]);
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
@@ -402,7 +404,6 @@ class ZonificacionController extends Controller
 
     public function updateBarrio(Request $request, $id): \Illuminate\Http\JsonResponse
     {
-        // dd($request->all());
         //valida campos con los tipo de dato correcto
         $validator = Validator::make($request->all(), [
             'barrio' => 'required|string|max:255',
@@ -410,7 +411,7 @@ class ZonificacionController extends Controller
             'barrio.required' => 'Por favor ingrese el nombre del barrio.',
             'barrio.string' => 'El nombre del barrio debe ser una cadena de texto.',
         ]);
-        //devuelve en caso de que no se cumpla la validacion
+        //devuelve en caso de que no se cumpla la validación
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()->first()], 422);
         }
@@ -430,6 +431,7 @@ class ZonificacionController extends Controller
                 'ok' => $barrio,
                 'success' => 'Registro actualizado exitosamente'
             ], 200);
+
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             DB::rollBack();
@@ -438,20 +440,6 @@ class ZonificacionController extends Controller
 
     }
 
-    /* public function changeStatusMunicipio(Request $request)
-     {
-         $id = $request->input('id');
-         $municipio = tbl_localidades_municipio::find($id);
-
-         if ($municipio->status == 1) {
-             $municipio->status = 0;
-         } else {
-             $municipio->status = 1;
-         }
-
-         $municipio->save();
-         return response()->json(['success' => $municipio]);
-     }*/
 
     //------------------------------------------------------------------------------------------
 

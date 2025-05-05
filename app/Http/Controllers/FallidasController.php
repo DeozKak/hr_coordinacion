@@ -35,7 +35,6 @@ class FallidasController extends Controller
                 return response()->json($response);
             }
         } else {
-
             $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
             $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
 
@@ -43,6 +42,7 @@ class FallidasController extends Controller
                 ->where('fecha_fin', '>=', $fecha_resta_un_dia)
                 ->first();
                // session()->put('corteEnviar', $corte);
+
         }
 
 
