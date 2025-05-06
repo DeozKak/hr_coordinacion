@@ -25,6 +25,21 @@ document.addEventListener('DOMContentLoaded', function () {
         height: 350,
         readOnly: true,
         licenseKey: 'non-commercial-and-evaluation',
+        hiddenColumns: {
+            columns: [0], // Oculta la columna con índice 0 ("ID")
+        },
+        afterChange: function (changes, source) {
+            if (source !== 'edit') {
+                return;
+            }
+            if (changes[0][1] === 'barrio' && changes[0][3] !== '') {
+                //se obtiene el id del registro para poder modificar en BD
+               const id = this.getDataAtCell(changes[0][0], 0);
+               // se obtiene el nombre del barrio para cambiar
+               const barrio = changes[0][3]
+                asignar_barrio(barrio,id);
+            }
+        }
 
     });
 
@@ -60,7 +75,7 @@ function busqueda(municipio, grupo, subgrupo, barrio) {
                     municipio: row.tbl_localidades_municipio?.nombre ?? '',
                     grupo: row.tbl_grupo?.grupo ?? '',
                     subgrupo: row.tbl_subgrupo?.subgrupo ?? '',
-                    barrio: row.tbl_barrios?.barrio ?? '',
+                    barrio: `${row.tbl_barrios?.id ?? ''}${row.tbl_barrios?.barrio ? '. ' + row.tbl_barrios.barrio : ''}`,
                 };
             });
 
@@ -84,7 +99,6 @@ function busqueda(municipio, grupo, subgrupo, barrio) {
 }
 
 function actualizar_barrios(barrios_dis_con_vacio) {
-
     hot.updateSettings({
         columns: [
             { data: 'id', type: 'text' },
@@ -123,5 +137,26 @@ function actualizar_barrios(barrios_dis_con_vacio) {
 
     });
 
+
+}
+
+function asignar_barrio(barrio,id) {
+
+    $.ajax({
+        url: document.getElementById('url_asignarBarrio').value,
+        method: "POST",
+        data: {
+            barrio: barrio,
+            id: id,
+            _token: document.getElementById('token').value,
+        },
+        success: function (response) {
+            console.log(response);
+
+        },error: function (xhr, status, error) {
+            console.log(xhr.responseText);
+        }
+
+    })
 
 }

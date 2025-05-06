@@ -34,6 +34,7 @@ Route::middleware('web')->group(function () {
         Route::get('/zonas/datosAsignador', [ZonificacionController::class, 'datosAsignador'])->name('zonas.datosAsignador')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
         //RUTA BUSCADOR
         Route::get('/zonas/buscador', [ZonificacionController::class, 'buscador'])->name('zonas.buscador')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
+        Route::post('/zonas/asignarBarrio',[ZonificacionController::class, 'asignarBarrio'])->name('zonas.asignarBarrio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
         //RUTA ASIGNADOR
         Route::post('/zonas/asignar', [ZonificacionController::class, 'asignar'])->name('zonas.asignar')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
     });

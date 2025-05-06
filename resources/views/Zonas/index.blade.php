@@ -14,6 +14,7 @@
     <script src="{{ asset('js/Zonas/buscador.js') }}"></script>
     <link rel="stylesheet" href="{{ asset ('css/zonas/zonas.css')}}">
     <input type="hidden" id="token" value="{{ csrf_token() }}">
+    <input type="hidden" id="url_asignarBarrio" value="{{ route('zonas.asignarBarrio') }}">
     <div class="row">
 
         {{-- Tarjeta Sedes y Zonas --}}
@@ -214,7 +215,7 @@
         </div>
     </div>
 
-    
+
     {{-- Contenedor de Barras de Búsqueda y Tabla --}}
 
     <div class="card mt-3">

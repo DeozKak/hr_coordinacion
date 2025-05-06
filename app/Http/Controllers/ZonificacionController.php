@@ -671,4 +671,44 @@ class ZonificacionController extends Controller
     }
     //------------------------------------------------------------------------------------------
 
+
+    public function asignarBarrio(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'barrio' => 'required|string|max:255',
+            'id' => 'required|int'
+        ],[
+            'id.required' => 'No se recibió el id del registro.',
+            'id.int' => 'El id debe ser un numero entero.',
+            'barrio.required' => 'Por favor ingrese un barrio.',
+            'barrio.string' => 'El barrio debe ser una cadena de texto.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 422);
+        }
+
+        try {
+            $id_resgistro = $request->input('id');
+            $nom_barrio = $request->input('barrio');
+            // Dividir la cadena por el primer punto
+            $partes = explode('.', $nom_barrio);
+
+            // El número estará en la primera parte del arreglo si existe
+            $id_barrio = isset($partes[0]) ? trim($partes[0]) : null;
+
+            DB::beginTransaction();
+
+            $detalle = TblGruposDetalle::find($id_resgistro);
+            $detalle->id_barrio = $id_barrio;
+            $detalle->save();
+
+            DB::commit();
+            return response()->json(['ok' => 'Actualizado exitosamente.'],200);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }
