@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Bitacoras\BitacoraController;
+use App\Http\Controllers\Bitacoras\BitacoraDiariaController;
 use App\Http\Middleware\CheckPermission;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -27,5 +28,6 @@ Route::middleware('web')->group(function () {
         Route::post('bitacora/devoluciones/actualizar/{id}', [BitacoraController::class, 'actualizar_devolucion'])->name('bitacoras.actualizar_devolucion')->middleware(CheckPermission::class . ':mod_devoluciones');
         Route::get('bitacoras/buscar_por_contrato', [BitacoraController::class, 'buscarPorContrato'])->name('bitacoras.buscar_por_contrato')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('municipios/json', [BitacoraController::class, 'getMunicipiosJson'])->name('municipios.json')->middleware(CheckPermission::class . ':ver_bitacoras,generar_programacion');
+        Route::post('bitacora/diaria',[BitacoraDiariaController::class, 'RecepcionBitacoraDiraria'])->name('bitacoras.diaria')->middleware(CheckPermission::class . ':generar_bitacoras');
     });
 });

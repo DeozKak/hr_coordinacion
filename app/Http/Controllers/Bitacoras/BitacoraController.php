@@ -190,8 +190,6 @@ class BitacoraController extends Controller
 
             $idTabla = "$indice";
 
-
-
             $nombre_tabla = $tabla[0][1] ?? "Tabla $indice";
 
             $nombre_tabla = strlen($nombre_tabla) > 31 ? substr($nombre_tabla, 0, 31) : $nombre_tabla;
