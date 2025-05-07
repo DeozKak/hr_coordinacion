@@ -34,8 +34,9 @@ class BitacoraDiariaController extends Controller
             }
 
              $respuesta = $this->CrearInforme($spreadsheet);
-            dd($respuesta);
-            //return response()->json(['success' => 'Archivo recibido con exito'], 200);
+
+            return response()->json(['success' => 'Archivo recibido con exito',
+                'url' => $respuesta], 200);
         } catch (\Exception $e) {
             dd($e);
             Log::error($e);
@@ -101,22 +102,23 @@ class BitacoraDiariaController extends Controller
             'RESULTADO CIERRE',
             'HORA INICIO',
             'HORA FINAL',
-            'DURACION',
             'VENCE',
             'PERIODO DE GRACIA'
         ];
         $procesadores = [
-            'D' => fn($valor) => date('Y-m-d', strtotime($valor)), // Formatear fecha
+            'D' => function($valor) { $fecha = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($valor);
+                return $fecha->format('Y-m-d');}, // Formatear fecha tipo excel a fecha
             'N' => fn($inicio) => $inicio, // Hora inicio sin procesar
+            'M' => fn($cierre) => ltrim($cierre, '.'),
             'O' => fn($final) => $final, // Hora final sin procesar
-            'P' => function ($inicio, $final) {
-                // Calcular duración entre hora inicio y final
-                $inicio_dt = new \DateTime($inicio);
-                $final_dt = new \DateTime($final);
-                $diferencia = $inicio_dt->diff($final_dt);
-                return $diferencia->format('%H:%I:%S');
+            'Q' => function ($vence) {
+                $venceDate = \DateTime::createFromFormat('d/m/Y', $vence); // convertir a fecha
+                return ($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m'))
+                    ? "60 meses"
+                    : "";
             },
-            'Q' => fn($vence) => $vence // Procesar "vence", si es necesario
+            'R' => function ($periodo) {if($periodo === 'Si'){return 'SI';}else{return 'NO';} },
+
         ];
 
         try{
@@ -124,6 +126,13 @@ class BitacoraDiariaController extends Controller
         foreach ($sheet->getRowIterator() as $row) {
             if ($row->getRowIndex() === 1){
                 $hoja_informe->fromArray($encabezados, null, 'A1');
+                $hoja_informe->getStyle('A1:O1')->applyFromArray([
+                    'fill' => [
+                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => '0096FF'], // Azul
+                    ],
+                ]);
+
                 continue;
             }
             $contrato = $sheet->getCell('H' . $row->getRowIndex())->getValue();
@@ -138,23 +147,92 @@ class BitacoraDiariaController extends Controller
 
                 foreach ($columnas as $columna) {
                     $valor = $sheet->getCell($columna . $row->getRowIndex())->getValue();
+
+                    // Aplica procesadores
+                    if (isset($procesadores[$columna])) {
+                            $valor = $procesadores[$columna]($valor);
+                    }
+
                     $fila_datos[] = $valor;
                 }
 
-                $hoja_informe->fromArray($fila_datos, null, 'A' .$fila_informe);
+                $hoja_informe->fromArray($fila_datos, null, 'A' . $fila_informe);
+
+                $this->EstilosInforme($hoja_informe,$fila_informe,$sheet,$row);;
+
                 $fila_informe++;
+
             }
+
         }
 
-        $writer = IOFactory::createWriter($informe, 'Xlsx');
-        $nombre_archivo = 'Bitacora Valle' . date('Y-m-d') . 'TODOS.xlsx';
+            // Aplicar bordes a todas las celdas con contenido
+            $hoja_informe->getStyle('A1:O' . ($fila_informe - 1))->applyFromArray([
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                        'color' => ['rgb' => '000000'], // Negro
+                    ],
+                ],
+            ]);
+
+            // Ajustar el ancho de todas las columnas al contenido
+            foreach ($columnas as $columna) {
+                $hoja_informe->getColumnDimension($columna)->setAutoSize(true);
+            }
+
+
+            $writer = IOFactory::createWriter($informe, 'Xlsx');
+        $nombre_archivo = 'Bitacora Valle ' . date('Y-m-d') . ' TODOS.xlsx';
         $writer->save(storage_path('app/uploads/') . $nombre_archivo);
-        return response()->json(['url' => '../storage/app/uploads/' . $nombre_archivo],200);
+        return '../storage/app/uploads/' . $nombre_archivo;
         }catch (\Exception $e){
-            dd($e);
+
             Log::error($e);
             return response()->json(['error' => 'Error al crear el informe', $e], 500);
 
         }
+    }
+
+    private function EstilosInforme($hoja_destino,$fila_informe, $hoja_origen,$fila_origen){
+        // Estilo columna G (verde)
+        $hoja_destino->getStyle('G' . $fila_informe)->applyFromArray([
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '92D050'], // VERDE
+            ],
+        ]);
+
+        // Estilo columna J (naranja si es COMERCIAL)
+        $categoria = $hoja_origen->getCell('K' . $fila_origen->getRowIndex())->getValue();
+        if (trim($categoria) === 'COMERCIAL') {
+            $hoja_destino->getStyle('J' . $fila_informe)->applyFromArray([
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => 'FF8000'], // NARANJA
+                ],
+            ]);
+        }
+
+        //Estilo columna N vence (Marca Naranja si es 60 meses)
+        if($hoja_destino->getCell('N' . $fila_informe)->getValue() === '60 meses'){
+
+            $hoja_destino->getStyle('N' . $fila_informe)->applyFromArray([
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => 'FF8000'], // NARANJA
+                ],
+            ]);
+        }
+
+        if($hoja_destino->getCell('O' . $fila_informe)->getValue() === 'SI'){
+            $hoja_destino->getStyle('O' . $fila_informe)->applyFromArray([
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => 'FF8000'], // NARANJA
+                ],
+            ]);
+        }
+
     }
 }

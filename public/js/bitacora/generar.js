@@ -1,17 +1,16 @@
 document.addEventListener('DOMContentLoaded', function () {
-
     const boton = document.getElementById('btnProcesar');
 
-
     boton.addEventListener('click', function (event) {
-
         enviarDatos();
-
     });
 
 });
 
 function enviarDatos() {
+
+    $('#loader').show();
+    $('#overlay').show();
     // Obtener el archivo y otros campos
     const archivoInput = document.getElementById('archivo_diaria');
     const archivo = archivoInput.files[0]; // Obtén el archivo seleccionado (tipo File)
@@ -30,8 +29,15 @@ function enviarDatos() {
         success: function (response) {
             let message = $('#message');
             message.css('display', 'none');
-            console.log(response);
+
+            if(response.url){
+                window.location.href = response.url;
+                $('#loader').hide();
+                $('#overlay').hide();
+            }
         }, error: function (xhr, status) {
+            $('#loader').hide();
+            $('#overlay').hide();
             console.log(xhr.responseText);
             let message = $('#message');
             message.css('display', 'block');

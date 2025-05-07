@@ -21,7 +21,8 @@
     </head>
 
     <body class="body">
-
+    <div id="loader" style="display: none;"></div>
+    <div id="overlay" style="display: none;"></div>
     <div class="container mt-5">
         <div class="row">
             @unlessrole('Supervisor')
