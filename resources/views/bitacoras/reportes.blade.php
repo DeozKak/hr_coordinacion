@@ -9,7 +9,7 @@
 @section('content')
 <link rel="stylesheet" href="{{asset('css/bitacoras/Reportes.css')}}">
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="{{asset('js/Reportes.js')}}"></script>
+<script src="{{asset('js/bitacora/Reportes.js')}}"></script>
 
 <body>
     <style>
@@ -73,9 +73,9 @@
 
                                             <button class="btn btn-primary" id="verReporte">Ver reporte</button>
                                         </form>
-                                       <!--  <form action="{{route('bitacoras.download',['file'=>$bitacora->nombre_archivo.".xlsx"])}}" method="GET">
+                                       <form action="{{route('bitacoras.download',['file'=>$bitacora->nombre_archivo.".xlsx"])}}" method="GET">
                                             <button class="btn btn-success" id="btnDescargar">Descargar Xlsx</button>
-                                        </form> -->
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -109,7 +109,7 @@
                     contrato: contrato
                 },
                 success: function(response) {
-                    
+
                     let listaHtml = '<ul>';
                     response.forEach(bitacora => {
                         listaHtml += `<li data-id="${bitacora.id}">${bitacora.nombre_archivo} (ID: ${bitacora.id})</li>`;

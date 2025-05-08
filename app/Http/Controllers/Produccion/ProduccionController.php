@@ -313,7 +313,7 @@ class ProduccionController extends Controller
         $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
             ->where('fecha_fin', '>=', $fecha_resta_un_dia)
             ->first();
-        return view('produccion.detalles', compact('municipios'));
+        return view('produccion.detalles', compact('municipios','corte'));
     }
 
     public function datosDetalles(Request $request)

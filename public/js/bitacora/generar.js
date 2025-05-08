@@ -29,7 +29,7 @@ function enviarDatos() {
         success: function (response) {
             let message = $('#message');
             message.css('display', 'none');
-
+            console.log(response);
             if(response.url){
                 window.location.href = response.url;
                 $('#loader').hide();

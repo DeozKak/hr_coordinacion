@@ -37,6 +37,7 @@ class BitacoraDiariaController extends Controller
 
             return response()->json(['success' => 'Archivo recibido con exito',
                 'url' => $respuesta], 200);
+
         } catch (\Exception $e) {
             dd($e);
             Log::error($e);
@@ -185,11 +186,17 @@ class BitacoraDiariaController extends Controller
             $writer = IOFactory::createWriter($informe, 'Xlsx');
         $nombre_archivo = 'Bitacora Valle ' . date('Y-m-d') . ' TODOS.xlsx';
         $writer->save(storage_path('app/uploads/') . $nombre_archivo);
-        return '../storage/app/uploads/' . $nombre_archivo;
+
+        return url()->temporarySignedRoute(
+            'descargar.archivo', // Usa la nueva ruta genérica
+            now()->addMinutes(10), // Expiración en 10 minutos
+            ['file' => $nombre_archivo] // Archivo como parámetro
+        );
+
         }catch (\Exception $e){
 
             Log::error($e);
-            return response()->json(['error' => 'Error al crear el informe', $e], 500);
+            return response()->json(['error' => 'Error al crear el informe', $e->getMessage()], 500);
 
         }
     }

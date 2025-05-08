@@ -3,7 +3,7 @@
 @section('title', 'Producción')
 
 @section('content_header')
-<h1>Producción</h1>
+<h1>Producción Corte: {{$corte?->nombre}}</h1>
 @endsection
 @section('content')
 

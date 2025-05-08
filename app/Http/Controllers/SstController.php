@@ -128,12 +128,16 @@ class SstController extends Controller
         // Establecer la configuración regional para el separador decimal (opcional)
         $writer->setDelimiter(';'); // Usar punto y coma como separador
         $writer->setEnclosure('');  // No usar ningún enclosure
-
-        $writer->save(storage_path('app/uploads/') . 'Preoperacional' . ".csv");
+        $nombreArchivo = 'Preoperacional ' .date('Y-m-d'). '.csv';
+        $writer->save(storage_path('app/uploads/') . $nombreArchivo);
         // Generar la URL de descarga
-
+        $url = url()->temporarySignedRoute(
+            'descargar.archivo', // Usa la nueva ruta genérica
+            now()->addMinutes(10), // Expiración en 10 minutos
+            ['file' => $nombreArchivo] // Archivo como parámetro
+        );
         // Puedes retornar la URL o usarla como necesites
-        return response()->json(['url' => '../storage/app/uploads/Preoperacional.csv']);
+        return response()->json(['url' => $url]);
     }
 
 }

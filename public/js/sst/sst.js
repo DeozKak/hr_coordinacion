@@ -21,10 +21,12 @@ function exportarGDW(){
             fecha_fin: $('#fecha_fin').val(),
         },
         success: function(response){
-
             const mensajeServidor = document.getElementById('mensaje_servidor');
             mensajeServidor.style.display = 'none';
-            window.location.href = response.url;
+            if(response.url){
+                window.location.href = response.url;
+            }
+
         },error: function(xhr, status){
             console.log(xhr.responseText);
             mostrarMensajeError(xhr.responseJSON.error);

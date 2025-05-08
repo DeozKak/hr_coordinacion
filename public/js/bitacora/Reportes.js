@@ -22,4 +22,18 @@ const spanElement = thfecha.find('span.dt-column-title');
 // Simular doble clic en el span
 spanElement.trigger('click').trigger('click');
 
+$('#btnDescargar').on('click', function () {
+
+    $.ajax({
+        url: urlReporte,
+        type:'GET',
+        success: function (response){
+            console.log(response);
+        },error: function (xhr){
+            console.log(xhr.responseText);
+        }
+    })
+
+})
+
 });

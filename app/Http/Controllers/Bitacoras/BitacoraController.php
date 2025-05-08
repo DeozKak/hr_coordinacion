@@ -525,6 +525,7 @@ class BitacoraController extends Controller
         $rutaArchivo = str_replace(".xls", " ", session('nom_archivo'));
         $rutaArchivoFinal = str_replace("4.08", "", $rutaArchivo);
         // Guardar el archivo Excel
+        $rutaArchivoFinal = ltrim($rutaArchivoFinal);
         $writer->save(storage_path('app/uploads/') . $rutaArchivoFinal . ".xlsx");
 
 
@@ -1078,15 +1079,18 @@ class BitacoraController extends Controller
 
     public function download($nombreArchivo)
     {
-        $rutaCompleta = storage_path('app/uploads/') . $nombreArchivo;
 
-        // Verificar si el archivo existe
-        if (Storage::exists('uploads/' . $nombreArchivo)) {
-            return response()->download($rutaCompleta);
-        } else {
-            // El archivo no existe, manejar el error
-            return redirect()->route('bitacoras.reportes')->with('error', 'Archivo no encontrado');
-        }
+        // Generar la URL firmada con expiración
+        $urlFirmada = url()->temporarySignedRoute(
+            'descargar.archivo', // Nombre de la ruta que procesa la descarga
+            now()->addMinutes(10), // Tiempo de expiración de la URL
+            ['file' => $nombreArchivo] // Parámetro con el nombre del archivo
+        );
+
+        // Redirigir automáticamente a la URL firmada
+        return redirect($urlFirmada);
+
+
     }
 
     public function devolver(Request $request, $ids, $bitacora)

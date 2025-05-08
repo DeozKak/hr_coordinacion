@@ -850,12 +850,12 @@ class ProgramacionController extends Controller
         // Establecer la configuración regional para el separador decimal (opcional)
         $writer->setDelimiter(';'); // Usar punto y coma como separador
         $writer->setEnclosure('');  // No usar ningún enclosure
-
-        $writer->save(storage_path('app/uploads/') . 'archivo' . ".csv");
+        $nombreArchivo = 'Plantilla Programacion GDW '.date('Y-m-d H:i:s').'.csv';;
+        $writer->save(storage_path('app/uploads/') . $nombreArchivo);
         // Generar la URL de descarga
 
         // Puedes retornar la URL o usarla como necesites
-        return response()->json(['url' => '../storage/app/uploads/archivo.csv']);
+        return response()->json(['url' => '../storage/app/uploads/'.$nombreArchivo]);
     }
 
     public function masivos(Request $request)

@@ -15,7 +15,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <!--     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
      -->
-        <link rel="stylesheet" href="{{asset('css/bitacoras/generar.css')}}">
+        <link rel="stylesheet" href="{{asset('css/bitacoras/generarV2.css')}}">
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
         <title>Subir Archivos</title>
     </head>
@@ -31,8 +31,8 @@
                 <small class="text-muted">(No suma producción)</small>
                 <br>
                 <br>
-                <label for="archivo" class="form-label">Seleccione Bitacora:</label>
-                <input class="form-control mb-3" type="file" name="archivo" id="archivo_diaria">
+                <label for="archivoDiaria" class="form-label">Seleccione Bitacora:</label>
+                <input class="form-control mb-3" type="file" name="archivoDiaria" id="archivo_diaria">
                 <div class="button-container">
                     <button class="btn btn-primary" id="btnProcesar" type="submit">Procesar</button>
                 </div>
