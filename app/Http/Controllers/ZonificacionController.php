@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Produccion\tbl_produccion_zona;
+use App\Models\tbl_insp_cali;
 use App\Models\Zonificacion\tbl_localidades_sede;
 use App\Models\Zonificacion\TblGrupo;
 use App\Models\Zonificacion\TblGruposDetalle;
@@ -671,13 +672,13 @@ class ZonificacionController extends Controller
     }
     //------------------------------------------------------------------------------------------
 
-
-    public function asignarBarrio(Request $request)
+    //------------------------ FUNCIONES RELACIONADOS AL BUSADOR ------------------------------
+    public function asignarBarrio(Request $request): \Illuminate\Http\JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'barrio' => 'required|string|max:255',
             'id' => 'required|int'
-        ],[
+        ], [
             'id.required' => 'No se recibió el id del registro.',
             'id.int' => 'El id debe ser un numero entero.',
             'barrio.required' => 'Por favor ingrese un barrio.',
@@ -704,11 +705,131 @@ class ZonificacionController extends Controller
             $detalle->save();
 
             DB::commit();
-            return response()->json(['ok' => 'Actualizado exitosamente.'],200);
+            return response()->json(['ok' => 'Actualizado exitosamente.'], 200);
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    public function UpdateSelects(Request $request): \Illuminate\Http\JsonResponse
+    {
+
+        $municipio = $request->input('municipio');
+        $barrio = $request->input('barrio');
+        $grupo = $request->input('grupo');
+        $subgrupo = $request->input('subgrupo');
+        try {
+            $busqueda = TblgruposDetalle::with(['tbl_grupo', 'tbl_subgrupo',
+                'tbl_barrios', 'tbl_localidades_municipio']);
+            //$barrio = "PARQUE DE LA CAÑA";
+            if ($municipio) {
+                $busqueda->where('id_mun', $municipio); // Filtra por el nombre del municipio
+            }
+
+            if ($barrio) {
+                $busqueda->where('id_barrio', $barrio);
+            }
+            //$grupo = "CO";
+            if ($grupo) {
+                $busqueda->where('id_grupo', $grupo);
+            }
+            //$subgrupo = "CE2";
+            if ($subgrupo) {
+                $busqueda->where('id_subGrupo', $subgrupo);
+            }
+
+            $resultados = $busqueda->get();
+            return response()->json(['data' => $resultados]);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+
+    }
+
+    // ----------------------------------------------------------------------------------------
+
+    public function responsablesForm(): \Illuminate\Http\JsonResponse
+    {
+        $grupos = TblGrupo::where('status', 1)->get();
+        $subgrupos = TblSubgrupo::where('status', 1)->get();
+
+        return response()->json([
+            'html' => view('zonas.partials.modal_inspectores', compact('grupos', 'subgrupos'))->render(),
+        ]);
+    }
+
+    public function inspectoresPorGrupo(Request $request)
+    {
+        $grupo_id = $request->input('grupo');
+        $subgrupo_id = $request->input('subgrupo');
+
+
+        // Obtén el detalle usando el grupo y subgrupo (ajusta según tu lógica de negocio)
+        $detalle = TblGruposDetalle::where('id_grupo', $grupo_id)
+            ->where('id_subGrupo', $subgrupo_id)
+            ->with('inspectores') // relación inspectores
+            ->first();
+
+        $asignados = $detalle ? $detalle->inspectores->pluck('id')->toArray() : [];
+
+        // Todos los inspectores activos
+        $inspectores = tbl_insp_cali::where('state', 1)->get();
+
+        // Divide asignados y disponibles
+        $inspectores_asignados = $inspectores->whereIn('id', $asignados)->values();
+        $inspectores_disponibles = $inspectores->whereNotIn('id', $asignados)->values();
+
+        return response()->json([
+            'asignados' => $inspectores_asignados,
+            'disponibles' => $inspectores_disponibles,
+        ]);
+    }
+
+    public function responsablesStore(Request $request, $id_subgrupo, $id_grupo): \Illuminate\Http\JsonResponse
+    {
+
+        $validator = Validator::make($request->all(), [
+            'inspectores' => 'array',
+        ], [
+                'inspectores.array' => 'El campo de inspectores debe ser un arreglo.',
+            ]
+        );
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 422);
+        }
+        try {
+            $detalles = TblGruposDetalle::where('id_grupo', $id_grupo)
+                ->where('id_subGrupo', $id_subgrupo)
+                ->get();
+            $inspectores = $request->input('inspectores');
+
+            foreach ($detalles as $detalle) {
+                $detalle->inspectores()->sync($inspectores);
+            }
+
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+        return response()->json(['success' => 'Inspectores asignados correctamente'], 200);
+    }
+
+    public function responsablesInsp($id): \Illuminate\Http\JsonResponse
+    {
+        $detalle = TblGruposDetalle::findOrFail($id);
+        $subgrupo = TblSubgrupo::findOrFail($detalle->id_subGrupo);
+        $grupo = TblGrupo::findOrFail($detalle->id_grupo);
+        return response()->json([
+            'inspectores' => $detalle->inspectores,
+            'subgrupo' => $subgrupo,
+            'grupo' => $grupo,
+        ]);
+
+    }
+
+
 }

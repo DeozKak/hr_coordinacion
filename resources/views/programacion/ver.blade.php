@@ -32,7 +32,7 @@
 
     .btn-success:hover {
         background-color: #218838;
-        border-color: #1e7e34;
+        border-color: #1e7e39;
     }
 </style>
 <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
@@ -70,8 +70,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-12 mt-6"> 
-            <div class="card"> 
+        <div class="col-md-12 mt-6">
+            <div class="card">
                 <div class="card-body">
                     <h4 class="card-title text-center mb-3">Resultados de la Búsqueda</h4>
                     <button id="btnExportar" class="btn btn-success float-right">Exportar a plantilla GDW</button>
@@ -84,9 +84,9 @@
 </div>
 
 @section('js')
-<script src="{{ asset('js/verProgramacionV3.js') }}"></script>
+<script src="{{ asset('js/programacion/verProgramacionV3.js') }}"></script>
 <script>
-    
+
     const rangoFechasCheckbox = document.getElementById('rangoFechas');
     const fechaFinContainer = document.getElementById('fechaFinContainer');
 

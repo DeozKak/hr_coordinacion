@@ -211,7 +211,7 @@
     </div>
 </body>
 @section('js')
-<script src="{{ asset('js/indexProgramacionV3-6.js') }}" type="text/javascript"></script>
+<script src="{{ asset('js/programacion/indexProgramacionV3-6.js') }}" type="text/javascript"></script>
 
 
 @if (session('success'))

@@ -37,5 +37,12 @@ Route::middleware('web')->group(function () {
         Route::post('/zonas/asignarBarrio',[ZonificacionController::class, 'asignarBarrio'])->name('zonas.asignarBarrio')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
         //RUTA ASIGNADOR
         Route::post('/zonas/asignar', [ZonificacionController::class, 'asignar'])->name('zonas.asignar')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
+        //RUTA PARA ACTUALIZAR SELECTS BUSCADOR
+        Route::get('/zonas/selects', [ZonificacionController::class, 'UpdateSelects'])->name('zonas.actualizarSelects')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
+        //
+        Route::get('/zonas/responsables-form', [ZonificacionController::class, 'responsablesForm'])->name('zonas.responsablesForm')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
+        Route::get('/zonas/{id}/responsablesInsp', [ZonificacionController::class, 'responsablesInsp'])->name('zonas.responsablesInsp')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
+        Route::get('/zonas/inspectores-por-grupo', [ZonificacionController::class, 'inspectoresPorGrupo'])->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');;
+        Route::post('/zonas/{id_sub}/{id_grup}/responsables-store', [ZonificacionController::class, 'responsablesStore'])->name('zonas.responsablesStore')->middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP');
     });
 });

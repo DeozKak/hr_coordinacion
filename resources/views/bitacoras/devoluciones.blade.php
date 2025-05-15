@@ -14,7 +14,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <link rel="stylesheet" href="{{asset('css/bitacoras/Devoluciones.css')}}">
 
-<script src="{{asset('js/tbl_devoluciones.js')}}"></script>
+<script src="{{asset('js/bitacora/tbl_devoluciones.js')}}"></script>
 
 <body class="body">
 
@@ -104,7 +104,7 @@
                                             @else
                                                 <td>
                                                 -
-                                                </td>                              
+                                                </td>
                                             @endif
                                         @else
                                             <td>

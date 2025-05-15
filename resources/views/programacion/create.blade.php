@@ -188,7 +188,7 @@
           </div>
         </div>
       </div>
-    
+
     <div class="modal-footer">
       <button class="btn btn-success" id="agregar">Agregar</button>
       <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
@@ -244,7 +244,7 @@ $tabla = isset($tabla) ? $tabla : []; // Si $tabla no está definida, se asigna 
     minimumInputLength: 2 // Mínimo de caracteres para iniciar la búsqueda
   });
 </script>
-<script src="{{ asset('js/programacionV4-5.js') }}" type="text/javascript"></script>
+<script src="{{ asset('js/programacion/programacionV4-5.js') }}" type="text/javascript"></script>
 <script src="{{ asset('js/formPlantilla.js') }}" type="text/javascript"></script>
 @stop
 @stop

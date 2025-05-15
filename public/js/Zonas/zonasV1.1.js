@@ -1,11 +1,13 @@
 let tomSelectMunicipio;
+let SelectGrupo_a;
+let SelectSubGrupo_a;
 document.addEventListener('DOMContentLoaded', () => {
 
  $('#nombreMunicipio, #sedeMunicipio, #zonaMunicipio, #barrio, #grupo, #subgrupo').on('input', function () {
         // Cambia el valor del campo al texto en mayúsculas
         $(this).val($(this).val().toUpperCase());
     });
-  
+
     $('#municipios,#Barrios,#sedes,#zonas,#grupos,#subgrupos').DataTable({
         paging: false, scrollCollapse: true, scrollY: '230px', lengthChange: false, info: false, "language": {
             "lengthMenu": "Mostrar _MENU_ registros por página",

@@ -327,3 +327,27 @@
     </div>
 </div>
 
+{{-- Modal de Asignacion de responsables subgrupos --}}
+<div class="modal fade" id="ResponsablesModal" tabindex="-1" role="dialog" aria-labelledby="ResponsablesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ResponsableModalLabel">Gestión de asignación</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="responsables-modal-body">
+                <div class="text-center">
+                    <span class="spinner-border spinner-border-sm"></span> Cargando...
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+
+            </div>
+        </div>
+    </div>
+</div>
+
