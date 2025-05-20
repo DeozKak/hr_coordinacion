@@ -933,11 +933,15 @@ class BitacoraController extends Controller
 
             $nombreArchivo = "Devoluciones " . $fecha_actual . ".xlsx";
 
+            $urlFirmada = url()->temporarySignedRoute(
+                'descargar.archivo', // Nombre de la ruta que procesa la descarga
+                now()->addMinutes(10), // Tiempo de expiración de la URL
+                ['file' => $nombreArchivo] // Parámetro con el nombre del archivo
+            );
 
             header('Content-Type: application/json');
             return response()->json([
-                'nombreArchivo' => $nombreArchivo,
-                'ruta' => '../storage/app/uploads/'
+                'ruta' => $urlFirmada
             ]);
         } catch (\Exception $e) {
 

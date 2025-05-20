@@ -80,7 +80,7 @@
     @include('inspectores.modales.modales')
 
     @section('js')
-        <script src="{{asset('js/inspectores/inspectores.js')}}"></script>
+        <script src="{{asset('js/inspectores/inspectoresV1.1.js')}}"></script>
         <script>
             let changeStateUrl = "{{ route('inspectores.change_state', ['inspector' => '__ID__']) }}";
             let activeStateUrl = "{{ route('inspectores.change_state', ['inspector' => '__ID__']) }}";

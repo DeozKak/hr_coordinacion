@@ -17,7 +17,8 @@ use App\Services\BarrioService;
 use App\Services\MunicipioService;
 use Illuminate\Support\Facades\Log;
 use App\Rules\UniqueMunicipio;
-
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class ZonificacionController extends Controller
 {
@@ -219,9 +220,6 @@ class ZonificacionController extends Controller
 
             $municipio->load('sede', 'zona');
 
-            $detalle = new TblGruposDetalle();
-            $detalle->id_mun = $municipio->id;
-            $detalle->save();
             DB::commit();
             return response()->json([
                 'ok' => $municipio,
@@ -749,8 +747,9 @@ class ZonificacionController extends Controller
 
     }
 
-    // ----------------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------------------------
 
+    // ---------------- FUNCIONES RELACIONADOS CON EL ASIGNADOR DE INSPECTORES -------------------
     public function responsablesForm(): \Illuminate\Http\JsonResponse
     {
         $grupos = TblGrupo::where('status', 1)->get();
@@ -831,5 +830,144 @@ class ZonificacionController extends Controller
 
     }
 
+    // -------------------------------------------------------------------------------------------
 
+    public function recepcionMasiva(Request $request)
+    {
+
+        $validator = Validator::make($request->all(), [
+            'archivo' => 'required|file|mimes:xlsx',
+        ],
+            [
+                'archivo.required' => 'Por favor seleccione un archivo.',
+                'archivo.file' => 'La entrada debe ser un archivo.',
+                'archivo.mimes' => 'El archivo debe ser un archivo de tipo xlsx.',
+            ]
+        );
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 422);
+        }
+
+        $archivo = $request->file('archivo');
+
+        $spreadsheet = IOFactory::load($archivo);
+        $sheet = $spreadsheet->getActiveSheet();
+        $rows = $sheet->toArray();
+
+        $validacion = $this->ValidacionMasiva($rows[0]);
+
+        if (!$validacion) {
+            return response()->json(['error' => 'El archivo no cumple con los criterios requeridos'], 422);
+        }
+
+        $indicador = $this->InsercionMasiva($rows);
+
+        if ($indicador === true) {
+            return response()->json(['success' => 'Datos insertados correctamente'], 200);
+        } else {
+            return response()->json(['error' => $indicador], 422);
+        }
+    }
+
+    private function ValidacionMasiva($encabezados)
+    {
+        try {
+            $indicador = true;
+            foreach ($encabezados as $index => $encabezado) {
+
+                switch ($index) {
+                    case 0:
+                        $indicador = $encabezado === "id_mun";
+                        break;
+                    case 1:
+                        $indicador = $encabezado === "grupo";
+                        break;
+                    case 2:
+                        $indicador = $encabezado === "sub_grupo";
+                        break;
+                    case 3:
+                        $indicador = $encabezado === "barrio";
+                        break;
+                }
+
+            }
+
+            return $indicador;
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            return false;
+        }
+    }
+
+    private function InsercionMasiva($datos)
+    {
+        try {
+            DB::beginTransaction();
+            $registros = [];
+            foreach ($datos as $index => $dato) {
+                if ($index == 0) {
+                    continue; // Saltar cabecera si hay
+                }
+
+                $fila = []; // Guardar datos de la fila
+
+                foreach ($dato as $index2 => $dato2) {
+                    switch ($index2) {
+                        case 0: // ID de municipio
+                            $exist = tbl_localidades_municipio::where('id', $dato2)->exists();
+                            if ($exist) {
+                                $fila['id_mun'] = $dato2;
+                            } else {
+                                return 'el id del municipio no existe. revise columna A fila ' . ($index + 1);
+                            }
+                            break;
+
+                        case 1: // grupo
+                            $grupoRegistro = TblGrupo::where('grupo', $dato2)->first();
+                            if ($grupoRegistro) {
+                                $fila['id_grupo'] = $grupoRegistro->id;
+                            } else {
+                                return 'el grupo no existe. revise columna B fila ' . ($index + 1);
+                            }
+                            break;
+
+                        case 2: // subgrupo
+                            $subgrupoRegistro = TblSubgrupo::where('subgrupo', $dato2)->first();
+                            if ($subgrupoRegistro) {
+                                $fila['id_subGrupo'] = $subgrupoRegistro->id;
+                            } else {
+                                return 'el subgrupo no existe. revise columna C fila ' . ($index + 1);
+                            }
+                            break;
+
+                        case 3: // barrio (puede ser null)
+                            if ($dato2 == "") {
+                                $fila['id_barrio'] = null;
+                            } else {
+                                $valor = new TblBarrios();
+                                $valor->barrio = $dato2;
+                                $valor->save(); // Guardar nuevo barrio y tomar el ID
+                                $fila['id_barrio'] = $valor->id;
+                            }
+                            break;
+                    }
+                }
+
+                $registros[] = $fila; // Añadir fila para inserción
+            }
+
+            // Si tienes una tabla intermedia llamada TblGruposDetalle por ejemplo:
+            if (!empty($registros)) {
+                TblGruposDetalle::insert($registros); // Inserta todos de una sola vez
+                DB::commit();
+                return true;
+            }
+            return 'No hay registros para insertar.';
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error($e->getMessage());
+            return 'Ocurrió un error al insertar los datos. ' . $e->getMessage();
+        }
+    }
 }

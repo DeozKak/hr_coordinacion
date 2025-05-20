@@ -3,7 +3,7 @@ let codigoHTMLges = "";
 
 $(document).ready(function () {
     $.fn.dataTable.ext.errMode = function (settings, helpPage, message) {
-      
+
     };
     $('#devoluciones').each(function () {
 
@@ -14,7 +14,7 @@ $(document).ready(function () {
         codigoHTMLdev += tablaHTMLdev;
 
     });
-    
+
     $('#gestionados').each(function () {
 
         let tablaHTMLges = $(this)[0].outerHTML;
@@ -24,7 +24,7 @@ $(document).ready(function () {
         codigoHTMLges += tablaHTMLges;
 
     });
-    
+
     $('#devoluciones').DataTable({
         scrollCollapse: true,
         scrollX: true,
@@ -66,9 +66,9 @@ $(document).ready(function () {
     $('div[id="gestionados_wrapper"]').hide();
 
     $('.btnav').on('click', function () {
-        
+
         const btn = $(this).attr('id');
-        
+
         if (btn === 'Devoluciones') {
             const devoluciones = $('a[id="Devoluciones"]');
             devoluciones.addClass('active');
@@ -92,7 +92,7 @@ $(document).ready(function () {
         $('#overlay').show();
 
         const url = document.getElementById('exportar_devoluciones').value;
-    
+
 
         const csrfToken = document.getElementById('token').value;
         $.ajax({
@@ -104,11 +104,11 @@ $(document).ready(function () {
                 _token: csrfToken
               },
             success: function (response) {
-                
-                const nombreArchivo = response.nombreArchivo;
+
+
                 const urlarchivo = response.ruta;
-                if (nombreArchivo !== undefined) {
-                    const urlDescarga = urlarchivo + nombreArchivo;
+                if (urlarchivo !== undefined) {
+                    const urlDescarga = urlarchivo;
                     window.location.href = urlDescarga;
                     $('#loader').hide();
                     $('#overlay').hide();
@@ -123,7 +123,7 @@ $(document).ready(function () {
 
             },
             error: function (xhr,error) {
-                
+
                 $('#loader').hide();
                 $('#overlay').hide();
                 Swal.fire({
@@ -148,10 +148,10 @@ $(document).ready(function () {
             url: url,
             data: {
                 codigoHTML: codigoHTML,
-             
+
             },
             success: function (response) {
-               
+
                 var nombreArchivo = response.nombreArchivo;
                 if (nombreArchivo !== undefined) {
                     var urlDescarga = 'Controlador/Archivos/' + nombreArchivo;

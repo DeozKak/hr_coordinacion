@@ -109,6 +109,19 @@ $(document).ready(function () {
     $(document).on('click', '.modalCrearInspector', function () {
         let modalCrearInspector = $('#createInspectorModal')
         modalCrearInspector.modal()
+        // Restringir el campo idCrear a solo números
+        $('#idCrear').off('input.numericOnly').on('input.numericOnly', function () {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        // Solo letras y mayúsculas para #nombresCrear y #apellidosCrear
+        $('#nombresCrear, #apellidosCrear').off('input.lettersOnly').on('input.lettersOnly', function () {
+            // Elimina todo lo que no sea letra ni espacios
+            this.value = this.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '');
+            // Convierte a mayúsculas
+            this.value = this.value.toUpperCase();
+        });
+
     })
 
     // ------------------------- Guardar Cambios de Crear Inspector -------------------------

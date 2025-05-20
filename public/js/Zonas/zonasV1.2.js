@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let nuevaFila = `
                             <tr data-id="${response.ok.id}">
+                                <td>${response.ok.id}</td>
                                 <td>${response.ok.nombre}</td>
                                 <td>${response.ok.sede.nombre}</td>
                                 <td>${response.ok.zona.nombre}</td>
@@ -67,9 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         `;
                 $('#municipios tbody').append(nuevaFila);  // Agregar la nueva fila al cuerpo de la tabla
                 topAlert('success', response.success);
-                setTimeout(() => {
+               /* setTimeout(() => {
                     alertaMunicipio();
-                }, 2000)
+                }, 2000)*/
             }, error: function (xhr, status, error) {
                 console.log(xhr.responseText);
                 alerta('error', 'Error', xhr.responseJSON.error)

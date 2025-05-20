@@ -9,14 +9,17 @@
 @section('content')
 
     <input type="hidden" id="token" value="{{ csrf_token() }}">
-    <script src="{{ asset('js/Zonas/zonasV1.1.js') }}"></script>
+    <script src="{{ asset('js/Zonas/zonasV1.2.js') }}"></script>
     <script src="{{ asset('js/Zonas/alerts.js') }}"></script>
     <script src="{{ asset('js/Zonas/asignador.js') }}"></script>
     <script src="{{ asset('js/Zonas/buscadorV1.2.js') }}"></script>
     <script src="{{ asset('js/Zonas/asigResponsablesV1.1.js') }}"></script>
+    <script src="{{ asset('js/Zonas/insercionMasiva.js') }}"></script>
+
     <link rel="stylesheet" href="{{ asset ('css/zonas/zonas.css')}}">
     <input type="hidden" id="token" value="{{ csrf_token() }}">
     <input type="hidden" id="url_asignarBarrio" value="{{ route('zonas.asignarBarrio') }}">
+    <input type="hidden" id="url_masivo" value="{{ route('zonas.recepcionMasiva') }}">
     <div class="row">
 
         {{-- Tarjeta Sedes y Zonas --}}
@@ -46,6 +49,7 @@
                     <table class="table table-striped" id="municipios">
                         <thead>
                         <tr>
+                            <th>ID</th>
                             <th>Nombre</th>
                             <th>Sede</th>
                             <th>Zona</th>
@@ -55,6 +59,7 @@
                         <tbody>
                         @foreach ($municipios as $municipio)
                             <tr data-id="{{$municipio->id}}">
+                                <td>{{ $municipio->id }}</td>
                                 <td>{{ $municipio->nombre }}</td>
                                 <td>{{ $municipio->sede->nombre }}</td>
                                 <td>{{ $municipio->zona->nombre }}</td>
@@ -135,7 +140,6 @@
                      <table class="table table-striped" id="grupos">
                          <thead>
                          <tr>
-                             <th>ID</th>
                              <th>Nombre</th>
                              <th>Sede</th>
                              <th class="text-center">Acciones</th>
@@ -144,7 +148,6 @@
                          <tbody>
                          @foreach ($grupos as $grupo)
                              <tr data-id="{{ $grupo->id }}">
-                                 <td>{{ $grupo->id }}</td>
                                  <td>{{ $grupo->grupo }}</td>
                                  <td>{{ $grupo->sede->nombre }}</td>
                                  <td>
@@ -184,7 +187,6 @@
                      <table class="table table-striped" id="subgrupos">
                          <thead>
                          <tr>
-                             <th>ID</th>
                              <th>Nombre</th>
                              <th>Sede</th>
                              <th class="text-center">Acciones</th>
@@ -193,7 +195,6 @@
                          <tbody>
                          @foreach ($subgrupos as $subgrupo)
                              <tr data-id="{{ $subgrupo->id }}">
-                                 <td>{{ $subgrupo->id }}</td>
                                  <td>{{ $subgrupo->subgrupo }}</td>
                                  <td>{{ $subgrupo->sede->nombre }}</td>
                                  <td>

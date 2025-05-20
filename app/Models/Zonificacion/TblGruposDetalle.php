@@ -20,23 +20,34 @@ class TblGruposDetalle extends Model
     /**
      * @var int|mixed
      */
-
+    protected $fillable = [
+        'id_mun',
+        'id_grupo',
+        'id_subGrupo',
+        'id_barrio',
+    ];
 
     protected $table = 'tbl_grupos_detalle';
 
 
-    public function tbl_grupo(){
-        return $this->belongsTo(TblGrupo::class,'id_grupo');
+    public function tbl_grupo()
+    {
+        return $this->belongsTo(TblGrupo::class, 'id_grupo');
     }
 
-    public function tbl_subgrupo(){
-        return $this->belongsTo(TblSubgrupo::class,'id_subGrupo');
+    public function tbl_subgrupo()
+    {
+        return $this->belongsTo(TblSubgrupo::class, 'id_subGrupo');
     }
-    public function tbl_barrios(){
-        return $this->belongsTo(TblBarrios::class,'id_barrio');
+
+    public function tbl_barrios()
+    {
+        return $this->belongsTo(TblBarrios::class, 'id_barrio');
     }
-    public function tbl_localidades_municipio(){
-        return $this->belongsTo(tbl_localidades_municipio::class,'id_mun');
+
+    public function tbl_localidades_municipio()
+    {
+        return $this->belongsTo(tbl_localidades_municipio::class, 'id_mun');
     }
 
     public function inspectores(): BelongsToMany
