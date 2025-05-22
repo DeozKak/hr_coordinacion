@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-
-class tbl_insp_cali extends Model
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+class tbl_insp_cali extends Model implements AuditableContract
 {
     use HasFactory;
-
+    use AuditableTrait;
     protected $table = 'tbl_insp_cali';
 
     public function supervisor(): BelongsTo

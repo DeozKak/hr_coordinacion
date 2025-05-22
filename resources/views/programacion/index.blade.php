@@ -50,7 +50,6 @@
             <div class="col-lg-12">
                 <div class="col-md-12 table-responsive" style="padding: 15px;">
                     <div class="card">
-
                         <div class="card-body">
                             <a href="{{ route('programacion.create') }}" class="btn btn-success btn-sm" title="Add New Programacion">
                                 <i class="fa fa-plus" aria-hidden="true"></i> Generar nueva Tabla

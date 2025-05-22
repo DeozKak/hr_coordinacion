@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Models\Zonificacion\tbl_localidades_sede;
 use Illuminate\Database\Eloquent\relations\HasOne;
-
-class TblSubgrupo extends Model
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+class TblSubgrupo extends Model implements AuditableContract
 {
-    use HasFactory;
+    use HasFactory,AuditableTrait;
 
     protected $table = 'tbl_subgrupos';
     public function sede(): HasOne

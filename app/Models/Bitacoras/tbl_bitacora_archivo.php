@@ -6,10 +6,11 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
-class tbl_bitacora_archivo extends Model
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+class tbl_bitacora_archivo extends Model implements AuditableContract
 {
-    use HasFactory;
+    use HasFactory,AuditableTrait;
 
     public function Usuario(): BelongsTo
     {

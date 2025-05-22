@@ -4,10 +4,11 @@ namespace App\Models\Nomina;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
-class TblParametroPrecios extends Model
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+class TblParametroPrecios extends Model implements AuditableContract
 {
-    use HasFactory;
+    use HasFactory,auditableTrait;
 
     protected $table = 'tbl_parametro_precios';
 

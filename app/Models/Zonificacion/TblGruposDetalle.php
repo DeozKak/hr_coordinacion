@@ -10,12 +10,14 @@ use App\Models\Zonificacion\TblGrupo;
 use App\Models\Zonificacion\TblSubgrupo;
 use App\Models\Zonificacion\TblBarrios;
 use App\Models\Zonificacion\tbl_localidades_municipio;
+use App\Models\tbl_insp_cali;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable as AuditableTrait;
 
-
-class TblGruposDetalle extends Model
+class TblGruposDetalle extends Model implements AuditableContract
 {
-    use HasFactory;
+    use HasFactory, AuditableTrait;
 
     /**
      * @var int|mixed

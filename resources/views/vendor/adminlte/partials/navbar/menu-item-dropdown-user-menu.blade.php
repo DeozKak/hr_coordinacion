@@ -3,17 +3,17 @@
 @php( $config_url = View::getSection('config_url') ?? config('adminlte.config_url', 'config') )
 
 @if (config('adminlte.usermenu_profile_url', false))
-@php( $profile_url = Auth::user()->adminlte_profile_url() )
+    @php( $profile_url = Auth::user()->adminlte_profile_url() )
 @endif
 
 @if (config('adminlte.use_route_url', false))
-@php( $profile_url = $profile_url ? route($profile_url) : '' )
-@php( $logout_url = $logout_url ? route($logout_url) : '' )
-@php( $config_url = $config_url ? route($config_url) : '' )
+    @php( $profile_url = $profile_url ? route($profile_url) : '' )
+    @php( $logout_url = $logout_url ? route($logout_url) : '' )
+    @php( $config_url = $config_url ? route($config_url) : '' )
 @else
-@php( $profile_url = $profile_url ? url($profile_url) : '' )
-@php( $logout_url = $logout_url ? url($logout_url) : '' )
-@php( $config_url = $config_url ? url($config_url) : '' )
+    @php( $profile_url = $profile_url ? url($profile_url) : '' )
+    @php( $logout_url = $logout_url ? url($logout_url) : '' )
+    @php( $config_url = $config_url ? url($config_url) : '' )
 @endif
 
 <li class="nav-item dropdown user-menu">
@@ -22,7 +22,7 @@
     <a href="#" class="nav-link" id="userMenuToggle">
         @if(config('adminlte.usermenu_image'))
             <img src="{{ Auth::user()->adminlte_image() }}" class="user-image img-circle elevation-2"
-                alt="{{ Auth::user()->name }}">
+                 alt="{{ Auth::user()->name }}">
         @endif
         <span @if(config('adminlte.usermenu_image')) class="d-none d-md-inline" @endif>
             {{ Auth::user()->name }}
@@ -39,7 +39,7 @@
                     @if(!config('adminlte.usermenu_image')) h-auto @endif">
                 @if(config('adminlte.usermenu_image'))
                     <img src="{{ Auth::user()->adminlte_image() }}" class="img-circle elevation-2"
-                        alt="{{ Auth::user()->name }}">
+                         alt="{{ Auth::user()->name }}">
                 @endif
                 <p class="@if(!config('adminlte.usermenu_image')) mt-0 @endif">
                     {{ Auth::user()->name }}
@@ -53,24 +53,26 @@
         @endif
 
         {{-- User menu footer --}}
-        <li class="user-footer d-flex flex-column align-items-start" style="background-color: #ffffff; padding: 10px; border-radius: 5px;">
+        <li class="user-footer d-flex flex-column align-items-start"
+            style="background-color: #ffffff; padding: 10px; border-radius: 5px;">
             @if($profile_url)
                 <a href="{{ $profile_url }}" class="btn btn-default btn-flat w-100 mb-1 text-left"
-                    style="border: none; border-radius: 0; background-color: #ffffff; transition: background-color 0.3s;">
+                   style="border: none; border-radius: 0; background-color: #ffffff; transition: background-color 0.3s;">
                     <i class="fa fa-user text-lightblue mr-2"></i> Perfil
                 </a>
             @endif
 
             @if($config_url)
                 <a href="#" class="btn btn-default btn-flat w-100 mb-1 text-left" data-toggle="modal"
-                    data-target="#configModal" style="border: none; border-radius: 0; background-color: #ffffff; transition: background-color 0.3s;">
+                   data-target="#configModal"
+                   style="border: none; border-radius: 0; background-color: #ffffff; transition: background-color 0.3s;">
                     <i class="fa fa-cog text-secondary mr-2"></i> Configuración
                 </a>
             @endif
 
             <a href="#" class="btn btn-default btn-flat w-100 text-left"
-                onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
-                style="border: none; border-radius: 0; background-color: #ffffff; transition: background-color 0.3s;">
+               onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+               style="border: none; border-radius: 0; background-color: #ffffff; transition: background-color 0.3s;">
                 <i class="fa fa-sign-out-alt text-red mr-2"></i> Cerrar Sesión
             </a>
             <form id="logout-form" action="{{ $logout_url }}" method="POST" style="display: none;">
@@ -123,16 +125,17 @@
     });
 </script>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-<link rel="stylesheet" href="{{ asset ('css/modalConfig/modalConfig.css')}}" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<link rel="stylesheet" href="{{ asset ('css/modalConfig/modalConfig.css')}}"/>
 
 <!-- Modal de Configuración -->
 <div class="modal fade" id="configModal" tabindex="-1" role="dialog" aria-labelledby="configModalLabel"
-    aria-hidden="true" data-backdrop="false">
+     aria-hidden="true" data-backdrop="false">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="configModalLabel" style="text-align: center; font-size: 20.5px; width: 100%; margin: 0 auto;">
+                <h5 class="modal-title" id="configModalLabel"
+                    style="text-align: center; font-size: 20.5px; width: 100%; margin: 0 auto;">
                     Configuración</h5>
                 <button type="button" class="close custom-close-btn" data-dismiss="modal" aria-label="Cerrar">
                     <span aria-hidden="true">&times;</span>
@@ -140,51 +143,55 @@
             </div>
             <div class="grid">
                 @can('gestion_usuarios')
-                <a href="{{ url('/admin/users') }}" class="item" target="_self">
-                    <div class="item-icon"><i class="fas fa-user"></i></div>
-                    <div class="item-label">Usuarios</div>
-                </a>
+                    <a href="{{ url('/admin/users') }}" class="item" target="_self">
+                        <div class="item-icon"><i class="fas fa-user"></i></div>
+                        <div class="item-label">Usuarios</div>
+                    </a>
+                    <a href="{{ route('admin.users.activity.list') }}" class="item" target="_self">
+                        <div class="item-icon"><i class="fas fa-user-secret"></i></div>
+                        <div class="item-label">Actividad Usuarios</div>
+                    </a>
                 @endcan
 
                 @can('gestion_inspectores')
-                <a href="{{ url('/inspectores') }}" class="item" target="_self">
-                    <div class="item-icon"><i class="fas fa-hard-hat"></i></div>
-                    <div class="item-label">Inspectores</div>
-                </a>
+                    <a href="{{ url('/inspectores') }}" class="item" target="_self">
+                        <div class="item-icon"><i class="fas fa-hard-hat"></i></div>
+                        <div class="item-label">Inspectores</div>
+                    </a>
                 @endcan
 
                 @canany(['ver_residente', 'ver_coordinacion_RP'])
-                <a href="{{ url('/cortes_produccion') }}" class="item" target="_self">
-                    <div class="item-icon"><i class="fas fa-chart-bar"></i></div>
-                    <div class="item-label">Cortes Producción</div>
-                </a>
+                    <a href="{{ url('/cortes_produccion') }}" class="item" target="_self">
+                        <div class="item-icon"><i class="fas fa-chart-bar"></i></div>
+                        <div class="item-label">Cortes Producción</div>
+                    </a>
                 @endcan
 
                 @can('reporte_produccion')
-                <a href="{{ url('/fechasParametros') }}" class="item" target="_self">
-                    <div class="item-icon"><i class="fas fa-coins"></i></div>
-                    <div class="item-label">Parametrizar precios</div>
-                </a>
+                    <a href="{{ url('/fechasParametros') }}" class="item" target="_self">
+                        <div class="item-icon"><i class="fas fa-coins"></i></div>
+                        <div class="item-label">Parametrizar precios</div>
+                    </a>
                 @endcan
 
                 @role('admin')
-                    <a href="{{ url('/admin/notifications/manage') }}" class="item" target="_self">
-                        <div class="item-icon"><i class="fas fa-bell"></i></div>
-                        <div class="item-label">Gestión Notificaciones</div>
-                    </a>
+                <a href="{{ url('/admin/notifications/manage') }}" class="item" target="_self">
+                    <div class="item-icon"><i class="fas fa-bell"></i></div>
+                    <div class="item-label">Gestión Notificaciones</div>
+                </a>
                 @endrole
 
                 @can('gestion_nomina')
-                <a href="{{ url('/nomina/parametrizarSalarioAux') }}" class="item" target="_self">
-                    <div class="item-icon"><i class="fas fa-money-bill-wave"></i></div>
-                    <div class="item-label">Sal. Mínimo - Aux. Transporte</div>
-                </a>
+                    <a href="{{ url('/nomina/parametrizarSalarioAux') }}" class="item" target="_self">
+                        <div class="item-icon"><i class="fas fa-money-bill-wave"></i></div>
+                        <div class="item-label">Sal. Mínimo - Aux. Transporte</div>
+                    </a>
                 @endcan
-                @can('ver_coordinacion_RP')
-                        <a href="{{ route('zonas.index') }}" class="item" target="_self">
-                            <div class="item-icon"><i class="fas fa-map-marked-alt"></i></div>
-                            <div class="item-label">Zonificación</div>
-                        </a>
+                @can('ver_residente')
+                    <a href="{{ route('zonas.index') }}" class="item" target="_self">
+                        <div class="item-icon"><i class="fas fa-map-marked-alt"></i></div>
+                        <div class="item-label">Zonificación</div>
+                    </a>
                 @endcan
             </div>
         </div>

@@ -4,10 +4,11 @@ namespace App\Models\Bitacoras;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
-class tbl_bitacoras_causal extends Model
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+class tbl_bitacoras_causal extends Model implements AuditableContract
 {
-    use HasFactory;
+    use HasFactory,auditableTrait;
 
     protected $table = 'tbl_bitacoras_causales';
 

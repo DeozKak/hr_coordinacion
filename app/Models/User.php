@@ -8,10 +8,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasPermissions;
 use Spatie\Permission\Traits\HasRoles;
-
-class User extends Authenticatable
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+class User extends Authenticatable implements AuditableContract
 {
-    use HasFactory, Notifiable, HasRoles, HasPermissions;
+    use HasFactory, Notifiable, HasRoles, HasPermissions, AuditableTrait;
 
 
     /**
