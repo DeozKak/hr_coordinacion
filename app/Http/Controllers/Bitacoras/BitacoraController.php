@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Border;
-
+use Illuminate\Support\Facades\DB;
 
 class BitacoraController extends Controller
 {
@@ -243,9 +243,10 @@ class BitacoraController extends Controller
                     foreach ($fila as $celda) {
                         $contenidoCelda = $celda;
                         // obtener datos complementarios 60 meses y rechazos
-                        $vence = $fila[18];
-                        $rechazo = $fila[19];
-                        $periodo_gracia = $fila[20];
+                        $vence = $fila[18] ?? null;
+                        $rechazo = $fila[19] ?? null;
+                        $periodo_gracia = $fila[20] ?? null;
+
                         // Obtener el identificador único del combobox y checkbox
                         $idCheckbox = $indicador_checkbox;
                         $idCombobox1 = $indicador_combobox1;
@@ -484,7 +485,8 @@ class BitacoraController extends Controller
             $hoja->getStyle('A7:O7')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('0096ff');
         }
         if ($super !== null) {
-
+            //comienzo de transaccion
+            DB::beginTransaction();
             if (!empty($datos_array_OK)) {
 
                 foreach ($datos_array_OK as $datos_ok) {
@@ -498,7 +500,9 @@ class BitacoraController extends Controller
 
                         //  $resultado_ok = $validacion->getValidación_existentes();
                     } catch (\Exception $e) {
-                        return response()->json(['error' => 'Error al consultar los datos en la base de datos']);
+                        log::error($e);
+                        DB::rollBack();
+                        return response()->json(['error' => 'Error al consultar los datos en la base de datos '.$e->getMessage()], 400);
                     }
 
                     // BitacoraController::dd($resultado_ok[0]['FECHA_GESTION']);
@@ -563,7 +567,7 @@ class BitacoraController extends Controller
                 $bitacoraFallidas->delete();
                 tbl_temp_contrato::where('id_bitacora', $bitacora->id)->delete();
             } catch (\Exception $e) {
-                return response()->json(['error' => 'Error al insertar Fallidas ' . $e]);
+                log::error($e);
             }
 
             foreach ($datos_array_OK as $datos) {
@@ -625,6 +629,7 @@ class BitacoraController extends Controller
                     $contrato->save();
                 } catch (\Exception $e) {
                     Log::error($e);
+                    DB::rollBack();
                     return response()->json(['error' => 'Error al guardar los datos en la base de datos ' . $e]);
                 }
             }
@@ -641,8 +646,9 @@ class BitacoraController extends Controller
 
                         // $resultado = $validacion->getValidación_existentes();
                     } catch (\Exception $e) {
+                        DB::rollBack();
                         Log::error($e);
-                        return response()->json(['error' => 'Error al consultar los datos en la base de datos']);
+                        return response()->json(['error' => 'Error al consultar los datos en la base de datos'. $e->getMessage()]);;
                     }
 
                     if ($resultado->isEmpty()) {
@@ -696,6 +702,7 @@ class BitacoraController extends Controller
             } catch (\Exception $e) {
                 Log::error($e);
             }
+            DB::commit();
         } else {
 
             $user = Auth::user();
@@ -812,7 +819,7 @@ class BitacoraController extends Controller
     {
         $devoluciones = Tbl_dv_insp::where('ACTIVADO', 1)->get();
         $gestionados = Tbl_dv_insp::where('ACTIVADO', 0)->get();
-
+/*
         foreach ($devoluciones as $devolucion) {
             if ($devolucion->GESTIONADO == 1) {
                 $devolucion->DIAS_SIN_GESTION = 0;
@@ -824,7 +831,7 @@ class BitacoraController extends Controller
             $diferencia = $fecha_devolucion->diff($fecha_actual);
             $devolucion->DIAS_SIN_GESTION = $diferencia->days;
             $devolucion->save();
-        }
+        }*/
         return view('bitacoras.devoluciones', compact('devoluciones', 'gestionados'));
     }
 

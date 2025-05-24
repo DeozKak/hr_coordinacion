@@ -34,6 +34,19 @@ class dev_clean extends Command
             $gestionada->ACTIVADO = 0;
             $gestionada->save();
         }
+        $devoluciones = Tbl_dv_insp::where('ACTIVADO', 1)->get();
+        foreach ($devoluciones as $devolucion) {
+            if ($devolucion->GESTIONADO == 1) {
+                $devolucion->DIAS_SIN_GESTION = 0;
+                $devolucion->save();
+                continue;
+            }
+            $fecha_devolucion = new DateTime($devolucion->FECHA_DV);
+            $fecha_actual = new DateTime(date('Y-m-d'));
+            $diferencia = $fecha_devolucion->diff($fecha_actual);
+            $devolucion->DIAS_SIN_GESTION = $diferencia->days;
+            $devolucion->save();
+        }
 
         return "Registros Actualizados";
     }

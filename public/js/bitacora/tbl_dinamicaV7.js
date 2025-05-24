@@ -28,15 +28,15 @@ $(document).ready(function () {
         },
         "columnDefs": [
             {
-                "targets": [18], // 
+                "targets": [18], //
                 "visible": false
             },
             {
-                "targets": [19], // 
+                "targets": [19], //
                 "visible": false
             },
             {
-                "targets": [20], 
+                "targets": [20],
                 "visible": false
             }
         ]
@@ -108,7 +108,7 @@ $(document).ready(function () {
 
         // habilitar vista tabla contadores
         var tbl_contadores = document.getElementById(tabId);
-        // habilitar vista tabla Inspector     
+        // habilitar vista tabla Inspector
         $('.tbl_datos').attr('style', 'table');
 
 
@@ -247,7 +247,7 @@ $(document).ready(function () {
                     encabezado: encabezado,
                     datos: datos,
                     indicadores: indicadores,
-                    _token: csrfToken
+
                 },
                 success: function (response) {
 
@@ -396,7 +396,7 @@ $(document).ready(function () {
     //--------------------------------------------------------------------------------
 
 
-    //-------------------------------------------------------------------------------- 
+    //--------------------------------------------------------------------------------
 
 
     //--------------------------------------------------------------------------------
@@ -738,12 +738,13 @@ function agregar_datos() {
                     '<input type="checkbox" id="checkRecintos" class="recintosCheck" ' + (recintos === 'SI' ? 'checked' : '') + '>' + '<input type="text" id="NroRecintos"  class="recintos" size="1" value="' + cantidadRecintos + '" style="text-align: center;"' + (recintos === 'SI' ? '' : 'disabled') + '>',
                     (devolucion === 'OK' ? '<select class="form-select nombre-columna" style="width: 80px;"><option value="OK" selected>OK</option><option value="DV">DV</option></select>' : '<select class="form-select nombre-columna" style="width: 80px;"><option value="OK">OK</option><option value="DV" selected>DV</option></select>'),
                     '<select class="combo2" style="width: 220px; display: none;">' +
-                    causalesData.map(causal => 
+                    causalesData.map(causal =>
                         `<option value="${causal.nom_causal}">${causal.nom_causal}</option>`
                     ).join('') +
                 '</select>',
                     "",
                     rechazo,
+                    ''
 
                 ]).draw().data();
             } catch (error) {
@@ -760,7 +761,7 @@ function agregar_datos() {
 
             const selectCausal = tabla.find('select.combo2').last();
             eventosNuevos(selectCausal[0],'CAUSAL');
-            
+
             const recintos = tabla.find('input.recintos').last();
             eventosNuevos(recintos[0],'4_RECINTOS');
 
@@ -779,7 +780,7 @@ function agregar_datos() {
                     fila.find('#NroRecintos').prop('disabled', true).val(''); // Deshabilitar el campo de entrada y limpiar su valor
                 }
             });
-           
+
             // Función para validar los datos ingresados en la tabla
             const inputrecintos = document.querySelectorAll('#NroRecintos');
 
@@ -1036,7 +1037,7 @@ function eventosNuevos(select, campo) {
 
                 if (!select.checked) { // Verifica si el checkbox está desmarcado
                     enviarDatos(celdas[0].textContent, '4_RECINTOS', 'NO');
-    
+
                 }
 
             });
@@ -1066,13 +1067,13 @@ function eventosNuevos(select, campo) {
                 cambiarColor(this);
                 let fila = select.parentNode.parentNode;
                 let celdas = fila.getElementsByTagName('td');
-        
+
                 enviarDatos(celdas[0].textContent, 'ESTADO', select.value);
-        
+
             });
             break;
     }
-   
+
 }
 
 

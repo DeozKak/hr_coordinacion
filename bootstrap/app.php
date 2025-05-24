@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\CheckUserStatus;
+use App\Http\Middleware\LogUserHttpActivity;
 use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -34,6 +35,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(callback: function (Middleware $middleware) {
         $middleware->group('public', []);
         $middleware->group('auth', [CheckUserStatus::class]);
+        $middleware->web([LogUserHttpActivity::class]);
+        $middleware->validateCsrfTokens(except: [
+            'guardar_tabla*', // Excluye solo esta ruta exacta
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

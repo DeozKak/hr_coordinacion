@@ -33,7 +33,16 @@ Route::middleware('web')->group(function () {
         // Si quieres una ruta para listar usuarios y desde ahí acceder a su actividad
         Route::get('/admin/users-activity', [UserActivityController::class, 'listUsers'])->name('admin.users.activity.list');
 
-// Ruta para ver la actividad de un usuario específico
+        // Ruta para ver la actividad de un usuario específico
         Route::get('/admin/user/{user}/activity', [UserActivityController::class, 'showUserActivity'])->name('admin.user.activity.show');
+
+
+        // Ruta para la actividad de Spatie de un usuario
+        Route::get('/admin/user/{user}/http-activity', [UserActivityController::class, 'showUserSpatieActivity'])
+            ->name('admin.user.http_activity.show'); // Nombre de ruta diferente
+
+        Route::get('/admin/fetch-global-audits', [UserActivityController::class, 'fetchGlobalAudits'])->name('admin.global_audit.fetch');
+
+
     });
 });

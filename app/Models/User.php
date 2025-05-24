@@ -10,9 +10,10 @@ use Spatie\Permission\Traits\HasPermissions;
 use Spatie\Permission\Traits\HasRoles;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use OwenIt\Auditing\Auditable as AuditableTrait;
+use Spatie\Activitylog\Traits\CausesActivity;
 class User extends Authenticatable implements AuditableContract
 {
-    use HasFactory, Notifiable, HasRoles, HasPermissions, AuditableTrait;
+    use HasFactory, Notifiable, HasRoles, HasPermissions, AuditableTrait, CausesActivity;
 
 
     /**
@@ -28,6 +29,12 @@ class User extends Authenticatable implements AuditableContract
         'identification',
         'state',
         'login_attempts',
+    ];
+
+    protected $auditExclude = [
+        'password',
+        'remember_token',
+        // Añade aquí cualquier otro campo que quieras excluir de la auditoría
     ];
 
     /**
