@@ -9,12 +9,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.getElementById('btnBuscar').addEventListener('click', function() {
-      
+
         const fechaInicio = document.getElementById('fechaInicio').value;
         let fechaFin = null;
 
         if (rangoFechasCheckbox.checked) {
-            fechaFin = fechaFinInput.value; 
+            fechaFin = fechaFinInput.value;
         }
 
         // Validaciones en JavaScript
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
         $.ajax({
-            url: document.getElementById('url_busqueda').value, 
+            url: document.getElementById('url_busqueda').value,
             method: 'POST',
             data: {
                 _token: document.getElementById('token').value,
@@ -44,9 +44,9 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             success: function(response) {
                 hot = new Handsontable(document.getElementById('buscador'), {
-                    data: response.data, 
+                    data: response.data,
                     colHeaders: response.columnas,
-                    contextMenu: true, 
+                    contextMenu: true,
                     filters: true,
                     dropdownMenu: true,
                     rowHeaders: true,
@@ -64,31 +64,31 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             error: function(xhr, status, error) {
                 console.error(xhr.responseText);
-                alert('Ocurrió un error al obtener los datos.');
+                alert(xhr.responseJSON.error);
             }
         });
 
 
         document.getElementById('btnExportar').addEventListener('click', function() {
-           
+
           $.ajax({
-            url: document.getElementById('url_exportar').value, 
+            url: document.getElementById('url_exportar').value,
             method: 'POST',
             data: {
                 _token: document.getElementById('token').value,
                 data: hot.getData()
             },
             success: function(response) {
-              
+
                 window.location.href = response.url;
             },
             error: function(xhr, status, error) {
                 console.error(xhr.responseText);
-                alert('Ocurrió un error al exportar los datos.');
+                alert(xhr.responseJSON.error);
           }
-        }); 
+        });
 
-        }); 
+        });
     });
 
 });
