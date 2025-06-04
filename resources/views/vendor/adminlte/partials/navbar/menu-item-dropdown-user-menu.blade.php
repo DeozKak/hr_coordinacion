@@ -187,7 +187,7 @@
                         <div class="item-label">Sal. Mínimo - Aux. Transporte</div>
                     </a>
                 @endcan
-                @can('ver_residente')
+                @canany(['ver_residente','ver_coordinacion_RP','ver_coordinacion_RN','ver_PQRS'])
                     <a href="{{ route('zonas.index') }}" class="item" target="_self">
                         <div class="item-icon"><i class="fas fa-map-marked-alt"></i></div>
                         <div class="item-label">Zonificación</div>

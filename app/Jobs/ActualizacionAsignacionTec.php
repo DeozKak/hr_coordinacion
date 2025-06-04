@@ -7,6 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
+use function PHPUnit\Framework\containsIdentical;
 
 //use Illuminate\Foundation\Queue\Queueable;
 
@@ -39,6 +40,10 @@ class ActualizacionAsignacionTec implements ShouldQueue
             foreach ($programacion as $pro) {
                 try {
                     $inspector = tbl_insp_cali::where('id', $this->rowData["ID_TECNICO"])->first();
+                    if ($inspector == null) {
+                        log::info('No existe el inspector con codigo: ' . $this->rowData["ID_TECNICO"]);
+                        continue;
+                    }
                     if ($pro->FECHA_AGENDAMIENTO >= date('Y-m-d')) {
                         $pro->TECNICO = $this->rowData["ID_TECNICO"] . '. ' . $inspector->apellidos . ' ' . $inspector->nombres;
                         $pro->save();

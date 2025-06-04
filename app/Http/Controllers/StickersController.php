@@ -387,7 +387,11 @@ class StickersController extends Controller
         }
 
         $response = json_decode($historico->Data);
-
+        // Validación para ejecución por consola (cron/artisan)
+        $esConsole = \App::runningInConsole();
+        if ($esConsole) {
+            return 'registros actualizados';
+        }
         //validacion para sacar operarios por supervisor
         if (!$user->haspermissionTo('control_stickers')) {
             $cc_operarios = tbl_insp_cali::select('cedula')->where('SUPERVISOR', $user->id)->get();

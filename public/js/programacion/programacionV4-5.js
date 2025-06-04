@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 correctFormat: true,
                 readOnly: true,
                 datePickerConfig: {
-                    minDate: new Date(), // Esto establece la fecha mínima como el día de inicio del corte 
+                    minDate: new Date(), // Esto establece la fecha mínima como el día de inicio del corte
                 },
             },
             {
@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
     H_tabla.alter('insert_row_above', H_tabla.countRows() + 1);
 
     function ajustarReadOnlyDespuesDeCargarDatos() {
-        const colContrato = 1; // Índice de la columna 'CONTRATO'      
+        const colContrato = 1; // Índice de la columna 'CONTRATO'
         // Recorrer los datos y ajustar readOnly
         for (let row = 0; row < tabla_data.length; row++) {
             if (tabla_data[row] && tabla_data[row][colContrato] !== null && tabla_data[row][colContrato] !== '') {
@@ -433,6 +433,7 @@ function enviarCambioAlServidor(id, propiedad, nuevoValor) {
             }
         }, error: function (xhr, status, error) {
             console.log(xhr.responseText);
+            alert(xhr.responseJSON.error)
         }
     });
 }
@@ -503,6 +504,7 @@ if (view === "") {
             }, error: function (xhr, status, error) {
                 $('#loader').hide();
                 $('#overlay').hide();
+                alert(xhr.responseJSON.error);
                 console.log(xhr.responseText);
             }
         });

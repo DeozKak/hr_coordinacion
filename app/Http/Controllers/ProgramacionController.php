@@ -486,6 +486,18 @@ class ProgramacionController extends Controller
 
             $programacion = tbl_programacion_contrato::find($id);
             $campo = $request->propiedad;
+            if ($campo === 'FECHA_AGENDAMIENTO') {
+                try {
+                    $fecha = Carbon::createFromFormat('Y-m-d', $request->valor);
+                    // Validación extra para rechazar fechas no exactas al formato (como '2024-1-9')
+                    if ($fecha->format('Y-m-d') !== $request->valor) {
+                        return response()->json(['error' => 'La fecha debe tener el formato correcto (Y-m-d).'], 422);
+                    }
+                } catch (\Exception $e) {
+                    return response()->json(['error' => 'La fecha debe tener el formato correcto (Y-m-d).'], 422);
+                }
+            }
+
 
             $programacion->$campo = $request->valor;
             $programacion->save();
@@ -568,9 +580,15 @@ class ProgramacionController extends Controller
                     $saludo = "Buenas noches";
                 }
 
-                // Convertir la cadena de fecha a un objeto Carbon
-                $fecha_carbon = Carbon::createFromFormat('Y-m-d', $programada->FECHA_AGENDAMIENTO);
-
+                try {
+                    $fecha_carbon = Carbon::createFromFormat('Y-m-d', $programada->FECHA_AGENDAMIENTO);
+                    // Validación extra para rechazar fechas no exactas al formato (como '2024-1-9')
+                    if ($fecha_carbon->format('Y-m-d') !== $programada->FECHA_AGENDAMIENTO) {
+                        return response()->json(['error' => 'La fecha debe tener el formato correcto (Y-m-d).'], 422);
+                    }
+                } catch (\Exception $e) {
+                    return response()->json(['error' => 'La fecha debe tener el formato correcto (Y-m-d).'], 422);
+                }
                 // Formatear la fecha en español
                 // locale es importante para obtener los nombres de los meses en español
                 $fecha_formateada = $fecha_carbon->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
@@ -795,7 +813,9 @@ class ProgramacionController extends Controller
                 if ($item[6] == "N/A" || $item[6] == null) {
                     continue;
                 }
-
+                if ($item[16] == "" || $item[16] == null) {
+                    return response()->json(['error' => 'Programación sin tecnico, revise la fila '.$index +1], 422);
+                }
                 //sacar id del tecnico
                 preg_match('/^(\d+)\./', $item[16], $matches);
                 $numero = $matches[1];

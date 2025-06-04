@@ -122,14 +122,14 @@ stackedBar = new Chart(canva, {
                 }
             },
             datalabels: {
-                anchor: 'center',
-                align: 'center',
+                anchor: 'end',
+                align: 'top',
                 formatter: (value) => value.toLocaleString(), // Mostrar números con formato
                 font: {
                     size: 12,
                 },
                 color: 'black',
-                display: false // Mostrar datalabels por defecto
+                display: true // Mostrar datalabels por defecto
             }
         },
         animation: {
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         await new Promise(resolve => setTimeout(resolve, 3500)); // Simulamos un pequeño retraso
 
-        const actualizarGrafico = (labels, data, titulo, mostrarDatalabels = false, mostrarCortesTooltip = false) => {
+        const actualizarGrafico = (labels, data, titulo, mostrarDatalabels = true, mostrarCortesTooltip = false) => {
             if (data[0] > 0) {
                 stackedBar.data.labels = labels;
                 stackedBar.data.datasets[0].data = data;
@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const tituloOriginal = 'Inspecciones Totales por Inspector';
 
             // Mantener el tooltip estándar para el gráfico principal
-            actualizarGrafico(allLabels, allData, tituloOriginal, false, false);
+            actualizarGrafico(allLabels, allData, tituloOriginal, true, false);
         }
 
         loadingModal.close();
@@ -450,7 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Restaurar el gráfico principal con el corte preseleccionado
             if (preselectedCorte) {
-                await restaurarGraficoPrincipal(preselectedCorte);
+                //await restaurarGraficoPrincipal(preselectedCorte);
             }
 
             // Limpiar el TomSelect
@@ -476,14 +476,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Función para restaurar el gráfico principal con el corte preseleccionado
     async function restaurarGraficoPrincipal(preselectedCorte) {
+
         try {
+
+
             // Obtener los datos generales (todos los inspectores)
             const allLabels = labels.map(inspector => inspector.nombres);
             const allData = labels.map(inspector => inspector.contratos);
             const tituloOriginal = 'Inspecciones Totales por Inspector';
 
             // Restauramos el gráfico principal con todos los inspectores
-            actualizarGrafico(allLabels, allData, tituloOriginal, false);
+            actualizarGrafico(allLabels, allData, tituloOriginal, true);
 
             // Verificar si ya existe el corte preseleccionado en los datasets antes de agregarlo
             const datasetComparacion = await obtenerDatosComparados([preselectedCorte]);
@@ -585,7 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const allData = labels.map(inspector => inspector.contratos);
             const tituloOriginal = 'Inspecciones Totales por Inspector';
 
-            actualizarGrafico(allLabels, allData, tituloOriginal, false);
+            actualizarGrafico(allLabels, allData, tituloOriginal, true);
 
             // Cerrar el indicador de carga
             loadingModal.close();
@@ -599,9 +602,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Función para actualizar los datos de cualquier gráfico
-    function actualizarGrafico(labels, data, titulo, mostrarDatalabels = false) {
+    function actualizarGrafico(labels, data, titulo, mostrarDatalabels = true) {
         stackedBar.data.labels = labels;
         stackedBar.data.datasets[0].data = data;
+        if (Array.isArray(labels)) {
+            console.log("HOLA");
+        } else {
+            console.error('labels no está definido correctamente:', labels);
+        }
         stackedBar.options.plugins.title.text = titulo;
 
         // Activar o desactivar datalabels dinámicamente
@@ -1267,6 +1275,7 @@ let contratosComerciales = 0;
 let contratosResidenciales = 0;
 
 function redibujarGraficos(labels, meta, contratosCategoria) {
+
     const canva = document.querySelector('#inspeccionesDiarias').getContext('2d');
     Chart.register(ChartDataLabels);
 
@@ -1369,13 +1378,14 @@ function redibujarGraficos(labels, meta, contratosCategoria) {
                         }
                     },
                     datalabels: {
-                        anchor: 'center',
-                        align: 'center',
+                        anchor: 'end',
+                        align: 'top',
                         formatter: () => '', // Ocultar números en la gráfica general
                         font: {
                             size: 12,
                         },
-                        color: 'black'
+                        color: 'black',
+                        display: true,
                     }
                 },
                 animation: {

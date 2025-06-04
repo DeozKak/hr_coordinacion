@@ -185,6 +185,6 @@
     };
 </script>
 
-<script src="{{ asset('js/seguimientoProduccionUpdate/verProduccion.js') }}?v={{ time() }}"></script>
+<script src="{{ asset('js/seguimientoProduccionUpdate/verProduccionV1.1.js') }}?v={{ time() }}"></script>
 
 @stop
