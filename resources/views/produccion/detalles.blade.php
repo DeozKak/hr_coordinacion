@@ -12,7 +12,7 @@
 
 <input type="hidden" id="fecha_inicio" value="{{session('fecha_inicio')}}">
 <link rel="stylesheet" href="{{asset('css/produccion/produccionV2.css')}}">
-<script src="{{asset('js/produccion/producciondetallesV5.js')}}?v={{ time()}}"></script>
+<script src="{{asset('js/produccion/producciondetallesV6.js')}}?v={{ time()}}"></script>
 
 
 <input type="hidden" id="id_corte_detalles" value="">

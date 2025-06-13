@@ -29,5 +29,6 @@ Route::middleware('web')->group(function () {
         Route::post('programacion/GDO', [ProgramacionController::class, 'programacionGDO'])->name('programacion.programacionGDO')->middleware(CheckPermission::class . ':ver_programacion');
         Route::get('programacion/buscar_por_contrato', [ProgramacionController::class, 'buscarPorContrato'])->name('programacion.buscar_por_contrato')->middleware(CheckPermission::class . ':ver_programacion');
         Route::post('programacion/plantilla/store', [ProgramacionController::class, 'PlantillaStore'])->name('programacion.PlantillaStore')->middleware(CheckPermission::class . ':ver_programacion');
+        Route::post('programacion/callCenterGDO', [ProgramacionController::class, 'callCenterGDO'])->name('programacion.callCenterGDO')->middleware(CheckPermission::class . ':ver_programacion');
     });
 });

@@ -10,6 +10,7 @@ let cellBackgroundColor = "";
 let cantInspecciones = 0;
 let rowSelected;
 let columnSelected;
+let idCorteDetalles = null;
 /* Inicializacion tabla de producción */
 document.addEventListener('DOMContentLoaded', async () => {
 
@@ -94,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
     };
-    
+
     try {
         const response = await fetchData();
 
@@ -155,20 +156,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const headerAdicional = { label: '', colspan: 2 };
         const headerFinal = { label: '', colspan: 7 };
-        const headerDatosAdicionales = { label: '', colspan: 4 };
+        const headerDatosAdicionales = { label: '', colspan: 5 };
         headers = [headerAdicional, ...resultados.map(item => ({ label: item.label, colspan: item.colspan })), headerFinal, headerDatosAdicionales];
         const datosAdicionales = ['CC', 'INSPECTORES CONTRATO CALI'];
         const columnasFinales = ['SUB TOTAL', 'MATRICES', 'DOMINGOS Y FESTIVOS', 'DISEÑOS ESPECIALES', '4 O MAS RECINTOS',
-            'COMERCIALES', 'TOTAL', 'DIAS LABORADOS', 'PROMEDIO INDIVIDUAL', 'META POR INSPECTOR', '% CUMPLIMIENTO META'];
+            'COMERCIALES', 'TOTAL', 'RN TOTAL','DIAS LABORADOS', 'PROMEDIO INDIVIDUAL', 'META POR INSPECTOR', '% CUMPLIMIENTO META'];
         const datosDias = response.diasIntermedios.map(item => item.nombreDia + ' ' + item.dias);
         headers.push(datosDias);
         datosDias.unshift(...datosAdicionales);
-        
+
         const lastIndex = headers.length - 1;
         headers[lastIndex].push(...columnasFinales);
-       
+
        // headers[5].push(...columnasFinales);
-        
+
         hot = new Handsontable(detalles, {
             readOnly: true,
             manualColumnMove: false,
@@ -213,7 +214,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let cellElement = hot.getCell(selectedRow, selectedColumn);
                     let valueCell = hot.getDataAtCell(selectedRow, selectedColumn);
                     cellBackgroundColor = window.getComputedStyle(cellElement).backgroundColor;
-                    cantInspecciones = valueCell; 
+                    cantInspecciones = valueCell;
 
                     if (isFechaColumn) {
                         // recuperar fecha para la consulta contratos por dia
@@ -279,7 +280,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             ]
         });
     }
-    
+
     // Calcular sumas
     for (let i = 0; i < totalColspan; i++) {
         hot.updateSettings({
@@ -322,7 +323,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             success: function(response) {
                 // Crear un objeto Date a partir de la fecha en formato YYYY-MM-DD+
 
-               
+
                 let fechaTransformar = new Date(fecha);
 
                 // Array para traducir los días de la semana al español
@@ -344,7 +345,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     );
                 }
                 cellStyle();
-                cargarDatos();
+                cargarDatos(idCorteDetalles);
 
                 Swal.fire({
                     position: "top-end",
@@ -357,7 +358,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 $('#exampleModal').modal('hide');
 
-               
+
             }
         })
     })
@@ -368,7 +369,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let dataUrl = $(this).attr('data-url')
         let token = $('#token').val()
         let nombreInspector = hot_dia.getDataAtRow(0,1)[2]
-        
+
         $.ajax({
             url:dataUrl,
             type: 'POST',
@@ -397,9 +398,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 sabadodobles = sabadodobles.filter(element =>
                     !(element.nombreDia === fechaFormateada && element.ccInspector === ccInspector)
                 );
-                
+
                 cellStyle();
-                cargarDatos();
+                cargarDatos(idCorteDetalles);
 
                 Swal.fire({
                     position: "top-end",
@@ -432,8 +433,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 _token:token,
             },
             success: function(response) {
-                
-                
+
+
                 let fechaTransformar = new Date(fecha);
 
                 // Array para traducir los días de la semana al español
@@ -450,7 +451,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 let fechaFormateada = `${diaSemanaEsp} ${diaMesFormateado}`;
 
                 cellStyle();
-                cargarDatos();
+                cargarDatos(idCorteDetalles);
 
                 Swal.fire({
                     position: "top-end",
@@ -462,8 +463,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
 
                 $('#exampleModal').modal('hide');
-                 
-               
+
+
             }
         })
     })
@@ -499,7 +500,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     _token:token,
                 },
                 success: function(response) {
-                    
+
                     $('#modalContarDoblesSabado').modal('hide')
                     $('#exampleModal').modal('hide');
 
@@ -533,7 +534,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
 
                     cellStyle();
-                    cargarDatos();
+                    cargarDatos(idCorteDetalles);
                 }
             })
         }
@@ -780,7 +781,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
     });
 
     /* consulta llenar tabla */
-   
+
     $.ajax({
         url: urlDetalles, // Ruta al archivo PHP que realiza la consulta a la base de datos
         type: 'GET',
@@ -791,12 +792,13 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             const url = window.location.href
             const array = url.split("/");
             const last = array[array.length - 1]
-            
+            //se llena esta variable para las consultas posteriores a los cambios de los dobles
+            idCorteDetalles = last;
             $('#cantidadDobles').text('');
-            if(last == 'detalles'){
+            //if(last == 'detalles'){
 
                 $('#noContar, #noContarDoblesFestivos, #contarDobles, #contarDoblesFestivos, #abrirModalContarDoblesSabado, #noContarDoblesSabado').remove();
-    
+
                 // para saber el color de la celda
                 const selectedRow = rowSelected;
                 const selectedColumn = columnSelected;
@@ -809,59 +811,66 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                 if (dataText != "") {
                     if(cellBackgroundColor == "rgb(147, 255, 134)" && !response[2]){
                         if (!$('#noContarDoblesFestivos').length){
+
                             let botonNoContarDobles = "<button type='button' data-url='" + urlGuardarNoDoblesFestivos+ "' class='btn btn-info' id='noContarDoblesFestivos'>No contar dobles</button>";
                             $('#agregar').before(botonNoContarDobles);
                         }
                     }else if (cellBackgroundColor == "rgb(147, 255, 134)" && response[2]){
                         if (!$('#contarDoblesFestivos').length) {
+
                             let botonContarDobles = "<button type='button' data-url='" + urlCountDoublesHolidays + "' class='btn btn-info' id='contarDoblesFestivos'>Contar dobles</button>";
                             $('#agregar').before(botonContarDobles);
                         }
                     }
-    
+
                     if(columnName == "Sábado")
                     {
                         if (response[3].length == 0 && !response[2] && !response[1] && cellBackgroundColor == "rgb(255, 240, 142)") {
                             if (!$('#noContar').length) { // Solo agregar si el botón no existe ya
+
                                 let botonNoContarDobles = "<button type='button' data-url='" + urlNoContarDobles + "' class='btn btn-info' id='noContar'>No contar dobles</button>"
                                 $('#agregar').before(botonNoContarDobles)
                             }
                         } else if (response[3].length == 0 && !response[2] && !response[1] && cellBackgroundColor != "rgb(255, 240, 142)") {
-                            if (!$('#abrirModalContarDoblesSabado').length) { // Solo agregar si el botón no existe ya
+                            if (!$('#abrirModalContarDoblesSabado').length) { // Solo agregar si el botón no existe yaconsole.log('sabado');
+
                                 let botonContarDoblesSabados = "<button type='button' class='btn btn-info' id='abrirModalContarDoblesSabado'>Contar dobles</button>"
                                 $('#agregar').before(botonContarDoblesSabados)
                             }
                         }else if(response[1] && !response[2] && response[3].length == 0 && cellBackgroundColor == "rgb(215, 232, 255)"){
-                            if (!$('#contarDobles').length) { // Solo agregar si el botón no existe ya
+                            if (!$('#contarDobles').length) { // Solo agregar si el botón no existe yaconsole.log('sabado');
+
                                 let botonContarDobles = "<button type='button' data-url='" + urlContarDobles + "' class='btn btn-info' id='contarDobles'>Contar dobles</button>"
                                 $('#agregar').before(botonContarDobles);
                             }
                         }else if(response[3].length != 0 && !response[1] && !response[2] && cellBackgroundColor == "rgb(255, 240, 142)"){
                             if (!$('#noContarDoblesSabado').length) { // Solo agregar si el botón no existe ya
                                 $('#cantidadDobles').text('(cantidad de inspecciones dobles: ' + response[3][0][0] +')')
+
+
                                 let botonNoContarDoblesSabados = "<button type='button' data-url='" + urlNoContarDoblesSabados + "' class='btn btn-info' id='noContarDoblesSabado'>No contar dobles</button>"
                                 $('#agregar').before(botonNoContarDoblesSabados);
                             }
                         }
                     }
-    
+
                     if(response[4] != 0){
                         $('#cantidadDobles').text('(cantidad de inspecciones dobles: ' + response[4] +')')
                     }
-    
+
                     if(cellBackgroundColor == "rgb(147, 255, 134)"){
                         if($('#contarDoblesFestivos').text() !== 'Contar dobles'){
                             if(cantInspecciones != 0){
                                 $('#cantidadDobles').text('(cantidad de inspecciones dobles: ' + cantInspecciones +')')
                             }
                         }
-                       
+
                     }
                 } else {
                     // Elimina ambos botones si no se cumplen las condiciones
                     $('#noContar, #noContarDoblesFestivos, #contarDobles, #contarDoblesFestivos, #abrirModalContarDoblesSabado, #noContarDoblesSabado').remove();
                 }
-            }
+            //}
 
             // Asigna los datos obtenidos a la variable
             const array2D = convertirJSONaArray2D(datosBaseDatos);
@@ -882,7 +891,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             });
         }
     });
-   
+
     const fechaconvert = formatearFecha(fecha);
     /* Variable sale de la vista Blade */
     const responseBitacoras = await fetch(urlObtenerBitacoras + `?fecha=${fechaconvert}&cc_inspector=${cc_inspector}`);
@@ -1382,7 +1391,10 @@ function actualizarDatosDia(fecha, cc_inspector) {
     });
 }
 async function cargarDatos(idCorteDetalles = null) {
-
+    //este valor se reasigna si la peticion viene de los botones de contar y descontar dobles
+    if(idCorteDetalles === 'detalles'){
+        idCorteDetalles = null
+    }
     const fetchData = () => {
         return new Promise((resolve, reject) => {
             const url = document.querySelector('#id_produccion').value;

@@ -17,11 +17,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 "previous": "Anterior"
             }
         },
-         // Aquí agregamos la propiedad 'order'
-        "order": [[ 3, "desc" ]] 
+        // Aquí agregamos la propiedad 'order'
+        "order": [[3, "desc"]]
     });
 
-
+    //----------------------------------------------------------------------------------------
 
     // codigo de modal masivo
     const openMasivo = document.getElementById('openMasivoBtn');
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalMasivo = new bootstrap.Modal(addMasivoModal);
 
     const closeModalMasivoBtn = document.querySelector('.masivoModal'); // Selecciona el botón de cierre
-  
+
     closeModalMasivoBtn.addEventListener('click', function () {
         modalMasivo.hide();
     });
@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loaderMasivo.style.display = 'block'; // Mostrar animación de carga
         // Limpiar mensajes de error anteriores antes de enviar el formulario
         document.getElementById('submit-masivo').disabled = true;
-        
+
         const formData = new FormData(this);
         const url = document.getElementById('url_masivo').value; // Ruta Laravel para procesar el formulario
 
@@ -60,21 +60,21 @@ document.addEventListener('DOMContentLoaded', () => {
             processData: false,
             contentType: false,
             success: function (response) {
-            document.getElementById('submit-masivo').disabled = false;
+                document.getElementById('submit-masivo').disabled = false;
 
                 // Manejo de la respuesta exitosa (opcional)
                 errorContainerMasivo.innerHTML = '';
                 errorContainerMasivo.classList.remove('alert', 'alert-danger');
                 modalMasivo.hide();
-                location.reload(); 
+                location.reload();
             },
             error: function (xhr, status, error) {
                 document.getElementById('submit-masivo').disabled = false;
 
                 if (xhr.status === 422) {
-                   
+
                     const errors = xhr.responseJSON.errors;
-                    showValidationErrors(errors,addMasivoModal,errorContainerMasivo); // Mostrar errores en el modal
+                    showValidationErrors(errors, addMasivoModal, errorContainerMasivo); // Mostrar errores en el modal
                 } else {
                     console.error(xhr.responseText); // Mostrar errores en la consola
 
@@ -82,12 +82,12 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             complete: function () {
                 loaderMasivo.style.display = 'none';
-               
+
                 masivoform.reset(); // Limpiar el formulario
             }
         });
     });
-
+    //----------------------------------------------------------------------------------------
     // cofigo de modal base
     const openModalBtn = document.getElementById('openModalBtn');
     const addProgramacionModal = document.getElementById('addProgramacionModal');
@@ -108,12 +108,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const loader = document.getElementById('loader');
 
     programacionForm.addEventListener('submit', function (event) {
-       
-      
+
+
         event.preventDefault();
         loader.style.display = 'block'; // Mostrar animación de carga
         // Limpiar mensajes de error anteriores antes de enviar el formulario
-       document.getElementById('submit-programacion').disabled = true;
+        document.getElementById('submit-programacion').disabled = true;
 
         const formData = new FormData(this);
         const url = document.getElementById('url_base').value; // Ruta Laravel para procesar el formulario
@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log(xhr.responseText);
                 if (xhr.status === 422) {
                     const errors = xhr.responseJSON.errors;
-                    showValidationErrors(errors,addProgramacionModal,errorContainer); // Mostrar errores en el modal
+                    showValidationErrors(errors, addProgramacionModal, errorContainer); // Mostrar errores en el modal
                 } else {
                     console.error(xhr.responseText); // Mostrar errores en la consola
 
@@ -155,13 +155,13 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             complete: function () {
                 loader.style.display = 'none';
-               
+
                 programacionForm.reset(); // Limpiar el formulario
             }
         });
     });
-    
-    const openGDOBtn = document.getElementById('openGDOBtn');
+    //----------------------------------------------------------------------------------------
+    /*const openGDOBtn = document.getElementById('openGDOBtn');
     const addGDOModal = document.getElementById('addGDO');
     const GDO = new bootstrap.Modal(addGDOModal);
 
@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
             processData: false,
             contentType: false,
             success: function (response) {
-            document.getElementById('submit-GDO').disabled = false;
+                document.getElementById('submit-GDO').disabled = false;
 
                 // Manejo de la respuesta exitosa (opcional)
                 Swal.fire({
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('submit-GDO').disabled = false;
                 if (xhr.status === 422) {
                     const errors = xhr.responseJSON.errors;
-                    showValidationErrors(errors,addGDOModal,errorContainerGDO); // Mostrar errores en el modal
+                    showValidationErrors(errors, addGDOModal, errorContainerGDO); // Mostrar errores en el modal
                 } else {
                     console.error(xhr.responseText); // Mostrar errores en la consola
 
@@ -223,16 +223,90 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             complete: function () {
                 loaderGDO.style.display = 'none';
-               
+
                 GDOform.reset(); // Limpiar el formulario
+            }
+        });
+    });*/
+    //----------------------------------------------------------------------------------------
+
+    const opencallcenterGDOBtn = document.getElementById('opencalcenterGDOBtn');
+    const addcallcenterGDOModal = document.getElementById('callcenterGDO');
+    const callcenterGDO = new bootstrap.Modal(addcallcenterGDOModal);
+
+    const closeModalcallcenterGDO = document.querySelector('.callcenterGDO'); // Selecciona el botón de cierre
+
+    closeModalcallcenterGDO.addEventListener('click', function () {
+        callcenterGDO.hide();
+    });
+
+    opencallcenterGDOBtn.addEventListener('click', function () {
+        callcenterGDO.show();
+    });
+    const callcenterGDOform = document.getElementById('callcenterGDOForm');
+    const errorContainercallcenterGDO = document.createElement('div'); // Contenedor para mensajes de error
+    const loadercallcenterGDO = document.getElementById('loaderCallcenterGDO');
+
+    callcenterGDOform.addEventListener('submit', function (event) {
+        event.preventDefault();
+        loadercallcenterGDO.style.display = 'block'; // Mostrar animación de carga
+        // Limpiar mensajes de error anteriores antes de enviar el formulario
+        document.getElementById('submit-callcenterGDO').disabled = true;
+
+        const formData = new FormData(this);
+        const url = document.getElementById('url_callcenterGDO').value; // Ruta Laravel para procesar el formulario
+
+
+        $.ajax({
+            type: 'POST',
+            url: url,
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                document.getElementById('submit-callcenterGDO').disabled = false;
+
+
+                // Manejo de la respuesta exitosa (opcional)
+                Swal.fire({
+                    position: "top-end",
+                    icon: "success",
+                    title: response.message,
+                    showConfirmButton: false,
+                    toast: true,
+                    timer: 4000
+                });
+                window.location.href = response.url;
+                setTimeout(function () {
+                    location.reload();
+                }, 1000)
+                errorContainercallcenterGDO.innerHTML = '';
+                errorContainercallcenterGDO.classList.remove('alert', 'alert-danger');
+                callcenterGDO.hide();
+            },
+            error: function (xhr, status, error) {
+                document.getElementById('submit-callcenterGDO').disabled = false;
+                if (xhr.status === 422) {
+                    const errors = xhr.responseJSON.error;
+                    console.log(errors);
+                    showValidationErrors(errors, addcallcenterGDOModal, errorContainercallcenterGDO); // Mostrar errores en el modal
+                } else {
+                    const errors = 'Ocurrió un error al procesar la solicitud.';
+                    console.log(errors);
+                    showValidationErrors(errors, addcallcenterGDOModal, errorContainercallcenterGDO);
+                    console.error(xhr.responseText); // Mostrar errores en la consola
+
+                }
+            },
+            complete: function () {
+                loadercallcenterGDO.style.display = 'none';
+
+                callcenterGDOform.reset(); // Limpiar el formulario
             }
         });
     });
 
-
-
-
-    function showValidationErrors(errors,addmodal,errorContainer) {
+    function showValidationErrors(errors, addmodal, errorContainer) {
         errorContainer.innerHTML = ''; // Limpiar mensajes anteriores
         errorContainer.classList.add('alert', 'alert-danger');
 
@@ -257,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    $('#buscadorContrato').on('input', function() {
+    $('#buscadorContrato').on('input', function () {
         let contrato = $(this).val();
         buscarBitacorasPorContrato(contrato);
     });
@@ -274,8 +348,8 @@ document.addEventListener('DOMContentLoaded', () => {
             data: {
                 contrato: contrato
             },
-            success: function(response) {
-                
+            success: function (response) {
+
                 let listaHtml = '<ul>';
                 response.forEach(programadas => {
                     listaHtml += `<li data-id="${programadas.id}">${programadas.nombre} ${programadas.usuario} (ID: ${programadas.id})</li>`;
@@ -284,18 +358,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 $('#resultadosBusqueda').html(listaHtml);
 
                 // Evento de clic para cada elemento de la lista
-                $('.lista-resultados li').click(function() {
+                $('.lista-resultados li').click(function () {
                     const idProgramacion = $(this).data('id');
-                    let elementoUrl = document.getElementById('url_ver'); 
-                    let url = elementoUrl.value.replace(':id', idProgramacion); 
+                    let elementoUrl = document.getElementById('url_ver');
+                    let url = elementoUrl.value.replace(':id', idProgramacion);
                     window.location.href = url;
                 });
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 console.log(xhr.responseText);
             }
         });
     }
 
-    
+
 });

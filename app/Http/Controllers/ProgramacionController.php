@@ -21,10 +21,15 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use App\Services\ExtraerFechas;
 use function Laravel\Prompts\error;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class ProgramacionController extends Controller
 {
@@ -814,7 +819,7 @@ class ProgramacionController extends Controller
                     continue;
                 }
                 if ($item[16] == "" || $item[16] == null) {
-                    return response()->json(['error' => 'Programación sin tecnico, revise la fila '.$index +1], 422);
+                    return response()->json(['error' => 'Programación sin tecnico, revise la fila ' . $index + 1], 422);
                 }
                 //sacar id del tecnico
                 preg_match('/^(\d+)\./', $item[16], $matches);
@@ -1243,53 +1248,6 @@ class ProgramacionController extends Controller
         }
     }
 
-    private function validacionGDO($worksheet): bool
-    {
-        $indicador = true;
-        foreach (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'] as $columna) {
-            switch ($columna) {
-                case 'A':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "CONTRATO") ? true : false;
-                    break;
-                case 'B':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "TIPO_TRABAJO") ? true : false;
-                    break;
-                case 'C':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "CELULAR") ? true : false;
-                    break;
-                case 'D':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "NOMBRE_USUARIO") ? true : false;
-                    break;
-                case 'E':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "ORDEN_TRABAJO_EXTERNA") ? true : false;
-                    break;
-                case 'F':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "DIRECCION") ? true : false;
-                    break;
-                case 'G':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "BARRIO") ? true : false;
-                    break;
-                case 'H':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "CIUDAD") ? true : false;
-                    break;
-                case 'I':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "ESTADO") ? true : false;
-                    break;
-                case 'J':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "CATEGORIA") ? true : false;
-                    break;
-                case 'K':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "FECHA_AGENDAMIENTO") ? true : false;
-                    break;
-                case 'L':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "OBSERVACIONES") ? true : false;
-                    break;
-                case 'M':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "TECNICO") ? true : false;
-            }
-        }
-        return $indicador;
-    }
 
     private function ExtdatosGDO($worksheet): true|string
     {
@@ -1617,9 +1575,220 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
         } catch (QueryException $e) {
             DB::rollBack();
             log::error($e);
-            return response()->json(['error' =>'No se pudo guardar registro. '.$e->getMessage()], 422);;
+            return response()->json(['error' => 'No se pudo guardar registro. ' . $e->getMessage()], 422);;
         }
         return response()->json(['message' => 'Registro guardado correctamente', 'id' => $programacion->id], 200);
+    }
+
+
+    public function callCenterGdo(Request $request)
+    {
+
+        $validator = Validator::make($request->all(), [
+            'archivo' => 'required|file|mimes:xls,xlsx',
+        ], [
+            'archivo.required' => 'El archivo es requerido',
+            'archivo.mimes' => 'El archivo debe ser un archivo excel',
+            'archivo.file' => 'la entrada debe ser un archivo'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 422);
+        }
+
+        date_default_timezone_set('America/Bogota');
+        $file = IOFactory::load($request->file('archivo'));
+        $date = Datetime::createFromFormat('Y/m/d', Carbon::now()->format('Y/m/d'));
+        $worksheet = $file->getActiveSheet();
+        $indicador = $this->validacionGDO($worksheet);
+
+        if (!$indicador) {
+            return response()->json(['error' => 'El archivo no cumple los criterios requeridos'], 422);
+        }
+
+        $worksheet->setCellValue('AB1', 'Resultado');
+
+        DB::beginTransaction();
+        $programacion = new tbl_programacion_usuario;
+        $programacion->nombre = "Programación GDO " . Carbon::now()->format('Y-m-d');
+        $programacion->id_usuario = Auth::id();
+        $programacion->finished = 1;
+        $programacion->mensaje = 1;
+        $programacion->save();
+
+        foreach ($worksheet->getRowIterator() as $row) {
+            if ($row->getRowIndex() === 1) {
+                continue;
+            }
+            $rango = 'A' . $row->getRowIndex() . ':AA' . $row->getRowIndex();
+
+            $string = $worksheet->getCell('S' . $row->getRowIndex())->getValue();
+            if($string == "" || $string == null){continue;}
+            // Obtienes el valor numéric FECHA de la celda
+            $valorNumericoExcel = $worksheet->getCell('R' . $row->getRowIndex())->getValue();
+
+            // Usas la función de la librería para convertirlo
+            $fechaComoDateTime = Date::excelToDateTimeObject($valorNumericoExcel);
+            $fechas = new ExtraerFechas();
+            //servicio para encontrar fechas en la columna de observación
+            $array = $fechas->findDates($string, $fechaComoDateTime->format('Y-m-d'),$row->getRowIndex());
+
+
+
+            //validación de array y que tengan objetos tipo DATE TIME
+            if (is_array($array) && count($array) > 0 && collect($array)->every(fn($item) => $item instanceof DateTime)) {
+                $fechaArray = Carbon::instance($array[0]);
+                $fechaComparar = Carbon::instance($date);
+                $diferenciaMeses = $fechaComparar->diffInMonths($fechaArray);
+
+
+                if (count($array) >= 2) {
+                    $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Hay dos o mas fechas, verificar ');
+                    $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFECC862');
+                } else if ($date->format('Y-m-d') > $array[0]->format('Y-m-d')) {
+                    $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Fecha menor al actual, verificar ' . $array[0]->format('Y-m-d'));
+                    $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFECC862');
+                } else if ($diferenciaMeses > 4) {
+                    $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Fecha de programación supera limite de diferencia ' . $array[0]->format('Y-m-d'));;
+                    $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFFF5353');
+                } else {
+                    //obtener datos de la fila para mandar a inserción
+                    $filaArray = $worksheet->rangeToArray(
+                        'A' . $row->getRowIndex() . ':AA' . $row->getRowIndex(),
+                        null,      // default null for empty cells
+                        true,      // calculate formulas
+                        false,     // do not format values
+                        true      // return associative array (false: numeric)
+                    );
+                    $valoresFila = $filaArray[$row->getRowIndex()];
+                    //funcion para insertar datos
+                    try {
+                        $resultado = $this->insertarDatosGDO($valoresFila, $programacion->id, $array[0]->format('Y-m-d'), $string);
+                        if ($resultado == 1) {
+                            $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Programado para ' . $array[0]->format('Y-m-d'));
+                            $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF6FF658');
+                        } else if ($resultado == 2) {
+                            $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Error al programar, intente manualmente '.$array[0]->format('Y-m-d'));
+                            $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFFFABAB');
+                        } else if ($resultado == 0) {
+                            $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Ya existe una programación para esta orden');
+                            $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFECA2CE');
+                        }
+                    } catch (\Exception $e) {
+                        // No afecta a las otras filas, solo esta
+                        $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Error inesperado: ' . $e->getMessage());
+                        $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFFFABAB');
+                    }
+
+
+                }
+            } else
+                if ($array == 1000) {
+                    $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Error en Interpretación, revisar');
+                    $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFFFABAB');
+                } else {
+                    $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Registro no Valido');
+                }
+        }
+        // Guardar el archivo modificado en almacenamiento temporal
+        $nombreArchivo = 'Resultados Programadas GDO ' . date('Y-m-d H-i-s') . '.xlsx';
+        $ruta = storage_path('app/uploads/' . $nombreArchivo);
+        $writer = new Xlsx($file);
+        $writer->save($ruta);
+
+        $url = url()->temporarySignedRoute(
+            'descargar.archivo', // Usa la nueva ruta genérica
+            now()->addMinutes(5), // Expiración en 10 minutos
+            ['file' => $nombreArchivo] // Archivo como parámetro
+        );
+        DB::commit();
+        return response()->json(['url' => $url,
+            'message' => 'Archivo procesado correctamente']);
+    }
+
+    private function validacionGDO($worksheet): bool
+    {
+        $cabeceras = [
+            'A' => "NUMERO_ORDEN",
+            'B' => "CONTRATO",
+            'C' => "PRODUCTO",
+            'D' => "NUMERO_SOLICITUD",
+            'E' => "TIPO_SOLICITUD",
+            'F' => "CEDULA",
+            'G' => "NOMBRE",
+            'H' => "DESC_DEPART",
+            'I' => "DESC_LOCALIDAD",
+            'J' => "BARRIO",
+            'K' => "DIRECCION",
+            'L' => "CONSECUTIVO_RUTA",
+            'M' => "TELEFONO",
+            'R' => "FECHA_ASIGNACION",
+            'S' => "OBSERVACION_SOLICITUD"
+        ];
+        foreach ($cabeceras as $col => $valorEsperado) {
+            if ($worksheet->getCell($col . '1')->getValue() !== $valorEsperado) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * @param $row
+     * @param $id_programacion
+     * @param $scheduling
+     * @param $observation
+     * @return void
+     *
+     */
+    private
+    function insertarDatosGDO($row, $id_programacion, $scheduling, $observation)
+    {
+        // verificar si ya existe la programación
+        $exist = tbl_programacion_contrato::where('CONTRATO', $row['B'])
+            ->where('ORDEN_TRABAJO', $row['A'])
+            ->exists();
+        if ($exist) {
+            return 0;
+        }
+        // Insertar los datos si es que ya no existe
+        try {
+            $registro = new tbl_programacion_contrato();
+            $registro->CONTRATO = $row['B'];
+            $registro->TIPO_TRABAJO = $row['Q'];
+            $registro->FECHA = date('Y-m-d');
+            $registro->CELULAR = '-';
+            $registro->NOMBRE_USUARIO = $row['G'];
+            $registro->ORDEN_TRABAJO = $row['A'];
+            $registro->DIRECCION = $row['K'];
+            $registro->BARRIO = $row['J'];
+            $registro->CIUDAD = $row['I'];
+            if ($row['T'] == 'Activo') {
+                $registro->ACTIVA = 'Si';
+                $registro->SUSPENDIDO = 'No';
+            } else {
+                $registro->ACTIVA = 'No';
+                $registro->SUSPENDIDO = 'Si';
+            }
+            $registro->CATEGORIA = $row['O'];
+            $registro->FECHA_AGENDAMIENTO = $scheduling;
+            $registro->OBSERVACIONES = $observation;
+            $registro->PORQUE_PROGRAMO = 'PROGRAMACION GDO';
+            $registro->TECNICO = '100. OFICINA';
+            $registro->HORA_INICIO = "06:59:00 a.m.";
+            $registro->HORA_FINAL = "04:59:00 p.m.";
+            $registro->id_programacion = $id_programacion;
+            $registro->mensaje = 1;
+            $registro->plantilla = 0;
+            $registro->EJECUTADA = 0;
+            $registro->save();
+            return 1;
+        } catch (\Exception $e) {
+            log::error($e->getMessage());
+            return 2;
+        }
+
+
     }
 
 }
