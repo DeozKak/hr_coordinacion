@@ -474,6 +474,13 @@ return [
                     'can' => 'generar_bitacoras',
                     'label_color' => 'success',
                 ],
+                [
+                    'text' => 'Contratos sin categoria',
+                    'url' => 'bitacora/contratos_sin_categoria',
+                    'icon' => 'far fa-circle',
+                    'can' => 'generar_bitacoras',
+                    'label_color' => 'success',
+                ],
             ]
         ],
 

@@ -742,6 +742,10 @@ class ProduccionController extends Controller
 
             // Obtener contratos de lunes a viernes
             $contratosPorSemana = tbl_bitacora_contrato::whereBetween('FECHA', [$semana['inicio'], $semana['fin']])
+                ->whereNotIn('TIPO_TRABAJO', [
+                    'FI-29 revisión periódica línea matriz',
+                    'FI-31 REVISIÓN NUEVA LINEA MATRIZ',
+                ])
                 ->where('state', '=', 1)
                 ->whereRaw('DAYOFWEEK(FECHA) between 2 and 6') // Filtrando días de lunes (2) a viernes (6)
                 ->selectRaw('DATE(FECHA) as fecha, COUNT(*) as total_contratos')
@@ -752,6 +756,10 @@ class ProduccionController extends Controller
 
             // Obtener contratos del sábado
             $contratosSabado = tbl_bitacora_contrato::whereBetween('FECHA', [$semana['inicio'], $semana['fin']])
+                ->whereNotIn('TIPO_TRABAJO', [
+                    'FI-29 revisión periódica línea matriz',
+                    'FI-31 REVISIÓN NUEVA LINEA MATRIZ',
+                ])
                 ->where('state', '=', 1)
                 ->whereRaw('DAYOFWEEK(FECHA) = 7') // Filtrando el día sábado (7)
                 ->selectRaw('DATE(FECHA) as fecha, COUNT(*) as total_contratos')

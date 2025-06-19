@@ -45,7 +45,7 @@
     <input type="hidden" name="url_buscar" id="url_buscar" value="{{ route('programacion.buscar_por_contrato') }}">
     <input type="hidden" name="url_ver" id="url_ver"
            value="{{ route('programacion.show', ['id' => ':id'])}}'?action=view">
-    <input type="hidden" name="url_GDO" id="url_GDO" value="{{ route('programacion.programacionGDO')}}">
+
     <input type="hidden" name="url_callcenterGDO" id="url_callcenterGDO" value="{{ route('programacion.callCenterGDO')}}">
     <div class="container">
         <div class="row justify-content-center">
@@ -65,9 +65,6 @@
                             <button id="openMasivoBtn" class="btn btn-primary btn-sm" title="Programadas Tecnicos">
                                 Programadas Tecnicos
                             </button>
-                         {{--   <button id="openGDOBtn" class="btn btn-secondary btn-sm" title="Programadas GDO">
-                                Programadas GDO
-                            </button>--}}
                             <button id="opencalcenterGDOBtn" class="btn btn-secondary btn-sm" title="Call center GDO">
                                 Programadas GDO
                             </button>

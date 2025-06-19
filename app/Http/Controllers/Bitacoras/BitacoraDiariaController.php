@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Bitacoras;
 
 use App\Http\Controllers\Controller;
+use App\Models\Bitacoras\tbl_bitacora_contrato;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -240,6 +242,54 @@ class BitacoraDiariaController extends Controller
                 ],
             ]);
         }
+
+    }
+
+    public function VstCategoria(): \Illuminate\Contracts\View\View
+    {
+
+        $contratos_sin_categoria = tbl_bitacora_contrato::whereNotIn('TIPO_TRABAJO', [
+            'FI-29 revisión periódica línea matriz',
+            'FI-31 REVISIÓN NUEVA LINEA MATRIZ',
+        ])->
+        where('CATEGORIA',null)->orderBy('CC_OPERARIO')->get();
+
+        return view('bitacoras.categorias',compact('contratos_sin_categoria'));
+    }
+
+    public function StoreCategoria(Request $request): \Illuminate\Http\JsonResponse
+    {
+
+        $validator = Validator::make($request->all(), [
+            'id' => 'required|integer|exists:tbl_bitacora_contratos,id',
+            'categoria' => 'required|string'
+        ], [
+            'id.required' => 'El id es requerido',
+            'id.integer' => 'El id debe ser una cadena de texto',
+            'categoria.required' => 'La categoria es requerida',
+            'categoria.string' => 'La categoria debe ser una cadena de texto'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => $validator->errors()->first()], 422);
+        }
+        try{
+        $registro = tbl_bitacora_contrato::find($request->id);
+
+        DB::beginTransaction();
+
+        $registro->CATEGORIA = $request->categoria;
+        $registro->save();
+
+        DB::commit();
+        }catch (\Exception $e){
+            DB::rollBack();
+            log::error($e);
+            return response()->json(['message' => 'Error al guardar los datos',
+                'e' => $e->getMessage()], 500);
+        }
+        return response()->json(['success' => 'Registro actualizado correctamente'], 200);
+
 
     }
 }

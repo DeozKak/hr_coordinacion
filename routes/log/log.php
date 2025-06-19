@@ -29,5 +29,7 @@ Route::middleware('web')->group(function () {
         Route::get('bitacoras/buscar_por_contrato', [BitacoraController::class, 'buscarPorContrato'])->name('bitacoras.buscar_por_contrato')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('municipios/json', [BitacoraController::class, 'getMunicipiosJson'])->name('municipios.json')->middleware(CheckPermission::class . ':ver_bitacoras,generar_programacion');
         Route::post('bitacora/diaria',[BitacoraDiariaController::class, 'RecepcionBitacoraDiraria'])->name('bitacoras.diaria')->middleware(CheckPermission::class . ':generar_bitacoras');
+        Route::get('bitacora/contratos_sin_categoria',[BitacoraDiariaController::class, 'VstCategoria'])->name('bitacoras.contratos_sin_categoria')->middleware(CheckPermission::class . ':generar_bitacoras');
+        Route::post('bitacora/contratos_sin_categoria/store',[BitacoraDiariaController::class, 'StoreCategoria'])->name('bitacoras.contratos_sin_categoria.StoreCategoria')->middleware(CheckPermission::class . ':generar_bitacoras');
     });
 });
