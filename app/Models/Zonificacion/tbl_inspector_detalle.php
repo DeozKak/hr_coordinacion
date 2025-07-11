@@ -10,6 +10,6 @@ class tbl_inspector_detalle extends Model implements AuditableContract
     use AuditableTrait;
    protected $table = 'tbl_inspector_detalle';
 
-
+    protected $fillable = ['detalle_id','inspector_id'];
 
 }

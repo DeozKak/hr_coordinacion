@@ -35,9 +35,14 @@
             border-color: #1e7e39;
         }
     </style>
+    <div id="loader" style="display: none;"></div>
+    <div id="overlay" style="display: none;"></div>
+    <link rel="stylesheet" href="{{ asset('css/programacion/ver_programacion.css') }}">
     <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
+    <input type="hidden" name="url_update" id="url_update" value="{{ route('programacion.update',['id'=>':id']) }}">
     <input type="hidden" name="url_busqueda" id="url_busqueda" value="{{ route('programacion.agendamiento') }}">
     <input type="hidden" name="url_exportar" id="url_exportar" value="{{ route('programacion.exportar') }}">
+    <input type="hidden" name="urlexportarSup" id="urlexportarSup" value="{{ route('programacion.exportarSup') }}">
     <div class="container mt-6">
         <div class="row justify-content-center">
             <div class="col-md-6">
@@ -75,6 +80,7 @@
                     <div class="card-body">
                         <h4 class="card-title text-center mb-3">Resultados de la Búsqueda</h4>
                         <button id="btnExportar" class="btn btn-success float-right">Exportar a plantilla GDW</button>
+                        <button id="btnExportarSup" class="btn btn-secondary float-right" style="margin-right: 10px">Exportar a plantilla Supervisores</button>
                         <br>
                         <div id="buscador" class="mt-4"></div>
                     </div>
@@ -84,9 +90,11 @@
     </div>
 
     @section('js')
-        <script src="{{ asset('js/programacion/verProgramacionV4.js') }}"></script>
-        <script>
 
+        <script src="{{ asset('js/programacion/verProgramacionV4.2.js') }}"></script>
+        <script>
+            const tecnicos = @json($tecnicos);
+            let permiso_modTec = 0;
             const rangoFechasCheckbox = document.getElementById('rangoFechas');
             const fechaFinContainer = document.getElementById('fechaFinContainer');
 
@@ -98,6 +106,9 @@
                 }
             });
         </script>
+        @can('mod_tecnicos')
+            <script> permiso_modTec = 1;</script>
+        @endcan
         <script>
             const url_jobs = "{{ route('jobs.pnd') }}";
 

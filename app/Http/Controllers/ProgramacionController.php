@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
+use Mpdf\Mpdf;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
@@ -30,6 +31,8 @@ use App\Services\ExtraerFechas;
 use function Laravel\Prompts\error;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+
+use ZipArchive;
 
 class ProgramacionController extends Controller
 {
@@ -510,7 +513,7 @@ class ProgramacionController extends Controller
         } catch (QueryException $e) {
             Log::error($e);
             DB::rollback();
-            return response()->json(['error' => 'Error al actualizar registro. ' . $e->getMessage()]);
+            return response()->json(['error' => 'Error al actualizar registro. ' . $e->getMessage()],500);
         }
         return response()->json(['message' => 'Registro actualizado correctamente']);
     }
@@ -634,7 +637,8 @@ class ProgramacionController extends Controller
 
     public function detalles()
     {
-        return view('programacion.ver');
+        $tecnicos = tbl_insp_cali::where('state','1')->get();
+        return view('programacion.ver',compact('tecnicos'));
     }
 
     public function agendamiento(Request $request): \Illuminate\Http\JsonResponse
@@ -944,6 +948,177 @@ class ProgramacionController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => 'Error al generar archivo. ' . $e->getMessage()], 500);
         }
+    }
+
+    public function exportarSup(Request $request)
+    {
+        $data = $request->data; // array de registros
+        $fechaInicio = $request->fechaInicio;
+        $fechaFin = $request->fechaFin;
+        foreach ($data as $index => $item) {
+            if ($item[16] == "" || $item[16] == null) {
+                return response()->json(['error' => 'Programación sin tecnico, revise la fila ' . $index + 1], 422);
+            }
+        }
+
+        try {
+            // Organizar registros por supervisor
+            $agrupadosPorSupervisor = $this->agruparPorSupervisor($data);
+
+            // Crear carpeta temporal
+            $carpetaTmp = storage_path('app/uploads/');
+            if (!file_exists($carpetaTmp)) {
+                mkdir($carpetaTmp, 0777, true);
+            }
+            $archivos = [];
+
+            // PDFs por supervisor
+            foreach ($agrupadosPorSupervisor as $supInfo) {
+                $archivos[] = $this->generarPdfSupervisor($supInfo['supervisor'], $supInfo['registros'], $carpetaTmp, $fechaInicio, $fechaFin);
+            }
+
+            // Excel global
+            $archivos[] = $this->generarExcelTotal($data, $carpetaTmp, $fechaInicio, $fechaFin);
+
+            // Nombre ZIP
+            $nombreZip = 'AGENDAMIENTO_'
+                . ($fechaInicio ? str_replace('-', '_', $fechaInicio) : '')
+                . ($fechaFin ? ('_' . str_replace('-', '_', $fechaFin)) : '')
+                . '.zip';
+
+
+            $zipPath = $this->empaquetarArchivosZip($archivos, $carpetaTmp . $nombreZip);
+
+            // Borrar archivos temporales individuales (no el ZIP)
+            foreach ($archivos as $archivo) {
+                if (file_exists($archivo)) {
+                    unlink($archivo);
+                }
+            }
+
+            // Genera ruta firmada (10 minutos de validez)
+            $url = url()->temporarySignedRoute(
+                'descargar.archivo',
+                now()->addMinutes(10),
+                ['file' => $nombreZip]
+            );
+        } catch (\Exception $e) {
+            log::error($e);
+            return response()->json(['error' => 'Error al generar archivo. ' . $e->getMessage()], 500);
+        }
+        return response()->json(['url' => $url]);
+    }
+
+    private function generarPdfSupervisor($supervisor, $registros, $destino, $fechaInicio, $fechaFin): string
+    {
+        $html = view('reportes.supervisor_pdf', compact('supervisor', 'registros'))->render();
+        $mpdf = new Mpdf([
+                'orientation' => 'L' // L = Landscape (horizontal)
+            ]
+        );
+        // Limpia y construye el nombre
+        $nombreLimpio = preg_replace('/[^A-Za-z0-9_\-]/', '_', $supervisor->nombre);
+        $fileName = 'reporte_' . $nombreLimpio . " " . ($fechaInicio ? str_replace('-', '_', $fechaInicio) : '')
+            . ($fechaFin ? ('_' . str_replace('-', '_', $fechaFin)) : '') . '.pdf';
+        $filePath = $destino . $fileName;
+
+        $mpdf->WriteHTML($html);
+        $mpdf->Output($filePath, \Mpdf\Output\Destination::FILE);
+        return $filePath;
+    }
+
+    private function generarExcelTotal($data, $destino, $fechaInicio, $fechaFin): string
+    {
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Definir los encabezados
+        $headers = [
+            'Contrato', 'Tipo de trabajo', 'Fecha', 'Celular', 'Nombre de Usuario', 'Orden de trabajo', 'Direccion',
+            'Barrio', 'Ciudad', 'Activa', 'Suspendida', 'Categoria', 'Fecha de agendamiento', 'Observaciones',
+            'Quien programo', 'Tecnico', 'Hora  inicio', 'Hora final'
+        ];
+        $sheet->fromArray($headers, NULL, 'A1');
+
+        // Estilos encabezado
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4F81BD'] // Azul claro
+            ]
+        ];
+        $cellRange = 'A1:R1'; // 18 columnas (R es la columna 18)
+        $sheet->getStyle($cellRange)->applyFromArray($headerStyle);
+
+        // Agregar los datos
+        $rowNum = 2;
+        foreach ($data as $fila) {
+            $filaSinPrimero = array_slice($fila, 1); // Ignora el primer elemento
+            $sheet->fromArray($filaSinPrimero, NULL, 'A' . $rowNum++);
+        }
+
+        // Aplicar borde tipo tabla a todo
+        $totalRows = count($data) + 1; // +1 por el header
+        $lastCol = 'R';
+        $tableRange = "A1:$lastCol$totalRows";
+        $tableStyle = [
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['argb' => 'FF000000'],
+                ]
+            ]
+        ];
+        $sheet->getStyle($tableRange)->applyFromArray($tableStyle);
+
+        // Autoajustar el contenido de las columnas
+        for ($col = 'A'; $col <= $lastCol; $col++) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $filePath = $destino . 'Agendamiento_total ' . ($fechaInicio ? str_replace('-', '_', $fechaInicio) : '')
+            . ($fechaFin ? ('_' . str_replace('-', '_', $fechaFin)) : '') . '.xlsx';
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save($filePath);
+        return $filePath;
+    }
+
+    private function empaquetarArchivosZip($archivos, $zipPath)
+    {
+        $zip = new ZipArchive;
+        $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        foreach ($archivos as $archivo) {
+            $zip->addFile($archivo, basename($archivo));
+        }
+        $zip->close();
+        return $zipPath;
+    }
+
+    private function agruparPorSupervisor($data): array
+    {
+        // Ejemplo básico. Cambia según tu formato de datos.
+        $resultado = [];
+        foreach ($data as $item) {
+            // 1. Extraer el ID de tbl_insp_cali del campo 16 (index 16)
+            $supId = (int)strtok($item[16], '.');
+            // 2. Obtener el registro de tbl_insp_cali
+            $registroCali = tbl_insp_cali::find($supId);
+            if ($registroCali && $registroCali->supervisor) {
+                $userId = $registroCali->supervisor->id;
+                if (!isset($resultado[$userId])) {
+                    $resultado[$userId] = [
+                        'supervisor' => (object)[
+                            'id' => $userId,
+                            'nombre' => $registroCali->supervisor->name,
+                        ],
+                        'registros' => []
+                    ];
+                }
+                $resultado[$userId]['registros'][] = $item;
+            }
+        }
+        return array_values($resultado);
     }
 
     public function masivos(Request $request): \Illuminate\Http\JsonResponse
@@ -1404,7 +1579,9 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
             $rango = 'A' . $row->getRowIndex() . ':AA' . $row->getRowIndex();
 
             $string = $worksheet->getCell('S' . $row->getRowIndex())->getValue();
-            if($string == "" || $string == null){continue;}
+            if ($string == "" || $string == null) {
+                continue;
+            }
             // Obtienes el valor numéric FECHA de la celda
             $valorNumericoExcel = $worksheet->getCell('R' . $row->getRowIndex())->getValue();
 
@@ -1412,8 +1589,7 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
             $fechaComoDateTime = Date::excelToDateTimeObject($valorNumericoExcel);
             $fechas = new ExtraerFechas();
             //servicio para encontrar fechas en la columna de observación
-            $array = $fechas->findDates($string, $fechaComoDateTime->format('Y-m-d'),$row->getRowIndex());
-
+            $array = $fechas->findDates($string, $fechaComoDateTime->format('Y-m-d'), $row->getRowIndex());
 
 
             //validación de array y que tengan objetos tipo DATE TIME
@@ -1449,7 +1625,7 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
                             $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Programado para ' . $array[0]->format('Y-m-d'));
                             $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF6FF658');
                         } else if ($resultado == 2) {
-                            $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Error al programar, intente manualmente '.$array[0]->format('Y-m-d'));
+                            $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Error al programar, intente manualmente ' . $array[0]->format('Y-m-d'));
                             $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFFFABAB');
                         } else if ($resultado == 0) {
                             $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Ya existe una programación para esta orden');

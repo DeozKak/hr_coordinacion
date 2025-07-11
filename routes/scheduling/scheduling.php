@@ -29,5 +29,7 @@ Route::middleware('web')->group(function () {
         Route::get('programacion/buscar_por_contrato', [ProgramacionController::class, 'buscarPorContrato'])->name('programacion.buscar_por_contrato')->middleware(CheckPermission::class . ':ver_programacion');
         Route::post('programacion/plantilla/store', [ProgramacionController::class, 'PlantillaStore'])->name('programacion.PlantillaStore')->middleware(CheckPermission::class . ':ver_programacion');
         Route::post('programacion/callCenterGDO', [ProgramacionController::class, 'callCenterGDO'])->name('programacion.callCenterGDO')->middleware(CheckPermission::class . ':ver_programacion');
+        Route::post('programacion/exportarSup', [ProgramacionController::class, 'exportarSup'])->name('programacion.exportarSup')->middleware(CheckPermission::class . ':ver_programacion');
+
     });
 });

@@ -21,6 +21,6 @@ class tbl_temp_fallida extends Model
         'RESULTADO_CIERRE',
         'id_bitacora',
         'id_usuario',
-        'id_super'
+        'id_super',
     ];
 }
