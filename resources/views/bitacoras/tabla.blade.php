@@ -17,6 +17,7 @@
     <script src="{{asset('js/bitacora/tbl_dinamicaV7.js')}}"></script>
 </head>
 
+
 <body>
     <div id="miContenedor" data-id-super="{{ json_encode($id_super) }}"></div>
     <div id="loader" style="display: none;"></div>
@@ -32,6 +33,7 @@
             <div class="card-header" style="white-space: nowrap;">
                 <div class="nav-wrapper" style="overflow-x: hidden ; overflow-y: hidden; flex-direction: column-reverse;">
                     <ul class="nav nav-tabs card-header-tabs flex-nowrap">
+
                         <?php foreach ($nombres as $index => $nombre) : ?>
                             <?php $partes_nombre = explode(' ', $nombre);
                             $nombre_corto = $partes_nombre[0] . ' ' . $partes_nombre[2]; // Primer apellido y primer nombre
@@ -55,6 +57,7 @@
 
                 <div class="nav-wrapper" style="overflow-x: auto; overflow-y: hidden; display: flex;">
                     <div class="tab-content">
+
                         <?php foreach ($nombres as $index => $nombre) : ?>
                             <div class="col-md-4">
                                 <table class="table table-bordered table-sm no-datatable tabla-indicadores" style="<?= $index === 0 ? 'display: table' : 'display: none'; ?>" id="#<?= $nombre; ?>">
@@ -115,10 +118,9 @@
                                             <th></th>
                                         </tr>
                                         @php
-                                        $datosFiltrados = array_filter($response->toArray(), function ($row) use ($nombre) {
-                                        return $row['NOMBRE'] === $nombre;
+                                        $datosFiltrados = array_filter($response->toArray(), function ($row) use ($cedulas,$index) {
+                                        return $row['CC_OPERARIO'] === $cedulas[$index];
                                         });
-
                                         @endphp
                                     </thead>
                                     <tbody>

@@ -134,6 +134,7 @@ class BitacoraController extends Controller
                 ->orderBy('apellidos', 'asc')
                 ->get();
         }
+
         $municipios = tbl_localidades_municipio::all();
 
         $nombres = array();
@@ -142,6 +143,7 @@ class BitacoraController extends Controller
 
         foreach ($inspectores as $inspector) {
             $nombres[] = $inspector->apellidos . ' ' . $inspector->nombres;
+            $cedulas[] = $inspector->cedula;
             $ids[$inspector->cedula] = $inspector->id;
         }
 
@@ -153,14 +155,14 @@ class BitacoraController extends Controller
         } catch (\Exception $e) {
             return redirect()->route('bitacora')->with('error', 'El archivo seleccionado no es válido o no se ha seleccionado un supervisor');
         }
-        if (!$spreadsheet->sheetNameExists('4.08 Bitacora Valle')) {
+       /* if (!$spreadsheet->sheetNameExists('4.08 Bitacora Valle')) {
             return redirect()->route('bitacora')->with('error', 'El archivo seleccionado no es válido o no se ha seleccionado un supervisor');
-        }
+        }*/
 
         unlink($excelFilePath);
         $causales = tbl_bitacoras_causal::all();
 
-        $response = $Guardado->guardar($spreadsheet, $nombres, $id_super, $cierre);
+        $response = $Guardado->guardar($spreadsheet, $nombres, $id_super, $cedulas,$cierre);
 
 
         if ($response->isEmpty()) {
@@ -168,7 +170,7 @@ class BitacoraController extends Controller
             return redirect()->route('bitacora')->with('error', 'Error al generar la bitacora');
         }
 
-        return view('bitacoras.tabla', compact('nombres', 'id_super', 'municipios', 'inspectores', 'causales', 'response'));
+        return view('bitacoras.tabla', compact('nombres', 'id_super', 'municipios', 'inspectores', 'causales', 'response','cedulas'));
     }
 
     public function guardar_tabla(Request $request, User $super = null)

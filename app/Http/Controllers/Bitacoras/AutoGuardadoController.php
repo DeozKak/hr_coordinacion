@@ -33,7 +33,7 @@ class AutoGuardadoController extends Controller
         }
     }
 
-    public function guardar($spreadsheet, $nombres, $super, $cierre_todos = null)
+    public function guardar($spreadsheet, $nombres, $super, $cedulas,$cierre_todos = null,)
     {
         $rutaArchivo = str_replace(".xls", " ", session('nom_archivo'));
         $rutaArchivoFinal = str_replace("4.08", "", $rutaArchivo);
@@ -74,7 +74,7 @@ class AutoGuardadoController extends Controller
             'USUARIO NO AUTORIZA.'
         ];
         $columnas = ['A', 'B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K', 'M', 'N', 'O', 'Q','R'];
-        foreach ($nombres as $nombre) {
+        foreach ($nombres as $index => $nombre) {
             foreach ($spreadsheet->getSheetNames() as $sheetName) {
                 $sheet = $spreadsheet->getSheetByName($sheetName);
                 foreach ($sheet->getRowIterator() as $row) {
@@ -89,7 +89,7 @@ class AutoGuardadoController extends Controller
                     // Verificar condiciones de filtrado
                     if (
                         strpos($contrato, ":") === 0 &&
-                        trim($nombreCelda) === $nombre &&
+                        trim($cc_operario) === $cedulas[$index] &&
                         in_array($cierre, ["CERTIFICADA", "CERTIFICADA CON NOVEDADES", "INSPECCIONADA CON DEFECTO CRITICO VALLE", "INSPECCIONADA CON DEFECTO NO CRITICO VALLE"])
                     ) {
                         $filaDatos = []; // Array para almacenar datos de la fila
@@ -128,7 +128,7 @@ class AutoGuardadoController extends Controller
                     } elseif (
                         $cierre_todos !== '0' &&
                         strpos($contrato, ":") === 0 &&
-                        trim($nombreCelda) === $nombre &&
+                        trim($cc_operario) === $cedulas[$index] &&
                         in_array($cierre, $arrayFallidas)
 
                     ) {
@@ -255,6 +255,7 @@ class AutoGuardadoController extends Controller
 
         foreach ($inspectores as $inspector) {
             $nombres[] = $inspector->apellidos . ' ' . $inspector->nombres;
+            $cedulas[] = $inspector->cedula;
             $ids[$inspector->cedula] = $inspector->id;
         }
 
@@ -264,7 +265,7 @@ class AutoGuardadoController extends Controller
         $response = tbl_temp_contrato::where('id_bitacora', $id_bitacora)->get();
         $causales = tbl_bitacoras_causal::all();
 
-        return view('bitacoras.tabla', compact('response', 'nombres', 'municipios', 'causales', 'id_super', 'inspectores'));
+        return view('bitacoras.tabla', compact('response', 'nombres', 'municipios', 'causales', 'id_super', 'inspectores','cedulas'));
     }
 
     public function Borrar($id_bitacora)

@@ -1,6 +1,6 @@
 let hot;
-let hot_dia;
-let hot_contadores;
+let hot_contadores = null;
+let hot_dia = null;
 let diasFestivos;
 let sabadodobles = [];
 let InspectorSelected;
@@ -626,6 +626,17 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         // Register the custom validator
         Handsontable.validators.registerValidator('custom.text', customTextValidator);
     })(Handsontable);
+    if (hot_contadores && !hot_contadores.isDestroyed) {
+        hot_contadores.destroy();
+        hot_contadores = null;
+    }
+    if (hot_dia && !hot_dia.isDestroyed) {
+        hot_dia.destroy();
+        hot_dia = null;
+    }
+
+
+
 
     hot_contadores = new Handsontable(contadores_dia, {
         readOnly: true,
