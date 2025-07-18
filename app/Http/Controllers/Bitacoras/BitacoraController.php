@@ -155,9 +155,9 @@ class BitacoraController extends Controller
         } catch (\Exception $e) {
             return redirect()->route('bitacora')->with('error', 'El archivo seleccionado no es válido o no se ha seleccionado un supervisor');
         }
-       /* if (!$spreadsheet->sheetNameExists('4.08 Bitacora Valle')) {
+        if (!$spreadsheet->sheetNameExists('4.08 Bitacora Valle V10')) {
             return redirect()->route('bitacora')->with('error', 'El archivo seleccionado no es válido o no se ha seleccionado un supervisor');
-        }*/
+        }
 
         unlink($excelFilePath);
         $causales = tbl_bitacoras_causal::all();
@@ -528,8 +528,8 @@ class BitacoraController extends Controller
         // Crear un objeto Writer para guardar la hoja de cálculo como un archivo Excel
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
 
-        $rutaArchivo = str_replace(".xls", " ", session('nom_archivo'));
-        $rutaArchivoFinal = str_replace("4.08", "", $rutaArchivo);
+        //quitar nombres que no sirven
+        $rutaArchivoFinal = str_replace(['.xls', '4.08',' V10'], [' ', '',''], session('nom_archivo'));
         // Guardar el archivo Excel
         $rutaArchivoFinal = ltrim($rutaArchivoFinal);
         $writer->save(storage_path('app/uploads/') . $rutaArchivoFinal . ".xlsx");

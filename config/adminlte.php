@@ -484,28 +484,24 @@ return [
             ]
         ],
 
-        // ['header' => 'Gestión usuarios', 'can' => ['gestion_usuarios', 'gestion_inspectores'],],
+         ['header' => 'PQRS', 'can' => ['ver_PQRS'],],
 
 
-        // [
-        //     'text' => 'Configuración',
-        //     'can' => ['gestion_usuarios', 'gestion_inspectores', 'ver_residente'],
-        //     'icon' => 'fas fa-wrench',
-        //     'submenu' => [
-        //         [
-        //             'text' => 'Usuarios',
-        //             'url' => 'admin/users',
-        //             'icon' => 'far fa-circle',
-        //             'can' => 'gestion_usuarios',
-        //             'label_color' => 'success',
-        //         ],
-        //         [
-        //             'text' => 'Inspectores',
-        //             'url' => 'inspectores',
-        //             'icon' => 'far fa-circle',
-        //             'can' => 'gestion_inspectores',
-        //             'label_color' => 'success',
-        //         ],
+         [
+             'text' => 'PQRS',
+             'can' => ['ver_PQRS'],
+             'icon' => 'fas fa-phone',
+             'submenu' => [
+
+                 [
+                     'text' => 'Ver Quejas',
+                     'url' => 'pqrs',
+                     'icon' => 'far fa-circle',
+                     'can' => 'ver_PQRS',
+                     'label_color' => 'success',
+                 ],
+             ],
+
         //         [
         //             'text' => 'Cortes Producción',
         //             'url' => 'cortes_produccion',
@@ -530,7 +526,7 @@ return [
         //             'label_color' => 'success',
         //         ],
         //     ]
-        // ],
+        ],
 
         ['header' => 'Supervisión Producción', 'can' => ['ver_residente', 'ver_produccion'],],
 

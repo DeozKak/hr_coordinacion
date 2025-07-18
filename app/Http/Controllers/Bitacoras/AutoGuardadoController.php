@@ -35,8 +35,7 @@ class AutoGuardadoController extends Controller
 
     public function guardar($spreadsheet, $nombres, $super, $cedulas,$cierre_todos = null,)
     {
-        $rutaArchivo = str_replace(".xls", " ", session('nom_archivo'));
-        $rutaArchivoFinal = str_replace("4.08", "", $rutaArchivo);
+        $rutaArchivoFinal = str_replace(['.xls', '4.08',' V10'], [' ', '',''], session('nom_archivo'));
         $nombreArchivo = $rutaArchivoFinal . ".xlsx";
 
         $usuario = Auth::user();
@@ -96,6 +95,10 @@ class AutoGuardadoController extends Controller
 
                         foreach ($columnas as $columna) {
                             $valor = $sheet->getCell($columna . $row->getRowIndex())->getValue();
+                            //si el tipo de trabajo es 12162 entonces que coja la categoria de la columna L
+                            if($columna === 'K' && $sheet->getCell('G' . $row->getRowIndex())->getValue() === 'RN 12162'){
+                                $valor = $sheet->getCell('L' . $row->getRowIndex())->getValue();
+                            }
                             if ($columna === 'A') {
                                 $valor = trim($valor);
                             }
