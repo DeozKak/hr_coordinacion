@@ -14,6 +14,7 @@ Route::middleware('web')->group(function () {
     Route::middleware('auth')->group(function () {
 
         Route::get('/pqrs',[PQRSImportController::class,'index'])->name('pqrs.index')->middleware(CheckPermission::class . ':ver_PQRS');
-
+        Route::post('/pqrs/importar',[PQRSImportController::class,'import'])->name('pqrs.importar')->middleware(CheckPermission::class . ':ver_PQRS');
+        Route::get('/pqrs/quejas', [PQRSImportController::class, 'getQuejas'])->name('pqrs.quejas');
     });
 });

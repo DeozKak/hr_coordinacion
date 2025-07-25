@@ -4,7 +4,7 @@
 
 @section('content_header')
     <h1>Control Stickers</h1>
-@stop   
+@stop
 
 @section('content')
 
@@ -20,9 +20,9 @@
     <div class="card">
         <div class="row justify-content-center mt-3 shadow-container">
             <div class="col-md-12">
-           
+
                 Semanas
-          
+
                 <table class="table table-bordered table-striped" id="semanas">
                     <thead>
                         <tr>
@@ -34,8 +34,8 @@
                     <tbody>
                     @foreach ($semana as $sem )
                             <tr>
-                             
-                            
+
+
                                 <td>{{$sem->mes_año}}</td>
                                 <td>{{$sem->fecha_inicio}}  a  {{$sem->fecha_fin}}</td>
                                 <td>
@@ -43,7 +43,7 @@
                                         <button type="submit" class="btn btn-primary">Ver</button>
                                     </form>
                                 </td>
-                              
+
                             </tr>
                             @endforeach
                     </tbody>
@@ -57,7 +57,7 @@
 
 
 @section('js')
-<script src="{{ asset('js/stickers/index.js') }}?v={{ time() }}"></script>
+<script src="{{ asset('js/stickers/indexV1.1.js') }}?v={{ time() }}"></script>
 @stop
 @stop
 
