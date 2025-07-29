@@ -8,6 +8,8 @@ use App\Models\Bitacoras\tbl_bitacoras_causal;
 use App\Models\Bitacoras\tbl_temp_contrato;
 use App\Models\Bitacoras\tbl_temp_fallida;
 use App\Models\tbl_insp_cali;
+use App\Models\tbl_quejas_contrato;
+use App\Models\User;
 use App\Models\Zonificacion\tbl_localidades_municipio;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -40,6 +42,8 @@ class AutoGuardadoController extends Controller
 
         $usuario = Auth::user();
 
+        $data_super = User::find($super);
+        $cedulas [] = $data_super->identification;
         try {
             $bitacora = tbl_bitacora_archivo::where('id_usuario', $usuario->id)->where('finished', '=', 0)->first();
             if (!$bitacora) {
@@ -54,7 +58,9 @@ class AutoGuardadoController extends Controller
         }
         $datos = [];
         $DatosFallidas = [];
+        $DatosQuejas = [];
         $arrayFallidas = [
+            'EJECUTADA',
             '.ANULADO VALLE',
             '.DIRECCION NO ENCONTRADA',
             '.PREDIO EN CONSTRUCCION',
@@ -84,12 +90,15 @@ class AutoGuardadoController extends Controller
                     $cc_operario = $sheet->getCell('B' . $row->getRowIndex())->getValue(); // Índice potencial
                     $vence = $sheet->getCell('Q' . $row->getRowIndex())->getValue();
                     $cierre = ltrim($sheet->getCell('M' . $row->getRowIndex())->getValue(), '.');
+                    $tipo_trabajo = $sheet->getCell('G' . $row->getRowIndex())->getValue();
 
                     // Verificar condiciones de filtrado
                     if (
                         strpos($contrato, ":") === 0 &&
                         trim($cc_operario) === $cedulas[$index] &&
+                        $cedulas[$index] !==  $data_super->identification &&
                         in_array($cierre, ["CERTIFICADA", "CERTIFICADA CON NOVEDADES", "INSPECCIONADA CON DEFECTO CRITICO VALLE", "INSPECCIONADA CON DEFECTO NO CRITICO VALLE"])
+
                     ) {
                         $filaDatos = []; // Array para almacenar datos de la fila
 
@@ -129,9 +138,11 @@ class AutoGuardadoController extends Controller
                         // Usar el valor de la columna 'B' como índice
                         $datos[$cc_operario][] = $filaDatos;
                     } elseif (
+                        $tipo_trabajo == ['RP 10444','RN 12162','RP 12161','SA 12163','SA 12164'] &&
                         $cierre_todos !== '0' &&
                         strpos($contrato, ":") === 0 &&
                         trim($cc_operario) === $cedulas[$index] &&
+                        $cedulas[$index] !==  $data_super->identification &&
                         in_array($cierre, $arrayFallidas)
 
                     ) {
@@ -158,12 +169,71 @@ class AutoGuardadoController extends Controller
                             $filaDatosFallidas[$columna] = $valor;
                         }
                         $DatosFallidas[$cc_operario][] = $filaDatosFallidas;
+                    }elseif(
+                        $tipo_trabajo === 'QUEJAS VALLE ' &&
+                        $cierre_todos !== '0' &&
+                       // strpos($contrato, ":") === 1 &&
+                        trim($cc_operario) === $cedulas[$index] &&
+                        in_array($cierre, $arrayFallidas)
+                    ){
+                        $filaDatosQuejas = [];
+                        foreach ($columnas as $columna) {
+                            $valor = $sheet->getCell($columna . $row->getRowIndex())->getValue();
+                            if ($columna === 'A') {
+                                $valor = trim($valor);
+                            }
+                            if ($columna === 'M') {
+                                $valor = ltrim($sheet->getCell($columna . $row->getRowIndex())->getValue(), '.');
+                            }
+                            if ($columna === 'D' && is_numeric($valor)) {
+                                $fecha = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($valor);
+                                $valor = $fecha->format('y-m-d');
+                            }
+
+                            // Formateo especial para vencimiento
+                            if ($columna === 'Q') {
+                                $venceDate = \DateTime::createFromFormat('d/m/Y', $valor);
+                                $valor = ($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m')) ? "60 meses" : "";
+                            }
+
+                            $filaDatosQuejas[$columna] = $valor;
+                        }
+
+                        $DatosQuejas[$cc_operario][] = $filaDatosQuejas;
                     }
                 }
             }
         }
 
         try {
+
+            if ($cierre_todos !== '0') {
+                foreach ($DatosQuejas as $cc => $inspecciones) {
+                    foreach ($inspecciones as $inspeccion) {
+
+                        $existe = tbl_quejas_contrato::where('CONTRATO', $inspeccion['H'])
+                            ->where('ORDEN_TRABAJO', $inspeccion['I'])
+                            ->where('No_ACTA', $inspeccion['E'])
+                            ->where('TIPO_TRABAJO', $inspeccion['G'])
+                            ->exists();
+                        if (!$existe) {
+                            tbl_quejas_contrato::create([
+                                'NOMBRE' => $inspeccion['A'],
+                                'CC_OPERARIO' => $inspeccion['B'],
+                                'MUNICIPIO' => $inspeccion['C'],
+                                'FECHA' => $inspeccion['D'],
+                                'No_ACTA' => $inspeccion['E'],
+                                'TIPO_TRABAJO' => $inspeccion['G'],
+                                'CONTRATO' => ltrim($inspeccion['H'], ':'),
+                                'ORDEN_TRABAJO' => $inspeccion['I'],
+                                'ORDEN_EXT' => $inspeccion['J'],
+                                'CATEGORIA' => $inspeccion['K'],
+                                'RESULTADO_CIERRE' => $inspeccion['M'],
+                            ]);
+                        }
+                    }
+                }
+            }
             if ($cierre_todos !== '0') {
                 foreach ($DatosFallidas as $cc => $inspecciones) {
                     foreach ($inspecciones as $inspeccion) {

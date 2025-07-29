@@ -19,8 +19,12 @@
             color: white !important;
         }
 
-        .filaRecepcion {
+        .filaRecepcionMacro {
             background-color: rgb(147, 255, 134) !important;
+            color: rgb(89, 88, 88) !important;
+        }
+        .filaRecepcionGDW {
+            background-color: rgb(150, 186, 255) !important;
             color: rgb(89, 88, 88) !important;
         }
 
@@ -65,6 +69,6 @@
 
 
 
-    <script src="{{ asset('js/PQRS/indexV1.1.js') }}"></script>
+    <script src="{{ asset('js/PQRS/indexV1.2.js') }}"></script>
 
 @endsection

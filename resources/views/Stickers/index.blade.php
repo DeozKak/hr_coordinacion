@@ -57,7 +57,7 @@
 
 
 @section('js')
-<script src="{{ asset('js/stickers/indexV1.1.js') }}?v={{ time() }}"></script>
+<script src="{{ asset('js/stickers/indexV1.2.js') }}?v={{ time() }}"></script>
 @stop
 @stop
 

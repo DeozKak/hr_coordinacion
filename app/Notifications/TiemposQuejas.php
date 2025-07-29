@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\tbl_queja;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class TiemposQuejas extends Notification
@@ -40,31 +41,31 @@ class TiemposQuejas extends Notification
         // Hacemos join para traer los datos del inspector
         $quejas = \App\Models\tbl_queja::query()
             ->select([
-                // lista solo los campos que mostrarás (excluyendo id, created_at, updated_at)
                 'CONTRATO',
                 'LOCALIDAD',
                 'BARRIO',
                 'DIRECCION',
                 'DIAS',
-                // Armamos el string para inspector con alias
-                \DB::raw("CONCAT(tbl_insp_cali.id, '. ', tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS INSPECTOR"),
-                'users.name as SUPERVISOR'
-
+                DB::raw("CONCAT(tbl_insp_cali.id, '. ', tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS INSPECTOR"),
+                // Aquí el CASE para la excepción:
+                DB::raw("CASE
+            WHEN tbl_insp_cali.id IN (101, 102, 200) THEN ''
+            ELSE users.name
+        END AS SUPERVISOR"),
             ])
-            // Ajusta el nombre del campo 'inspector' según exista en tu modelo (puede ser id_inspector o similar)
             ->join('tbl_insp_cali', 'tbl_quejas.INSPECTOR', '=', 'tbl_insp_cali.id')
             ->leftJoin('users', 'tbl_insp_cali.SUPERVISOR', '=', 'users.id')
             ->whereNull('recepcion')
-            ->where('DIAS','>=',3)->orderBy('DIAS','DESC')
+            ->where('DIAS', '>=', 3)
+            ->orderBy('DIAS', 'DESC')
             ->get();
 
 
-
-            return (new MailMessage)
-                ->subject('Reporte de Tiempos de Quejas '.date('d-m-Y'))
-                ->view('mail.tiemposQuejas', [
-                    'quejas' => $quejas,
-                ]);
+        return (new MailMessage)
+            ->subject('Reporte de Tiempos de Quejas ' . date('d-m-Y'))
+            ->view('mail.tiemposQuejas', [
+                'quejas' => $quejas,
+            ]);
 
     }
 

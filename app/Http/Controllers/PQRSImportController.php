@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\tbl_insp_cali;
+use App\Models\tbl_quejas_contrato;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -147,7 +149,17 @@ class PQRSImportController extends Controller
                 $queja->BARRIO = $sheet->getCell('J' . $row->getRowIndex())->getValue();
                 $queja->DIRECCION = $sheet->getCell('K' . $row->getRowIndex())->getValue();
                 $queja->INSPECTOR = $sheet->getCell('AH' . $row->getRowIndex())->getValue();
-                $queja->recepcion = $sheet->getCell('AO' . $row->getRowIndex())->getValue();
+                if($sheet->getCell('AO' . $row->getRowIndex())->getValue() === 1){
+                    $queja->recepcion = "MACRO";
+                }else{
+                    $Consulta_movilidad = tbl_quejas_contrato::where('CONTRATO', $queja->CONTRATO)->
+                    where('ORDEN_TRABAJO', $sheet->getCell('A' . $row->getRowIndex())->getValue())->exists();
+                    if ($Consulta_movilidad === true){
+                        $queja->recepcion = 'GDW';
+                    }
+
+                }
+
 
                 // Manejo fecha excel
                 $valorExcel = $sheet->getCell('AI' . $row->getRowIndex())->getValue();

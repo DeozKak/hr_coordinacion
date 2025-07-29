@@ -136,12 +136,15 @@ function initHandsontableQuejas(colHeaders, data) {
             const rowData = data[row];
 
             // O agregar lógica adicional, por ejemplo con recepción
-            const recepcion = Number(rowData['recepcion'] ?? rowData['RECEPCION']);
-            if (!isNaN(recepcion)) {
-                if (recepcion === 1) {
-                    cellProperties.className = (cellProperties.className ? cellProperties.className + ' ' : '') + 'filaRecepcion';
+            const recepcion = rowData['recepcion'] ?? rowData['RECEPCION'];
+
+                if (recepcion === 'MACRO') {
+                    cellProperties.className = (cellProperties.className ? cellProperties.className + ' ' : '') + 'filaRecepcionMacro';
                 }
-            }
+                if (recepcion === 'GDW') {
+                    cellProperties.className = (cellProperties.className ? cellProperties.className + ' ' : '') + 'filaRecepcionGDW';
+                }
+
 
             return cellProperties;
 

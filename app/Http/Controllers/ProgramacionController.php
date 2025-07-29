@@ -1369,10 +1369,10 @@ class ProgramacionController extends Controller
                  if ($movilidad) {
                      continue;
                  }*/
-
+                $date = date('Y-m-d');
                 $exist = tbl_programacion_contrato::where('ORDEN_TRABAJO', $programada->ORDEN_TRABAJO)
                     ->where('CONTRATO', $programada->CONTRATO)
-                    ->where('FECHA_AGENDAMIENTO', $programada->FECHA_AGENDAMIENTO)
+                    ->where('FECHA_AGENDAMIENTO','>=',$date)
                     ->first();
 
                 if ($exist) {
