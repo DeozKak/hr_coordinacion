@@ -66,10 +66,17 @@ document.addEventListener('DOMContentLoaded', function () {
                         copyColumnHeaders: true,
                     },
                     licenseKey: 'non-commercial-and-evaluation',
-                });
-                if(permiso_modTec === 1){
-                hot.updateSettings({
-                        cells: function (row, col) {
+                    cells: function (row, col) {
+                        const cellProperties = {};
+
+                        // Ajusta el índice 7 por el que corresponda a "ORDEN_TRABAJO" según tus columnas
+                        let ordenTrabajoColIndex = 'ORDEN_TRABAJO';
+                        let rowData = this.instance.getSourceDataAtRow(row);
+
+                        if (rowData && rowData[ordenTrabajoColIndex] === "N/A") {
+                            cellProperties.className = (cellProperties.className ? cellProperties.className + ' ' : '') + 'filaNA';
+                        }
+                        if (permiso_modTec === 1) {
                             if (col === 16) {
                                 return {
                                     readOnly: false,
@@ -80,32 +87,63 @@ document.addEventListener('DOMContentLoaded', function () {
 
                                 };
                             }
-                        },afterChange: function (changes, source) {
+                        }
 
-                            if(source === "edit"){
-                                if(changes[0][2] === changes[0][3]){
+                            return cellProperties;
+                        }, afterChange: function (changes, source) {
+
+                            if (source === "edit") {
+                                if (changes[0][2] === changes[0][3]) {
                                     return;
                                 }
                                 let id_reg = hot.getDataAtCell(changes[0][0], 0);
                                 let value = changes[0][3];
 
-                                enviarCambios(id_reg,value);
+                                enviarCambios(id_reg, value);
                             }
 
-                    }
-                    }
-                );
-                }
-            },
-            error: function (xhr, status, error) {
-                console.error(xhr.responseText);
-                alert(xhr.responseJSON.error);
-            }
-        });
+                        }
 
-        function enviarCambios(idReg,value){
+                    });
+               /* if (permiso_modTec === 1) {
+                    hot.updateSettings({
+                            cells: function (row, col) {
+                                if (col === 16) {
+                                    return {
+                                        readOnly: false,
+                                        type: 'dropdown',
+                                        source: sourceTecnicos,
+                                        strict: true,
+                                        allowInvalid: false
+
+                                    };
+                                }
+                            }, afterChange: function (changes, source) {
+
+                                if (source === "edit") {
+                                    if (changes[0][2] === changes[0][3]) {
+                                        return;
+                                    }
+                                    let id_reg = hot.getDataAtCell(changes[0][0], 0);
+                                    let value = changes[0][3];
+
+                                    enviarCambios(id_reg, value);
+                                }
+
+                            }
+                        }
+                    );
+                }*/
+            },
+                error: function (xhr, status, error) {
+                    console.error(xhr.responseText);
+                    alert(xhr.responseJSON.error);
+                }
+            });
+
+        function enviarCambios(idReg, value) {
             let url = document.getElementById('url_update').value;
-            url = url.replace(':id',idReg);
+            url = url.replace(':id', idReg);
             $.ajax({
                 url: url,
                 method: 'PUT',
@@ -115,17 +153,17 @@ document.addEventListener('DOMContentLoaded', function () {
                     valor: value
                 },
                 success: function (response) {
-                   if(response.message){
-                       Swal.fire({
-                           position: "top-end",
-                           icon: "success",
-                           title: response.message,
-                           showConfirmButton: false,
-                           toast: true,
-                           timer: 2000
-                       });
-                   }
-                },error: function (xhr, status, error) {
+                    if (response.message) {
+                        Swal.fire({
+                            position: "top-end",
+                            icon: "success",
+                            title: response.message,
+                            showConfirmButton: false,
+                            toast: true,
+                            timer: 2000
+                        });
+                    }
+                }, error: function (xhr, status, error) {
                     alert(xhr.responseJson.error);
                 }
             })
@@ -178,6 +216,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
         });
-    });
+    })
+        ;
 
-});
+    });

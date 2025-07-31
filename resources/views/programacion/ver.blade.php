@@ -34,6 +34,11 @@
             background-color: #218838;
             border-color: #1e7e39;
         }
+        .filaNA {
+            background-color: #ffe8a6 !important;  /* Un color de fondo suave */
+            color: #705e00 !important;             /* Un color de texto suave */
+        }
+
     </style>
     <div id="loader" style="display: none;"></div>
     <div id="overlay" style="display: none;"></div>
@@ -91,7 +96,7 @@
 
     @section('js')
 
-        <script src="{{ asset('js/programacion/verProgramacionV4.2.js') }}"></script>
+        <script src="{{ asset('js/programacion/verProgramacionV4.3.js') }}"></script>
         <script>
             const tecnicos = @json($tecnicos);
             let permiso_modTec = 0;

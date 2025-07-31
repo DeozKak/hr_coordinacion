@@ -513,7 +513,7 @@ class ProgramacionController extends Controller
         } catch (QueryException $e) {
             Log::error($e);
             DB::rollback();
-            return response()->json(['error' => 'Error al actualizar registro. ' . $e->getMessage()],500);
+            return response()->json(['error' => 'Error al actualizar registro. ' . $e->getMessage()], 500);
         }
         return response()->json(['message' => 'Registro actualizado correctamente']);
     }
@@ -637,8 +637,8 @@ class ProgramacionController extends Controller
 
     public function detalles()
     {
-        $tecnicos = tbl_insp_cali::where('state','1')->get();
-        return view('programacion.ver',compact('tecnicos'));
+        $tecnicos = tbl_insp_cali::where('state', '1')->get();
+        return view('programacion.ver', compact('tecnicos'));
     }
 
     public function agendamiento(Request $request): \Illuminate\Http\JsonResponse
@@ -780,27 +780,31 @@ class ProgramacionController extends Controller
             $plantilla = $plantilla->orderBy('TECNICO')->get();
             $busqueda = $busqueda->orderBy('TECNICO')->get();
 
-            $uniqueData = [];
+
+            // Agregar primero los registros de plantilla
+            $finalData = [];
+
+            foreach ($plantilla as $registro) {
+                $finalData[] = $registro;
+            }
+
+            // Luego los restantes, descartando duplicados si algún registro de plantilla también está en $busqueda
             $uniqueKeys = [];
 
-            foreach ($busqueda as $item) {
-                //unificar en un solo array
-                $key = $item->ORDEN_TRABAJO . $item->FECHA_AGENDAMIENTO . $item->PORQUE_PROGRAMO;
+            foreach ($plantilla as $itemPlantilla) {
+                $keyP = $itemPlantilla->ORDEN_TRABAJO . $itemPlantilla->FECHA_AGENDAMIENTO . $itemPlantilla->PORQUE_PROGRAMO;
+                $uniqueKeys[] = $keyP;
+            }
 
+            foreach ($busqueda as $item) {
+                $key = $item->ORDEN_TRABAJO . $item->FECHA_AGENDAMIENTO . $item->PORQUE_PROGRAMO;
                 if (!in_array($key, $uniqueKeys)) {
-                    $uniqueData[] = $item;
-                    $uniqueKeys[] = $key;
+                    $finalData[] = $item;
                 }
             }
 
-            $busqueda = $uniqueData;
-
-            foreach ($plantilla as $registro) {
-                $busqueda[] = $registro; // Agregamos cada elemento de $plantilla al array $busqueda
-            }
-
             return response()->json([
-                'data' => $busqueda,
+                'data' => $finalData,
                 'columnas' => $columnasAIncluir
             ]);
         } catch (Exception $e) {
@@ -1372,7 +1376,7 @@ class ProgramacionController extends Controller
                 $date = date('Y-m-d');
                 $exist = tbl_programacion_contrato::where('ORDEN_TRABAJO', $programada->ORDEN_TRABAJO)
                     ->where('CONTRATO', $programada->CONTRATO)
-                    ->where('FECHA_AGENDAMIENTO','>=',$date)
+                    ->where('FECHA_AGENDAMIENTO', '>=', $date)
                     ->first();
 
                 if ($exist) {

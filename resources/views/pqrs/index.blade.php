@@ -54,7 +54,7 @@
 
 
     <div class="d-flex justify-content-center">
-        <div class="card" style="width:1400px; margin:auto;">
+        <div class="card" style="width:1150px; margin:auto;">
             <div class="card-header">
                 <h4 class="card-title text-center mb-0">Tiempos</h4>
             </div>

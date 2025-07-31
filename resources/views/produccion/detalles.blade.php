@@ -14,20 +14,16 @@
     <link rel="stylesheet" href="{{asset('css/produccion/produccionV2.css')}}">
     <script src="{{asset('js/produccion/producciondetallesV7.js')}}?v={{ time()}}"></script>
 
-
     <input type="hidden" id="id_corte_detalles" value="">
     <input type="hidden" id="id_produccion" value="{{route('produccion.datosDetalles')}}">
     <input type="hidden" name="_token" id="token" value="{{csrf_token()}}">
 
     <div class="shadow-container">
-        <div>
             <a class="btn btn-primary" href="javascript:history.go(-1)" style="margin-bottom: 10px;">Ir Atrás</a>
             <button type="button" class="btn btn-success" id="exportar" style="margin-bottom: 10px;">Exportar</button>
-            <x-adminlte-card title="Producción por dia" theme="info" icon="fas fa-code-branch"
-                             header-class="text-uppercase rounded-bottom border-info" collapsible>
+            <x-adminlte-card title="Producción por dia" theme="info" icon="fas fa-code-branch" header-class="text-uppercase rounded-bottom border-info" collapsible>
                 <div id="detalles" style="width: '100px'"></div>
             </x-adminlte-card>
-        </div>
     </div>
 
     <!-- Modal Detalles de dia -->
