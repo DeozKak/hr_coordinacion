@@ -138,7 +138,7 @@ class AutoGuardadoController extends Controller
                         // Usar el valor de la columna 'B' como índice
                         $datos[$cc_operario][] = $filaDatos;
                     } elseif (
-                        $tipo_trabajo == ['RP 10444','RN 12162','RP 12161','SA 12163','SA 12164'] &&
+                        in_array($tipo_trabajo,['RP 10444','RN 12162','RP 12161','SA 12163','SA 12164']) &&
                         $cierre_todos !== '0' &&
                         strpos($contrato, ":") === 0 &&
                         trim($cc_operario) === $cedulas[$index] &&

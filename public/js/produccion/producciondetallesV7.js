@@ -635,9 +635,6 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         hot_dia = null;
     }
 
-
-
-
     hot_contadores = new Handsontable(contadores_dia, {
         readOnly: true,
         manualColumnMove: false,

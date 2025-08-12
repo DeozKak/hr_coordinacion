@@ -58,5 +58,5 @@
 @endsection
 
 @section('js')
-<script src="{{ asset('js/nomina/nomina.js') }}?v={{ time() }}"></script>
+<script src="{{ asset('js/nomina/nominaV1.1.js') }}?v={{ time() }}"></script>
 @endsection

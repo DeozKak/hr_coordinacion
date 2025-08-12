@@ -200,19 +200,22 @@ class BitacoraController extends Controller
             $hoja = $spreadsheet->createSheet($indice);
             $hoja->setTitle($nombre_tabla);
             // setear la tabla de indicadores
-            $tablaIndicadores = $indicadores[$indice];
+            if ($indicadores !== null) {
+                $tablaIndicadores = $indicadores[$indice];
 
-            $hoja->setCellValue([1, 1], ".CERTIFICADA");
-            $hoja->setCellValue([1, 2], "CERTIFICADA CON NOVEDADES");
-            $hoja->setCellValue([1, 3], ".INSPECCIONADA CON DEFECTO CRITICO");
-            $hoja->setCellValue([1, 4], ".INSPECCIONADA CON DEFECTO NO CRITICO");
-            $hoja->setCellValue([1, 5], "TOTAL CONTRATOS OK");
+                $hoja->setCellValue([1, 1], ".CERTIFICADA");
+                $hoja->setCellValue([1, 2], "CERTIFICADA CON NOVEDADES");
+                $hoja->setCellValue([1, 3], ".INSPECCIONADA CON DEFECTO CRITICO");
+                $hoja->setCellValue([1, 4], ".INSPECCIONADA CON DEFECTO NO CRITICO");
+                $hoja->setCellValue([1, 5], "TOTAL CONTRATOS OK");
 
-            $hoja->setCellValue([2, 1], $tablaIndicadores["certificadaCount"]);
-            $hoja->setCellValue([2, 2], $tablaIndicadores["certificadaConNovedadesCount"]);
-            $hoja->setCellValue([2, 3], $tablaIndicadores["inspeccionadaConDefectoCriticoCount"]);
-            $hoja->setCellValue([2, 4], $tablaIndicadores["inspeccionadaConDefectoNoCriticoCount"]);
-            $hoja->setCellValue([2, 5], $tablaIndicadores["totalCount"]);
+                $hoja->setCellValue([2, 1], $tablaIndicadores["certificadaCount"]);
+                $hoja->setCellValue([2, 2], $tablaIndicadores["certificadaConNovedadesCount"]);
+                $hoja->setCellValue([2, 3], $tablaIndicadores["inspeccionadaConDefectoCriticoCount"]);
+                $hoja->setCellValue([2, 4], $tablaIndicadores["inspeccionadaConDefectoNoCriticoCount"]);
+                $hoja->setCellValue([2, 5], $tablaIndicadores["totalCount"]);
+            }
+
 
 
             $indiceFila = 8;

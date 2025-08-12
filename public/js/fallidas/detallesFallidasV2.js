@@ -1,4 +1,5 @@
 let totalColspan = 0;
+let hot_dia;
 document.addEventListener('DOMContentLoaded', async () => {
     let headers = [];
     let rows = [];
@@ -11,19 +12,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (col !== 0 && col !== 1 && columNameColor !== 'META POR INSPECTOR' && columNameColor !== 'DIAS LABORADOS') {
                 TD.style.backgroundColor = 'rgb(215, 232, 255)';
             }
-            
+
             if (columNameColor == 'TOTAL'){
                 TD.style.backgroundColor = 'rgb(250, 243, 152)';
 
             }
-            
+
             if(row ==  lastRow){
                  TD.style.backgroundColor = 'rgb(250, 243, 152)';
             }
-          
+
             const columnName = hotInstance.getColHeader(col);
             const ccOperario = hotInstance.getDataAtCell(row, 0);
-           
+
         });
     }
     const fetchData = () => {
@@ -42,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         return;
                     }
                     resolve(response);
-                     cellStyle() 
+                     cellStyle()
                     $('#loader').hide();
                     $('#overlay').hide();
                 },
@@ -102,10 +103,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const datosDias = response.diasIntermedios.map(item => item.nombreDia + ' ' + item.dias);
     const segundaFila = [...datosAdicionales, ...datosDias]; // Usar spread operator para crear un nuevo array
     headers.push(segundaFila); // Agregar la segunda fila a headers
-    
+
     const lastIndex = headers.length - 1;
     headers[lastIndex].push(...columnasFinales);
-   
+
     hot = new Handsontable(detalles, {
         readOnly: true,
         manualColumnMove: false,
@@ -121,7 +122,7 @@ document.addEventListener('DOMContentLoaded', async () => {
              const cellProperties = {};
              cellProperties.renderer = 'customStylesRenderer';
              return cellProperties;
-         }, 
+         },
         afterChange: function (changes, source) {
             if (source === 'edit') {
                 changes.forEach(([row, prop, oldValue, newValue]) => {
@@ -160,11 +161,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     });
-    
+
     // Insertar fila para promedios
     hot.setDataAtCell(hot.countRows(), 1, 'TOTAL');
     totalColspan = totalColspan + 1;
-  
+
   for (let i = 0; i < totalColspan; i++) {
         hot.updateSettings({
             columnSummary: [
@@ -187,7 +188,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
     /* variable de rutas sale de la vista */
     const response = await fetch(urlObtenerDetalles + `?fecha=${fecha}&cc_inspector=${cc_inspector}`);
     const urlDetalles = await response.text();
-    
+
     const contratos_dia = document.querySelector('#contratos_dia');
     const cerrar = document.querySelector('#cerrar_modal');
     const titulo = document.querySelector('#titulo');
@@ -233,6 +234,10 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         Handsontable.validators.registerValidator('custom.text', customTextValidator);
     })(Handsontable);
 
+    if (hot_dia && !hot_dia.isDestroyed) {
+        hot_dia.destroy();
+        hot_dia = null;
+    }
 
     hot_dia = new Handsontable(contratos_dia, {
         readOnly: true,
@@ -240,7 +245,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         rowHeaders: false,
         colHeaders: [ 'vence', 'OPERARIO', 'CC OPERARIO', 'MUNICIPIO', 'FECHA', 'N° ACTA', 'TIPO TRABAJO', 'CONTRATO', 'ORDEN TRABAJO', 'ORDEN EXT', 'CATEGORIA', 'RESULTADO CIERRE' ],
         columns: [
-        
+
             { renderer: 'customStylesRendererdays' }, // VENCE
             { type: 'text' }, // OPERARIO
             { type: 'numeric', validator: 'custom.numeric' }, // CC OPERARIO
@@ -248,7 +253,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             {
                 type: 'date',
                 dateFormat: 'YYYY-MM-DD',
-              
+
             },// Usa el editor personalizado, // FECHA
             { type: 'numeric', validator: 'custom.numeric', renderer: 'customStylesRendererdays' }, // N° ACTA
             {
@@ -266,7 +271,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                 editor: 'select', // Tipo combobox
                 selectOptions: ['CERTIFICADA', 'CERTIFICADA CON NOVEDADES', 'INSPECCIONADA CON DEFECTO CRITICO VALLE', 'INSPECCIONADA CON DEFECTO NO CRITICO VALLE'],
             }, // RESULTADO CIERRE
-           
+
         ],
         className: 'htCenter',
         className: 'htMiddle',
@@ -291,8 +296,8 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             url: urlDetalles, // Ruta al archivo PHP que realiza la consulta a la base de datos
             type: 'GET',
             success: function (response) {
-               
-           
+
+
                 // Asigna los datos obtenidos a la variable
             const array2D = convertirJSONaArray2D(response);
             hot_dia.loadData(array2D);
@@ -301,7 +306,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             } else {
                 document.getElementById('mensajeNoDatos').style.display = 'block';
             }
-                
+
             },error: function (xhr, status, error) {
                 console.error('Error fetching data:', error);
             },});
@@ -309,7 +314,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
 
     function convertirJSONaArray2D(jsonData) {
         const columnasDeseadas = ['id', 'nombre_completo', 'CC_OPERARIO', 'MUNICIPIO', 'FECHA', 'No_ACTA', 'TIPO_TRABAJO', 'CONTRATO', 'ORDEN_TRABAJO', 'ORDEN_EXT', 'CATEGORIA', 'RESULTADO_CIERRE', 'HORA_INICIO', 'HORA_FINAL', 'DURACION_INSP', '4_RECINTOS', 'state', 'diseno_especial'];
-    
+
         return Object.keys(jsonData).map(key => {
             const fila = jsonData[key];
             return columnasDeseadas.map(columna => fila[columna]);

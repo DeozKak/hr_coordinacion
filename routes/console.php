@@ -11,4 +11,4 @@ Schedule::command('app:ejecutadas-programacion')->hourly();
 
 Schedule::command('app:dev_clean')->daily();
 
-Schedule::command('app:update_stickers')->dailyAt('10:00');
+Schedule::command('app:actualizar_-stickers')->dailyAt('12:00');

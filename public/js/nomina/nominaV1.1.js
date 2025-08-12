@@ -703,59 +703,89 @@ $(document).ready(function(){
     // Descargar excel
     $(document).on('click', '#descargarExcelNomina', function(){
         // Obtener encabezados y datos de la primera tabla (handNomina)
-        let headers1 = handNomina.getColHeader(); // Encabezados de la primera tabla
-        let datos1 = handNomina.getData(); // Datos de la primera tabla
+        let headers1 = handNomina.getColHeader();
+        let datos1 = handNomina.getData();
 
-        // Formatear las columnas 5, 6, 7, 8 y 9 para que tengan formato de moneda en handNomina
-        datos1 = datos1.map((fila, rowIndex) => {
-            return fila.map((cell, colIndex) => {
-                if ([5, 6, 7, 8, 9].includes(colIndex)) {
-                    // Formatear solo si el valor es numérico
-                    if (typeof cell === 'number') {
-                        return `$${cell.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
-                    }
-                }
-                return cell; // Devolver el valor original para otras columnas
-            });
-        });
-
-        // Añadir encabezados a los datos de handNomina
-        datos1.unshift(headers1);
+        // NO formatees a string; mantenlos numéricos
+        datos1.unshift(headers1); // Agregar encabezados
 
         // Obtener encabezados y datos de la segunda tabla (handCostosProyecto)
-        let headers2 = handCostosProyecto.getColHeader().map(header => header.replace(/<br\s*\/?>/gi, ' ')); // Reemplazar <br> por espacio
-        let datos2 = handCostosProyecto.getData(); // Datos de la segunda tabla
+        let headers2 = handCostosProyecto.getColHeader().map(h => h.replace(/<br\s*\/?>/gi, ' '));
+        let datos2 = handCostosProyecto.getData();
+        datos2.unshift(headers2); // Agregar encabezados
 
-        // Formatear las columnas 2 a 12 para que tengan formato de moneda en handCostosProyecto
-        datos2 = datos2.map((fila, rowIndex) => {
-            return fila.map((cell, colIndex) => {
-                if (colIndex >= 2 && colIndex <= 12) {
-                    // Formatear solo si el valor es numérico
-                    if (typeof cell === 'number') {
-                        return `$${cell.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
-                    }
-                }
-                return cell; // Devolver el valor original para otras columnas
-            });
-        });
-
-        // Añadir encabezados a los datos de handCostosProyecto
-        datos2.unshift(headers2);
-
-        // Añadir una fila vacía para separar las tablas
+        // Separador de tablas (dos filas vacías)
         datos1.push([],[]);
 
-        // Unir las dos tablas (datos de handNomina y handCostosProyecto)
+        // Unir tablas
         let datosCombinados = datos1.concat(datos2);
 
-        // Crear una nueva hoja de trabajo
+        // Crear hoja
         const worksheet = XLSX.utils.aoa_to_sheet(datosCombinados);
 
-        // Crear un nuevo libro de trabajo y añadir la hoja
+        // Cantidades de filas para calcular rangos
+        const rows1 = datos1.length; // incluye header y las dos filas vacías
+        const rows2 = datos2.length; // incluye header
+
+        // Helper: índice de columna (0=A) -> letra Excel
+        const colIdxToLetter = (i) => {
+            let s = '';
+            i++; // 1-based
+            while (i > 0) {
+                const m = (i - 1) % 26;
+                s = String.fromCharCode(65 + m) + s;
+                i = Math.floor((i - 1) / 26);
+            }
+            return s;
+        };
+
+        // Aplica formato moneda a un rango
+        function applyCurrencyFormat(ws, startRow, endRow, startColIdx, endColIdx, fmt) {
+            for (let r = startRow; r <= endRow; r++) {
+                for (let c = startColIdx; c <= endColIdx; c++) {
+                    const addr = colIdxToLetter(c) + r;
+                    const cell = ws[addr];
+                    if (!cell) continue;
+
+                    // Si viene como texto (por ejemplo "1234" o "$1.234"), intenta convertir a número
+                    if (cell.t !== 'n') {
+                        const num = typeof cell.v === 'string'
+                            ? Number(cell.v.replace(/[^0-9.-]/g, ''))
+                            : Number(cell.v);
+                        if (Number.isFinite(num)) {
+                            cell.v = num;
+                            cell.t = 'n';
+                        } else {
+                            continue; // no es convertible a número
+                        }
+                    }
+
+                    // Aplica formato de número (moneda sin decimales)
+                    cell.z = fmt; // ejemplo: '"$"#,##0' o '"$"#,##0.00' si quieres 2 decimales
+                }
+            }
+        }
+
+        // Formato moneda que muestra $ y separador de miles; Excel ajusta separadores según la configuración regional
+        const currencyFmt = '"$"#,##0';
+
+        // Primera tabla: filas 2..(rows1-2) son datos (fila 1 es header, las últimas 2 filas están vacías)
+        if (rows1 > 3) {
+            applyCurrencyFormat(worksheet, 2, rows1 - 2, 5, 9, currencyFmt); // columnas F..J (5..9 base 0)
+        }
+
+        // Segunda tabla:
+        // Header2 está en la fila (rows1 + 3).
+        // Datos comienzan en (rows1 + 4) y terminan en (rows1 + 2 + rows2)
+        const data2Start = rows1 + 4;
+        const data2End = rows1 + 2 + rows2;
+        if (data2Start <= data2End) {
+            applyCurrencyFormat(worksheet, data2Start, data2End, 2, 12, currencyFmt); // columnas C..M (2..12 base 0)
+        }
+
+        // Crear libro y exportar
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte_Completo');
-
-        // Exportar el archivo Excel
         XLSX.writeFile(workbook, 'Reporte_nomina_costos.xlsx');
     });
 
