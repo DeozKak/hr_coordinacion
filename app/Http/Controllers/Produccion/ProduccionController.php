@@ -616,7 +616,8 @@ class ProduccionController extends Controller
         $sqlHistorico = tbl_produccion_historico::where('id_corte', $corte->id)->first();
 
         $jsonNoDobles = json_decode($sqlHistorico->no_dobles, true);
-
+        $jsonDobles_sabados = array_values(json_decode($sqlHistorico->dobles_sabados, true));
+        //dd($jsonDobles_sabados,$sabados);
         if ($jsonNoDobles != null) {
             foreach ($sabados as $sabadoIndex => &$sabado) {
                 foreach ($sabado['datos'] as $datoIndex => $dato) {
@@ -644,6 +645,7 @@ class ProduccionController extends Controller
             'sabadodobles' => $sabados,
             'fechasIntermedias' => $fechasIntermedias,
             'corte' => $corte->id,
+            'sabadosDoblesManuales' => $jsonDobles_sabados,
         ];
 
         $exist = tbl_produccion_historico::where('id_corte', $corte->id)->exists();
@@ -903,7 +905,7 @@ class ProduccionController extends Controller
         $contratosDoblesSabadoos = json_decode($sqlProHis->data, true);
 
         $flag = false;
-        if ($jsonNoDobles != null) {
+       /* if ($jsonNoDobles != null) {
             foreach ($jsonNoDobles as $datos) {
                 foreach ($datos as $item) {
                     if ($inspector == $item['datos']['cc_inspector'] && in_array($fecha, $item['datos']['fechas'])) {
@@ -911,7 +913,7 @@ class ProduccionController extends Controller
                     }
                 }
             }
-        }
+        }*/
 
         $flagHolidays = false;
         if ($jsonNoDoblesHoliday != null) {
@@ -1105,85 +1107,7 @@ class ProduccionController extends Controller
         return ['error' => 'Bitácora no encontrada.'];
     }
 
-    // public function zonas(Request $request)
-    // {
-    //     if (session('id_corte') || $request->idCorteDetalles) {
-    //         $idCorte = session('id_corte') ?? $request->idCorteDetalles;
-    //         $corte = tbl_produccion_corte::find($idCorte);
-    //         session()->forget('id_corte');
-    //         session()->save();
-    //     } else {
-    //         $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
-    //         $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
 
-    //         $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
-    //             ->where('fecha_fin', '>=', $fecha_resta_un_dia)
-    //             ->first();
-    //     }
-    //     if ($corte == null) {
-    //         return response()->json(['error' => 'No hay corte activo']);
-    //     }
-    //     $diasIntermedios = $this->DiasIntermedios($corte);
-    //     $zonas = tbl_produccion_zona::select('id', 'nombre')->get();
-
-    //     foreach ($zonas as $zona) {
-    //         $ContratosPorZonaReidencial = ['zona' => $zona->nombre . " RESIDENCIAL"];
-    //         $ContratosPorZonaComercial = ['zona' => $zona->nombre . " COMERCIAL"];
-
-    //         $period = new DatePeriod(
-    //             new DateTime($corte->fecha_inicio),
-    //             new DateInterval('P1D'),
-    //             (new DateTime($corte->fecha_fin))->modify('+1 day')
-    //         );
-
-    //         foreach ($period as $date) {
-    //             $fecha = $date->format('Y-m-d');
-
-    //             // Subconsulta para obtener los contratos residenciales
-    //             $contratosResidenciales = DB::table('tbl_bitacora_contratos')
-    //                 ->select(DB::raw('count(*) as total'))
-    //                 ->where('CATEGORIA', 'RESIDENCIAL')
-    //                 ->where('FECHA', $fecha)
-    //                 ->where('state', 1)
-    //                 ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
-    //                 ->whereIn('MUNICIPIO', function ($query) use ($zona) {
-    //                     $query->select('nombre')
-    //                         ->from('tbl_localidades_municipios')
-    //                         ->where('id_zona', $zona->id);
-    //                 })
-    //                 ->first();
-
-    //             // Subconsulta para obtener los contratos comerciales
-    //             $contratosComerciales = DB::table('tbl_bitacora_contratos')
-    //                 ->select(DB::raw('count(*) as total'))
-    //                 ->where('CATEGORIA', 'COMERCIAL')
-    //                 ->where('FECHA', $fecha)
-    //                 ->where('state', 1)
-    //                 ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
-    //                 ->whereIn('MUNICIPIO', function ($query) use ($zona) {
-    //                     $query->select('nombre')
-    //                         ->from('tbl_localidades_municipios')
-    //                         ->where('id_zona', $zona->id);
-    //                 })
-    //                 ->first();
-
-    //             $ContratosPorZonaReidencial[$fecha] = $contratosResidenciales->total;
-    //             $ContratosPorZonaComercial[$fecha] = $contratosComerciales->total;
-    //         }
-
-    //         $conteoContratosResidencial[] = $ContratosPorZonaReidencial;
-    //         $conteoContratosComercial[] = $ContratosPorZonaComercial;
-    //     }
-
-    //     $response = [
-    //         'diasIntermedios' => $diasIntermedios,
-    //         'residencial' => $conteoContratosResidencial,
-    //         'comercial' => $conteoContratosComercial
-    //     ];
-
-    //     // Retornar la respuesta JSON
-    //     return response()->json($response);
-    // }
 
     public function guardarNoDobles(Request $request)
     {

@@ -3,308 +3,141 @@
 @section('title', 'Producción')
 
 @section('content_header')
-    <h1>Producción Corte: {{$corte?->nombre}}</h1>
-@endsection
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h1 class="fw-bold text-primary mb-0">
+            <i class="fas fa-industry me-2"></i>
+            Producción Corte:
+            <span class="text-dark">{{$corte?->nombre}}</span>
+        </h1>
+    </div>
+
+@stop
+
 @section('content')
-
-    <div id="loader"></div>
+    <!-- Loader y overlay modernos -->
     <div id="overlay"></div>
+    <div id="loader">
+        <div class="spinner"></div>
+        <div class="loader-text">Cargando información...</div>
+    </div>
 
+
+    <!-- Inputs ocultos -->
     <input type="hidden" id="fecha_inicio" value="{{session('fecha_inicio')}}">
-    <link rel="stylesheet" href="{{asset('css/produccion/produccionV2.css')}}">
-    <script src="{{asset('js/produccion/producciondetallesV7.js')}}?v={{ time()}}"></script>
-
     <input type="hidden" id="id_corte_detalles" value="">
     <input type="hidden" id="id_produccion" value="{{route('produccion.datosDetalles')}}">
     <input type="hidden" name="_token" id="token" value="{{csrf_token()}}">
-
-    <div class="shadow-container">
-            <a class="btn btn-primary" href="javascript:history.go(-1)" style="margin-bottom: 10px;">Ir Atrás</a>
-            <button type="button" class="btn btn-success" id="exportar" style="margin-bottom: 10px;">Exportar</button>
-            <x-adminlte-card title="Producción por dia" theme="info" icon="fas fa-code-branch" header-class="text-uppercase rounded-bottom border-info" collapsible>
-                <div id="detalles" style="width: '100px'"></div>
-            </x-adminlte-card>
-    </div>
-
-    <!-- Modal Detalles de dia -->
-    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog" style="max-width: 90%;" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="titulo">Inspecciones </h5>&nbsp;<span class="text-danger"
-                                                                                      id="cantidadDobles"></span>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
+    <link rel="stylesheet" href="{{ asset('css/produccion/detalles.css')}}">
+    <!-- Contenido principal -->
+    <div class="container-xxl my-4">
+        <div class="row mb-4">
+            <div class="col-12 d-flex flex-wrap align-items-center justify-content-between">
+                <div>
+                    <a class="btn btn-outline-primary btn-lg shadow-sm me-2" href="javascript:history.go(-1)">
+                        <i class="fas fa-arrow-left"></i> Ir Atrás
+                    </a>
+                    <button type="button" class="btn btn-gradient-success btn-lg shadow-sm" id="exportar">
+                        <i class="fas fa-download"></i> Exportar
                     </button>
                 </div>
-                <div class="modal-body" style="margin-bottom: 10px;">
-                    <div id="mensajeNoDatos" style="display: none;" class="alert alert-warning">No hay datos</div>
-                    <div>Cantidad Prioridades</div>
-                    <div id="contadores_dia" style=" width: '100px';"></div>
-                    <div>Inspecciones</div>
-                    <div id="contratos_dia" style=" width: '100px'; margin-bottom: 10px;"></div>
+                <div class="d-none d-md-block">
                 </div>
-                <div class="modal-footer">
-                    @haspermission('ver_residente')
-                    <button type="button" class="btn btn-success" id="agregar">Agregar Inspección</button>
-                    @endhaspermission
-                    <button type="button" class="btn btn-secondary" id="cerrar_modal" data-dismiss="modal">Cerrar
-                    </button>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-12">
+                <div class="card shadow-lg border-0 rounded-4 bg-light h-100 custom-card-altura">
+                    <div class="card-header bg-primary text-white rounded-top-4">
+                        <h3 class="mb-0 fw-bold">
+                            <i class="fas fa-industry"></i> Detalles de Producción
+                        </h3>
+                    </div>
+                    <div class="card-body overflow-auto" style="min-height:120vh; max-height:200vh;" id="detalles">
+                        <!-- Aquí se cargan los detalles dinámicamente -->
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal -->
-    <div class="modal fade" id="modalContarDoblesSabado" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Contar dobles</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <label for="contarSabado">Inspecciones a contar<span class="text-danger inspeccionesTotales"></span></label>
-                    <input class="form-control inputNumeric" type="text" id="contarSabado">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-primary btnGuardarContarSabado"
-                            data-url="{{route('produccion.countDoublesSaturday')}}">Guardar
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- modal agregar Inspeccion -->
-    <div class="modal fade" id="ventanaEmergente" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Agregar Inspección</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <div class="col-md-6">
-                            <label for="nombre">Inspector:</label>
-                            <select class="form-control" name="nombre" id="nombre" disabled>
-
-                            </select>
-                        </div>
-                        <br>
-
-                        <div class="col-md-6">
-                            <label for="municipio">Municipio:</label>
-                            <select class="form-control select2" name="municipio" id="municipio-select"></select>
-                        </div>
-                    </div>
-                    <br>
-                    <div class="form-group">
-                        <div class="col-md-6">
-                            <label for="fecha">Fecha:</label>
-                            <input type="date" class="form-control" name="fecha" id="fecha" placeholder="dd-mm-yy"
-                                   disabled>
-                        </div>
-
-                        <br>
-
-                        <div class="col-md-6">
-                            <label for="N°acta">N° ACTA</label>
-                            <input type="text" class="form-control" name="N°acta" id="N°acta">
-                        </div>
-                    </div>
-                    <br>
-                    <div class="form-group">
-                        <div class="col-md-6">
-                            <label for="tipo_trabajo">Tipo de Trabajo</label>
-                            <select class="form-control" name="tipo_trabajo" id="tipo_trabajo">
-                                <option value="">Seleccione Tipo de Trabajo</option>
-                                <option value="FI-29 revisión periódica línea matriz">FI-29 revisión periódica línea
-                                    matriz
-                                </option>
-                                <option value="RP 10444">RP 10444</option>
-                                <option value="RP 12161">RP 12161</option>
-                                <option value="RN 12162">RN 12162</option>
-                                <option value="SA 12163">SA 12163</option>
-                                <option value="SA 12164">SA 12164</option>
-                            </select>
-                        </div>
-
-                        <br>
-
-                        <div class="col-md-6">
-                            <label for="contrato">Contrato</label>
-                            <input type="text" class="form-control" name="contrato" id="contrato" value=":">
-                        </div>
-                    </div>
-                    <br>
-                    <div class="form-group matriz-des1">
-                        <div class="col-md-6">
-                            <label for="orden_trabajo">Orden de trabajo</label>
-                            <input type="text" class="form-control" name="orden_trabajo" id="orden_trabajo">
-                        </div>
-
-                        <br>
-
-                        <div class="col-md-6">
-                            <label for="categoria">Categoria</label>
-                            <select class="form-control" name="categoria" id="categoria">
-                                <option value="">Seleccione categoria</option>
-                                <option value="RESIDENCIAL">RESIDENCIAL</option>
-                                <option value="COMERCIAL">COMERCIAL</option>
-                            </select>
-                        </div>
-                    </div>
-                    <br>
-                    <div class="form-group">
-                        <div class="col-md-6">
-                            <label for="hora_inicio">Hora Inicio</label>
-                            <input type="time" class="form-control" name="hora_inicio" id="hora_inicio" step="60"
-                                   pattern="[0-9]{2}:[0-9]{2}">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="hora_final" style="margin-left: 10px;">Hora Final</label>
-                            <input type="time" class="form-control" name="hora_final" id="hora_final" step="60"
-                                   pattern="[0-9]{2}:[0-9]{2}">
-                        </div>
-                    </div>
-                    <br>
-                    <div class="form-group matriz-des2">
-                        <div class="col-md-6">
-                            <label for="recintos">4 Recintos o mas</label>
-                            <select class="form-control" name="recintos" id="recintos">
-                                <option value="NO" selected>NO</option>
-                                <option value="SI">SI</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="cantidad_recintos">Cantidad de recintos</label>
-                            <input type="text" class="form-control" id="NroRecintosP" style="text-align: center;"
-                                   disabled>
-                        </div>
-                    </div>
-                    <br>
-                    <div class="form-group">
-                        <div class="col-md-6">
-                            <label for="resultado_cierre">Resultado Cierre</label>
-                            <select class="form-control" name="resultado_cierre" id="resultado_cierre">
-                                <option value="">Seleccione categoria</option>
-                                <option value="CERTIFICADA">CERTIFICADA</option>
-                                <option value="CERTIFICADA CON NOVEDADES">CERTIFICADA CON NOVEDADES</option>
-                                <option value="INSPECCIONADA CON DEFECTO CRITICO VALLE">INSPECCIONADA CON DEFECTO
-                                    CRITICO VALLE
-                                </option>
-                                <option value="INSPECCIONADA CON DEFECTO NO CRITICO VALLE">INSPECCIONADA CON DEFECTO NO
-                                    CRITICO VALLE
-                                </option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-success" id="agregarInspeccion">Agregar</button>
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        @section('js')
-            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
-            <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/es.js"></script>
-            <script>
-                let permission = 0;
-            </script>
-            @haspermission('ver_residente')
-            <script>
-                permission = 1;
-            </script>
-            @endhaspermission
-            <script>
-                const urlMunicipios = "{{ route('municipios.json') }}"; // Usando el helper route()
-                const urlObtenerDetalles = "{{ route('obtener-url-detalles') }}"; // Usando el helper route()
-                const urlObtenerBitacoras = "{{ route('obtener-url-bitacoras') }}"; // Usando el helper route()
-                const urlActualizarDetallesDiario = "{{ route('produccion.ActualizarDetallesDiario', ['id' => ':id']) }}";
-                const urlDiseñoEspecial = "{{ route('produccion.diseñoEspecial', ['id' => ':id']) }}";
-                const urlDesasociar = "{{ route('produccion.eliminarDetallesDiario', ['id' => ':id']) }}";
-                const urlCrearSession = "{{ route('produccion.crearSession') }}";
-                const urlActualizarDetallesDia = "{{ route('produccion.detallesDiario',['fecha' => ':fecha', 'inspector' => ':inspector']) }}";
-                const urlInsertar = "{{ route('produccion.insertarContrato') }}"
-                const urlContarDobles = "{{ route('produccion.contarDobles') }}"
-                const urlNoContarDobles = "{{ route('produccion.guardarNoDobles') }}"
-                const urlGuardarNoDoblesFestivos = "{{ route('produccion.storeNotDoublesHolidays') }}"
-                const urlCountDoublesHolidays = "{{ route('produccion.countDoublesHolidays') }}"
-                const urlNoContarDoblesSabados = "{{ route('produccion.noContarDoblesSaturday') }}"
-
-                $(document).ready(function () {
-                    $('#ventanaEmergente').on('shown.bs.modal', function () {
-                        select2();
-
-                        function select2() {
-                            $('#municipio-select').select2({
-                                language: "es",
-                                ajax: {
-                                    url: urlMunicipios, // Ruta a la función del controlador
-                                    dataType: 'json',
-                                    delay: 250, // Retraso antes de realizar la búsqueda
-                                    data: function (params) {
-                                        return {
-                                            term: params.term // Término de búsqueda
-                                        };
-                                    },
-                                    processResults: function (data) {
-                                        return {
-                                            results: $.map(data, function (item, key) { // Mapear resultados
-                                                return {
-                                                    id: key,
-                                                    text: item
-                                                };
-                                            })
-                                        };
-                                    },
-                                    cache: true
-                                },
-                                minimumInputLength: 2 // Mínimo de caracteres para iniciar la búsqueda
-                            });
-                        }
-                    });
-                    $(window).on('resize', function () {
-                        $('#municipio-select').select2('destroy'); // Destruir la instancia actual de Select2
-                        $('#municipio-select').select2({
-                            language: "es",
-                            ajax: {
-                                url: urlMunicipios, // Ruta a la función del controlador
-                                dataType: 'json',
-                                delay: 250, // Retraso antes de realizar la búsqueda
-                                data: function (params) {
-                                    return {
-                                        term: params.term // Término de búsqueda
-                                    };
-                                },
-                                processResults: function (data) {
-                                    return {
-                                        results: $.map(data, function (item, key) { // Mapear resultados
-                                            return {
-                                                id: key,
-                                                text: item
-                                            };
-                                        })
-                                    };
-                                },
-                                cache: true
-                            },
-                            minimumInputLength: 2 // Mínimo de caracteres para iniciar la búsqueda
-                        });
-
-                    });
-                });
-            </script>
+   @include('produccion.modales.modales')
 @stop
+
+@section('css')
+    <link rel="stylesheet" href="{{asset('css/produccion/produccionV3.css')}}">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+
+@stop
+
+@section('js')
+    <script src="{{asset('js/produccion/producciondetallesV9.js')}}?v={{ time()}}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/es.js"></script>
+    <script>
+        let permission = 0;
+    </script>
+    @haspermission('ver_residente')
+    <script>
+        permission = 1;
+    </script>
+    @endhaspermission
+    <script>
+        const urlMunicipios = "{{ route('municipios.json') }}";
+        const urlObtenerDetalles = "{{ route('obtener-url-detalles') }}";
+        const urlObtenerBitacoras = "{{ route('obtener-url-bitacoras') }}";
+        const urlActualizarDetallesDiario = "{{ route('produccion.ActualizarDetallesDiario', ['id' => ':id']) }}";
+        const urlDiseñoEspecial = "{{ route('produccion.diseñoEspecial', ['id' => ':id']) }}";
+        const urlDesasociar = "{{ route('produccion.eliminarDetallesDiario', ['id' => ':id']) }}";
+        const urlCrearSession = "{{ route('produccion.crearSession') }}";
+        const urlActualizarDetallesDia = "{{ route('produccion.detallesDiario',['fecha' => ':fecha', 'inspector' => ':inspector']) }}";
+        const urlInsertar = "{{ route('produccion.insertarContrato') }}"
+        const urlContarDobles = "{{ route('produccion.contarDobles') }}"
+        const urlNoContarDobles = "{{ route('produccion.guardarNoDobles') }}"
+        const urlGuardarNoDoblesFestivos = "{{ route('produccion.storeNotDoublesHolidays') }}"
+        const urlCountDoublesHolidays = "{{ route('produccion.countDoublesHolidays') }}"
+        const urlNoContarDoblesSabados = "{{ route('produccion.noContarDoblesSaturday') }}"
+
+        $(document).ready(function() {
+            function initializeSelect2() {
+                $('#municipio-select').select2({
+                    language: "es",
+                    ajax: {
+                        url: urlMunicipios,
+                        dataType: 'json',
+                        delay: 250,
+                        data: function(params) {
+                            return {
+                                term: params.term
+                            };
+                        },
+                        processResults: function(data) {
+                            return {
+                                results: $.map(data, function(item, key) {
+                                    return {
+                                        id: key,
+                                        text: item
+                                    };
+                                })
+                            };
+                        },
+                        cache: true
+                    },
+                    minimumInputLength: 2
+                });
+            }
+
+            $('#ventanaEmergente').on('shown.bs.modal', function() {
+                initializeSelect2();
+            });
+
+            $(window).on('resize', function() {
+                if ($('#municipio-select').hasClass("select2-hidden-accessible")) {
+                    $('#municipio-select').select2('destroy');
+                    initializeSelect2();
+                }
+            });
+        });
+    </script>
 @stop

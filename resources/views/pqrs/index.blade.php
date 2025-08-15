@@ -27,7 +27,6 @@
             background-color: rgb(150, 186, 255) !important;
             color: rgb(89, 88, 88) !important;
         }
-
     </style>
     @can('cargar_PQRS')
         <div class="d-flex justify-content-center">

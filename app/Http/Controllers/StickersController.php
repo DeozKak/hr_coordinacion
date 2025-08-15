@@ -17,11 +17,15 @@ use App\Models\Stickers\tbl_inspector_sticker;
 use App\Models\Stickers\tbl_asignacion_sticker_historial;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use IntlDateFormatter;
+
 
 class StickersController extends Controller
 {
-
+    /**
+     *
+     * Funcion retorna vista con las variables de Stickers y los inspectores activos
+     * @return \Illuminate\Contracts\View\View
+     */
     public function index(): \Illuminate\Contracts\View\View
     {
         $Stickers = tbl_sticker_tipo::with('Inventario')->OrderBy('nombre')->get();
@@ -41,7 +45,12 @@ class StickersController extends Controller
         return view('stickers.index', compact('inspectores', 'Stickers'));
     }
 
-    // Devuelve solo los datos actualizados del inventario
+    /**
+     *
+     * Funcion para Obtener inventario total de cada tipo de Sticker
+     *
+     * @return JsonResponse
+     */
     public function getInventario(): \Illuminate\Http\JsonResponse
     {
         $Stickers = tbl_sticker_tipo::with('Inventario')->OrderBy('nombre')->get();
@@ -69,12 +78,12 @@ class StickersController extends Controller
         //Validación de entradas de usuario
         $validator = Validator::make($request->all(), [
             'cantidad' => 'required|numeric',
-        ],[
+        ], [
             'cantidad.required' => 'la cantidad es requerida',
             'cantidad.numeric' => 'Se tienen que ingresar numeros'
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()], 400);
         }
         //guardar entrada a variable local
@@ -95,16 +104,17 @@ class StickersController extends Controller
             'value' => $tipo->cantidad_disponible], 200);
 
     }
-/**
- * Función dedicada a recibir entradas de usuario para la asignación de uno o diferentes
- * tipos de Sticker a un inspector y registrar en BD en las tablas correspondientes,
- * además de guardar un histórico de lo asignado
- * @param Request $request el id del inspector al cual se van a asignar la cantidad de Stickers
- * @param $stickers array con los tipos de stickers y cantidad a asignar
- *
- * @return JsonResponse
- *
- * */
+
+    /**
+     * Función dedicada a recibir entradas de usuario para la asignación de uno o diferentes
+     * tipos de Sticker a un inspector y registrar en BD en las tablas correspondientes,
+     * además de guardar un histórico de lo asignado
+     * @param Request $request el id del inspector al cual se van a asignar la cantidad de Stickers
+     * @param array $stickers  con los tipos de stickers y cantidad a asignar
+     *
+     * @return JsonResponse
+     *
+     * */
     public function asignar(Request $request): \Illuminate\Http\JsonResponse
     {
         //Validación de entrada de usuario
@@ -113,15 +123,15 @@ class StickersController extends Controller
             'stickers' => 'required|array',
             'stickers.*' => 'required|numeric', // <--- Valida que cada elemento sea numérico
         ],
-        [
-            'idInspector.required' => 'el id de inspector es requerido',
-            'stickers.required' => 'los stickers son requeridos',
-            'stickers.*.required' => 'el id de sticker es requerido',
-            'stickers.*.numeric' => 'Se tienen que ingresar numeros'
-        ]
+            [
+                'idInspector.required' => 'el id de inspector es requerido',
+                'stickers.required' => 'los stickers son requeridos',
+                'stickers.*.required' => 'el id de sticker es requerido',
+                'stickers.*.numeric' => 'Se tienen que ingresar numeros'
+            ]
         );
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()], 400);
         }
         //las entradas se asignan a variables locales
@@ -189,6 +199,7 @@ class StickersController extends Controller
         }
         return response()->json(['success' => 'Stickers asignados correctamente'], 200);
     }
+
     /**
      * Obtiene los stickers asignados a un inspector específico
      *
@@ -205,7 +216,7 @@ class StickersController extends Controller
             return response()->json($stickersAsignados, 200);
         } catch (\Exception $e) {
             Log::error('Error al obtener stickers asignados: ' . $e->getMessage());
-            return response()->json(['error' => 'Error al obtener stickers asignados '.$e->getMessage()], 500);
+            return response()->json(['error' => 'Error al obtener stickers asignados ' . $e->getMessage()], 500);
         }
     }
 

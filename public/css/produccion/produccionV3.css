@@ -11,51 +11,62 @@
 }
 
 @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-  
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-  
-#loader {
-    border: 16px solid rgba(0, 0, 0, 0.329);
-    /* Borde transparente */
-    border-top: 16px solid #3498db;
-    /* Azul */
-    border-radius: 50%;
-    width: 120px;
-    height: 120px;
-    animation: spin 2s linear infinite;
-    /* Animación de rotación */
-    position: fixed;
-    /* Fijar posición */
-    top: 50%;
-    /* Posición vertical en el centro */
-    left: 50%;
-    /* Posición horizontal en el centro */
-    margin-top: -60px;
-    /* Centrar verticalmente */
-    margin-left: -60px;
-    /* Centrar horizontalmente */
-    z-index: 9999;
-    /* Asegurar que esté sobre otros elementos */
-  }
-  
-  /* Estilo adicional para oscurecer el fondo */
+    0% { transform: rotate(0deg);}
+    100% { transform: rotate(360deg);}
+}
+
 #overlay {
+    display: none;                /* Ocultamos por defecto */
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgb(255, 255, 255);
-    /* Fondo semi-transparente */
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(20,30,60,0.15); /* Suavemente oscuro/transparente */
     z-index: 9998;
-    /* Debajo del loader */
-  }
+    transition: background 0.25s;
+}
+
+.spinner {
+    border: 16px solid rgba(0,0,0,0.13);
+    border-top: 16px solid #3498db;
+    border-radius: 50%;
+    width: 90px;
+    height: 90px;
+    animation: spin 1.25s linear infinite;
+    /* El spinner queda alineado arriba del texto */
+}
+
+
+#loader {
+    /* Quita el border y animación aquí */
+    border: none;
+    animation: none;
+    background: rgba(255,255,255,0.96);
+    /* ...todo lo demás igual que ya tienes... */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#loader .loader-text {
+    margin-top: 18px;
+    color: #3498db;
+    font-size: 1.08em;
+    font-weight: 500;
+    letter-spacing:0.02em;
+    font-family: "Segoe UI", Arial, "Helvetica Neue", sans-serif;
+}
+
+
+@media (max-width:600px){
+    #loader {
+        width:65px; height:65px;
+        padding:9px 0; font-size:0.97em;
+    }
+    #loader .loader-text {
+        font-size: 0.97em; margin-top: 10px;
+    }
+}
 
 .handsontable.htReadOnly {
     background-color: #f9f9f9; /* Cambia el color de fondo a un tono diferente */

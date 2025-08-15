@@ -3,6 +3,7 @@ let hot_contadores = null;
 let hot_dia = null;
 let diasFestivos;
 let sabadodobles = [];
+let sabadosDoblesManualesTransformados = [];
 let InspectorSelected;
 let fechaSeleccionada;
 let totalColspan = 0;
@@ -54,6 +55,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     TD.style.backgroundColor = 'rgb(255, 240, 142)'; // Cambia el color según tus necesidades
                 }
             });
+
+            sabadosDoblesManualesTransformados.forEach(resultado => {
+                if (resultado.nombreDia === columnName && resultado.ccInspector === ccOperario) {
+                    TD.style.backgroundColor = 'rgb(255, 240, 142)'; // Cambia el color según tus necesidades
+                }
+            });
         });
     }
 
@@ -71,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 success: function (response) {
                     if (response.error) {
                         Swal.fire({
-                            type: 'warning',
+                            icon: 'warning',
                             text: response.error
                         });
                         $('#loader').hide();
@@ -86,7 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 error: function (xhr, status, error) {
                     console.log(xhr.responseText);
                     Swal.fire({
-                        type: 'error',
+                        icon: 'error',
                         title: error,
                         text: 'Ocurrió un error al cargar los datos de la base de datos'
                     });
@@ -132,6 +139,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             });
         });
+
+        // Validar que sabadosDoblesManuales existe y es un array
+        let datos
+        response.sabadosDoblesManuales?.forEach(item => {
+         datos = item;
+        });
+
+        datos.forEach(items => {
+            if (items?.datos?.totalInspecciones?.length > 0) {
+                items.datos.totalInspecciones.forEach(inspeccion => {
+                    if (inspeccion?.fecha) {
+                        let fechaObj = new Date(inspeccion.fecha + 'T00:00:00');
+                        let options = { weekday: 'long', day: '2-digit' };
+                        let nombreDiaS = fechaObj.toLocaleDateString('es-ES', options);
+                        nombreDiaS = nombreDiaS.charAt(0).toUpperCase() + nombreDiaS.slice(1);
+
+                        sabadosDoblesManualesTransformados.push({
+                            nombreDia: nombreDiaS,
+                            ccInspector: items.datos.cc_inspector
+                        });
+                    }
+                });
+            }
+        })
 
         rows = response.produccionInspector;
         // Extraer la propiedad nombreMes de cada objeto
@@ -232,7 +263,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         console.error('Error fetching data:', error);
         Swal.fire({
-            type: 'error',
+            icon: 'error',
             title: 'Error',
            text: 'Error en la insersion de datos en tabla local',
        });
@@ -472,7 +503,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     $(document).on('click', '#abrirModalContarDoblesSabado', function(){
         $('.inspeccionesTotales').text(' max ('+cantInspecciones+')')
         $('#contarSabado').val('')
-        $('#modalContarDoblesSabado').modal()
+        $('#modalContarDoblesSabado').modal({ show: true,
+            focus: false })
+        $('#btn_modal_cerrar').click(function(){
+            $('#modalContarDoblesSabado').modal('hide')
+        })
+
+
     })
 
     $(document).on('click', '.btnGuardarContarSabado', function(){
@@ -483,6 +520,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         let nombreInspector = hot_dia.getDataAtRow(0,1)[2]
         let diasContados = $('#contarSabado').val()
 
+        if (!diasContados || diasContados === '0' || diasContados === '' || diasContados === undefined){
+            Swal.fire({
+                icon: 'warning',
+                title: 'Advertencia',
+                text: 'Coloque al menos una inspeccion doble para contar'
+            });
+            return;
+        }
         if(diasContados > cantInspecciones ){
             Swal.fire({
                 icon: 'warning',
@@ -581,7 +626,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
     /* variable de rutas sale de la vista */
     const response = await fetch(urlObtenerDetalles + `?fecha=${fecha}&cc_inspector=${cc_inspector}`);
     const urlDetalles = await response.text();
-    const contadores_dia = document.querySelector('#contadores_dia');
+   // const contadores_dia = document.querySelector('#contadores_dia');
     const contratos_dia = document.querySelector('#contratos_dia');
     const cerrar = document.querySelector('#cerrar_modal');
     const titulo = document.querySelector('#titulo');
@@ -626,23 +671,23 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         // Register the custom validator
         Handsontable.validators.registerValidator('custom.text', customTextValidator);
     })(Handsontable);
-    if (hot_contadores && !hot_contadores.isDestroyed) {
+  /*  if (hot_contadores && !hot_contadores.isDestroyed) {
         hot_contadores.destroy();
         hot_contadores = null;
-    }
+    }*/
     if (hot_dia && !hot_dia.isDestroyed) {
         hot_dia.destroy();
         hot_dia = null;
     }
 
-    hot_contadores = new Handsontable(contadores_dia, {
+   /* hot_contadores = new Handsontable(contadores_dia, {
         readOnly: true,
         manualColumnMove: false,
         rowHeaders: false,
         colHeaders: false,
         height: '150px',
         licenseKey: 'non-commercial-and-evaluation',
-    });
+    });*/
 
     hot_dia = new Handsontable(contratos_dia, {
         readOnly: true,
@@ -777,7 +822,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                         error: function (xhr, status, error) {
 
                             Swal.fire({
-                                type: 'error',
+                                icon: 'error',
                                 title: 'Error',
                                 text: error
                             });
@@ -794,7 +839,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         url: urlDetalles, // Ruta al archivo PHP que realiza la consulta a la base de datos
         type: 'GET',
         success: function (response) {
-            hot_contadores.loadData(response[5]);
+            //hot_contadores.loadData(response[5]);
             datosBaseDatos = response[0];
             console.log(response);
             const url = window.location.href
@@ -848,10 +893,11 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                         }else if(response[1] && !response[2] && response[3].length == 0 && cellBackgroundColor == "rgb(215, 232, 255)"){
                             if (!$('#contarDobles').length) { // Solo agregar si el botón no existe yaconsole.log('sabado');
 
-                                let botonContarDobles = "<button type='button' data-url='" + urlContarDobles + "' class='btn btn-info' id='contarDobles'>Contar dobles</button>"
+                                let botonContarDobles = "<button type='button' data-url='" + urlContarDobles + "' class='btn btn-info' id='abrirModalContarDoblesSabado'>Contar dobles</button>"
                                 $('#agregar').before(botonContarDobles);
                             }
                         }else if(response[3].length != 0 && !response[1] && !response[2] && cellBackgroundColor == "rgb(255, 240, 142)"){
+                            console.log('sabado');
                             if (!$('#noContarDoblesSabado').length) { // Solo agregar si el botón no existe ya
                                 $('#cantidadDobles').text('(cantidad de inspecciones dobles: ' + response[3][0][0] +')')
 
@@ -862,7 +908,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                         }
                     }
 
-                    if(response[4] != 0){
+                    if(response[4] !== 0){
                         $('#cantidadDobles').text('(cantidad de inspecciones dobles: ' + response[4] +')')
                     }
 
@@ -893,7 +939,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         error: function (xhr, status, error) {
             console.log(xhr.responseText);
             Swal.fire({
-                type: 'error',
+                icon: 'error',
                 title: 'Error',
                 text: 'Ocurrió un error al cargar los datos de la base de datos'
             });
@@ -923,7 +969,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
         },
         error: function (xhr, status, error) {
             Swal.fire({
-                type: 'error',
+                icon: 'error',
                 title: 'Error',
                 text: 'Ocurrió un al consultar bitacoras'
             });
@@ -1172,7 +1218,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
                 }
 
             });
-
+            $('#ventanaEmergente').modal('hide');
         } else {
             window.scrollTo({
                 top: 0,
@@ -1181,7 +1227,7 @@ async function detallesDia(fecha, cc_inspector, nombreDia, nombre_completo) {
             });
             Swal.fire({
                 position: "top-end",
-                type: "warning",
+                icon: "warning",
                 title: "Por favor complete todos los campos",
                 showConfirmButton: false,
                 toast: true,
@@ -1215,7 +1261,7 @@ function desasociar(row, fecha, cc_inspector) {
     Swal.fire({
         title: '¿Estás seguro?',
         text: "¡Se descontará de producción!",
-        type: 'warning',
+        icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#3085d6',
         cancelButtonColor: '#d33',
@@ -1247,7 +1293,7 @@ function desasociar(row, fecha, cc_inspector) {
                 },
                 error: function (xhr, status, error) {
                     Swal.fire({
-                        type: 'error',
+                        icon: 'error',
                         title: 'Error',
                         text: 'Ocurrió un error al descontar el registro'
                     });
@@ -1295,7 +1341,7 @@ function asociar(row, fecha, cc_inspector) {
                 },
                 error: function (xhr, status, error) {
                     Swal.fire({
-                        type: 'error',
+                        icon: 'error',
                         title: 'Error',
                         text: 'Ocurrió un error al sumar el registro'
                     });
@@ -1315,7 +1361,7 @@ function diseñoEspecial(row, fecha, cc_inspector, currentValue) {
     Swal.fire({
         title: actionTitle,
         text: actionMessage,
-        type: 'info',
+        icon: 'info',
         showCancelButton: true,
         confirmButtonColor: '#3085d6',
         cancelButtonColor: '#d33',
@@ -1357,7 +1403,7 @@ function diseñoEspecial(row, fecha, cc_inspector, currentValue) {
                 error: function (xhr, status, error) {
 
                     Swal.fire({
-                        type: 'error',
+                        icon: 'error',
                         title: 'Error',
                         text: 'Ocurrió un error al agregar un diseño especial'
                     });
@@ -1377,9 +1423,9 @@ function actualizarDatosDia(fecha, cc_inspector) {
         type: 'GET',
         success: function (response) {
             datosBaseDatos = response;
-
+            console.log(datosBaseDatos[0]);
             // Asigna los datos obtenidos a la variable
-            const array2D = convertirJSONaArray2D(datosBaseDatos);
+            const array2D = convertirJSONaArray2D(datosBaseDatos[0]);
             hot_dia.loadData(array2D);
             if (array2D && array2D.length > 0) {
                 document.getElementById('mensajeNoDatos').style.display = 'none';
@@ -1391,7 +1437,7 @@ function actualizarDatosDia(fecha, cc_inspector) {
         error: function (xhr, status, error) {
 
             Swal.fire({
-                type: 'error',
+                icon: 'error',
                 title: 'Error',
                 text: 'Ocurrió un error al cargar los datos de la base de datos'
             });
@@ -1416,7 +1462,7 @@ async function cargarDatos(idCorteDetalles = null) {
                 error: function (xhr, status, error) {
 
                     Swal.fire({
-                        type: 'error',
+                        icon: 'error',
                         title: 'Error',
                         text: 'Ocurrió un error al cargar los datos de la base de datos'
                     });
@@ -1459,6 +1505,30 @@ async function cargarDatos(idCorteDetalles = null) {
                 });
             });
         });
+        sabadosDoblesManualesTransformados = [];
+        // Validar que sabadosDoblesManuales existe y es un array
+        let datos
+        response.sabadosDoblesManuales?.forEach(item => {
+            datos = item;
+        });
+
+        datos.forEach(items => {
+            if (items?.datos?.totalInspecciones?.length > 0) {
+                items.datos.totalInspecciones.forEach(inspeccion => {
+                    if (inspeccion?.fecha) {
+                        let fechaObj = new Date(inspeccion.fecha + 'T00:00:00');
+                        let options = { weekday: 'long', day: '2-digit' };
+                        let nombreDiaS = fechaObj.toLocaleDateString('es-ES', options);
+                        nombreDiaS = nombreDiaS.charAt(0).toUpperCase() + nombreDiaS.slice(1);
+
+                        sabadosDoblesManualesTransformados.push({
+                            nombreDia: nombreDiaS,
+                            ccInspector: items.datos.cc_inspector
+                        });
+                    }
+                });
+            }
+        })
 
         rows = response.produccionInspector;
         // Extraer la propiedad nombreMes de cada objeto
@@ -1639,7 +1709,7 @@ function agregar_datos() {
         success: function (response) {
             if (response.error) {
                 Swal.fire({
-                    type: 'error',
+                    icon: 'error',
                     title: 'Error',
                     text: response.error
                 });
@@ -1648,7 +1718,7 @@ function agregar_datos() {
             if (response.ok) {
                 Swal.fire({
                     position: "top-end",
-                    type: "success",
+                    icon: "success",
                     title: response.ok,
                     showConfirmButton: false,
                     toast: true,
@@ -1673,7 +1743,7 @@ function agregar_datos() {
         },
         error: function (xhr, status, error) {
             Swal.fire({
-                type: 'error',
+                icon: 'error',
                 title: 'Error',
                 text: error
             });
