@@ -68,6 +68,8 @@ class Actualizar_Stickers extends Command
         $C_CER_NOV     = 'CERTIFICADA CON NOVEDADES';
         $C_DEF_CRIT    = 'INSPECCIONADA CON DEFECTO CRITICO VALLE';
         $C_DEF_NO_CRIT = 'INSPECCIONADA CON DEFECTO NO CRITICO VALLE';
+        // <<< CAMBIO: Se define el array de tipos de trabajo de línea matriz
+        $tipos_linea_matriz = ['FI-29 revisión periódica línea matriz', 'FI-31 REVISIÓN NUEVA LINEA MATRIZ'];
 
         // Reglas de descuento
         $AMARILLO   = 'AMARILLOS';
@@ -89,9 +91,18 @@ class Actualizar_Stickers extends Command
                 ->select('RESULTADO_CIERRE', DB::raw('COUNT(*) as total'))
                 ->whereDate('FECHA', $ayer->toDateString())
                 ->where('CC_OPERARIO', $documentoInspector)
+                ->whereNotIn('TIPO_TRABAJO', $tipos_linea_matriz)
                 ->whereNotNull('RESULTADO_CIERRE')
                 ->groupBy('RESULTADO_CIERRE')
                 ->get();
+
+            // <<< CAMBIO: Consulta 2: Solo para contar trabajos de Línea Matriz
+            $conteoLineaMatriz = tbl_bitacora_contrato::query()
+                ->whereDate('FECHA', $ayer->toDateString())
+                ->where('CC_OPERARIO', $documentoInspector)
+                ->whereIn('TIPO_TRABAJO', $tipos_linea_matriz) // Se usa whereIn para buscar estos tipos
+                ->count(); // Usamos count() para obtener directamente el número total
+
 
 
             $conteo = [
@@ -110,7 +121,7 @@ class Actualizar_Stickers extends Command
             }
 
             $descuentoAmarillos  = $conteo[$C_CER] + $conteo[$C_CER_NOV] + $conteo[$C_DEF_CRIT] + $conteo[$C_DEF_NO_CRIT];
-            $descuentoRojos      = $conteo[$C_CER] + $conteo[$C_CER_NOV];
+            $descuentoRojos      = $conteo[$C_CER] + $conteo[$C_CER_NOV] + $conteoLineaMatriz;
             $descuentoSuspension = $conteo[$C_DEF_CRIT];
 
             if ($descuentoAmarillos === 0 && $descuentoRojos === 0 && $descuentoSuspension === 0) {

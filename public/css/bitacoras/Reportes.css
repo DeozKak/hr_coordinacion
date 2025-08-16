@@ -1,79 +1,326 @@
-@keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-  
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-  
-  #loader {
-    border: 16px solid rgba(0, 0, 0, 0.1);
-    /* Borde transparente */
-    border-top: 16px solid #3498db;
-    /* Azul */
-    border-radius: 50%;
-    width: 120px;
-    height: 120px;
-    animation: spin 2s linear infinite;
-    /* Animación de rotación */
-    position: fixed;
-    /* Fijar posición */
+/* ==== Estilos para Controles de DataTable (Versión Moderna) ==== */
+
+/* ANTERIORMENTE:
+.dt-search label,
+.dt-length label {
+    color: #525f7f;
+    font-weight: 500;
+}
+*/
+
+/* AHORA: Regla unificada para TODO el texto de los controles */
+.dt-search label,
+.dt-length label,
+.dt-info {
+    color: #525f7f;       /* Mismo color de texto */
+    font-weight: 500;    /* Mismo grosor de fuente */
+    font-size: 0.95rem;  /* Mismo tamaño de fuente */
+    vertical-align: middle; /* Ayuda a alinear todo perfectamente */
+}
+/* Estilo para el input de BÚSQUEDA y el SELECT de entradas (ambos usan .dt-input) */
+.dt-input {
+    border-radius: 8px !important;
+    border: 1px solid #d1d9e6 !important;
+    padding: 0.5rem 0.8rem !important;
+    font-size: 0.95rem;
+    transition: all 0.2s ease-in-out;
+    background-color: #f8f9fa;
+    margin-left: 0.5rem;
+    box-shadow: none !important; /* Reseteamos sombras por defecto */
+}
+
+.dt-input:focus {
+    background-color: #fff;
+    border-color: #3498db !important;
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1) !important;
+    outline: none;
+}
+
+/* ---- Estilos para la PAGINACIÓN ---- */
+
+/* Contenedor de los botones */
+.dt-paging {
+    display: flex;
+    justify-content: flex-end; /* Alineamos a la derecha */
+    gap: 5px; /* Espacio entre botones */
+}
+
+/* Estilo base para cada botón de la paginación */
+.dt-paging-button {
+    border-radius: 8px !important;
+    padding: 0.5rem 0.9rem;
+    margin: 0 !important;
+    border: none !important; /* Quitamos bordes */
+    background: transparent;
+    color: #525f7f;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+/* Efecto al pasar el mouse sobre un botón (que no sea el actual o desactivado) */
+.dt-paging-button:not(.current):not(.disabled):hover {
+    background-color: #e9f3fe;
+    color: #1d8cf8;
+}
+
+/* Botón de la página ACTIVA (ahora es .current) */
+.dt-paging-button.current {
+    /* Usamos un gradiente más oscuro y vibrante, como el del encabezado */
+    background: linear-gradient(90deg, #1d8cf8 0%, #3358f4 100%);
+    color: #ffffff !important;
+
+    /* Una sombra más notoria para que el botón "resalte" */
+    box-shadow: 0 4px 14px rgba(29, 140, 248, 0.35);
+
+    /* Hacemos el número más grueso y "levantamos" el botón */
+    font-weight: 700;
+    transform: translateY(-2px);
+    cursor: default;
+}
+.dt-paging-button.current:hover {
+    background: linear-gradient(90deg, #1d8cf8 0%, #3358f4 100%);
+    transform: translateY(-2px);
+}
+
+
+/* Botones deshabilitados (Previous/Next en los extremos) */
+.dt-paging-button.disabled {
+    color: #a0aec0 !important;
+    background-color: #f0f3f5 !important;
+    cursor: not-allowed;
+}
+
+
+/* ==== Estilos Generales de la Página ==== */
+body {
+    background-color: #f4f7f9; /* Un fondo suave para toda la página */
+}
+
+h1 {
+    color: #34495e;
+    font-weight: 600;
+}
+
+/* Contenedor principal con efecto de tarjeta */
+.shadow-container {
+    background: #ffffff;
+    border-radius: 1.25rem; /* Bordes bien redondeados */
+    box-shadow: 0 4px 32px rgba(44, 62, 80, 0.12); /* Sombra suave y pronunciada */
+    padding: 2rem;
+    margin-top: 1rem !important;
+    border: 1px solid #e8eef3;
+    overflow: hidden; /* Asegura que los hijos respeten los bordes redondeados */
+}
+
+/* ==== Estilos para el Buscador y sus Resultados ==== */
+
+/* Contenedor para el input para poder posicionar el ícono */
+.search-container {
+    position: relative;
+    margin-bottom: 0.5rem; /* Espacio antes de que aparezcan los resultados */
+}
+
+/* Ícono de lupa dentro del buscador */
+.search-container::before {
+    content: '\f002'; /* Código del ícono de búsqueda de FontAwesome */
+    font-family: 'Font Awesome 5 Free'; /* Asegúrate de tener FontAwesome cargado */
+    font-weight: 900;
+    position: absolute;
+    left: 15px;
     top: 50%;
-    /* Posición vertical en el centro */
-    left: 50%;
-    /* Posición horizontal en el centro */
-    margin-top: -60px;
-    /* Centrar verticalmente */
-    margin-left: -60px;
-    /* Centrar horizontalmente */
-    z-index: 9999;
-    /* Asegurar que esté sobre otros elementos */
-  }
-  
-  /* Estilo adicional para oscurecer el fondo */
-  #overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
+    transform: translateY(-50%);
+    color: #9db0c9;
+    font-size: 0.95rem;
+}
+
+#buscadorContrato {
+    border-radius: 8px;
+    border: 1px solid #d1d9e6;
+    padding: 0.75rem 1rem 0.75rem 2.5rem; /* Más padding a la izquierda para el ícono */
+    font-size: 1rem;
+    transition: all 0.2s ease-in-out;
+    background-color: #f8f9fa;
+}
+
+#buscadorContrato:focus {
+    background-color: #fff;
+    border-color: #3498db;
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+    outline: none;
+}
+
+#buscadorContrato::placeholder {
+    color: #9db0c9;
+}
+
+/* Estilos para la lista de resultados de búsqueda */
+.lista-resultados {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #e1e8ed;
+    border-radius: 8px;
+    background: #fff;
+    /* Posicionamiento y sombra para que parezca un dropdown */
+    box-shadow: 0 5px 20px rgba(44, 62, 80, 0.1);
+    /* Ocultar hasta que tenga contenido */
+    display: none;
+}
+
+/* Mostrar la lista solo cuando tiene elementos <li> dentro */
+.lista-resultados:not(:empty) {
+    display: block;
+}
+
+
+.lista-resultados ul {
+    list-style: none;
+    padding: 0.5rem 0; /* Espacio vertical interno */
+    margin: 0;
+}
+
+.lista-resultados li {
+    padding: 12px 20px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f3f5;
+    transition: background-color 0.15s ease;
+    color: #34495e;
+    font-size: 0.95rem;
+}
+
+.lista-resultados li:last-child {
+    border-bottom: none;
+}
+
+.lista-resultados li:hover {
+    background-color: #f5f9fe;
+    color: #1d8cf8;
+}
+
+
+
+/* ==== Estilos para la Tabla (DataTable) ==== */
+#devoluciones {
+    border-collapse: separate;
+    border-spacing: 0;
     width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    /* Fondo semi-transparente */
-    z-index: 9998;
-    /* Debajo del loader */
-  }
-    
-  
-    .body {
-        background-color: #f0f0f0;
-        font-family: 'Arial', sans-serif;
-    }
-  
+}
+
+/* AHORA: Aplicamos el fondo a la fila (tr) completa */
+#devoluciones thead tr {
+    background: linear-gradient(90deg, #1d8cf8 0%, #3358f4 100%);
+}
+
+/* AHORA: Las celdas (th) solo definen el estilo del texto y el espaciado */
+#devoluciones thead th {
+    /* Quitamos la propiedad 'background' de aquí */
+    color: #ffffff;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.85rem;
+    padding: 1rem 1.25rem;
+    vertical-align: middle;
+    /* Hacemos la celda transparente para que muestre el fondo de la fila */
+    background-color: transparent;
+    border: none; /* Nos aseguramos de que no haya bordes entre celdas */
+
+    text-align: center;
+}
+
+/* Esto lo mantenemos igual para redondear las esquinas de la barra */
+#devoluciones thead th:first-child {
+    border-top-left-radius: 0.8rem;
+}
+
+#devoluciones thead th:last-child {
+    border-top-right-radius: 0.8rem;
+}
+
+/* Estilo de las filas del cuerpo de la tabla */
+#devoluciones tbody tr {
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+#devoluciones tbody tr:hover {
+    background-color: #f5f9fe;
+    transform: translateY(-3px); /* Efecto sutil de elevación */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+#devoluciones tbody td {
+    padding: 1rem 1.25rem;
+    vertical-align: middle;
+    color: #525f7f;
+    border-bottom: 1px solid #e9ecef;
+}
+
+#devoluciones tbody tr:last-child td {
+    border-bottom: none; /* Quitar el borde de la última fila */
+}
+
+/* ==== Estilos para los Botones de Acción ==== */
+
+/* Contenedor de botones para asegurar espaciado */
+#devoluciones .btn-group {
+    display: flex; /* Asegura que los botones se alineen bien */
+    gap: 8px; /* Espacio moderno entre botones */
+}
+
+/* Estilo base para los botones con gradiente */
+.btn-gradient {
+    border: none;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.btn-gradient:hover, .btn-gradient:focus {
+    color: #fff;
+    transform: translateY(-2px); /* Efecto de "levantarse" */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* Sombra más pronunciada */
+    outline: none;
+}
+
+/* Botón Primario (Ver Reporte) - Azul/Violeta */
+.btn-gradient-primary {
+    background: linear-gradient(90deg, #5e72e4 0%, #825ee4 100%);
+}
+.btn-gradient-primary:hover, .btn-gradient-primary:focus {
+    background: linear-gradient(90deg, #825ee4 0%, #5e72e4 100%);
+}
+
+/* Botón Success (Descargar) - Verde */
+.btn-gradient-success {
+    background: linear-gradient(90deg, #2ecc71 0%, #27ae60 100%);
+}
+.btn-gradient-success:hover, .btn-gradient-success:focus {
+    background: linear-gradient(90deg, #27ae60 0%, #2ecc71 100%);
+}
+
+
+
+
+/* ==== Ajustes para Móviles ==== */
+@media (max-width: 768px) {
     .shadow-container {
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        margin: 20px auto; 
-        max-width: 1250px;  
-        border-radius: 10px;
-        background-color: #f8f9fac4;
-    }
-    .card-header{
-        background-color: #f3f3f3;
-        color: white;
-    }
-  
-    .btn-group {
-        display: flex;
-        flex-wrap: nowrap; /* Evita que los botones se envuelvan a la siguiente línea */
-    }
-    
-    .btn {
-        margin-right: 5px; /* Espacio entre los botones */
+        padding: 1rem;
     }
 
-    td {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis; /* Opcional: añade puntos suspensivos al final del texto si se desborda */
+    #devoluciones thead th,
+    #devoluciones tbody td {
+        padding: 0.75rem;
+        font-size: 0.9rem; /* Letra un poco más pequeña en móviles */
     }
+
+    /* Permite que la tabla haga scroll horizontal si no cabe */
+    .table-responsive {
+        border-radius: 0.8rem;
+    }
+}
+

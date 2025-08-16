@@ -1,3 +1,125 @@
+/* =================================================================== */
+/* ====   ESTILOS MODERNOS PARA LA VISTA "VER REPORTE"   ==== */
+/* =================================================================== */
+
+/* ==== Título de la Página ==== */
+h1 {
+    color: #34495e;
+    font-weight: 600;
+}
+.report-name {
+    font-weight: 400;
+    color: #3498db;
+}
+
+/* ==== Contenedor Principal (Tarjeta) ==== */
+.shadow-container {
+    background: #ffffff;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 32px rgba(44, 62, 80, 0.12);
+    border: 1px solid #e8eef3;
+}
+
+/* ==== 1. Barra de Herramientas (Acciones) ==== */
+.report-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+
+    /* ▼▼ AÑADE ESTAS LÍNEAS ▼▼ */
+    border-top-left-radius: 1.25rem;
+    border-top-right-radius: 1.25rem;
+}
+/* Botón "Ir Atrás" */
+.btn-back {
+    color: #525f7f;
+    font-weight: 500;
+    text-decoration: none;
+    padding: 0.5rem 0;
+    transition: color 0.2s ease;
+}
+.btn-back:hover {
+    color: #1d8cf8;
+}
+.btn-back i {
+    margin-right: 6px;
+}
+
+/* Botones con Gradiente (base) */
+.btn-gradient {
+    border: none; color: #fff; padding: 0.6rem 1.2rem;
+    font-size: 0.9rem; font-weight: 600; border-radius: 8px;
+    cursor: pointer; transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Nuevo Botón Naranja/Amarillo para "Devolución" */
+.btn-gradient-warning {
+    background: linear-gradient(90deg, #f5a623 0%, #f8d800 100%);
+    color: #594200;
+}
+.btn-gradient-warning:hover {
+    background: linear-gradient(90deg, #f8d800 0%, #f5a623 100%);
+}
+
+/* ==== 2. Contenido del Reporte ==== */
+.report-content {
+    padding: 1.5rem;
+}
+
+/* Contenedor de Indicadores (Dashboard) */
+.indicators-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+}
+
+/* Estilo para cada tarjeta de indicador */
+.indicator-card {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.2s ease;
+}
+.indicator-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(44, 62, 80, 0.08);
+    border-color: #d1d9e6;
+}
+.indicator-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #525f7f;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+.indicator-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+/* ESTA REGLA DEBE PERMANECER ASÍ */
+.table-container {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    overflow: hidden; /* Correcto: El overflow se controla aquí */
+    height: 65vh; /* Correcto: La altura se define aquí */
+    position: relative;
+
+}
 .handsontable table .fila-60-meses {
     background-color: rgb(251, 201, 255) ; /* Lila claro */
 }
@@ -19,12 +141,7 @@
     background-color: #f9f9f9; /* Cambia el color de fondo a un tono diferente */
 }
 
-.shadow-container {
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-    margin: 20px auto;  
-    border-radius: 10px;
-    background-color: #f8f9fa;
-}
+
 
 .highlight {
     background-color: rgb(193, 144, 21);

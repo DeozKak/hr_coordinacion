@@ -12,7 +12,7 @@
 <script src="{{asset('js/bitacora/Reportes.js')}}"></script>
 
 <body>
-    <style>
+   {{-- <style>
         /* En tu archivo CSS (por ejemplo, Reportes.css) */
         .lista-resultados {
             max-height: 200px;
@@ -38,13 +38,15 @@
             background-color: #f5f5f5;
             /* Cambia el color de fondo al pasar el mouse por encima */
         }
-    </style>
+    </style>--}}
     <div class="container">
         <div class="row justify-content-center mt-3 shadow-container">
             <div class="col-md-12">
                 <div class="col-md-12 table-responsive" style="padding: 17px;">
                     <div class="form-group">
-                        <input type="text" class="form-control" id="buscadorContrato" placeholder="Buscar contrato...">
+                        <div class="search-container">
+                            <input type="text" class="form-control" id="buscadorContrato" placeholder="Buscar contrato...">
+                        </div>
                     </div>
 
                     <div id="resultadosBusqueda" class="lista-resultados">
@@ -68,14 +70,16 @@
                                 <td>{{$bitacora->Usuario->name}}</td>
                                 <td>{{$bitacora->fecha_creacion}}</td>
                                 <td>
-                                    <div class="btn-group" role="group" aria-label="Botones">
-                                        <form action="{{route('bitacoras.ver_reporte',['id_bitacora'=> $bitacora->id])}}" method="GET">
+                                    <div class="btn-group" role="group" aria-label="Botones de acción">
 
-                                            <button class="btn btn-primary" id="verReporte">Ver reporte</button>
+                                        <form action="{{route('bitacoras.ver_reporte',['id_bitacora'=> $bitacora->id])}}" method="GET">
+                                            <button class="btn btn-gradient btn-gradient-primary" type="submit">Ver reporte</button>
                                         </form>
-                                       <form action="{{route('bitacoras.download',['file'=>$bitacora->nombre_archivo.".xlsx"])}}" method="GET">
-                                            <button class="btn btn-success" id="btnDescargar">Descargar Xlsx</button>
+
+                                        <form action="{{route('bitacoras.download',['file'=>$bitacora->nombre_archivo.".xlsx"])}}" method="GET">
+                                            <button class="btn btn-gradient btn-gradient-success" type="submit">Descargar Xlsx</button>
                                         </form>
+
                                     </div>
                                 </td>
                             </tr>
