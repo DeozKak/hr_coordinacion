@@ -40,8 +40,8 @@
                 </div>
                 <div class="row justify-content-center">
                     <div class="col-lg-12">
-                        <div class="col-md-12 table-responsive" style="padding: 15px;">
-                            <table class="table table-striped table-bordered tbl_datos" id="devoluciones">
+                        <div class="col-md-12 table-responsive">
+                            <table class="table" id="devoluciones">
                                 <thead>
                                     <tr>
                                         <th>Supervisor</th>
@@ -83,12 +83,12 @@
                                         @if ($dato->GESTIONADO === 0 )
                                         <td>NO</td>
                                         @else
-                                        <td style='background-color: rgb(146, 208, 80);'>SI</td>
+                                        <td style='background-color: #9cffa9 !important; font-weight: 600; color: #1a7f37; '>SI</td>
                                         @endif
                                         <td> {{$dato->FECHA_GESTION}} </td>
                                         <td> {{$dato->OBSERVACION_GESTION}}</td>
                                         @if($dato->DIAS_SIN_GESTION >= 2)
-                                        <td style='background-color: rgb(255, 165, 0);'> {{$dato->DIAS_SIN_GESTION}} </td>
+                                        <td style='background-color: rgba(255,255,0,0.8) !important; font-weight: 600; color: #8d6500;'> {{$dato->DIAS_SIN_GESTION}} </td>
                                         @else
                                         <td>{{$dato->DIAS_SIN_GESTION}} </td>
                                         @endif
@@ -98,7 +98,7 @@
                                                 <td>
                                                     <form action="{{route('bitacoras.actualizar_devolucion',['id' => $dato->id])}}" method="POST">
                                                     @csrf
-                                                    <button type="submit" class="btn btn-primary btn-xs">Cambiar</button>
+                                                        <button type="submit" class="btn btn-gradient btn-gradient-info btn-sm">Cambiar</button>
                                                     </form>
                                                 </td>
                                             @else
@@ -118,7 +118,7 @@
                             </table>
 
 
-                            <table class="table table-striped table-bordered tbl_datos" id="gestionados">
+                            <table class="table tbl_datos" id="gestionados">
                                 <thead>
                                     <tr>
                                         <th>Supervisor</th>
@@ -157,7 +157,7 @@
                                         @if ($dato->GESTIONADO === 0 )
                                         <td>NO</td>
                                         @else
-                                        <td style='background-color: rgb(146, 208, 80);'>SI</td>
+                                        <td style='background-color: #c2ffd4 !important; font-weight: 600; color: #1a7f37; '>SI</td>
                                         @endif
                                         <td> {{$dato->FECHA_GESTION}} </td>
                                         <td> {{$dato->OBSERVACION_GESTION}}</td>
@@ -174,9 +174,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="d-grid gap-2 d-md-flex group-buttons">
-                    <a class="btn btn-primary" href="javascript:history.go(-1)">Ir Atrás</a>
-                    <button class="btn btn-success" id="btnGuardar">Exportar</button>
+                <div class="card-footer group-buttons">
+                    <a class="btn-back" href="javascript:history.go(-1)">Ir Atrás</a>
+                    <button class="btn btn-gradient btn-gradient-success" id="btnGuardar">Exportar</button>
                 </div>
             </div>
         </div>

@@ -113,8 +113,9 @@ class BitacoraController extends Controller
 
         $validacionArchivo1 = str_replace(".xls", " ", basename($excelFilePath));
         $validacionArchivo2 = str_replace("4.08", "", $validacionArchivo1);
+        $validacionArchivo3 = str_replace(" V10", "", $validacionArchivo2);
 
-        $exist = $Guardado->buscar($validacionArchivo2);
+        $exist = $Guardado->buscar($validacionArchivo3);
 
         if ($exist) {
             $data = $exist->getData(true); // Obtener datos como array asociativo

@@ -1,43 +1,489 @@
-
-.ui-autocomplete {
-  z-index: 1051 !important; /* Valor superior al z-index del modal (1050 por defecto en Bootstrap) */
+/* =================================================================== */
+/* ====     ESTILOS MODERNOS PARA LA VISTA DE BITÁCORAS      ==== */
+/* =================================================================== */
+h1 {
+    color: #34495e;
+    font-weight: 600;
 }
-@keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-  
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-  
-  #loader {
-    border: 16px solid rgba(0, 0, 0, 0.1);
-    /* Borde transparente */
-    border-top: 16px solid #3498db;
-    /* Azul */
+/* ==== Estructura Principal ==== */
+.shadow-container {
+    background: #ffffff;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 32px rgba(44, 62, 80, 0.12);
+    border: 1px solid #e8eef3;
+    overflow: hidden;
+}
+
+/* ==== Encabezado con Controles (Selector y Botones) ==== */
+.card-header-controls {
+    display: flex;
+    flex-wrap: wrap; /* Permite que los elementos se ajusten en pantallas pequeñas */
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.selector-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.selector-container label {
+    font-weight: 600;
+    color: #525f7f;
+    margin-bottom: 0;
+}
+
+/* Estilo moderno para el <select> */
+.form-control-modern {
+    border-radius: 8px !important;
+    border: 1px solid #d1d9e6 !important;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.95rem;
+    background-color: #fff;
+    min-width: 250px; /* Ancho mínimo para el selector */
+}
+.form-control-modern:focus {
+    border-color: #3498db !important;
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1) !important;
+    outline: none;
+}
+
+.buttons-container {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* ==== Botones de Acción (Versión Mejorada) ==== */
+
+/* 1. ESTILO BASE (Para TODOS los botones) */
+/* Define el tamaño, la forma y la fuente para que sean proporcionales */
+.btn-base {
+    padding: 0.35rem 1.1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid transparent;
+    position: relative; /* Contexto para la animación */
+    overflow: hidden;   /* Oculta lo que se salga del botón */
+}
+
+/* 2. ESTILO GRADIENTE (Para botones principales) */
+.btn-gradient {
+    color: #fff !important; /* Usamos !important por si acaso */
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.btn-gradient-success {
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(39, 174, 96, 0.2);
+    /* Este es el gradiente FINAL (el que se revela) */
+    background: linear-gradient(90deg, #5e72e4 0%, #825ee4 100%);
+    transition: color 0.4s ease; /* Anima el color del texto si es necesario */
+}
+.btn-gradient-success span {
+    position: relative;
+    z-index: 2;
+}
+.btn-gradient-success::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    /* Este es el gradiente INICIAL (el que se desvanece) */
+    background: linear-gradient(45deg, #22c55e, #28a745);
+    opacity: 1; /* Comienza visible */
+    z-index: 1; /* Detrás del texto */
+
+    /* La duración de la animación de desvanecimiento */
+    transition: opacity 0.4s ease-out;
+}
+.btn-gradient-success:hover::before {
+    opacity: 0;
+}
+.btn-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.btn-gradient-secondary { background: linear-gradient(90deg, #8a96a8 0%, #6c757d 100%); }
+
+/* 3. NUEVO ESTILO OUTLINE (Para "Ir Atrás") */
+.btn-outline-modern {
+    background-color: transparent;
+    border-color: #6c757d;
+    color: #6c757d;
+}
+.btn-outline-modern:hover {
+    background-color: #6c757d;
+    color: #fff;
+    border-color: #6c757d;
+}
+
+/* --- NUEVO ESTILO MINIMALISTA PARA "IR ATRÁS" --- */
+.btn-back {
+    /* Quitamos fondo y bordes */
+    background-color: transparent;
+    border: none;
+
+    /* Estilos del texto y el ícono */
+    color: #525f7f; /* Color grisáceo y sutil */
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+
+    /* Alineación del ícono y el texto */
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem; /* Espacio de 8px entre el ícono y el texto */
+
+    /* Animación suave */
+    transition: all 0.2s ease;
+}
+
+.btn-back:hover {
+    color: #1d8cf8; /* Cambia a nuestro color azul principal al pasar el mouse */
+    transform: translateX(-3px); /* Pequeño movimiento a la izquierda */
+}
+/* ==== ESTILOS MODERNOS PARA LA TABLA (DATATABLE) ==== */
+.table {
+    border-collapse: separate !important;
+    border-spacing: 0;
+    width: 100% !important;
+}
+.table thead tr {
+    background: linear-gradient(90deg, #1d8cf8 0%, #3358f4 100%);
+}
+.table thead th {
+    color: #ffffff; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em; font-size: 0.80rem; padding: 1rem 1.25rem;
+    vertical-align: middle; background-color: transparent; border: none;
+    text-align: left;
+}
+.table thead th:first-child { border-top-left-radius: 0.8rem; }
+.table thead th:last-child { border-top-right-radius: 0.8rem; }
+.table tbody tr:hover {
+    background-color: #f5f9fe;
+}
+.table tbody td {
+    /* ¡CAMBIO! Padding y font-size más pequeños */
+    padding: 0.5rem 1rem;
+    font-size: 0.80rem;
+
+    vertical-align: middle;
+    color: #525f7f;
+    border-bottom: 1px solid #e9ecef;
+}
+td,th {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Quitamos el margen superior del contenedor de la tabla de datos */
+.table-responsive {
+    margin-top: 0 !important;
+}
+
+/* =================================================================== */
+/* ====   ESTILOS PARA FORMULARIOS DENTRO DE LA TABLA       ==== */
+/* =================================================================== */
+
+/* --- Estilo para Checkbox Moderno --- */
+.tbl_datos input[type="checkbox"].recintosCheck {
+    width: 1.3em;
+    height: 1.3em;
+    cursor: pointer;
+    margin-right: 0.5rem; /* Espacio entre el check y el input de texto */
+    vertical-align: middle;
+
+    /* Cambia el color del check al color principal de tu tema */
+    accent-color: #3498db;
+}
+
+/* --- Estilo para Inputs de Texto Pequeños --- */
+.tbl_datos input[type="text"].recintos {
+    border: 1px solid #d1d9e6;
+    border-radius: 6px;
+
+    /* --- AJUSTES PARA HACERLO MÁS PEQUEÑO --- */
+    padding: 0.15rem;      /* Menos padding interno */
+    width: 35px;           /* Un ancho más reducido */
+    height: auto;          /* Altura automática para que se ajuste al contenido */
+    font-size: 0.8rem;     /* Fuente más pequeña */
+
+    text-align: center;
+    transition: all 0.2s ease;
+}
+.tbl_datos input[type="text"].recintos:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+    outline: none;
+}
+.tbl_datos input[type="text"].recintos:disabled {
+    background-color: #f0f3f5;
+    cursor: not-allowed;
+}
+
+
+/* --- Estilo para Selectores (Dropdowns) Modernos --- */
+.tbl_datos select {
+    /* Reseteo y apariencia */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-color: #fff;
+
+    /* Flecha personalizada */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 14px 10px; /* Hacemos la flecha un poco más pequeña */
+
+    /* --- AJUSTES PARA UN TAMAÑO MÁS COMPACTO --- */
+    padding: 0.2rem 1.6rem 0.2rem 0.6rem; /* Menos padding vertical y horizontal */
+    font-size: 0.8rem;                       /* Fuente más pequeña */
+
+    /* Bordes y transición */
+    border: 1px solid #d1d9e6;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tbl_datos select:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+    outline: none;
+}
+
+/* --- Anchos específicos para cada selector --- */
+.tbl_datos .nombre-columna {
+    width: 90px;
+}
+
+.tbl_datos .combo2 {
+    width: 230px;
+}
+
+/* Estilo para la celda de Contrato cuando es una Devolución (DV) */
+.celda-devolucion {
+    background-color: #e53e3e !important; /* Un rojo fuerte pero agradable a la vista */
+    color: #e6e6e6 !important;           /* ¡La clave! Texto blanco para el contraste */
+    font-weight: 600;                    /* Opcional: hacer el texto un poco más grueso */
+}
+
+/* También puedes crear una clase para el estado OK (verde) */
+.celda-ok {
+    background-color: rgb(146, 208, 80) !important;
+    color: #525f7f !important;
+    font-weight: 600;
+}
+
+/* =================================================================== */
+/* ====   ESTILOS MODERNOS PARA TABLA DE INDICADORES        ==== */
+/* =================================================================== */
+
+.tabla-indicadores {
+    /* --- Control del Tamaño y Posición --- */
+    width: auto;
+    max-width: 400px;
+    /* ¡CAMBIO! Quitamos el centrado y la alineamos a la izquierda */
+    margin: 0 0 1.5rem 0; /* Margen: 0 arriba, 0 derecha, 1.5rem abajo, 0 izquierda */
+
+    /* --- Estilos Visuales --- */
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    overflow: hidden;
+    font-size: 0.8rem;
+    border-collapse: separate !important;
+    border-spacing: 0;
+}
+
+.tabla-indicadores td {
+    padding: 0.75rem 1.25rem;
+    border: none;
+    /* ¡CAMBIO! Un color de borde más oscuro para que sea más visible */
+    border-bottom: 1px solid #e9ecef;
+    color: #525f7f;
+    vertical-align: middle;
+}
+
+/* Hacemos que la última fila (TOTAL) resalte */
+.tabla-indicadores tr:last-child td {
+    border-bottom: none;      /* Quitamos la última línea separadora */
+    font-weight: 700;
+    color: #2c3e50;
+    background-color: #f8f9fa; /* Un fondo ligeramente distinto */
+}
+
+/* Alineamos los números a la derecha */
+.tabla-indicadores td:last-child {
+    text-align: right;
+    font-weight: 600;
+    min-width: 80px; /* Ancho mínimo para la columna de números */
+}
+
+/* =================================================================== */
+/* ====   ESTILO MODERNO PARA MODAL DE AGREGAR INSPECCIÓN   ==== */
+/* =================================================================== */
+
+#ventanaEmergente .modal-content {
+    border-radius: 1.25rem;
+    border: none;
+    box-shadow: 0 4px 32px rgba(44, 62, 80, 0.15);
+    overflow: hidden; /* Clave para que el contenido respete los bordes redondeados */
+}
+
+/* --- Encabezado del Modal --- */
+#ventanaEmergente .modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+}
+
+#ventanaEmergente .modal-title {
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+#ventanaEmergente .close {
+    font-size: 1.5rem;
+    color: #6c757d;
+    text-shadow: none;
+    opacity: 0.8;
+}
+
+/* --- Cuerpo del Modal y Formulario --- */
+#ventanaEmergente .modal-body {
+    padding: 2rem 1.5rem;
+    /* Creamos un layout de grid para el formulario */
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Dos columnas de igual tamaño */
+    gap: 1.5rem; /* Espacio entre los campos */
+}
+
+/* Contenedor para cada campo (label + input/select) */
+.form-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem; /* Espacio entre la etiqueta y el campo */
+}
+
+/* Ocultamos los contenedores que no se deben mostrar en la grid */
+.form-field-group.hidden {
+    display: none;
+}
+
+#ventanaEmergente .modal-body label {
+    font-weight: 500;
+    color: #525f7f;
+    margin-bottom: 0;
+}
+
+#ventanaEmergente .modal-body .form-control {
+    border-radius: 8px;
+    border: 1px solid #d1d9e6;
+    padding: 0.6rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.2s ease-in-out;
+    background-color: #fff;
+}
+
+#ventanaEmergente .modal-body .form-control:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+    outline: none;
+}
+
+/* Estilo moderno para los <select> */
+#ventanaEmergente .modal-body select.form-control {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    padding-right: 2.5rem;
+}
+
+/* --- Pie del Modal y Botones --- */
+#ventanaEmergente .modal-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+/* Botón secundario (Cerrar) */
+#ventanaEmergente .modal-footer .btn-secondary {
+    background-color: #e9ecef;
+    color: #2c3e50;
+    border: none;
+    font-weight: 600;
+    border-radius: 8px;
+}
+#ventanaEmergente .modal-footer .btn-secondary:hover {
+    background-color: #d1d9e6;
+}
+
+/* Botón primario (Agregar) con nuestro estilo de gradiente */
+#ventanaEmergente .modal-footer .btn-success {
+    border: none;
+    color: #fff;
+    padding: 0.6rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: linear-gradient(90deg, #2ecc71 0%, #27ae60 100%);
+}
+#ventanaEmergente .modal-footer .btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.2);
+}
+
+
+
+/*.ui-autocomplete {
+  z-index: 1051 !important; !* Valor superior al z-index del modal (1050 por defecto en Bootstrap) *!
+}*/
+#loader {
+    /* Hacemos el borde mucho más delgado */
+    border: 5px solid #e9ecef; /* Un gris claro para la base del círculo */
+    border-top: 5px solid #3498db; /* El color principal que gira */
     border-radius: 50%;
-    width: 120px;
-    height: 120px;
-    animation: spin 2s linear infinite;
-    /* Animación de rotación */
+    width: 80px;
+    height: 80px;
+
+    /* La clave: una animación más suave */
+    animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+
     position: fixed;
-    /* Fijar posición */
     top: 50%;
-    /* Posición vertical en el centro */
     left: 50%;
-    /* Posición horizontal en el centro */
-    margin-top: -60px;
-    /* Centrar verticalmente */
-    margin-left: -60px;
-    /* Centrar horizontalmente */
+    /* Ajustamos el margen para el nuevo tamaño */
+    margin-top: -40px;
+    margin-left: -40px;
     z-index: 9999;
-    /* Asegurar que esté sobre otros elementos */
-  }
-  
-  /* Estilo adicional para oscurecer el fondo */
-  #overlay {
+}
+#overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -47,12 +493,20 @@
     /* Fondo semi-transparente */
     z-index: 9998;
     /* Debajo del loader */
-  }
-    
-  .tabla-indicadores{
+}
+/* La animación de rotación se mantiene igual */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+  /*.tabla-indicadores{
     font-size: 11.5px;
   }
-    
+
     .tbl_datos {
         font-size: 12px;
     }
@@ -60,7 +514,7 @@
     .tbl_datos th,
     .tbl_datos td {
         padding: 5px;
-       
+
     }
 
     .body {
@@ -70,13 +524,13 @@
 
     .shadow-container {
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        margin: 20px auto;  
+        margin: 20px auto;
         border-radius: 10px;
         background-color: #f8f9fa;
     }
 
     #btnPapel{
-       margin: 10px;      
+       margin: 10px;
     }
 
     .form-group {
@@ -93,10 +547,11 @@
   }
 
   .campo-invalido {
-    border: 1px solid red; /* Establecer borde rojo para campos no completados */
+    border: 1px solid red; !* Establecer borde rojo para campos no completados *!
 }
 td,th {
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis; /* Opcional: añade puntos suspensivos al final del texto si se desborda */
+  text-overflow: ellipsis; !* Opcional: añade puntos suspensivos al final del texto si se desborda *!
 }
+*/

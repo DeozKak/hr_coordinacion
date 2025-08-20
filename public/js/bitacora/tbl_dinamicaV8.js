@@ -1,4 +1,4 @@
-
+let selector;
 $(document).ready(function () {
     const contenedor = document.getElementById('miContenedor');
     const idSuper = JSON.parse(contenedor.dataset.idSuper);
@@ -7,7 +7,7 @@ $(document).ready(function () {
         "paging": false,
         "scrollY": "400px",
         "lengthChange": true,
-        "searching": true,
+        "searching": false,
         "ordering": true,
         "info": false,
         "autoWidth": true,
@@ -48,8 +48,9 @@ $(document).ready(function () {
     $('table[style*="display: none"]').parent().hide();
     $('div[class*="tab-content"]').show();
     $('div[class*="dt-container dt-empty-footer"]').hide();
-
-    var idElemento = $('.active').attr('href');
+    selector = $('#selectorPersonal');
+   /* var idElemento = $('.active').attr('href');*/
+    let idElemento = '#'+selector.val();
     var divid = $('div[id*="' + idElemento + '_wrapper"]').attr('id');
 
     if (divid) {
@@ -77,10 +78,11 @@ $(document).ready(function () {
     });
 
     // Mostrar la tabla correspondiente cuando se hace clic en una pestaña
-    $('.btnav').on('click', function () {
+    /*$('.btnav').on('click', function () {*/
+    selector.on('change', function () {
         // Ocultar todas las tablas nuevamente
         $('table').hide();
-        $('.btnav').removeClass('active');
+       // $('.btnav').removeClass('active');
         /*  $('table[style*="display: none"]').parent().hide(); */
         /* $('div[class*="display: none"]').show(); */
         $('div[style*="display: table"]').hide();
@@ -89,7 +91,8 @@ $(document).ready(function () {
 
         //$('table[class*="no-datatable"]').hide();
         // Obtener el ID de la pestaña activa
-        var tabId = $(this).attr('href');
+       // var tabId = $(this).attr('href');
+        let tabId = '#'+$(this).val();
         var divid = $('div[id*="' + tabId + '_wrapper"]').attr('id');
 
         if (divid) {
@@ -284,7 +287,7 @@ $(document).ready(function () {
                     $('#loader').hide();
                     $('#overlay').hide();
                     Swal.fire({
-                        type: 'error',
+                        icon: 'error',
                         title: 'Error',
                         text: error,
                     });
@@ -313,7 +316,7 @@ $(document).ready(function () {
     const selectrecintos = document.getElementById('recintos');
 
     selectrecintos.addEventListener('change', function () {
-        console.log(this.value);
+
         if (this.value === 'SI') {
             inputrecintosP.disabled = false; // Habilitar el campo "NroRecintos"
         } else {
@@ -328,9 +331,22 @@ $(document).ready(function () {
             show: true, // Mostrar el modal
             focus: false // Deshabilitar el autoenfoque
         });
+        const selectInsp = document.getElementById('nombre');
+        const valorSeleccionado = selector.val();
+        if (valorSeleccionado) {
+            const opcion = Array.from(selectInsp.options).find(option => option.dataset.nombres === valorSeleccionado);
+
+            // Busca la opción con ese valor
+            if (opcion) {
+                selectInsp.value = opcion.value;
+                selectInsp.disabled = true; // Deshabilita la opción encontrada
+            }
+        }
     });
     // limitar fechas en el campo fecha
     const inputFecha = document.getElementById('fecha');
+
+
 
     // Obtener la fecha actual
     const fechaActual = new Date();
@@ -433,6 +449,10 @@ $(document).ready(function () {
         let formularioValido = true;
 
         campos.forEach(campo => {
+
+            if(campo.id === "municipio-select-ts-control"){
+                return;
+            }
             if (campo.value === 'DV') {
                 const selectCausal = document.getElementById('causal');
 
@@ -476,6 +496,7 @@ $(document).ready(function () {
             } else {
                 campo.style.border = ''; // Restablecer estilo de borde por defecto
             }
+
         });
 
         if (formularioValido) {
@@ -522,7 +543,7 @@ $(document).ready(function () {
             });
             Swal.fire({
                 position: "top-end",
-                type: "warning",
+                icon: "warning",
                 title: "Por favor complete todos los campos",
                 showConfirmButton: false,
                 toast: true,
@@ -554,9 +575,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Agregar evento clic a los botones de navegación
+   /* // Agregar evento clic a los botones de navegación
     document.querySelector('.scroll-left').addEventListener('click', scrollLeft);
-    document.querySelector('.scroll-right').addEventListener('click', scrollRight);
+    document.querySelector('.scroll-right').addEventListener('click', scrollRight);*/
 
     var links = document.querySelectorAll('.btnav');
 
@@ -659,6 +680,7 @@ function agregar_datos() {
 
     //obtener el select del inspector
     const select_insp = document.getElementById('nombre');
+
     const selectedoption = select_insp.options[select_insp.selectedIndex];
     //obtener el valor de la cedula
     const cedulaInsp = select_insp.value;
@@ -836,7 +858,8 @@ function cambiarColor(select) {
         for (var i = 0; i < celdas.length; i++) {
 
             if (celdas[i].textContent.includes(':')) {
-                celdas[i].style.backgroundColor = 'rgb(255, 0, 0)'; // Cambiar el color de fondo a rojo
+                celdas[i].classList.add('celda-devolucion'); // Cambiar el color de fondo a rojo
+                celdas[i].classList.remove('celda-ok');
                 break;
             }
         }
@@ -849,8 +872,9 @@ function cambiarColor(select) {
 
             if (celdas[i].textContent.includes(':')) {
 
-                celdas[i].style.backgroundColor = 'rgb(146, 208, 80)';
-                // Cambiar el color de fondo a Verde
+               // celdas[i].style.backgroundColor = 'rgb(146, 208, 80)';
+               celdas[i].classList.remove('celda-devolucion');
+               celdas[i].classList.add('celda-ok'); // Vuelve al estado normal
                 break;
             }
         }
@@ -881,7 +905,7 @@ function validacionDatos(contrato, tabla) {
 
     // Obtener los datos existentes en la tabla
     const data = tabla.DataTable().data();
-    console.log(data);
+
     let datosRepetidos = false;
     // Verificar si los datos ya existen en la tabla
     data.each(function (value, index) {
@@ -922,7 +946,7 @@ function enviarDatos(id, nom_campo, valor) {
             $('#loader').hide();
             $('#overlay').hide();
             Swal.fire({
-                type: 'error',
+                icon: 'error',
                 title: 'Error',
                 text: error,
             });
@@ -1013,8 +1037,8 @@ function eventos() {
     comboBoxes.forEach(function (comboBox) {
         comboBox.addEventListener('change', function () {
 
-            let id_pestaña = $('.btnav.active').attr('href');
-
+            //let id_pestaña = $('.btnav.active').attr('href');
+            let id_pestaña = '#'+selector.val();
             let fila = comboBox.parentNode.parentNode;
             let celdas = fila.getElementsByTagName('td');
 
@@ -1062,7 +1086,8 @@ function eventosNuevos(select, campo) {
             break;
         case 'ESTADO':
             select.addEventListener('change', function () {
-                let id_pestaña = $('.btnav.active').attr('href');
+                //let id_pestaña = $('.btnav.active').attr('href');
+                let id_pestaña = '#'+selector.val();
                 contadores_dinamicos(id_pestaña);
                 cambiarColor(this);
                 let fila = select.parentNode.parentNode;

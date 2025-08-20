@@ -2,9 +2,7 @@ let codigoHTMLdev = "";
 let codigoHTMLges = "";
 
 $(document).ready(function () {
-    $.fn.dataTable.ext.errMode = function (settings, helpPage, message) {
 
-    };
     $('#devoluciones').each(function () {
 
         let tablaHTMLdev = $(this)[0].outerHTML;
@@ -26,7 +24,7 @@ $(document).ready(function () {
     });
 
     $('#devoluciones').DataTable({
-        scrollCollapse: true,
+
         scrollX: true,
         "language": {
             "lengthMenu": "Mostrar _MENU_ registros por página",
@@ -45,7 +43,7 @@ $(document).ready(function () {
     });
 
     $('#gestionados').DataTable({
-        scrollCollapse: true,
+
         scrollX: true,
         "language": {
             "lengthMenu": "Mostrar _MENU_ registros por página",

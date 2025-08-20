@@ -1,66 +1,196 @@
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
+/* =================================================================== */
+/* ====   ESTILOS MODERNOS PARA VISTA DE GENERAR BITÁCORAS   ==== */
+/* =================================================================== */
 
-    100% {
-        transform: rotate(360deg);
+h1 {
+    color: #34495e;
+    font-weight: 600;
+}
+/* ==== Layout Principal ==== */
+.upload-grid {
+    display: flex;              /* Cambiamos de Grid a Flexbox */
+    justify-content: center;    /* ¡La clave! Centra el/los elementos horizontalmente */
+    flex-wrap: wrap;            /* Permite que las tarjetas se ajusten en pantallas pequeñas */
+    gap: 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* En pantallas más grandes, usamos dos columnas */
+@media (min-width: 992px) {
+    .upload-grid {
+        grid-template-columns: repeat(2, 1fr);
+        display: flex;              /* Cambiamos de Grid a Flexbox */
+        justify-content: center;    /* ¡La clave! Centra el/los elementos horizontalmente */
+        flex-wrap: wrap;            /* Permite que las tarjetas se ajusten en pantallas pequeñas */
+        gap: 2rem;
+        max-width: 1100px;
+        margin: 0 auto;
     }
 }
 
+/* ==== Tarjeta de Carga de Archivos ==== */
+.upload-card {
+    background: #ffffff;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 32px rgba(44, 62, 80, 0.12);
+    border: 1px solid #e8eef3;
+    padding: 2rem 2.5rem;
+    display: flex;
+    flex-direction: column;
 
-#loader {
-    border: 16px solid rgba(0, 0, 0, 0.1);
-    /* Borde transparente */
-    border-top: 16px solid #3498db;
-    /* Azul */
-    border-radius: 50%;
-    width: 120px;
-    height: 120px;
-    animation: spin 2s linear infinite;
-    /* Animación de rotación */
-    position: fixed;
-    /* Fijar posición */
-    top: 50%;
-    /* Posición vertical en el centro */
-    left: 50%;
-    /* Posición horizontal en el centro */
-    margin-top: -60px;
-    /* Centrar verticalmente */
-    margin-left: -60px;
-    /* Centrar horizontalmente */
-    z-index: 9999;
-    /* Asegurar que esté sobre otros elementos */
+    /* ▼▼ AÑADE ESTAS LÍNEAS ▼▼ */
+    width: 100%;       /* Ocupa todo el ancho disponible en móviles */
+    max-width: 500px;  /* Un ancho máximo para que no sea demasiado grande */
 }
 
-/* Estilo adicional para oscurecer el fondo */
-#overlay {
-    position: fixed;
+.upload-card h2 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.upload-card small {
+    display: block;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+/* ==== Estilos de Formularios Modernos ==== */
+.upload-card .form-label {
+    font-weight: 500;
+    color: #525f7f;
+    margin-bottom: 0.5rem;
+}
+
+/* Selectores (Dropdowns) */
+.upload-card .form-control {
+    border-radius: 8px;
+    border: 1px solid #d1d9e6;
+    padding: 0.5rem 1rem; /* <-- AJUSTE: Reducimos el padding vertical de 0.75rem a 0.5rem */
+    font-size: 1rem;
+    transition: all 0.2s ease-in-out;
+    background-color: #f8f9fa;
+}
+
+.upload-card .form-control:focus {
+    background-color: #fff;
+    border-color: #3498db;
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+    outline: none;
+}
+
+/* Estilo específico para el campo de carga de archivos */
+.upload-card .form-control[type="file"] {
+    padding: 0.2rem 1rem;
+}
+.upload-card .form-control[type="file"]::file-selector-button {
+    background: linear-gradient(90deg, #e9ecef 0%, #d1d9e6 100%);
+    color: #34495e;
+    border: none;
+    border-radius: 6px;
+    padding: 0.2rem 0.4rem; /* <-- AJUSTE: Reducimos también este padding */
+    margin-right: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+.upload-card .form-control[type="file"]::file-selector-button:hover {
+    background: linear-gradient(90deg, #d1d9e6 0%, #e9ecef 100%);
+}
+
+/* ==== Botones ==== */
+.button-container {
+    display: flex;
+    justify-content: flex-end; /* Alinea el botón a la derecha */
+    margin-top: 1.5rem;
+}
+
+/* 1. La clase base que contiene la ANIMACIÓN y los estilos comunes */
+/* Clase general del botón */
+/* Diseño base del botón */
+.btn-gradient {
+    position: relative;
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+    /* Transiciones generales */
+    overflow: hidden;
+    background: linear-gradient(90deg, rgba(51, 88, 244, 1) 0%, rgba(29, 140, 248, 1) 100%);
+    transition: background 0.5s ease-in-out, color 0.5s ease-in-out;
+}
+
+/* Diseño base del botón */
+.btn-gradient {
+    position: relative; /* Crear un contexto para los pseudo-elementos */
+    color: #fff; /* Asegura que el texto esté visible */
+    border: none;
+    padding: 0.6rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+    /* Fondo del botón (gradiente final que quedará visible tras la animación) */
+    background: linear-gradient(90deg, rgb(152, 84, 255) 0%, rgb(84, 29, 248) 100%);
+    overflow: hidden; /* Asegura que el pseudo-elemento no se salga del botón */
+    transition: color 0.5s ease-in-out; /* Transición para el color del texto, si se desea */
+}
+
+/* Contenido textual del botón */
+.btn-gradient span {
+    position: relative; /* Mantiene el texto dentro del botón */
+    z-index: 2; /* Asegura que siempre esté por encima del pseudo-elemento */
+}
+
+/* Gradiente inicial (pseudo-elemento animado) */
+.btn-gradient::before {
+    content: ''; /* Se utiliza para el gradiente inicial del fondo */
+    position: absolute; /* Es absoluto respecto al botón */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
+    z-index: 0; /* Colocar detrás del texto pero dentro del botón */
+
+    /* Fondo gradiente inicial */
+    background: linear-gradient(90deg, rgba(29, 140, 248, 1) 0%, rgba(51, 88, 244, 1) 100%);
+    opacity: 1; /* Comienza completamente visible */
+    transition: opacity 0.6s ease-in-out; /* Transición suave para el desvanecimiento */
+}
+
+/* Al pasar el mouse */
+.btn-gradient:hover::before {
+    opacity: 0; /* El pseudo-elemento se desvanece */
+}
+/* ==== Loader y Overlay (se mantienen tus estilos) ==== */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+#loader {
+    border: 16px solid rgba(0, 0, 0, 0.1);
+    border-top: 16px solid #3498db;
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+}
+#overlay {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    /* Fondo semi-transparente */
     z-index: 9998;
-    /* Debajo del loader */
-}
-
-.shadow-container {
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-    padding: 20px;
-    max-width: 500px;
-    margin: 0 auto;
-    border-radius: 10px;
-    background-color: #f8f9fa;
-}
-
-.button-container {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-}
-
-.button-container button {
-    margin: 0 10px;
 }

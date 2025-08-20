@@ -7,96 +7,74 @@
 @endsection
 
 @section('content')
+    {{-- Dependencias --}}
+    <link rel="stylesheet" href="{{asset('css/bitacoras/generarV2.css')}}">
+    <script src="{{ asset('js/bitacora/generar.js') }}"></script>
     <input type="hidden" id="token" value="{{ csrf_token() }}">
     <input type="hidden" id="url_diaria" value="{{ route('bitacoras.diaria') }}">
-    <script src="{{asset('js/bitacora/generar.js')}}"></script>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <!--     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-     -->
-        <link rel="stylesheet" href="{{asset('css/bitacoras/generarV2.css')}}">
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
-        <title>Subir Archivos</title>
-    </head>
 
-    <body class="body">
+    {{-- Loader y Overlay para operaciones AJAX --}}
     <div id="loader" style="display: none;"></div>
     <div id="overlay" style="display: none;"></div>
-    <div class="container mt-5">
-        <div class="row">
+
+    <div class="container mt-4">
+        {{-- Usamos nuestro nuevo layout de grid --}}
+        <div class="upload-grid">
+
             @unlessrole('Supervisor')
-            <div class="shadow-container">
-                <h2 class="text-center mb-4">Bitacora Todos</h2>
-                <small class="text-muted">(No suma producción)</small>
-                <br>
-                <br>
-                <label for="archivoDiaria" class="form-label">Seleccione Bitacora:</label>
-                <input class="form-control mb-3" type="file" name="archivoDiaria" id="archivo_diaria">
+            {{-- Tarjeta #1: Bitácora Todos --}}
+            <div class="upload-card">
+                <h2 class="text-center">Bitácora Todos</h2>
+                <small class="text-muted text-center">(No suma producción)</small>
+
+                <label for="archivoDiaria" class="form-label mt-3">Seleccione Bitácora:</label>
+                <input class="form-control" type="file" name="archivoDiaria" id="archivo_diaria">
+
                 <div class="button-container">
-                    <button class="btn btn-primary" id="btnProcesar" type="submit">Procesar</button>
+                    <button class="btn-gradient" id="btnProcesar"><span>Procesar</span></button>
                 </div>
-                <br>
-                <div class="row" id="message"></div>
+
+                <div class="row mt-3" id="message"></div>
             </div>
             @endunlessrole
-            <div class="shadow-container">
 
+            {{-- Tarjeta #2: Subir Archivos (siempre visible) --}}
+            <div class="upload-card">
+                <h2 class="text-center">Subir Archivos</h2>
 
-                <h2 class="text-center mb-4">Subir Archivos</h2>
-                @role('Supervisor')
                 <form action="{{route('bitacoras.generar')}}" method="POST" enctype="multipart/form-data">
                     @csrf
-                    <select class="form-control form-select-lg mb-3" name="supervisor" id="supervisor" disabled>
-                        <option value="{{$supervisores->id}}" selected>{{$supervisores->name}}</option>
-                    </select>
+
+                    @role('Supervisor')
                     <input type="hidden" name="supervisor" value="{{$supervisores->id}}">
-                    @error('supervisor')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                    <label for="archivo" class="form-label">Seleccione Bitacora:</label>
-
-                    <input class="form-control mb-3" type="file" name="archivo" id="archivo">
-                    @error('archivo')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                    <div class="button-container">
-                        <button class="btn btn-primary" type="submit">Subir Archivo</button>
-                    </div>
-
-                </form>
-                @endrole
-                @unlessrole('Supervisor')
-                <form action="{{route('bitacoras.generar')}}" method="POST" enctype="multipart/form-data">
-                    <select class="form-control form-select-lg mb-3" name="supervisor" id="supervisor">
-                        <option value="">Seleccione Supervisor</option>
-                        <option value="0">Cierre</option>
-                        @foreach ($supervisores as $supervisor)
-
-                            <option value="{{$supervisor->id}}">{{$supervisor->name}}</option>
-                        @endforeach
+                    <select class="form-control" id="supervisor" disabled>
+                        <option selected>{{$supervisores->name}}</option>
                     </select>
+                    @else
+                        <label for="supervisor" class="form-label mt-3">Supervisor:</label>
+                        <select class="form-control" name="supervisor" id="supervisor">
+                            <option value="">Seleccione Supervisor</option>
+                            @foreach ($supervisores as $supervisor)
+                                <option value="{{$supervisor->id}}">{{$supervisor->name}}</option>
+                            @endforeach
+                        </select>
+                        @error('supervisor')
+                        <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                        @endrole
 
-                    @error('supervisor')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                    <label for="archivo" class="form-label">Seleccione Bitacora:</label>
-                    @csrf
-                    <input class="form-control mb-3" type="file" name="archivo" id="archivo">
-                    @error('archivo')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                    <div class="button-container">
-                        <button class="btn btn-primary" type="submit">Subir Archivo</button>
+                        <label for="archivo" class="form-label mt-3">Seleccione Bitácora:</label>
+                        <input class="form-control" type="file" name="archivo" id="archivo">
+                        @error('archivo')
+                        <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
 
+                        <div class="button-container">
+                            <button class="btn-gradient" type="submit"><span>Subir Archivo</span></button>
+                        </div>
                 </form>
-                @endunlessrole
 
             </div>
         </div>
     </div>
-    </div>
-
     @if (session('error'))
         <script>
             document.addEventListener('DOMContentLoaded', function () {
@@ -177,7 +155,7 @@
                 });
             });
         </script>
-    @endif
-    </body>
+        @endif
+        </body>
 
-@endsection
+        @endsection

@@ -78,7 +78,7 @@ class AutoGuardadoController extends Controller
             'PROGRAMADA.',
             'USUARIO NO AUTORIZA.'
         ];
-        $columnas = ['A', 'B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K', 'M', 'N', 'O', 'Q','R'];
+        $columnas = ['A', 'B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K', 'M', 'N', 'O', 'Q','R','S'];
         foreach ($nombres as $index => $nombre) {
             foreach ($spreadsheet->getSheetNames() as $sheetName) {
                 $sheet = $spreadsheet->getSheetByName($sheetName);
@@ -104,6 +104,10 @@ class AutoGuardadoController extends Controller
 
                         foreach ($columnas as $columna) {
                             $valor = $sheet->getCell($columna . $row->getRowIndex())->getValue();
+
+                            if($columna === 'S' &&$sheet->getCell('G' . $row->getRowIndex())->getValue() === 'RN 12162' ){
+                                $valor = $sheet->getCell('T' . $row->getRowIndex())->getValue();
+                            }
                             //si el tipo de trabajo es 12162 entonces que coja la categoria de la columna L
                             if($columna === 'K' && $sheet->getCell('G' . $row->getRowIndex())->getValue() === 'RN 12162'){
                                 $valor = $sheet->getCell('L' . $row->getRowIndex())->getValue();
@@ -292,6 +296,7 @@ class AutoGuardadoController extends Controller
                             'RESULTADO_CIERRE' => $inspeccion['M'],
                             'HORA_INICIO' => $inspeccion['N'],
                             'HORA_FINAL' => $inspeccion['O'],
+                            '4_RECINTOS' => $inspeccion['S'] ?? 'NO',
                             'VENCE' => $inspeccion['Q'],
                             'PERIODO_GRACIA' => $inspeccion['R'],
                             'id_bitacora' => $bitacora->id,

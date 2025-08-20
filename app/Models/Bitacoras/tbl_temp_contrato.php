@@ -25,6 +25,7 @@ class tbl_temp_contrato extends Model
         'HORA_FINAL',
         'VENCE',
         'PERIODO_GRACIA',
+        '4_RECINTOS',
         'id_bitacora',
         'id_usuario',
         'id_super'
