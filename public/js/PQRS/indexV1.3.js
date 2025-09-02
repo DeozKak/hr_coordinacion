@@ -48,14 +48,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 let mensajeHtml = '';
 
                 // Mensaje de éxito genérico
-                mensajeHtml += `<div class="alert alert-success">
+                mensajeHtml += `<div class="alert-modern alert-success-modern">
                 Archivo subido exitosamente.<br>
                 Registros procesados: <strong>${response.procesados ?? 0}</strong>.
             </div>`;
 
                 // Si hay errores, los mostramos
                 if (response.errores && response.errores.length > 0) {
-                    mensajeHtml += `<div class="alert alert-warning">
+                    mensajeHtml += `<div class="alert-modern alert-warning-modern">
                     <strong>Hubo errores en las siguientes filas:</strong>
                     <ul>`;
                     response.errores.forEach(function(item) {
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     msg = xhr.responseJSON.error;
                 }
                 $('#mensaje-programaciones').html(
-                    `<div class="alert alert-danger">${msg}</div>`
+                    `<div class="alert-modern alert-danger-modern">${msg}</div>`
                 );
             }
         });
@@ -96,6 +96,7 @@ function cargarQuejas() {
 
                 // Si usas un archivo como "coordinaciontbl.js", llama aquí a tu función Handsontable:
                 initHandsontableQuejas(columnas, datos);
+
             }
         });
 }
@@ -126,7 +127,7 @@ function initHandsontableQuejas(colHeaders, data) {
         rowHeaders: true,
         readOnly: true,
         columns: columns,
-        height: "650px",
+
         licenseKey: "non-commercial-and-evaluation",
         cells: function(row, col, prop) {
             const cellProperties = {};
@@ -154,6 +155,18 @@ function initHandsontableQuejas(colHeaders, data) {
 
 
 }
+
+let resizeTimeout;
+window.addEventListener('resize', function() {
+    clearTimeout(resizeTimeout);
+    // Usamos un timeout para no ejecutar la función cientos de veces mientras se redimensiona
+    resizeTimeout = setTimeout(function() {
+        // 'hot' es la variable de tu tabla Handsontable
+        if (window.hotInstance) {
+            window.hotInstance.render(); // Vuelve a dibujar la tabla para que se ajuste al nuevo tamaño
+        }
+    }, 250);
+});
 
 
 

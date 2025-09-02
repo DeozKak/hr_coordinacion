@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
             error: function (xhr, status, error) {
                 console.error(xhr.responseText);
                 Swal.fire({
-                    type: 'error',
+                    icon: 'error',
                     title: 'Error',
                     text: 'Ocurrió un error al cargar los datos de la base de datos'
                 });
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
             error: function (xhr, status, error) {
                 console.error(xhr.responseText);
                 Swal.fire({
-                    type: 'error',
+                    icon: 'error',
                     title: 'Error',
                     text: 'Ocurrió un error al cargar los datos de la base de datos'
                 });
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         success: function (response) {
 
                             Swal.fire({
-                                type: 'success',
+                                icon: 'success',
                                 title: 'Devolución exitosa',
                                 text: 'Los contratos seleccionados han sido devueltos correctamente'
                             });
@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         error: function (xhr, status, error) {
                             console.log(xhr.responseText);
                             Swal.fire({
-                                type: 'error',
+                                icon: 'error',
                                 title: 'Error',
                                 text: 'Ocurrió un error al devolver los contratos seleccionados ' + error
                             });

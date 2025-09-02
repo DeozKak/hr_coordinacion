@@ -1,0 +1,170 @@
+/* =================================================================== */
+/* ====   ESTILOS MODERNOS PARA VISTA DE PRODUCCIÓN         ==== */
+/* =================================================================== */
+h1 {
+    color: #34495e;
+    font-weight: 600;
+}
+/* ==== Contenedor Principal ==== */
+.shadow-container {
+    background: #ffffff;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 32px rgba(44, 62, 80, 0.12);
+    border: 1px solid #e8eef3;
+    padding: 1.5rem;
+}
+
+/* ==== Botón "Ir Atrás" ==== */
+.btn-back {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background-color: transparent; border: none;
+    color: #525f7f; font-size: 0.9rem; font-weight: 600;
+    text-decoration: none; transition: all 0.2s ease;
+    margin-bottom: 1.5rem;
+}
+.btn-back:hover { color: #1d8cf8; transform: translateX(-3px); }
+
+/* ==== Pestañas (Tabs) Modernas ==== */
+.nav-tabs { border-bottom: 1px solid #dee2e6 !important; }
+.nav-tabs .nav-link {
+    border: none !important; color: #525f7f; font-weight: 600;
+    margin-bottom: -1px; border-bottom: 3px solid transparent;
+}
+.nav-tabs .nav-link:hover { border-bottom-color: #a0cffc; }
+.nav-tabs .nav-link.active { color: #3358f4; border-bottom-color: #3358f4 !important; }
+
+/* ==== Tarjetas para Gráficos ==== */
+.dashboard-card {
+    border: 1px solid #e9ecef !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    height: 100%; /* Para que las tarjetas en una fila tengan la misma altura */
+}
+/* Busca esta regla y reemplázala */
+
+.dashboard-card .card-header {
+    /* NUEVO FONDO DE GRADIENTE */
+    background: linear-gradient(90deg, #1d8cf8 0%, #3358f4 100%) !important;
+
+    /* NUEVO COLOR DE TEXTO E ICONO PARA CONTRASTE */
+    color: #ffffff !important;
+
+    font-weight: 600;
+    border-bottom: none !important; /* El gradiente no necesita un borde inferior */
+    border-radius: 12px 12px 0 0 !important;
+}
+
+/* Adicional: Nos aseguramos de que el ícono dentro del título también sea blanco */
+.dashboard-card .card-header .card-title i {
+    color: #ffffff !important;
+}
+
+
+
+/* ==== Selectores Modernos ==== */
+.form-select-modern {
+    -webkit-appearance: none; appearance: none; display: block;
+    width: 100%; padding: 0.6rem 2.5rem 0.6rem 1rem;
+    font-size: 0.95rem; font-weight: 400; line-height: 1.5;
+    color: #2c3e50; background-color: #fff;
+    border: 1px solid #d1d9e6; border-radius: 8px;
+    transition: all .15s ease-in-out; cursor: pointer;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+}
+.form-select-modern:focus {
+    border-color: #3498db; outline: 0;
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+}
+
+
+/* Estilos para Tom Select (Recomendado para selección múltiple) */
+.ts-control {
+    border-radius: 8px !important; border: 1px solid #d1d9e6 !important;
+    padding: 0.6rem 1rem !important; box-shadow: none !important;
+}
+/* =================================================================== */
+/* ====   BOTONES MODERNOS CON ANIMACIÓN CROSS-FADE         ==== */
+/* =================================================================== */
+
+/* --- 1. ESTILO BASE (Para TODOS los botones) --- */
+/* Define el tamaño y la forma para que sean proporcionales */
+.btn-base {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    position: relative; /* Contexto para la animación */
+    overflow: hidden;   /* Oculta lo que se salga del botón */
+}
+
+/* --- 2. CLASE DE ANIMACIÓN (La mecánica del efecto) --- */
+.btn-animated-gradient {
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.btn-animated-gradient span,
+.btn-animated-gradient i {
+    position: relative;
+    z-index: 2; /* El texto y el ícono siempre visibles */
+}
+.btn-animated-gradient::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    opacity: 1; /* Comienza visible */
+    z-index: 1; /* Detrás del texto */
+    transition: opacity 0.4s ease-out; /* La duración de la animación */
+}
+.btn-animated-gradient:hover::before {
+    opacity: 0; /* Al pasar el mouse, la capa inicial se desvanece */
+}
+
+/* --- 3. CLASES DE COLOR (Definen los gradientes) --- */
+
+/* Botón Primario (Azul/Púrpura) */
+.btn-primary-animated {
+    /* Gradiente FINAL (el que se revela) */
+    background: linear-gradient(90deg, #5e72e4 0%, #825ee4 100%);
+}
+.btn-primary-animated::before {
+    /* Gradiente INICIAL (el que se desvanece) */
+    background: linear-gradient(90deg, #1d8cf8 0%, #3358f4 100%);
+}
+
+/* Botón Secundario (Gris) */
+.btn-secondary-animated {
+    /* Gradiente FINAL (gris oscuro) */
+    background: linear-gradient(90deg, #6c757d 0%, #5a6268 100%);
+}
+.btn-secondary-animated::before {
+    /* Gradiente INICIAL (gris claro) */
+    background: linear-gradient(90deg, #adb5bd 0%, #8a96a8 100%);
+}
+/* Agrega esta nueva regla para que Tom Select ocupe el 100% del ancho */
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+/* Nuevo contenedor para alinear los botones horizontalmente */
+.button-actions-row {
+    display: flex;
+    flex-direction: row; /* Alinea los botones uno al lado del otro */
+    gap: 0.75rem;      /* Espacio entre los botones */
+}
+
+.filter-group .ts-wrapper {
+    width: 100%;
+}

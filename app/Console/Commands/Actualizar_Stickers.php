@@ -10,7 +10,7 @@ use App\Models\tbl_insp_cali;
 use App\Models\Bitacoras\tbl_bitacora_contrato;
 use App\Models\Stickers\tbl_inspector_sticker;
 use App\Models\Stickers\tbl_sticker_tipo;
-
+use Rmunate\Calendario\CalendarioColombia;
 class Actualizar_Stickers extends Command
 {
     /**
@@ -29,8 +29,28 @@ class Actualizar_Stickers extends Command
     public function handle(): int
     {
         $hoy = Carbon::today();
+
+        // Retroceder hasta el último día no festivo
         $ayer = clone $hoy;
-        $ayer->subDay();
+        $ayer->subDay(); // Comenzar con el día anterior
+
+
+        if(CalendarioColombia::date($hoy->toDateString())->isHoliday()){
+            return Command::SUCCESS;
+        }
+
+        while (CalendarioColombia::date($ayer->toDateString())->isHoliday()) {
+            $ayer->subDay(); // Retroceder día a día hasta encontrar uno no festivo
+        }
+
+        $inicioRango = $ayer->copy(); // Último día no festivo encontrado
+        $finRango = $hoy->copy()->subDay(); // Día anterior al actual
+
+        Log::info('[Stickers] Rango de días seleccionado.', [
+            'inicio_rango' => $inicioRango->toDateString(),
+            'fin_rango'    => $finRango->toDateString(),
+        ]);
+
 
         // Ajusta el nombre del campo si tu tabla de tipos usa otro en vez de "nombre" (por ejemplo "NOMBRE")
         $tiposNecesarios = ['ROJOS', 'AMARILLOS', 'SUSPENSION'];
@@ -89,7 +109,7 @@ class Actualizar_Stickers extends Command
 
             $rows = tbl_bitacora_contrato::query()
                 ->select('RESULTADO_CIERRE', DB::raw('COUNT(*) as total'))
-                ->whereDate('FECHA', $ayer->toDateString())
+                ->whereBetween('FECHA', [$inicioRango->toDateString(), $finRango->toDateString()])
                 ->where('CC_OPERARIO', $documentoInspector)
                 ->whereNotIn('TIPO_TRABAJO', $tipos_linea_matriz)
                 ->whereNotNull('RESULTADO_CIERRE')
@@ -98,7 +118,7 @@ class Actualizar_Stickers extends Command
 
             // <<< CAMBIO: Consulta 2: Solo para contar trabajos de Línea Matriz
             $conteoLineaMatriz = tbl_bitacora_contrato::query()
-                ->whereDate('FECHA', $ayer->toDateString())
+                ->whereBetween('FECHA', [$inicioRango->toDateString(), $finRango->toDateString()])
                 ->where('CC_OPERARIO', $documentoInspector)
                 ->whereIn('TIPO_TRABAJO', $tipos_linea_matriz) // Se usa whereIn para buscar estos tipos
                 ->count(); // Usamos count() para obtener directamente el número total

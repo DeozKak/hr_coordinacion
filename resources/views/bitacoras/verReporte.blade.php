@@ -8,7 +8,7 @@
 
 @section('content')
     {{-- Enlazamos la nueva hoja de estilos para esta vista --}}
-    <link rel="stylesheet" href="{{ asset('css/bitacoras/verReportesV2.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/bitacoras/verReportesV3.css') }}">
 
     {{-- Inputs ocultos para que los use JavaScript --}}
     <input type="hidden" id="url_devolucion" value="{{ route('bitacoras.devolver', ['ids' => ':id', 'bitacora' => $bitacora->id]) }}">
@@ -48,5 +48,5 @@
         const causales = {!! json_encode($causales_dv) !!};
     </script>
     {{-- Asegúrate que tu JS se cargue después de la definición de 'causales' --}}
-    <script src="{{ asset('js/bitacora/verReportesV4.js') }}"></script>
+    <script src="{{ asset('js/bitacora/verReportesV4.1.js') }}"></script>
 @stop

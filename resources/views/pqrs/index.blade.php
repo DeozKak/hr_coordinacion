@@ -7,67 +7,41 @@
 @endsection
 
 @section('content')
-    <style>
-        /* Agrega estos estilos en tu archivo CSS o blade */
-        .htDiasWarning {
-            background-color: rgba(255, 255, 0, 0.8) !important;
-            color: black !important;
-        }
+    <link rel="stylesheet" href="{{asset('css/pqrs/index.css')}}">
 
-        .htDiasError {
-            background-color: rgba(255, 0, 0, 0.76) !important;
-            color: white !important;
-        }
-
-        .filaRecepcionMacro {
-            background-color: rgb(147, 255, 134) !important;
-            color: rgb(89, 88, 88) !important;
-        }
-        .filaRecepcionGDW {
-            background-color: rgb(150, 186, 255) !important;
-            color: rgb(89, 88, 88) !important;
-        }
-    </style>
+    {{-- Contenedor #1: Formulario de Carga (centrado) --}}
     @can('cargar_PQRS')
-        <div class="d-flex justify-content-center">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title text-center mb-3">Macro PQR</h4>
-                        <form id="formulario-archivo" enctype="multipart/form-data">
-                            @csrf
-                            <div class="form-group">
-                                <input type="file" class="form-control" id="archivo" name="macroPQR" required>
-                            </div>
-                            <div class="text-center">
-                                <button type="submit" id="btnSubir" class="btn btn-success">Subir</button>
-                            </div>
-                        </form>
-                        <br>
-                        <div id="mensaje-programaciones"></div>
+        <div class="shadow-container" style="max-width: 600px; margin: 2rem auto;">
+            <div class="upload-card">
+                {{-- ... tu formulario de carga aquí ... --}}
+                <h4 class="card-title text-center mb-3">Cargar Macro PQR</h4>
+                <form id="formulario-archivo" enctype="multipart/form-data">
+                    @csrf
+                    <div class="form-group mb-3">
+                        <input type="file" class="form-control" id="archivo" name="macroPQR">
                     </div>
-                </div>
+                    <div class="text-center">
+                        <button type="submit" id="btnSubir" class="btn-gradient-success">Subir Archivo</button>
+                    </div>
+                </form>
+                <div id="mensaje-programaciones" class="mt-3"></div>
             </div>
         </div>
     @endcan
 
-
+    {{-- ▼▼ ESTE ES EL NUEVO CONTENEDOR PARA CENTRAR LA TABLA ▼▼ --}}
     <div class="d-flex justify-content-center">
-        <div class="card" style="width:1150px; margin:auto;">
-            <div class="card-header">
-                <h4 class="card-title text-center mb-0">Tiempos</h4>
-            </div>
-            <div class="card-body" style="padding: 20px">
-                <div id="table"></div>
+        {{-- Contenedor #2: Tabla de Tiempos de Gestión --}}
+        <div class="shadow-container" style="width: 100%; max-width: 1400px;"> {{-- Le damos un ancho máximo --}}
+            <div class="table-section">
+                <h2 class="table-section-header">Tiempos de Gestión</h2>
+                <div class="table-container">
+                    <div id="table"></div>
+                </div>
             </div>
         </div>
     </div>
 
 
-
-
-
-
-    <script src="{{ asset('js/PQRS/indexV1.2.js') }}"></script>
-
+    <script src="{{ asset('js/PQRS/indexV1.3.js') }}"></script>
 @endsection

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Stickers\tbl_asignacion_sticker_historial;
 use App\Models\Stickers\tbl_inspector_sticker;
+use App\Models\Bitacoras\tbl_bitacora_contrato;
 use App\Models\Zonificacion\TblSubgrupo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -42,5 +43,11 @@ class tbl_insp_cali extends Model implements AuditableContract
     {
         return $this->hasMany(tbl_asignacion_sticker_historial::class,'id_inspector','id');
     }
+
+    public function contratos()
+    {
+        return $this->hasMany(tbl_bitacora_contrato::class, 'CC_OPERARIO', 'cedula');
+    }
+
 
 }

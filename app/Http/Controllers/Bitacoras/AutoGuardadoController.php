@@ -31,13 +31,13 @@ class AutoGuardadoController extends Controller
             ->where('finished', '=', '0')->exists();
 
         if ($proceso) {
-            return  response()->json(['error' => 'El archivo seleccionado se encuentra en proceso por otro usuario']);
+            return response()->json(['error' => 'El archivo seleccionado se encuentra en proceso por otro usuario']);
         }
     }
 
-    public function guardar($spreadsheet, $nombres, $super, $cedulas,$cierre_todos = null,)
+    public function guardar($spreadsheet, $nombres, $super, $cedulas, $cierre_todos = null)
     {
-        $rutaArchivoFinal = str_replace(['.xls', '4.08',' V10'], [' ', '',''], session('nom_archivo'));
+        $rutaArchivoFinal = str_replace(['.xls', '4.08', ' V10'], [' ', '', ''], session('nom_archivo'));
         $nombreArchivo = $rutaArchivoFinal . ".xlsx";
 
         $usuario = Auth::user();
@@ -78,7 +78,7 @@ class AutoGuardadoController extends Controller
             'PROGRAMADA.',
             'USUARIO NO AUTORIZA.'
         ];
-        $columnas = ['A', 'B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K', 'M', 'N', 'O', 'Q','R','S'];
+        $columnas = ['A', 'B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K', 'M', 'N', 'O', 'Q', 'R', 'S'];
         foreach ($nombres as $index => $nombre) {
             foreach ($spreadsheet->getSheetNames() as $sheetName) {
                 $sheet = $spreadsheet->getSheetByName($sheetName);
@@ -96,7 +96,7 @@ class AutoGuardadoController extends Controller
                     if (
                         strpos($contrato, ":") === 0 &&
                         trim($cc_operario) === $cedulas[$index] &&
-                        $cedulas[$index] !==  $data_super->identification &&
+                        $cedulas[$index] !== $data_super->identification &&
                         in_array($cierre, ["CERTIFICADA", "CERTIFICADA CON NOVEDADES", "INSPECCIONADA CON DEFECTO CRITICO VALLE", "INSPECCIONADA CON DEFECTO NO CRITICO VALLE"])
 
                     ) {
@@ -105,11 +105,11 @@ class AutoGuardadoController extends Controller
                         foreach ($columnas as $columna) {
                             $valor = $sheet->getCell($columna . $row->getRowIndex())->getValue();
 
-                            if($columna === 'S' &&$sheet->getCell('G' . $row->getRowIndex())->getValue() === 'RN 12162' ){
+                            if ($columna === 'S' && $sheet->getCell('G' . $row->getRowIndex())->getValue() === 'RN 12162') {
                                 $valor = $sheet->getCell('T' . $row->getRowIndex())->getValue();
                             }
                             //si el tipo de trabajo es 12162 entonces que coja la categoria de la columna L
-                            if($columna === 'K' && $sheet->getCell('G' . $row->getRowIndex())->getValue() === 'RN 12162'){
+                            if ($columna === 'K' && $sheet->getCell('G' . $row->getRowIndex())->getValue() === 'RN 12162') {
                                 $valor = $sheet->getCell('L' . $row->getRowIndex())->getValue();
                             }
                             if ($columna === 'A') {
@@ -129,10 +129,10 @@ class AutoGuardadoController extends Controller
                                 $valor = ($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m')) ? "60 meses" : "";
                             }
 
-                            if ($columna === 'R'){
-                                if($valor === 'Si'){
+                            if ($columna === 'R') {
+                                if ($valor === 'Si') {
                                     $valor = 1;
-                                }else{
+                                } else {
                                     $valor = 0;
                                 }
                             }
@@ -142,11 +142,11 @@ class AutoGuardadoController extends Controller
                         // Usar el valor de la columna 'B' como índice
                         $datos[$cc_operario][] = $filaDatos;
                     } elseif (
-                        in_array($tipo_trabajo,['RP 10444','RN 12162','RP 12161','SA 12163','SA 12164']) &&
+                        in_array($tipo_trabajo, ['RP 10444', 'RN 12162', 'RP 12161', 'SA 12163', 'SA 12164']) &&
                         $cierre_todos !== '0' &&
                         strpos($contrato, ":") === 0 &&
                         trim($cc_operario) === $cedulas[$index] &&
-                        $cedulas[$index] !==  $data_super->identification &&
+                        $cedulas[$index] !== $data_super->identification &&
                         in_array($cierre, $arrayFallidas)
 
                     ) {
@@ -173,13 +173,13 @@ class AutoGuardadoController extends Controller
                             $filaDatosFallidas[$columna] = $valor;
                         }
                         $DatosFallidas[$cc_operario][] = $filaDatosFallidas;
-                    }elseif(
+                    } elseif (
                         $tipo_trabajo === 'QUEJAS VALLE ' &&
                         $cierre_todos !== '0' &&
-                       // strpos($contrato, ":") === 1 &&
+                        // strpos($contrato, ":") === 1 &&
                         trim($cc_operario) === $cedulas[$index] &&
                         in_array($cierre, $arrayFallidas)
-                    ){
+                    ) {
                         $filaDatosQuejas = [];
                         foreach ($columnas as $columna) {
                             $valor = $sheet->getCell($columna . $row->getRowIndex())->getValue();
@@ -282,6 +282,18 @@ class AutoGuardadoController extends Controller
                     if (!$existe || $cierre_todos === '0') {
 
 
+                        //Validacion para el campo de recintos, no permite valores inferiores a 4
+                        $valorRecintos = 'NO';
+
+                        //  Definimos los valores que también deben ser considerados como 'NO'.
+                        $valoresInvalidos = ['1', '2', '3'];
+
+                        //  Verificamos si la clave 'S' existe y si su valor no está en la lista de inválidos.
+                        if (isset($inspeccion['S']) && !in_array($inspeccion['S'], $valoresInvalidos)) {
+                            // Si la condición es verdadera, usamos el valor original.
+                            $valorRecintos = $inspeccion['S'];
+                        }
+
                         tbl_temp_contrato::create([
                             'NOMBRE' => $inspeccion['A'],
                             'CC_OPERARIO' => $inspeccion['B'],
@@ -296,7 +308,7 @@ class AutoGuardadoController extends Controller
                             'RESULTADO_CIERRE' => $inspeccion['M'],
                             'HORA_INICIO' => $inspeccion['N'],
                             'HORA_FINAL' => $inspeccion['O'],
-                            '4_RECINTOS' => $inspeccion['S'] ?? 'NO',
+                            '4_RECINTOS' => $valorRecintos,
                             'VENCE' => $inspeccion['Q'],
                             'PERIODO_GRACIA' => $inspeccion['R'],
                             'id_bitacora' => $bitacora->id,
@@ -343,7 +355,7 @@ class AutoGuardadoController extends Controller
         $response = tbl_temp_contrato::where('id_bitacora', $id_bitacora)->get();
         $causales = tbl_bitacoras_causal::all();
 
-        return view('bitacoras.tabla', compact('response', 'nombres', 'municipios', 'causales', 'id_super', 'inspectores','cedulas'));
+        return view('bitacoras.tabla', compact('response', 'nombres', 'municipios', 'causales', 'id_super', 'inspectores', 'cedulas'));
     }
 
     public function Borrar($id_bitacora)

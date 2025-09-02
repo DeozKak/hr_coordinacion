@@ -8,7 +8,7 @@
 
 @section('content')
     {{-- Dependencias --}}
-    <link rel="stylesheet" href="{{asset('css/bitacoras/generarV2.css')}}">
+    <link rel="stylesheet" href="{{asset('css/bitacoras/generarV3.1.css')}}">
     <script src="{{ asset('js/bitacora/generar.js') }}"></script>
     <input type="hidden" id="token" value="{{ csrf_token() }}">
     <input type="hidden" id="url_diaria" value="{{ route('bitacoras.diaria') }}">

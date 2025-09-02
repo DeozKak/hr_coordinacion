@@ -1,0 +1,181 @@
+/* =================================================================== */
+/* ====   REDISENO MODERNO Y GENERAL PARA SWEETALERT2      ==== */
+/* =================================================================== */
+
+/* --- 1. ESTILO GENERAL DEL POPUP (MODAL) --- */
+.swal2-popup {
+    border-radius: 1.25rem !important;
+    border: 1px solid #e8eef3 !important;
+    box-shadow: 0 4px 32px rgba(44, 62, 80, 0.15) !important;
+    padding: 1.5rem !important;
+    font-family: inherit !important; /* Usa la fuente de tu plantilla */
+}
+
+/* --- 2. TÍTULO, TEXTO Y CONTENIDO --- */
+.swal2-title {
+    color: #2c3e50 !important;
+    font-weight: 600 !important;
+    font-size: 1.5rem !important;
+}
+
+.swal2-html-container {
+    color: #525f7f !important;
+    font-size: 1rem !important;
+}
+
+.swal2-footer {
+    border-top: 1px solid #e9ecef !important;
+    margin-top: 1.5rem !important;
+    padding-top: 1rem !important;
+}
+
+/* --- 3. ICONOS PERSONALIZADOS --- */
+.swal2-icon.swal2-success .swal2-success-ring {
+    border-color: rgba(40, 167, 69, 0.3) !important;
+}
+.swal2-icon.swal2-success [class^=swal2-success-line] {
+    background-color: #28a745 !important;
+}
+.swal2-icon.swal2-error {
+    border-color: #e53e3e !important;
+    color: #e53e3e !important;
+}
+.swal2-icon.swal2-warning {
+    border-color: #f59e0b !important;
+    color: #f59e0b !important;
+}
+.swal2-icon.swal2-info {
+    border-color: #3498db !important;
+    color: #3498db !important;
+}
+.swal2-icon.swal2-question {
+    border-color: #6c757d !important;
+    color: #6c757d !important;
+}
+
+/* --- 4. BOTONES DE ACCIÓN MODERNOS (VERSIÓN CORREGIDA) --- */
+.swal2-actions {
+    gap: 0.75rem !important;
+}
+
+.swal2-styled {
+    border-radius: 8px !important;
+    padding: 0.65rem 1.5rem !important;
+    font-weight: 600 !important;
+    box-shadow: none !important;
+    transition: all 0.2s ease !important;
+    min-width: 120px;
+}
+.swal2-styled:focus {
+    box-shadow: none !important;
+}
+
+/* Botón de Confirmar (AZUL POR DEFECTO para "OK") */
+.swal2-styled.swal2-confirm {
+    border: none !important;
+    color: #fff !important;
+    /* Tu nuevo gradiente púrpura */
+    background: linear-gradient(90deg, #5e72e4 0%, #825ee4 100%) !important;
+}
+.swal2-styled.swal2-confirm:hover {
+    transform: translateY(-2px);
+    /* Tu nuevo gradiente púrpura para el estado hover */
+    background: linear-gradient(90deg, #825ee4 0%, #5e72e4 100%) !important;
+    /* Sombra actualizada para coincidir con el tono púrpura */
+    box-shadow: 0 4px 12px rgba(94, 114, 228, 0.25) !important;
+}
+
+/* CLASE ADICIONAL para cuando quieras que el botón de confirmar sea VERDE */
+.swal2-confirm.swal2-confirm-success {
+    background: linear-gradient(90deg, #34e681 0%, #27ae60 100%) !important;
+    transition: background 0.4s ease; /* Añadimos la transición */
+}
+.swal2-confirm.swal2-confirm-success:hover {
+    /* Invertimos el gradiente para la animación */
+    background: linear-gradient(90deg, #27ae60 0%, #34e681 100%) !important;
+    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.2) !important;
+}
+
+
+/* Botón de Denegar (Rojo) */
+.swal2-styled.swal2-deny {
+    border: none !important;
+    color: #fff !important;
+    background: linear-gradient(90deg, #fa5252 0%, #e03131 100%) !important;
+    transition: background 0.4s ease; /* Añadimos la transición */
+}
+.swal2-styled.swal2-deny:hover {
+    transform: translateY(-2px);
+    /* Invertimos el gradiente para la animación */
+    background: linear-gradient(90deg, #e03131 0%, #fa5252 100%) !important;
+    box-shadow: 0 4px 12px rgba(224, 49, 49, 0.2) !important;
+}
+
+/* Botón de Cancelar (Secundario) */
+.swal2-styled.swal2-cancel {
+    background-color: #e9ecef !important;
+    color: #2c3e50 !important;
+}
+.swal2-styled.swal2-cancel:hover {
+    background-color: #d1d9e6 !important;
+}
+/* --- 5. CAMPOS DE FORMULARIO DENTRO DEL ALERT --- */
+.swal2-input, .swal2-textarea, .swal2-select {
+    border-radius: 8px !important;
+    border: 1px solid #d1d9e6 !important;
+    box-shadow: none !important;
+    transition: all 0.2s ease-in-out;
+    font-size: 1rem !important;
+}
+.swal2-input:focus, .swal2-textarea:focus, .swal2-select:focus {
+    border-color: #3498db !important;
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1) !important;
+}
+
+/* --- 6. ESTILO PARA NOTIFICACIONES TIPO "TOAST" --- */
+.swal2-popup.swal2-toast {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    padding: 0.8rem 1.25rem !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 20px rgba(44, 62, 80, 0.12) !important;
+    border: 1px solid #e9ecef;
+}
+.swal2-popup.swal2-toast.swal2-icon-success {
+    background-color: #f0fff4 !important;
+    border-left: 5px solid #28a745 !important;
+}
+.swal2-toast .swal2-icon.swal2-success .swal2-success-ring {
+    display: none;
+}
+.swal2-popup.swal2-toast.swal2-icon-error {
+    background-color: #fff5f5 !important;
+    border-left: 5px solid #e53e3e !important;
+}
+
+.swal2-popup.swal2-toast.swal2-icon-warning {
+    background-color: #fffbeb !important;
+    border-left: 5px solid #f59e0b !important;
+}
+
+.swal2-toast .swal2-icon {
+    /* Definimos un tamaño fijo y cuadrado para el contenedor del ícono */
+    width: 2rem !important;
+    height: 2rem !important;
+
+    /* Eliminamos márgenes y tamaños de fuente relativos que causan el conflicto */
+    margin: 0 !important;
+    font-size: initial; /* Reseteamos el font-size para evitar cálculos extraños */
+
+    /* Centramos el contenido del ícono (el tick o la exclamación) */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0; /* Evita que el contenedor se encoja */
+}
+.swal2-toast .swal2-title {
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 0.95rem !important;
+}

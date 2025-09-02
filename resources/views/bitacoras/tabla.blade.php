@@ -11,7 +11,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" type="text/css" href="{{asset('css/bitacoras/Tablas.css')}}">
+        <link rel="stylesheet" type="text/css" href="{{asset('css/bitacoras/TablasV2.css')}}">
         <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script src="{{asset('js/bitacora/tbl_dinamicaV8.js')}}"></script>
@@ -46,7 +46,7 @@
                 </a>
 
                 {{-- Los otros botones ahora también usan la clase base para ser proporcionales --}}
-                <button id="btnPapel" class="btn-base btn-gradient btn-gradient-secondary">Agregar Inspeccion en Papel</button>
+                <button id="btnPapel" class="btn-base btn-gradient btn-gradient-secondary">Agregar Inspección en Papel</button>
                 <button id="btnGuardar" class="btn-base btn-gradient btn-gradient-success">
                     <span>Guardar</span>
                 </button>

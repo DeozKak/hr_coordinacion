@@ -27,10 +27,10 @@ class CorreoTiemposQuejas implements ShouldQueue
      */
     public function handle(): void
     {
-        $quejas = tbl_queja::where('DIAS','>=','3')->get();
+        $quejas = tbl_queja::where('DIAS','>=',3)->where('recepcion',null)->get();
 
         if ($quejas->count() === 0) {
-            // No hay quejas, no se envía correo
+
             return;
         }
 

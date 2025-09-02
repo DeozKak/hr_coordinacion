@@ -839,6 +839,11 @@ return [
                 'asset' => true,
                 'location' => '//cdn.jsdelivr.net/npm/sweetalert2@11',
             ],
+            [
+                'type' => 'css',
+                'asset' => true,
+                'location' => 'css/Redesign_Sweetalert2/sweetalert2.css',
+            ],
         ],
     ],
     'Pace' => [

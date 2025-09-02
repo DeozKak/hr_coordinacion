@@ -7,7 +7,7 @@
 @endsection
 
 @section('content')
-<link rel="stylesheet" href="{{asset('css/bitacoras/Reportes.css')}}">
+<link rel="stylesheet" href="{{asset('css/bitacoras/ReportesV2.css')}}">
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="{{asset('js/bitacora/Reportes.js')}}"></script>
 

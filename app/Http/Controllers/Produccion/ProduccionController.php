@@ -25,7 +25,7 @@ class ProduccionController extends Controller
 {
     public function index(Request $request)
     {
-        $inpectores = [];
+
         $arrayInspectores = [];
         $cortes = tbl_produccion_corte::all();
         if ($request->id) {
@@ -41,15 +41,13 @@ class ProduccionController extends Controller
         $warning = null;
         $error = false;
         // sacar cortes activos
-
         if ($corte === null && !$error) {
             $error = true;
             $warning = 'No hay corte activo';
-            return view('produccion.index', ['produccionInspector' => "produccionInspector", 'contratosCategoria' => "contratosCategoria", 'conteoContratosPorZona' => " conteoContratosPorZona", 'corte' => $corte, 'warning' => $warning, 'cortes' => $cortes, 'arrayInspectores' => $arrayInspectores, 'inpectores' => $inpectores]);
+            return view('produccion.index', ['produccionInspector' => "produccionInspector", 'contratosCategoria' => "contratosCategoria", 'conteoContratosPorZona' => " conteoContratosPorZona", 'corte' => $corte, 'warning' => $warning, 'cortes' => $cortes, 'arrayInspectores' => $arrayInspectores]);
         }
         // Guardar el ID del corte actual en la sesión
         session(['corte_actual_id' => $corte->id]);
-
 
         // sacar contratos del corte activo
         $contratosCorte = tbl_bitacora_contrato::where('FECHA', '>=', $corte->fecha_inicio)
@@ -60,19 +58,27 @@ class ProduccionController extends Controller
             $error = true;
             $warning = 'No hay contratos en el corte activo';
         }
-        // sacar inspectores
-        $inpectores = tbl_insp_cali::all();
 
-        if (count($inpectores->toArray()) === 0 && !$error) {
+        // Obtenemos los inspectores con producción dentro del rango de fechas especificado
+        $inspectores = tbl_insp_cali::whereHas('contratos', function ($query) use ($corte) {
+            $query->where('FECHA', '>=', $corte->fecha_inicio)
+                ->where('FECHA', '<=', $corte->fecha_fin)
+                ->where('state', 1)
+                ->whereNotIn('TIPO_TRABAJO', [
+                    'FI-29 revisión periódica línea matriz',
+                    'FI-31 REVISIÓN NUEVA LINEA MATRIZ'
+                ]);
+        })->orderby('apellidos')->get();
+
+        if (count($inspectores->toArray()) === 0 && !$error) {
             $error = true;
             $warning = 'No hay inspectores activos';
         }
-        $contadortotal = 0;
         // sacar produccion de cada inspector
         $produccionInspector = array();
-        foreach ($inpectores as $inspector) {
-            // Contratos comerciales
-            $contratosComerciales = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
+        foreach ($inspectores as $inspector) {
+
+            $contratos = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
                 ->where('FECHA', '>=', $corte->fecha_inicio)
                 ->where('FECHA', '<=', $corte->fecha_fin)
                 ->where('state', '=', 1)
@@ -80,116 +86,22 @@ class ProduccionController extends Controller
                     'FI-29 revisión periódica línea matriz',
                     'FI-31 REVISIÓN NUEVA LINEA MATRIZ'
                 ])
-                ->where('CATEGORIA', '=', 'COMERCIAL')
+               // ->where('CATEGORIA', '=', 'COMERCIAL')
                 ->count();
-
-            // Contratos residenciales
-            $contratosResidenciales = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
-                ->where('FECHA', '>=', $corte->fecha_inicio)
-                ->where('FECHA', '<=', $corte->fecha_fin)
-                ->where('state', '=', 1)
-                ->whereNotIn('TIPO_TRABAJO', [
-                    'FI-29 revisión periódica línea matriz',
-                    'FI-31 REVISIÓN NUEVA LINEA MATRIZ'
-                ])
-                ->where('CATEGORIA', '=', 'RESIDENCIAL')
-                ->count();
-
-            // Total de contratos para este inspector
-            $numerosContratos = $contratosComerciales + $contratosResidenciales;
-
-            // Verifica si el inspector tiene contratos válidos para incluir en la lista
-            if ($numerosContratos === 0 && $inspector->state === 0) {
-                continue;
-            } elseif ($numerosContratos === 0) {
-                continue;
-            }
-
-            // Incrementa el contador total con el total de contratos del inspector
-            $contadortotal += $numerosContratos;
 
             // Añadir datos al array
             $produccionInspector[] = [
                 'nombres' => $inspector->apellidos,
-                'contratos_comerciales' => $contratosComerciales,
-                'contratos_residenciales' => $contratosResidenciales,
-                'contratos' => $numerosContratos, // Conserva el total de contratos en esta variable
+                'contratos' => $contratos, // Conserva el total de contratos en esta variable
                 'cedula' => $inspector->cedula
             ];
         }
-        // dd($produccionInspector);
-        // sacar categorias de los contratos
-        $contratosCategoria = tbl_bitacora_contrato::select('CATEGORIA', 'CC_OPERARIO')
-            ->where('FECHA', '>=', $corte->fecha_inicio)
-            ->where('FECHA', '<=', $corte->fecha_fin)
-            ->where('state', '=', 1)
-            ->whereNotIn('TIPO_TRABAJO', [
-                'FI-29 revisión periódica línea matriz',
-                'FI-31 REVISIÓN NUEVA LINEA MATRIZ'
-            ])
-            ->get()
-            ->toArray(); // Convertir a un arreglo para facilitar el uso en JavaScript
 
-        if (empty($contratosCategoria) && !$error) {
-            $error = true;
-            $warning = 'No hay categorías en los contratos';
-        }
-        // sacar cantidad de contratos por zona
-        $zonas = tbl_produccion_zona::all();
-        $conteoContratosPorZona = array();
         $municipiosNoEncontrados = array();
 
-        foreach ($zonas as $zona) {
-            $count = tbl_localidades_municipio::select('nombre')->where('id_zona', '=', $zona->id)->get();
-            $contador = 0;
-            // Verificador de municipios no encontrados
-            // Obtener los municipios de tbl_bitacora_contrato
-            $municipiosContratos = tbl_bitacora_contrato::select('MUNICIPIO')
-                ->where('FECHA', '>=', $corte->fecha_inicio)
-                ->where('FECHA', '<=', $corte->fecha_fin)
-                ->where('state', '=', 1)
-                ->whereNotIn('TIPO_TRABAJO', [
-                    'FI-29 revisión periódica línea matriz',
-                    'FI-31 REVISIÓN NUEVA LINEA MATRIZ'
-                ])
-                ->distinct()
-                ->get()
-                ->pluck('MUNICIPIO');
-
-            // Obtener los municipios de tbl_localidades_municipios
-            $municipiosLocalidades = tbl_localidades_municipio::select('nombre')
-                ->distinct()
-                ->get()
-                ->pluck('nombre');
-
-            // Comparar los municipios
-            $municipiosNoEncontrados = $municipiosContratos->diff($municipiosLocalidades);
-
-            if ($municipiosNoEncontrados->isEmpty()) {
-            } else {
-
-                foreach ($municipiosNoEncontrados as $municipio) {
-
-                    $municipiosNoEncontrados = collect(array_unique($municipiosNoEncontrados->toArray()));
-                }
-            }
-            foreach ($count as $c) {
-
-                $cantidades = tbl_bitacora_contrato::where('MUNICIPIO', '=', $c->nombre)->where('FECHA', '>=', $corte->fecha_inicio)
-                    ->where('FECHA', '<=', $corte->fecha_fin)->where('state', '=', 1)->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')->count();
-                $contador += $cantidades;
-                // Consulta adicional para obtener los registros que no cumplen con la condición del municipio
-
-            }
-
-            $conteoContratosPorZona[] = [
-                'zona' => $zona->nombre,
-                'contratos' => $contador
-            ];
-        }
-
-        // Consulta para filtrar los inspectores del corte actual
-        $inspectoresContratos = tbl_bitacora_contrato::select('CC_OPERARIO')
+        // Verificador de municipios no encontrados
+        // Obtener los municipios de tbl_bitacora_contrato
+        $municipiosContratos = tbl_bitacora_contrato::select('MUNICIPIO')
             ->where('FECHA', '>=', $corte->fecha_inicio)
             ->where('FECHA', '<=', $corte->fecha_fin)
             ->where('state', '=', 1)
@@ -197,51 +109,39 @@ class ProduccionController extends Controller
                 'FI-29 revisión periódica línea matriz',
                 'FI-31 REVISIÓN NUEVA LINEA MATRIZ'
             ])
-            ->groupBy('CC_OPERARIO')
-            ->get();
+            ->distinct()
+            ->get()
+            ->pluck('MUNICIPIO');
 
+        // Obtener los municipios de tbl_localidades_municipios
+        $municipiosLocalidades = tbl_localidades_municipio::select('nombre')
+            ->distinct()
+            ->get()
+            ->pluck('nombre');
 
-        foreach ($inspectoresContratos as $val) {
-            $queryInsp = tbl_insp_cali::where('cedula', $val->CC_OPERARIO)->first();
-            // dd($queryInsp);
-            if ($queryInsp != null) {
-                $arrayInspectores[] = [
-                    'id' => $queryInsp->id,
-                    'apellido' => $queryInsp->apellidos,
-                    'status' => $queryInsp->state,
-                    'cedula' => $queryInsp->cedula,
-                ];
+        // Comparar los municipios
+        $municipiosNoEncontrados = $municipiosContratos->diff($municipiosLocalidades);
+
+        if ($municipiosNoEncontrados->isEmpty()) {
+        } else {
+            foreach ($municipiosNoEncontrados as $municipio) {
+
+                $municipiosNoEncontrados = collect(array_unique($municipiosNoEncontrados->toArray()));
             }
         }
-        if (count($conteoContratosPorZona) === 0 && !$error) {
-            $error = true;
-            $warning = 'error en las zonas';
-        }
-
 
         if ($error) {
-
-            return view('produccion.index', ['produccionInspector' => $produccionInspector, 'numerosContratos' => $numerosContratos, 'contratosCategoria' => $contratosCategoria, 'conteoContratosPorZona' => $conteoContratosPorZona, 'corte' => $corte, 'warning' => $warning, 'cortes' => $cortes, 'arrayInspectores' => $arrayInspectores, 'inpectores' => $inpectores]);
+            return view('produccion.index', ['produccionInspector' => $produccionInspector, 'corte' => $corte, 'warning' => $warning, 'cortes' => $cortes, 'inspectores' => $inspectores]);
         }
 
-        return view('produccion.index', compact('produccionInspector', 'contratosCategoria', 'conteoContratosPorZona', 'corte', 'warning', 'municipiosNoEncontrados', 'inpectores', 'cortes', 'arrayInspectores'));
+        return view('produccion.index', compact('produccionInspector', 'corte', 'warning', 'municipiosNoEncontrados', 'cortes', 'inspectores'));
     }
 
     public function getCorteData(Request $request)
     {
-        // Obtener el corte actual desde la sesión
-        $corteActualId = session('corte_actual_id');
-
-        // Obtener el ID del corte seleccionado
-        $corteIdSeleccionado = $request->id;
-
-        // Verifica si el ID seleccionado es el mismo que el corte actual
-        if ($corteIdSeleccionado == $corteActualId) {
-            return response()->json(['message' => 'El corte seleccionado es el mismo que el corte actual. No se realizará ninguna comparación.']);
-        }
 
         $corteId = $request->id;
-
+        $inspectorCC = $request->inspector_cc;
         // Buscar el corte seleccionado por ID
         $corte = tbl_produccion_corte::find($corteId);
 
@@ -250,31 +150,38 @@ class ProduccionController extends Controller
         }
 
         // Obtener los inspectores y sus inspecciones para el corte seleccionado
-        $inpectores = tbl_insp_cali::all();
+        if ($inspectorCC) {
+            $inspectores = tbl_insp_cali::whereIn('cedula', $inspectorCC)->get();
+        } else {
+            // Obtenemos los inspectores con producción dentro del rango de fechas especificado
+            $inspectores = tbl_insp_cali::whereHas('contratos', function ($query) use ($corte) {
+                $query->where('FECHA', '>=', $corte->fecha_inicio)
+                    ->where('FECHA', '<=', $corte->fecha_fin)
+                    ->where('state', 1)
+                    ->whereNotIn('TIPO_TRABAJO', [
+                        'FI-29 revisión periódica línea matriz',
+                        'FI-31 REVISIÓN NUEVA LINEA MATRIZ'
+                    ]);
+            })->get();
+        }
+
         $produccionInspector = [];
 
-        foreach ($inpectores as $inspector) {
-            $contratosComerciales = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
+        foreach ($inspectores as $inspector) {
+            $contratos = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
                 ->where('FECHA', '>=', $corte->fecha_inicio)
                 ->where('FECHA', '<=', $corte->fecha_fin)
                 ->where('state', '=', 1)
-                ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
-                ->where('CATEGORIA', '=', 'COMERCIAL')
+                ->whereNotIn('TIPO_TRABAJO', [
+                    'FI-29 revisión periódica línea matriz',
+                    'FI-31 REVISIÓN NUEVA LINEA MATRIZ',
+                ])
+                //->where('CATEGORIA', '=', 'COMERCIAL')
                 ->count();
-
-            $contratosResidenciales = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
-                ->where('FECHA', '>=', $corte->fecha_inicio)
-                ->where('FECHA', '<=', $corte->fecha_fin)
-                ->where('state', '=', 1)
-                ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
-                ->where('CATEGORIA', '=', 'RESIDENCIAL')
-                ->count();
-
-            $numerosContratos = $contratosComerciales + $contratosResidenciales;
 
             $produccionInspector[] = [
                 'nombres' => $inspector->apellidos,
-                'contratos' => $numerosContratos,
+                'contratos' => $contratos,
                 'cedula' => $inspector->cedula
             ];
         }
@@ -283,6 +190,38 @@ class ProduccionController extends Controller
             'produccionInspector' => $produccionInspector,
             'nombreCorte' => $corte->nombre . " " . explode("-", $corte->fecha_inicio)[0] . "-" . explode("-", $corte->fecha_fin)[0]
         ]);
+    }
+
+    public function getCorteTotalData(Request $request)
+    {
+
+        $cortes_id = $request->cortes;
+
+        if (!$cortes_id) {
+            return response()->json(['error' => 'Corte no encontrado'], 404);
+        }
+
+        $cortes = tbl_produccion_corte::whereIn('id', $cortes_id)->get();
+
+        $results = [];
+
+        foreach ($cortes as $corte) {
+            $contratos = tbl_bitacora_contrato::where('FECHA', '>=', $corte->fecha_inicio)
+                ->where('FECHA', '<=', $corte->fecha_fin)
+                ->where('state', '=', 1)
+                ->whereNotIn('TIPO_TRABAJO', [
+                    'FI-29 revisión periódica línea matriz',
+                    'FI-31 REVISIÓN NUEVA LINEA MATRIZ',])
+                ->count();
+
+            $results[] = [
+                'id' => $corte->id,
+                'nombreCorte' => $corte->nombre . " " . explode("-", $corte->fecha_inicio)[0] . "-" . explode("-", $corte->fecha_fin)[0],
+                'totalContratos' => $contratos,
+            ];
+        }
+
+        return response()->json($results);
     }
 
     public function detallesCorte($id)
@@ -905,15 +844,15 @@ class ProduccionController extends Controller
         $contratosDoblesSabadoos = json_decode($sqlProHis->data, true);
 
         $flag = false;
-       /* if ($jsonNoDobles != null) {
-            foreach ($jsonNoDobles as $datos) {
-                foreach ($datos as $item) {
-                    if ($inspector == $item['datos']['cc_inspector'] && in_array($fecha, $item['datos']['fechas'])) {
-                        $flag = true;
-                    }
-                }
-            }
-        }*/
+        /* if ($jsonNoDobles != null) {
+             foreach ($jsonNoDobles as $datos) {
+                 foreach ($datos as $item) {
+                     if ($inspector == $item['datos']['cc_inspector'] && in_array($fecha, $item['datos']['fechas'])) {
+                         $flag = true;
+                     }
+                 }
+             }
+         }*/
 
         $flagHolidays = false;
         if ($jsonNoDoblesHoliday != null) {
@@ -1106,8 +1045,6 @@ class ProduccionController extends Controller
 
         return ['error' => 'Bitácora no encontrada.'];
     }
-
-
 
     public function guardarNoDobles(Request $request)
     {

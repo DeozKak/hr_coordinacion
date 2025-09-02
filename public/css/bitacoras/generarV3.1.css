@@ -170,6 +170,34 @@ h1 {
 .btn-gradient:hover::before {
     opacity: 0; /* El pseudo-elemento se desvanece */
 }
+/* --- Base para la alerta moderna --- */
+.alert {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px; /* Bordes redondeados */
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    border: 1px solid transparent;
+    border-left-width: 5px; /* Borde izquierdo más grueso */
+}
+
+.alert i {
+    font-size: 1.2rem;
+    margin-right: 0.75rem;
+}
+
+/* --- Variante para Alertas de Error/Peligro --- */
+.alert-danger{
+    background-color: #fff5f5; /* Fondo rojo pastel */
+    border-left-color: #e53e3e;  /* Borde izquierdo rojo */
+    color: #c53030;           /* Texto oscuro para legibilidad */
+}
+
+.alert-danger i {
+    color: #e53e3e;
+}
+
 /* ==== Loader y Overlay (se mantienen tus estilos) ==== */
 @keyframes spin {
     0% { transform: rotate(0deg); }

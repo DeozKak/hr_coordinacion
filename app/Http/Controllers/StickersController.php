@@ -30,18 +30,21 @@ class StickersController extends Controller
     {
         $Stickers = tbl_sticker_tipo::with('Inventario')->OrderBy('nombre')->get();
         // dd($Stickers);
+        // Consulta a inspectores activos y la última fecha de asignación por tipo de sticker
         $inspectores = tbl_insp_cali::where('state', 1)
             ->selectRaw('id, CONCAT(apellidos, " ", nombres) as nombre_completo')
-            ->with('Stickers')
+            ->with('Stickers') // Relación con todos los stickers asignados a cada inspector
             ->with(['HistoricoStickers' => function ($q) {
-                $q->whereIn('fecha_asignacion', function ($sub) {
-                    $sub->selectRaw('MAX(fecha_asignacion)')
-                        ->from('tbl_asignacion_sticker_historial as h2')
-                        ->whereColumn('h2.id_inspector', 'tbl_asignacion_sticker_historial.id_inspector');
+                $q->select('id', 'id_inspector', 'id_sticker_tipo', 'fecha_asignacion', 'cantidad') // Selección optimizada
+                ->whereIn('id', function ($sub) {
+                    $sub->selectRaw('MAX(id)') // Toma el último registro por inspector y tipo de sticker
+                    ->from('tbl_asignacion_sticker_historial')
+                        ->groupBy('id_inspector', 'id_sticker_tipo');
                 });
             }])
-            ->orderBy('nombre_completo', 'asc')
+            ->orderBy('nombre_completo', 'asc') // Ordena los inspectores por nombre completo
             ->get();
+
         return view('stickers.index', compact('inspectores', 'Stickers'));
     }
 
