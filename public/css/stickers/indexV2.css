@@ -1,10 +1,11 @@
 /* =================================================================== */
 /* ====   ESTILOS MODERNOS PARA VISTA DE CONTROL DE STICKERS   ==== */
 /* =================================================================== */
-h1 {
+h1  {
     color: #34495e;
     font-weight: 600;
 }
+
 /* ==== Tarjeta Principal ==== */
 .card-custom {
     background: #ffffff;
@@ -233,6 +234,7 @@ h1 {
     display: flex;
     justify-content: space-between; /* Mantiene el título a la izq. y el botón a la der. */
     align-items: flex-start;
+    background-color: #f8f9fa; border-bottom: 1px solid #e9ecef;
 }
 
 /* Agrupamos el título y subtítulo para un mejor control */

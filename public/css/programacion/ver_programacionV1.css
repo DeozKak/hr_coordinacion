@@ -1,0 +1,340 @@
+/* --- Estilos Generales --- */
+h1 {
+    color: #34495e;
+    font-weight: 600;
+}
+body {
+    background-color: #f4f6f9;
+}
+
+/* --- Estilos para las Tarjetas (Cards) --- */
+.card-modern {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-modern:hover {
+   /* transform: translateY(-5px);*/
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.card-header-modern {
+    background: linear-gradient(45deg, #2869f6 0%, #382bf3 100%); /* Gradiente actualizado */
+    color: #fff;
+    border-bottom: none;
+    border-radius: 12px 12px 0 0; /* Simplificado */
+    padding: 1rem 1.5rem;
+
+    /* Mantenemos Flexbox para la alineación vertical */
+    display: flex;
+    align-items: center;
+}
+.card-tools {
+    display: flex;
+    gap: 0.5rem;
+
+    /* ¡LA CLAVE! Esto empuja el div hacia la derecha */
+    margin-left: auto;
+}
+
+
+.card-title-modern {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.card-title-modern i {
+    margin-right: 10px;
+}
+
+/* --- Estilos para Formularios --- */
+.form-group label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.form-control-modern {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.075);
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    accent-color: #007bff;
+}
+
+.form-control-modern:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+/* --- Checkbox de Rango de Fechas --- */
+.custom-checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 500;
+    color: #495057;
+}
+
+/* --- Botón Primario con Gradiente --- */
+.btn-gradient-primary {
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border: none;
+    color: #fff;
+    transition: all 0.3s ease;
+    background-image: linear-gradient(45deg, #007bff 0%, #6610f2 100%);
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+}
+
+.btn-gradient-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
+}
+
+/* --- Estilo para botones de gradiente CUANDO están deshabilitados --- */
+.btn-gradient-primary:disabled {
+    background: #adb5bd !important; /* Un color gris y plano */
+    cursor: not-allowed;           /* Muestra un cursor de "prohibido" */
+    box-shadow: none;              /* Sin sombra */
+    transform: none;               /* Sin efecto de levantamiento */
+    opacity: 0.65;                 /* Lo hace semitransparente */
+}
+/* --- Estilos para Botones de Exportación Modernos (Versión Gradiente) --- */
+
+/* Estilo base para ambos botones */
+.btn-export-sup,
+.btn-export-gdw {
+    border-radius: 8px; /* Esquinas bien redondeadas, no ovaladas */
+    font-weight: 600;
+    padding: 0.4rem 1rem;
+    border: none; /* Quitamos el borde para un look más limpio con gradiente */
+    color: #fff;
+    transition: all 0.3s ease;
+    letter-spacing: 0.5px;
+}
+
+/* Botón Primario: Plantilla GDW */
+.btn-export-gdw {
+    background-image: linear-gradient(45deg, #218838 0%, #28a745 100%);
+    box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+}
+
+.btn-export-gdw:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+}
+
+/* Botón Secundario: Plantilla Supervisores */
+.btn-export-sup {
+    background-image: linear-gradient(45deg, #5a6268 0%, #6c757d 100%);
+    box-shadow: 0 4px 10px rgba(108, 117, 125, 0.2);
+}
+
+.btn-export-sup:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(108, 117, 125, 0.3);
+}
+/* Contenedor para centrar el botón  buscar*/
+.button-container-center {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+/* --- Estilos para Checkbox Moderno --- */
+
+/* Contenedor del checkbox */
+.modern-checkbox {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 500;
+    color: #495057;
+}
+
+/* Ocultamos el checkbox por defecto */
+.modern-checkbox input[type="checkbox"] {
+    display: none;
+}
+
+/* Creamos la caja del checkbox personalizado */
+.modern-checkbox .checkbox-box {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ced4da;
+    border-radius: 6px;
+    margin-right: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+/* Estilo del "tick" o palomita (usando un pseudo-elemento) */
+.modern-checkbox .checkbox-box::after {
+    content: '\f00c'; /* Código del ícono de check de Font Awesome */
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    font-size: 12px;
+    color: #fff;
+    opacity: 0; /* Oculto por defecto */
+    transform: scale(0.5);
+    transition: all 0.2s ease;
+}
+
+/* Estilos para cuando el checkbox está seleccionado */
+.modern-checkbox input[type="checkbox"]:checked + .checkbox-box {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.modern-checkbox input[type="checkbox"]:checked + .checkbox-box::after {
+    opacity: 1; /* Hacemos visible el check */
+    transform: scale(1);
+}
+
+#buscador .handsontable {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* --- REGLA UNIFICADA PARA EL TAMAÑO DE TODAS LAS CELDAS --- */
+/* Sincronizamos las 3 propiedades que afectan la altura de la fila */
+#buscador .handsontable .htCore th,
+#buscador .handsontable .htCore td {
+    font-size: 0.8rem;
+    /* padding: 0.35rem 0.6rem;*/
+    line-height: 1.4; /* <-- ¡LA CLAVE! Forzamos la misma altura de línea para todos */
+}
+
+/* --- Estilos que solo aplican a los encabezados (th) --- */
+#buscador .handsontable .htCore th {
+    background-color: #f8f9fa !important;
+    color: #525f7f;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    /* Cambiamos el color del borde a uno más oscuro */
+    border-color: #d0d4d8 !important; /* <-- MODIFICADO */
+}
+
+/* --- Estilos que solo aplican a las celdas de datos (td) --- */
+#buscador .handsontable .htCore td {
+    /* Cambiamos el color del borde a uno más oscuro */
+    border-color: #d0d4d8; /* <-- MODIFICADO */
+    color: #34495e;
+}
+
+/* El resto de los estilos de resaltado y selección se mantienen igual */
+#buscador .handsontable th.ht__highlight {
+    background-color: #e9f3fe !important;
+    color: #1d8cf8;
+}
+
+#buscador .handsontable .wtBorder.current {
+    background-color: #3498db !important;
+}
+
+#buscador .handsontable .wtBorder.corner {
+    background-color: #3498db !important;
+}
+
+
+/* --- Estilos de Handsontable (ya existentes) --- */
+.filaNA {
+    background-color: #ffe8a6 !important;
+    color: #705e00 !important;
+}
+
+
+/* =================================================================== */
+/* ====      ESTILOS MODERNOS PARA MENSAJES DE ALERTA     ==== */
+/* =================================================================== */
+
+/* --- Base para la alerta moderna --- */
+.alert-modern {
+    padding: 1rem;
+    margin-top: 1rem;
+    border-radius: 8px; /* Bordes redondeados */
+    display: flex;
+    align-items: center; /* Centra el ícono y el texto verticalmente */
+    font-size: 0.95rem;
+    border: 1px solid transparent;
+    border-left-width: 5px; /* Borde izquierdo más grueso */
+}
+
+.alert-modern i {
+    font-size: 1.2rem;
+    margin-right: 0.75rem;
+}
+
+.alert-modern span {
+    font-weight: 500;
+}
+
+/* --- Variante para Alertas de Información (la que necesitas) --- */
+.alert-info-modern {
+    background-color: #f0f9ff; /* Fondo azul pastel */
+    border-left-color: #3498db;  /* Borde izquierdo azul */
+    color: #0c5464;           /* Texto oscuro para legibilidad */
+}
+
+.alert-info-modern i {
+    color: #3498db;
+}
+
+.htCenter {
+    text-align: center;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+#loader {
+    border: 16px solid rgba(0, 0, 0, 0.1);
+    /* Borde transparente */
+    border-top: 16px solid #3498db;
+    /* Azul */
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+    /* Animación de rotación */
+    position: fixed;
+    /* Fijar posición */
+    top: 50%;
+    /* Posición vertical en el centro */
+    left: 50%;
+    /* Posición horizontal en el centro */
+    margin-top: -60px;
+    /* Centrar verticalmente */
+    margin-left: -60px;
+    /* Centrar horizontalmente */
+    z-index: 9999;
+    /* Asegurar que esté sobre otros elementos */
+}
+
+/* Estilo adicional para oscurecer el fondo */
+#overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    /* Fondo semi-transparente */
+    z-index: 9998;
+    /* Debajo del loader */
+}

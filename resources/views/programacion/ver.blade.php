@@ -3,96 +3,84 @@
 @section('title', 'Programación')
 
 @section('content_header')
-    <h1>Ver Programacion</h1>
+    <h1>Ver Programación</h1>
 @stop
 
-
 @section('content')
-    <style>
-        .card {
-            border-radius: 10px;
-            /* Bordes redondeados para la tarjeta */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            /* Sombra sutil para destacar la tarjeta */
-        }
 
-        .card-body {
-            padding: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .btn-success {
-            background-color: #28a745;
-            /* Verde Bootstrap */
-            border-color: #28a745;
-        }
-
-        .btn-success:hover {
-            background-color: #218838;
-            border-color: #1e7e39;
-        }
-        .filaNA {
-            background-color: #ffe8a6 !important;  /* Un color de fondo suave */
-            color: #705e00 !important;             /* Un color de texto suave */
-        }
-
-    </style>
     <div id="loader" style="display: none;"></div>
     <div id="overlay" style="display: none;"></div>
-    <link rel="stylesheet" href="{{ asset('css/programacion/ver_programacion.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/programacion/ver_programacionV1.css') }}">
     <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
     <input type="hidden" name="url_update" id="url_update" value="{{ route('programacion.update',['id'=>':id']) }}">
     <input type="hidden" name="url_busqueda" id="url_busqueda" value="{{ route('programacion.agendamiento') }}">
     <input type="hidden" name="url_exportar" id="url_exportar" value="{{ route('programacion.exportar') }}">
     <input type="hidden" name="urlexportarSup" id="urlexportarSup" value="{{ route('programacion.exportarSup') }}">
-    <div class="container mt-6">
+    <div class="container-fluid">
         <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title text-center mb-3">Fecha de agendamiento</h4>
-                        <br>
 
+            {{-- Columna del Formulario de Búsqueda --}}
+            <div class="col-lg-4 ">
+                <div class="card card-modern">
+                    <div class="card-header card-header-modern">
+                        <h3 class="card-title-modern"><i class="fas fa-calendar-alt"></i>Fecha de Agendamiento</h3>
+                    </div>
+                    <div class="card-body">
                         <div class="form-group">
-                            <input type="date" class="form-control" id="fechaInicio" name="fechaInicio" required>
+                            <label for="fechaInicio">Fecha Inicial</label>
+                            <input type="date" class="form-control form-control-modern" id="fechaInicio"
+                                   name="fechaInicio" required>
                         </div>
 
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="rangoFechas" name="rangoFechas">
-                            <label class="form-check-label" for="rangoFechas">
+                        <div class="form-group" id="fechaFinContainer" style="display: none;">
+                            <label for="fechaFin">Fecha Final</label>
+                            <input type="date" class="form-control form-control-modern" id="fechaFin"
+                                   name="fechaFin">
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <label class="modern-checkbox" for="rangoFechas">
+                                <input class="form-check-input" type="checkbox" id="rangoFechas" name="rangoFechas">
+                                <span class="checkbox-box"></span>
                                 Seleccionar un rango de fechas
                             </label>
                         </div>
 
-                        <div class="form-group" id="fechaFinContainer" style="display: none;">
-                            <input type="date" class="form-control" id="fechaFin" name="fechaFin">
-                        </div>
-                        <br>
-                        <div class="text-center">
-                            <button type="submit" id="btnBuscar" class="btn btn-success">Buscar</button>
-                        </div>
-                        <br>
-                        <div id="mensaje-programaciones">
+                        <div id="mensaje-programaciones" class="mb-3"></div>
+                        <div class="button-container-center">
+                            <button type="submit" id="btnBuscar" class="btn-gradient-primary">
+                                <i class="fas fa-search"></i> Buscar
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-12 mt-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title text-center mb-3">Resultados de la Búsqueda</h4>
-                        <button id="btnExportar" class="btn btn-success float-right">Exportar a plantilla GDW</button>
-                        <button id="btnExportarSup" class="btn btn-secondary float-right" style="margin-right: 10px">Exportar a plantilla Supervisores</button>
-                        <br>
-                        <div id="buscador" class="mt-4"></div>
+
+        </div>
+        {{-- Columna de Resultados de la Búsqueda --}}
+        <div class="col-12">
+            <div class="card card-modern">
+                <div class="card-header card-header-modern d-flex justify-content-between align-items-center">
+                    <h3 class="card-title-modern mb-0"><i class="fas fa-tasks"></i>Resultados de la Búsqueda</h3>
+                    <div class="card-tools">
+
+                        <button id="btnExportarSup" class="btn btn-sm btn-export-sup">
+                            <i class="fas fa-file-export"></i> Plantilla Supervisores
+                        </button>
+                        <button id="btnExportar" class="btn btn-sm btn-export-gdw">
+                            <i class="fas fa-file-excel"></i> Plantilla GDW
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="buscador">
+                        {{-- Aquí se renderizará la tabla de Handsontable --}}
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
 
     @section('js')
 
@@ -124,7 +112,7 @@
                         const mensajeDiv = document.getElementById('mensaje-programaciones');
                         if (data) {
                             document.getElementById('btnBuscar').disabled = true;
-                            mensajeDiv.innerHTML = '<div class="alert alert-info">Sincronizando asignaciones tecnicos faltan ' + data + ' registros, espere por favor...</div>';
+                            mensajeDiv.innerHTML = '<div class="alert-modern alert-info-modern">Sincronizando asignaciones tecnicos faltan ' + data + ' registros, espere por favor...</div>';
                         } else {
                             document.getElementById('btnBuscar').disabled = false;
                             mensajeDiv.innerHTML = ''; // Limpiar el mensaje si no hay jobs en cola

@@ -1,3 +1,4 @@
+let debounceTimer;
 document.addEventListener('DOMContentLoaded', () => {
 
     $('#programacion').DataTable({
@@ -308,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showValidationErrors(errors, addmodal, errorContainer) {
         errorContainer.innerHTML = ''; // Limpiar mensajes anteriores
-        errorContainer.classList.add('alert', 'alert-danger');
+        errorContainer.classList.add('alert-modern', 'alert-danger-modern');
 
         if (typeof errors === 'string') {
             // Si es una cadena, muestra directamente
@@ -332,8 +333,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     $('#buscadorContrato').on('input', function () {
-        let contrato = $(this).val();
-        buscarBitacorasPorContrato(contrato);
+        // 1. Obtiene el valor actual del campo de texto
+        const contrato = $(this).val();
+
+        // 2. Limpia el temporizador anterior.
+        // Esto es clave: si el usuario sigue escribiendo, cancelamos la búsqueda que estaba por ejecutarse.
+        clearTimeout(debounceTimer);
+
+        // 3. Configura un nuevo temporizador.
+        // La búsqueda solo se ejecutará después de 300 milisegundos de inactividad.
+        debounceTimer = setTimeout(() => {
+            buscarBitacorasPorContrato(contrato);
+        }, 300); // Puedes ajustar el tiempo (en ms) como prefieras
     });
 
     function buscarBitacorasPorContrato(contrato) {
@@ -352,7 +363,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let listaHtml = '<ul>';
                 response.forEach(programadas => {
-                    listaHtml += `<li data-id="${programadas.id}">${programadas.nombre} ${programadas.usuario} (ID: ${programadas.id})</li>`;
+                    listaHtml += `
+                                    <li data-id="${programadas.id}">
+                                        <span class="result-text">${programadas.nombre} ${programadas.usuario}</span>
+                                        <span class="result-id">ID: ${programadas.id}</span>
+                                    </li>
+                    `;
+                   // listaHtml += `<li data-id="${programadas.id}">${programadas.nombre} ${programadas.usuario} (ID: ${programadas.id})</li>`;
                 });
                 listaHtml += '</ul>';
                 $('#resultadosBusqueda').html(listaHtml);

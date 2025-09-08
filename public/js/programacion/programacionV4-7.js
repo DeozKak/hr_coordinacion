@@ -15,10 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const plantilaModal = document.getElementById('addPlantilla');
     const modalPlantilla = new bootstrap.Modal(plantilaModal);
 
-    const closeModalMasivoBtn = document.querySelector('.btn-close'); // Selecciona el botón de cierre
+    const closeModalMasivoBtn = document.getElementById('btn_close'); // Selecciona el botón de cierre
 
     closeModalMasivoBtn.addEventListener('click', function () {
-        modalPlantilla.hide();
+        $('#addPlantilla').modal('hide');
     });
 
     if (!view) {
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
         rowHeaders: true,
         dropdownMenu: true,
         filters: true,
-        height: '450px',
+       /* height: '450px',*/
         licenseKey: 'non-commercial-and-evaluation',
         afterChange: function (changes, source) {
             if (source === 'edit' || source == 'CopyPaste.paste' || source == 'Autofill.fill') {

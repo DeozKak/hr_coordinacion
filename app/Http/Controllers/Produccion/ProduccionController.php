@@ -257,7 +257,6 @@ class ProduccionController extends Controller
 
     public function datosDetalles(Request $request)
     {
-
         if (session('id_corte') || $request->idCorteDetalles) {
             $idCorte = session('id_corte') ?? $request->idCorteDetalles;
             $corte = tbl_produccion_corte::find($idCorte);
@@ -275,8 +274,6 @@ class ProduccionController extends Controller
                 //return response()->json($response);
             }
         } else {
-
-
             $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
             //$fecha_actual = "2025-05-30";
 
@@ -295,8 +292,6 @@ class ProduccionController extends Controller
             return response()->json(['error' => 'No hay corte activo']);
         }
 
-        $cantidad_dias = count($diasIntermedios);
-
         $fechaInicio = new DateTime($corte->fecha_inicio);
         $fechaFin = new DateTime($corte->fecha_fin);
         $fechaFin->modify('+1 day');
@@ -308,11 +303,87 @@ class ProduccionController extends Controller
             $fechasIntermedias[] = $fecha->format('Y-m-d');
         }
         // sacar inspectores
-        $inspectores = tbl_insp_cali::orderBy('apellidos', 'asc')->get();
+        //$inspectores = tbl_insp_cali::orderBy('apellidos', 'asc')->get();
+        $inspectores = tbl_insp_cali::whereHas('contratos', function ($query) use ($corte) {
+            $query->where('FECHA', '>=', $corte->fecha_inicio)
+                ->where('FECHA', '<=', $corte->fecha_fin)
+                ->where('state', 1);
+        })->orderBy('apellidos', 'asc')->get();
+        $cedulas = $inspectores->pluck('cedula');
+
+        // 1. REALIZAR UNA ÚNICA CONSULTA PARA TODOS LOS CONTRATOS
+        $todosLosContratos = tbl_bitacora_contrato::whereIn('CC_OPERARIO', $cedulas)
+            ->where('state', 1)
+            ->whereBetween('FECHA', [$corte->fecha_inicio, $corte->fecha_fin])
+            ->select(
+                'CC_OPERARIO',
+                'FECHA',
+                'CATEGORIA',
+                '4_RECINTOS',
+                'TIPO_TRABAJO',
+                'diseno_especial'
+            )->get();
+        //guardar colección de contratos por inspector
+        $contratosPorInspector = $todosLosContratos->groupBy('CC_OPERARIO');
+        //consulta para saber fechas que no cuentan doble
+        $sqlProHis = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
+        //decodificar JSON de festivos y Sabados
+        $jsonDecode = json_decode($sqlProHis->no_dobles_festivos, true);
+        $jsonDecodeSabados = json_decode($sqlProHis->dobles_sabados, true);
+        //Inicializar Arrays
         $sabados = array();
-        // sacar produccion de cada inspector
         $produccionInspector = array();
+
+        // Generar todas las fechas en el rango
+        $fechaInicio = Carbon::parse($corte->fecha_inicio);
+        $fechaFin = Carbon::parse($corte->fecha_fin);
+        $fechas = [];
+
+        // Calcular la duración del corte en minutos
+        $duracionCorte = $fechaInicio->diffInMinutes($fechaFin);
+
+        // Calcular la fecha de inicio y fin del rango de 1 mes antes y 1 mes después
+        $fechaInicioRango = $fechaInicio->copy()->subMonth();
+        $fechaFinRango = $fechaFin->copy()->addMonth();
+
+        // Generar una clave única para la caché basada en las fechas del rango
+        $cacheKeyRango = 'dias_festivos_rango_' . $fechaInicioRango->format('Ymd') . '_' . $fechaFinRango->format('Ymd');
+
+        // Verificar si los días festivos en el rango ya están en caché
+        $diasFestivosRango = Cache::get($cacheKeyRango);
+
+        /* Cache::forget($cacheKeyRango); */
+
+        if (!$diasFestivosRango) {
+            $diasFestivosRango = [];
+            // Calcular y almacenar los días festivos en el rango de fechas
+            for ($date = $fechaInicioRango; $date->lte($fechaFinRango); $date->addDay()) {
+                $fechas[$date->format('Y-m-d')] = "";
+
+                // Filtrar las fechas para mantener solo las originales
+                $fechas = array_filter($fechas, function ($fecha) use ($fechaInicio, $fechaFin) {
+                    return $fecha >= $fechaInicio->format('Y-m-d') && $fecha <= $fechaFin->format('Y-m-d');
+                }, ARRAY_FILTER_USE_KEY);
+                if (CalendarioColombia::date($date->format('Y-m-d'))->isHoliday()) {
+                    $diasFestivosRango[] = $date->format('Y-m-d');
+                }
+            }
+            // Guardar los días festivos en el rango en caché por un tiempo determinado (por ejemplo, 24 horas)
+            Cache::put($cacheKeyRango, $diasFestivosRango, $duracionCorte);
+        } else {
+            for ($date = $fechaInicio; $date->lte($fechaFin); $date->addDay()) {
+                $fechas[$date->format('Y-m-d')] = ""; // Inicializa todas las fechas con 0 contratos
+            }
+        }
+        $fechasPlantilla = $fechas;
+
+
+        // sacar produccion de cada inspector
         foreach ($inspectores as $inspector) {
+            $fechaInicio = Carbon::parse($corte->fecha_inicio);
+            $fechaFin = Carbon::parse($corte->fecha_fin);
+           // dd($fechasPlantilla);
+            $fechas = $fechasPlantilla;
             $contadorFestivosDomingos = 0;
             $contadorDiasSabados = 0;
             //inicializar variables contadores
@@ -323,102 +394,72 @@ class ProduccionController extends Controller
             $contadorComerciales = null;
             $contadorNuevas = null;
             $sumaInspecciones = 0;
-            // Generar todas las fechas en el rango
-            $fechaInicio = Carbon::parse($corte->fecha_inicio);
-            $fechaFin = Carbon::parse($corte->fecha_fin);
-            $fechas = [];
-
             $referenciaInicio = $fechaInicio->copy();
             $referenciaFin = $fechaFin->copy();
 
-            // Calcular la duración del corte en minutos
-            $duracionCorte = $fechaInicio->diffInMinutes($fechaFin);
+            // Obtenemos solo los contratos del inspector actual, sin consultar la BD de nuevo.
+            $contratosDelInspectorActual = $contratosPorInspector->get($inspector->cedula, collect());
 
-            // Calcular la fecha de inicio y fin del rango de 1 mes antes y 1 mes después
-            $fechaInicioRango = $fechaInicio->copy()->subMonth();
-            $fechaFinRango = $fechaFin->copy()->addMonth();
-
-            // Generar una clave única para la caché basada en las fechas del rango
-            $cacheKeyRango = 'dias_festivos_rango_' . $fechaInicioRango->format('Ymd') . '_' . $fechaFinRango->format('Ymd');
-
-            // Verificar si los días festivos en el rango ya están en caché
-            $diasFestivosRango = Cache::get($cacheKeyRango);
-
-            /* Cache::forget($cacheKeyRango); */
-
-            if (!$diasFestivosRango) {
-                $diasFestivosRango = [];
-                // Calcular y almacenar los días festivos en el rango de fechas
-                for ($date = $fechaInicioRango; $date->lte($fechaFinRango); $date->addDay()) {
-                    $fechas[$date->format('Y-m-d')] = "";
-
-                    // Filtrar las fechas para mantener solo las originales
-                    $fechas = array_filter($fechas, function ($fecha) use ($fechaInicio, $fechaFin) {
-                        return $fecha >= $fechaInicio->format('Y-m-d') && $fecha <= $fechaFin->format('Y-m-d');
-                    }, ARRAY_FILTER_USE_KEY);
-                    if (CalendarioColombia::date($date->format('Y-m-d'))->isHoliday()) {
-                        $diasFestivosRango[] = $date->format('Y-m-d');
-                    }
-                }
-                // Guardar los días festivos en el rango en caché por un tiempo determinado (por ejemplo, 24 horas)
-                Cache::put($cacheKeyRango, $diasFestivosRango, $duracionCorte);
-            } else {
-                for ($date = $fechaInicio; $date->lte($fechaFin); $date->addDay()) {
-                    $fechas[$date->format('Y-m-d')] = ""; // Inicializa todas las fechas con 0 contratos
-                }
-            }
-
-            // Realizar la consulta
-            $contratosPorDia = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
-                ->where('FECHA', '>=', $corte->fecha_inicio)
-                ->where('FECHA', '<=', $corte->fecha_fin)
-                ->where('state', '=', 1)
-                ->whereNotIn('TIPO_TRABAJO', [
-                    'FI-29 revisión periódica línea matriz',
-                    'FI-31 REVISIÓN NUEVA LINEA MATRIZ',
-                ])
-                ->select(DB::raw('DATE(FECHA) as fecha, COUNT(*) as total_contratos'))
-                ->groupBy('fecha')
-                ->get();
-            if ($contratosPorDia->sum('total_contratos') == 0) {
+            // Si el inspector no tiene contratos, saltamos a la siguiente iteración.
+            if ($contratosDelInspectorActual->isEmpty()) {
                 continue;
             }
-            $contratosPorCategoria = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
-                ->where('state', '=', 1)
-                ->whereBetween('FECHA', [$corte->fecha_inicio, $corte->fecha_fin])
-                ->select('CATEGORIA', DB::raw('COUNT(*) as total_contratos'))
-                ->groupBy('CATEGORIA')
-                ->get();
 
-            $contratosPorRecinto = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
-                ->where('state', '=', 1)
-                ->whereBetween('FECHA', [$corte->fecha_inicio, $corte->fecha_fin])
-                ->select('4_RECINTOS', DB::raw('COUNT(*) as total_contratos'))
-                ->groupBy('4_RECINTOS')
-                ->get();
-
-            $contratosNuevas = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
-                ->where('state', '=', 1)
-                ->where('TIPO_TRABAJO', '=', 'RN 12162')
-                ->whereBetween('FECHA', [$corte->fecha_inicio, $corte->fecha_fin])
-                ->select('TIPO_TRABAJO', DB::raw('COUNT(*) as total_contratos'))
-                ->groupBy('TIPO_TRABAJO')
-                ->count();
-
-            $matrices = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
-                ->where('state', '=', 1)
-                ->whereBetween('FECHA', [$corte->fecha_inicio, $corte->fecha_fin])
-                ->where(function ($query) {
-                    $query->where('TIPO_TRABAJO', '=', 'FI-29 revisión periódica línea matriz')
-                        ->orWhere('TIPO_TRABAJO', '=', 'FI-31 REVISIÓN NUEVA LINEA MATRIZ');
+            // 1. REEMPLAZO para: Contratos por día
+            $contratosPorDia = $contratosDelInspectorActual
+                ->groupBy(function($contrato) {
+                    // Agrupamos por fecha en formato Y-m-d
+                    return Carbon::parse($contrato->FECHA)->format('Y-m-d');
                 })
+                ->map(function($group) {
+                    // Contamos los contratos por cada grupo de fecha
+                    return (object)[
+                        'fecha' => $group->first()->FECHA,
+                        'total_contratos' => $group->whereNotIn('TIPO_TRABAJO', [
+                            'FI-29 revisión periódica línea matriz',
+                            'FI-31 REVISIÓN NUEVA LINEA MATRIZ',
+                        ])->count()
+                    ];
+                });
+            /*if($inspector->cedula == '94313913'){
+                dd($contratosPorDia);
+            }*/
+            // 2. REEMPLAZO para: Contratos por categoría
+            $contratosPorCategoria = $contratosDelInspectorActual
+                ->groupBy('CATEGORIA')
+                ->map(function($group, $categoria) {
+                    return (object)[
+                        'CATEGORIA' => $categoria,
+                        'total_contratos' => $group->count()
+                    ];
+                });
+            // 3. REEMPLAZO para: Contratos por recinto
+            $contratosPorRecinto = $contratosDelInspectorActual
+                ->groupBy('4_RECINTOS')
+                ->map(function($group, $recinto) {
+                    return (object)[
+                        '4_RECINTOS' => $recinto,
+                        'total_contratos' => $group->count()
+                    ];
+                });
+            // 4. REEMPLAZO para: Contratos Nuevas (RN 12162)
+            $contratosNuevas = $contratosDelInspectorActual
+                ->where('TIPO_TRABAJO', 'RN 12162')
                 ->count();
 
-            $diseñosEspeciales = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
-                ->where('state', '=', 1)
-                ->whereBetween('FECHA', [$corte->fecha_inicio, $corte->fecha_fin])
-                ->where('diseno_especial', '=', 1)
+            // 5. REEMPLAZO para: Matrices
+            $matrices = $contratosDelInspectorActual
+                ->whereIn('TIPO_TRABAJO', [
+                    'FI-29 revisión periódica línea matriz',
+                    'FI-31 REVISIÓN NUEVA LINEA MATRIZ'
+                ])
                 ->count();
+
+            // 6. REEMPLAZO para: Diseños Especiales
+            $diseñosEspeciales = $contratosDelInspectorActual
+                ->where('diseno_especial', 1)
+                ->count();
+
             if ($diseñosEspeciales > 0) {
                 $contadorDiseñosEspeciales = $diseñosEspeciales;
             }
@@ -431,9 +472,6 @@ class ProduccionController extends Controller
                 $contadorNuevas = $contratosNuevas;
             }
 
-            $sqlProHis = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
-            $jsonDecode = json_decode($sqlProHis->no_dobles_festivos, true);
-
             if ($jsonDecode != null) {
                 foreach ($jsonDecode['noDoblesFestivos'] as &$registro) {
                     foreach ($registro['datos']['totalInspecciones'] as $totalInsp) {
@@ -443,8 +481,6 @@ class ProduccionController extends Controller
                     }
                 }
             }
-
-            $jsonDecodeSabados = json_decode($sqlProHis->dobles_sabados, true);
 
             if ($jsonDecodeSabados != null) {
                 foreach ($jsonDecodeSabados['doblesSabados'] as &$registro) {
@@ -458,30 +494,25 @@ class ProduccionController extends Controller
 
             // contadores dobles contratos
             foreach ($contratosPorDia as $contrato) {
-
                 foreach ($diasFestivosRango as $festivo) {
-
                     if ($festivo == $contrato->fecha) {
                         $contadorFestivos += $contrato->total_contratos;
                     }
                 }
-
                 $fechas[$contrato->fecha] = $contrato->total_contratos;
-
                 $sumaInspecciones += $contrato->total_contratos;
             }
 
-            $sabadosDobles = $this->calcularDobles($referenciaInicio, $referenciaFin, $inspector, $diasFestivosRango, $corte->dobles);
+
+            $sabadosDobles = $this->calcularDobles($referenciaInicio, $referenciaFin, $inspector, $diasFestivosRango, $corte->dobles, $sqlProHis);
 
             foreach ($contratosPorCategoria as $contrato_C) {
-
                 if ($contrato_C->CATEGORIA === 'COMERCIAL') {
                     $contadorComerciales = $contrato_C->total_contratos;
                 }
             }
 
             foreach ($contratosPorRecinto as $contrato_R) {
-
                 if ($contrato_R->{'4_RECINTOS'} != 'NO') {
                     $subtotal = 0;
                     $subtotal = $contrato_R->total_contratos * $contrato_R->{'4_RECINTOS'};
@@ -490,7 +521,6 @@ class ProduccionController extends Controller
             }
 
             $contratos4recintos = $contratos4recintos / 4;
-
             $contratos4recintosRedondeado = floor($contratos4recintos);
 
             if ($contratos4recintosRedondeado == intval($contratos4recintosRedondeado)) {
@@ -506,6 +536,7 @@ class ProduccionController extends Controller
                 'cedula' => $inspector->cedula,
                 'nombres' => $inspector->apellidos . ' ' . $inspector->nombres,
             ];
+
             $contadorDiasLaborados = 0;
             // Agregar los contratos por fecha
             foreach ($fechas as $fecha => $total_contratos) {
@@ -550,12 +581,15 @@ class ProduccionController extends Controller
             $datosInspector['porcentaje_meta'] = '%' . number_format(($datosInspector['sub_total'] / $datosInspector['meta']) * 100, 2);
 
             $produccionInspector[] = $datosInspector;
+
         }
 
         $sqlHistorico = tbl_produccion_historico::where('id_corte', $corte->id)->first();
 
         $jsonNoDobles = json_decode($sqlHistorico->no_dobles, true);
-        $jsonDobles_sabados = array_values(json_decode($sqlHistorico->dobles_sabados, true));
+        // Si json_decode devuelve null, usará un array vacío ([]) en su lugar.
+        $decoded_sabados = json_decode($sqlHistorico->dobles_sabados, true) ?? [];
+        $jsonDobles_sabados = array_values($decoded_sabados);
         //dd($jsonDobles_sabados,$sabados);
         if ($jsonNoDobles != null) {
             foreach ($sabados as $sabadoIndex => &$sabado) {
@@ -600,6 +634,7 @@ class ProduccionController extends Controller
             $historico->save();
         }
         $reponse = json_decode($historico->data);
+
         return response()->json($reponse);
     }
 
@@ -638,11 +673,28 @@ class ProduccionController extends Controller
         return $diasIntermedios;
     }
 
-    public function calcularDobles($fechaInicio, $fechaFin, $inspector, $diasFestivos, $valDobles)
+    public function calcularDobles($fechaInicio, $fechaFin, $inspector, $diasFestivos, $valDobles,$sqlHistorico)
     {
+        $inicioSemana = $fechaInicio->copy()->startOfWeek();
+
         // Inicializar variables para contadores
         $contadorDiasSabados = null;
         $sabadosdobles = array();
+
+        $todosLosContratosDelInspector = tbl_bitacora_contrato::where('CC_OPERARIO', $inspector->cedula)
+            ->where('state', 1)
+            ->whereBetween('FECHA', [$inicioSemana->format('Y-m-d'), $fechaFin->format('Y-m-d')])
+            ->whereNotIn('TIPO_TRABAJO', [
+                'FI-29 revisión periódica línea matriz',
+                'FI-31 REVISIÓN NUEVA LINEA MATRIZ',
+            ])
+            ->select('FECHA') // Solo necesitamos la fecha para agrupar y contar
+            ->get()
+            ->map(function ($contrato) {
+                // Agregamos el día de la semana para filtrar fácilmente después
+                $contrato->dayOfWeek = Carbon::parse($contrato->FECHA)->dayOfWeekIso; // 1 (Lunes) a 7 (Domingo)
+                return $contrato;
+            });
 
         // Generar las semanas en el rango del corte
         $semanas = [];
@@ -681,41 +733,18 @@ class ProduccionController extends Controller
                 }
             }
 
-            // Obtener contratos de lunes a viernes
-            $contratosPorSemana = tbl_bitacora_contrato::whereBetween('FECHA', [$semana['inicio'], $semana['fin']])
-                ->whereNotIn('TIPO_TRABAJO', [
-                    'FI-29 revisión periódica línea matriz',
-                    'FI-31 REVISIÓN NUEVA LINEA MATRIZ',
-                ])
-                ->where('state', '=', 1)
-                ->whereRaw('DAYOFWEEK(FECHA) between 2 and 6') // Filtrando días de lunes (2) a viernes (6)
-                ->selectRaw('DATE(FECHA) as fecha, COUNT(*) as total_contratos')
-                ->groupBy('fecha')
-                ->where('CC_OPERARIO', '=', $inspector->cedula)
-                ->get();
+            // Obtener contratos de lunes a viernes para la semana actual
+            $totalContratos = $todosLosContratosDelInspector
+                ->whereBetween('FECHA', [$semana['inicio'], $semana['fin']])
+                ->whereBetween('dayOfWeek', [1, 5]) // Lunes a Viernes
+                ->count();
 
 
-            // Obtener contratos del sábado
-            $contratosSabado = tbl_bitacora_contrato::whereBetween('FECHA', [$semana['inicio'], $semana['fin']])
-                ->whereNotIn('TIPO_TRABAJO', [
-                    'FI-29 revisión periódica línea matriz',
-                    'FI-31 REVISIÓN NUEVA LINEA MATRIZ',
-                ])
-                ->where('state', '=', 1)
-                ->whereRaw('DAYOFWEEK(FECHA) = 7') // Filtrando el día sábado (7)
-                ->selectRaw('DATE(FECHA) as fecha, COUNT(*) as total_contratos')
-                ->groupBy('fecha')
-                ->where('CC_OPERARIO', '=', $inspector->cedula)
-                ->get();
+            // Obtener contratos del sábado para la semana actual
+            $contratosSabado = $todosLosContratosDelInspector
+                ->whereBetween('FECHA', [$semana['inicio'], $semana['fin']])
+                ->where('dayOfWeek', 6); // Sábado
 
-
-            // Verificar cada contrato por día y excluir días festivos
-            foreach ($contratosPorSemana as $contrato) {
-                /*  $esFestivo = in_array($contrato->fecha, $diasFestivos);
-                 if (!$esFestivo) { */
-                $totalContratos += $contrato->total_contratos;
-                /*  } */
-            }
 
             // Ajustar los límites de las condicionales si hay un festivo en la semana
             $limiteContratos = $hayFestivoEnSemana ? $valDobles - 10 : $valDobles;
@@ -727,9 +756,6 @@ class ProduccionController extends Controller
                 $esSabadoFestivo = in_array($fechaSabado, $diasFestivos);
 
                 if (!$esSabadoFestivo) {
-
-                    $corte = session('corteEnviar');
-                    $sqlHistorico = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
 
                     $jsonSabadosDobles = json_decode($sqlHistorico->dobles_sabados, true);
 
@@ -755,29 +781,34 @@ class ProduccionController extends Controller
                     if ($jsonNoDobles != null) {
                         foreach ($jsonNoDobles as $datos) {
                             foreach ($datos as $item) {
-                                if ($inspector->cedula == $item['datos']['cc_inspector'] && in_array($contratosSabado->first()->fecha, $item['datos']['fechas'])) {
+                                if ($inspector->cedula == $item['datos']['cc_inspector'] && in_array($contratosSabado->first()->FECHA, $item['datos']['fechas'])) {
                                     continue 3;
                                 }
                             }
                         }
                     }
 
+
                     if ($totalContratos >= $limiteContratos) {
 
                         // Sumar los contratos del sábado
-                        $totalContratosSabado = $contratosSabado->sum('total_contratos');
+                        $totalContratosSabado = $contratosSabado->count();
                         $contadorDiasSabados += $totalContratosSabado;
+                        /*if($index === 1){
+                            dd($contratosSabado->count());
+                        }*/
                         try {
                             $sabadosdobles[] = [
-                                'fecha' => $contratosSabado->first()->fecha,
+                                'fecha' => $contratosSabado->first()->FECHA,
                                 'cc_inspector' => $inspector->cedula,
                                 'totalContratosSabado' => $totalContratosSabado
                             ];
+
                         } catch (\Exception $e) {
                         }
                     } elseif ($totalContratos < $limiteContratos && $totalContratos >= $limiteContratosBajo) {
                         // Sumar los contratos del sábado con ajustes
-                        $totalContratosSabado = $contratosSabado->sum('total_contratos');
+                        $totalContratosSabado = $contratosSabado->count();
                         $totalContratosSabado = ($totalContratos === $limiteContratosMedio) ? $totalContratosSabado - 1 : $totalContratosSabado - 2;
 
                         // Validación para evitar contar valores cero o negativos
@@ -789,7 +820,7 @@ class ProduccionController extends Controller
                         if ($totalContratosSabado > 0 && $contratosSabado->isNotEmpty()) { // <-- Nueva condición
                             try {
                                 $sabadosdobles[] = [
-                                    'fecha' => $contratosSabado->first()->fecha,
+                                    'fecha' => $contratosSabado->first()->FECHA,
                                     'cc_inspector' => $inspector->cedula,
                                     'totalContratosSabado' => $totalContratosSabado
                                 ];
@@ -804,11 +835,12 @@ class ProduccionController extends Controller
             // Guardar el total de contratos en el array de semanas
             $semanas[$index]['contratos'] = $totalContratos;
 
-            // Descomentar para depuración
-            /*  if ($inspector->cedula === '7691266') {
-                dd($totalContratosSabado);
-            } */
+
         }
+        // Descomentar para depuración
+        /*if ($inspector->cedula === '1107080079') {
+            dd($sabadosdobles);
+        }*/
         // Descomentar para ver el resultado final
         // dd($contadorDiasSabados);
         return [

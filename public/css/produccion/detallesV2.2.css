@@ -1,5 +1,3 @@
-
-
 .btn-gradient-success {
     background: linear-gradient(90deg, #2ecc71 0%, #27ae60 100%);
     color: #fff;
@@ -31,7 +29,17 @@
 }
 /* El body será "scrollable" si hay mucho contenido */
 .custom-card-altura .card-body {
+
+    /* Aumenta este valor para hacer el contenedor más alto */
+    height: 130vh; /* Antes estaba en 90vh */
+
+    display: flex;
+    flex-direction: column;
+}
+#detalles {
     flex: 1 1 auto;
+    height: 130vh;
+    overflow: hidden; /* ¡CAMBIO CLAVE! De 'auto' a 'hidden' */
 }
 
 /* ==== MODAL DETALLE INSPECCION - MODERNO ==== */
@@ -112,7 +120,7 @@
     gap: 10px;
 }
 
-.modal-detalle-inspeccion .btn-primary {
+/*.modal-detalle-inspeccion .btn-primary {
     background: linear-gradient(90deg, #3498db, #43cea2 90%);
     border: none;
     font-weight: 500;
@@ -124,11 +132,122 @@
 }
 .modal-detalle-inspeccion .btn-primary:hover {
     background: linear-gradient(87deg,#2d8ef2,#43cea2 84%);
-}
+}*/
 
 .modal-detalle-inspeccion .btn-outline-secondary {
     border-radius: 7px;
 }
+
+/* =================================================================== */
+/* ====   BOTÓN CON ANIMACIÓN DE GRADIENTE (CROSS-FADE)     ==== */
+/* =================================================================== */
+
+/* 1. Diseño y estado final del botón */
+.btn-gradient-agregar {
+    position: relative;
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    overflow: hidden; /* Muy importante para la animación */
+
+    /* Este es el gradiente FINAL (el que se revela en el hover) */
+    background: linear-gradient(90deg, #825ee4 0%, #5e72e4 100%);
+
+    /* Transición para el texto, si cambia de color */
+    transition: color 0.5s ease-in-out;
+}
+
+/* 2. El texto y el ícono siempre deben estar visibles */
+.btn-gradient-agregar span,
+.btn-gradient-agregar i {
+    position: relative;
+    z-index: 2;
+}
+
+/* 3. La capa de animación con el gradiente inicial */
+.btn-gradient-agregar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; /* Detrás del texto */
+
+    /* Este es el gradiente INICIAL (el que se desvanece) */
+    background: linear-gradient(90deg, #3498db, #43cea2 90%);
+
+    opacity: 1; /* Comienza visible */
+    transition: opacity 0.5s ease-out; /* Velocidad de la animación */
+}
+
+/* 4. El efecto al pasar el mouse */
+.btn-gradient-agregar:hover::before {
+    opacity: 0; /* La capa inicial se desvanece */
+}
+
+/* --- Estilos base para botones de gradiente --- */
+.btn-gradient {
+    border: none;
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.btn-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-radius: 8px;
+}
+
+/* Modificador para botones más pequeños en tablas */
+.btn-gradient.btn-sm {
+    padding: 0.35rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+/* --- Variantes de Color --- */
+.btn-gradient-success { background: linear-gradient(90deg, #2ecc71 0%, #27ae60 100%); }
+.btn-gradient-danger  { background: linear-gradient(90deg, #fa5252 0%, #e03131 100%); }
+.btn-gradient-info    { background: linear-gradient(90deg, #11cdef 0%, #1171ef 100%); }
+.btn-gradient-warning { background: linear-gradient(90deg, #f5a623 0%, #f8d800 100%); color: #594200; }
+
+/* --- ESTILO PARA BOTONES SECUNDARIOS MODERNOS --- */
+.btn-base {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    transition: all 0.3s ease;
+}
+/* --- Variantes de Color para Gradientes --- */
+.btn-gradient-primary {
+    background: linear-gradient(90deg, #1d8cf8 0%, #3358f4 100%);
+}
+
+/* ▼▼ NUEVO ESTILO PARA EL BOTÓN SECUNDARIO ▼▼ */
+.btn-gradient-secondary {
+    background: linear-gradient(90deg, #43cea2 0%, #185a9d 100%);
+}
+
 @media (max-width: 768px) {
     .modal-detalle-inspeccion .modal-content,
     .modal-detalle-inspeccion .modal-header,
@@ -362,4 +481,28 @@
     #ventanaEmergente label { font-size: 0.96em;}
     #ventanaEmergente .form-group { padding: 6px 4px; }
     #ventanaEmergente .modal-title { font-size: 1.1em;}
+}
+/* Este selector apunta correctamente a las celdas DENTRO del tbody */
+#contratos_dia .handsontable .htCore tbody th,
+#contratos_dia .handsontable .htCore tbody td {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    padding: 0.6rem 0.6rem;
+}
+/* --- SOLUCIÓN PARA ALINEACIÓN DE BOTONES EN HANDSONTABLE --- */
+
+/* 1. Le decimos a la celda que centre su contenido verticalmente */
+.handsontable .actions-cell {
+    display: flex !important;
+    align-items: center !important; /* Centra los botones verticalmente */
+    justify-content: center !important; /* Centra los botones horizontalmente */
+
+    padding-top: 0.5rem;    /* Espacio superior dentro de la celda */
+    padding-bottom: 0.5rem; /* Espacio inferior dentro de la celda */
+}
+
+/* 2. El contenedor de los botones ahora es más simple */
+.action-buttons-container {
+    display: flex;
+    gap: 10px;
 }

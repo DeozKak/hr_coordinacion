@@ -32,8 +32,9 @@
             <div class="modal-footer border-0 justify-content-between">
                 <div>
                     @haspermission('ver_residente')
-                    <button type="button" class="btn btn-primary shadow-sm" id="agregar">
-                        <i class="fas fa-plus"></i> Agregar Inspección
+                    <button type="button" class="btn-gradient-agregar" style="margin-left: 10px" id="agregar">
+                        <i class="fas fa-plus"></i>
+                        <span>Agregar Inspección</span>
                     </button>
                     @endhaspermission
                 </div>

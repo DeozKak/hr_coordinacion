@@ -27,7 +27,7 @@
     <input type="hidden" id="id_corte_detalles" value="">
     <input type="hidden" id="id_produccion" value="{{route('produccion.datosDetalles')}}">
     <input type="hidden" name="_token" id="token" value="{{csrf_token()}}">
-    <link rel="stylesheet" href="{{ asset('css/produccion/detalles.css')}}">
+    <link rel="stylesheet" href="{{ asset('css/produccion/detallesV2.2.css')}}">
     <!-- Contenido principal -->
     <div class="container-xxl my-4">
         <div class="row mb-4">
@@ -53,9 +53,11 @@
                             <i class="fas fa-industry"></i> Detalles de Producción
                         </h3>
                     </div>
-                    <div class="card-body overflow-auto" style="min-height:120vh; max-height:200vh;" id="detalles">
+
+                    <div class="overflow-auto"  id="detalles">
                         <!-- Aquí se cargan los detalles dinámicamente -->
                     </div>
+
                 </div>
             </div>
         </div>
@@ -72,7 +74,7 @@
 @stop
 
 @section('js')
-    <script src="{{asset('js/produccion/producciondetallesV9.js')}}?v={{ time()}}"></script>
+    <script src="{{asset('js/produccion/producciondetallesV10.2.js')}}?v={{ time()}}"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/es.js"></script>
     <script>
