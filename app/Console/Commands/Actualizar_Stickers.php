@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\tbl_insp_cali;
 use App\Models\Bitacoras\tbl_bitacora_contrato;
+use App\Models\Bitacoras\tbl_bitacora_fallida;
 use App\Models\Stickers\tbl_inspector_sticker;
 use App\Models\Stickers\tbl_sticker_tipo;
 use Rmunate\Calendario\CalendarioColombia;
@@ -50,10 +51,30 @@ class Actualizar_Stickers extends Command
             'inicio_rango' => $inicioRango->toDateString(),
             'fin_rango'    => $finRango->toDateString(),
         ]);
-
-
+        $arrayFallidas = [
+            '.DIRECCION NO ENCONTRADA',
+            '.PREDIO EN CONSTRUCCION',
+            'APLAZADO POR EL USUARIO.',
+            'CASA SOLA.',
+            'CERTIFICADA POR OIA EXTERNO.',
+            'MEDIDOR POR LITROS BORRADOS.',
+            'MENOR DE EDAD.',
+            'NO ESTA EL ENCARGADO.',
+            'NOVEDAD BLOQUEANTE',
+            'NOVEDAD BLOQUEANTE.',
+            'PERDIDA',
+            "SIN GESTION.",
+            'PREDIO DESOCUPADO.',
+            'USUARIO NO AUTORIZA.'
+        ];
+        // Reglas de descuento
+        $AMARILLO   = 'AMARILLOS';
+        $ROJO       = 'ROJOS';
+        $SUSPENSION = 'SUSPENSION';
+        $ISOMETRICOS = 'ISOMETRICOS';
+        $VISITA = 'CONS DE VISITA';
         // Ajusta el nombre del campo si tu tabla de tipos usa otro en vez de "nombre" (por ejemplo "NOMBRE")
-        $tiposNecesarios = ['ROJOS', 'AMARILLOS', 'SUSPENSION'];
+        $tiposNecesarios = [$AMARILLO, $ROJO, $SUSPENSION, $ISOMETRICOS ,$VISITA];
         $tipos = tbl_sticker_tipo::query()
             ->whereIn('nombre', $tiposNecesarios)
             ->pluck('id', 'nombre');
@@ -91,10 +112,7 @@ class Actualizar_Stickers extends Command
         // <<< CAMBIO: Se define el array de tipos de trabajo de línea matriz
         $tipos_linea_matriz = ['FI-29 revisión periódica línea matriz', 'FI-31 REVISIÓN NUEVA LINEA MATRIZ'];
 
-        // Reglas de descuento
-        $AMARILLO   = 'AMARILLOS';
-        $ROJO       = 'ROJOS';
-        $SUSPENSION = 'SUSPENSION';
+
 
         $procesados = 0;
 
@@ -122,8 +140,11 @@ class Actualizar_Stickers extends Command
                 ->where('CC_OPERARIO', $documentoInspector)
                 ->whereIn('TIPO_TRABAJO', $tipos_linea_matriz) // Se usa whereIn para buscar estos tipos
                 ->count(); // Usamos count() para obtener directamente el número total
-
-
+            //Visitas Fallidas
+            $conteoFallidas = tbl_bitacora_fallida::whereBetween('FECHA', [$inicioRango->toDateString(), $finRango->toDateString()])
+            ->where('CC_OPERARIO', $documentoInspector)
+            ->whereIn('TIPO_TRABAJO', $arrayFallidas)
+            ->count();
 
             $conteo = [
                 $C_CER          => 0,
@@ -143,8 +164,10 @@ class Actualizar_Stickers extends Command
             $descuentoAmarillos  = $conteo[$C_CER] + $conteo[$C_CER_NOV] + $conteo[$C_DEF_CRIT] + $conteo[$C_DEF_NO_CRIT];
             $descuentoRojos      = $conteo[$C_CER] + $conteo[$C_CER_NOV] + $conteoLineaMatriz;
             $descuentoSuspension = $conteo[$C_DEF_CRIT];
+            $descuentoIsometricos = $conteo[$C_CER] + $conteo[$C_CER_NOV] + $conteo[$C_DEF_CRIT] + $conteo[$C_DEF_NO_CRIT] + $conteoLineaMatriz;
+            $descuentoVisitas = $conteoFallidas;
 
-            if ($descuentoAmarillos === 0 && $descuentoRojos === 0 && $descuentoSuspension === 0) {
+            if ($descuentoAmarillos === 0 && $descuentoRojos === 0 && $descuentoSuspension === 0 && $descuentoIsometricos === 0 && $descuentoVisitas === 0) {
                 continue;
             }
 
@@ -154,9 +177,13 @@ class Actualizar_Stickers extends Command
                 $AMARILLO,
                 $ROJO,
                 $SUSPENSION,
+                $ISOMETRICOS,
+                $VISITA,
                 $descuentoAmarillos,
                 $descuentoRojos,
-                $descuentoSuspension
+                $descuentoSuspension,
+                $descuentoIsometricos,
+                $descuentoVisitas
             ) {
                 // Restar usando los nombres y columnas reales del inventario:
                 // - id_sticker_tipo
@@ -194,6 +221,8 @@ class Actualizar_Stickers extends Command
                 $restar($AMARILLO, $descuentoAmarillos);
                 $restar($ROJO, $descuentoRojos);
                 $restar($SUSPENSION, $descuentoSuspension);
+                $restar($ISOMETRICOS, $descuentoIsometricos);
+                $restar($VISITA, $descuentoVisitas);
             });
 
             Log::info('[Stickers] Descuentos aplicados', [
@@ -205,11 +234,15 @@ class Actualizar_Stickers extends Command
                     'CERTIFICADA CON NOVEDADES'                   => $conteo[$C_CER_NOV],
                     'INSPECCIONADA CON DEFECTO CRITICO VALLE'     => $conteo[$C_DEF_CRIT],
                     'INSPECCIONADA CON DEFECTO NO CRITICO VALLE'  => $conteo[$C_DEF_NO_CRIT],
+                    'LINEAS MATRICES'                             => $conteoLineaMatriz,
+                    'FALLIDAS'                                    => $conteoFallidas,
                 ],
                 'descuentos'   => [
                     'AMARILLOS'  => $descuentoAmarillos,
                     'ROJOS'      => $descuentoRojos,
                     'SUSPENSION' => $descuentoSuspension,
+                    'ISOMETRICOS' => $descuentoIsometricos,
+                    'VISITA'     => $descuentoVisitas,
                 ],
             ]);
 

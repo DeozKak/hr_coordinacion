@@ -112,10 +112,41 @@ h1  {
     border-radius: 50%;
     flex-shrink: 0; /* Evita que el punto se encoja */
 }
+.bg-brown {
+    background-color: #8B4513; /* Color café (Saddle Brown) */
+    color: #fff; /* Texto blanco para buena legibilidad */
+    border-radius: 0.25rem; /* Bordes redondeados */
+    padding: 0.375rem 0.75rem; /* Espaciado interno */
+    font-size: 0.875rem; /* Tamaño de fuente suficiente */
+    font-weight: 600; /* Fuente en semi-negrita */
+    display: inline-block; /* Para adaptarse al contenido */
+    text-align: center; /* Asegura que el texto esté centrado */
+}
+
+
 .dot-amarillos { background-color: #fdbd00; }
 .dot-rojos { background-color: #f21b35; }
 .dot-suspension { background-color: #69747c; }
 .dot-default { background-color: #4d5863; }
+.dot-cons {
+    background-color: #3498db; /* Azul */
+    border: 1px solid #2c82c9;
+    width: 15px;
+    height: 15px;
+    display: inline-block;
+    border-radius: 50%;
+}
+
+/* Isométricos (brown) */
+.dot-isometricos {
+    background-color: #8B4513; /* Café (saddle brown) */
+    border: 1px solid #6b3a09;
+    width: 15px;
+    height: 15px;
+    display: inline-block;
+    border-radius: 50%;
+}
+
 
 .history-item b {
     color: #2c3e50;

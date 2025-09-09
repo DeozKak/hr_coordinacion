@@ -9,7 +9,7 @@
 
 @section('content')
 
-    <link rel="stylesheet" href="{{ asset('css/stickers/indexV2.css')}}">
+    <link rel="stylesheet" href="{{ asset('css/stickers/indexV2.1.css')}}">
     <input type="hidden" id="url_ActualizarInventario"
            value="{{ route('bitacora.stickers.ActualizarInventario',['id'=>':id']) }}">
     <input type="hidden" id="token" value="{{ csrf_token() }}">
@@ -39,6 +39,8 @@
                             if ($s == 'amarillos') { $badgeClass = 'bg-warning text-dark'; }
                             if ($s == 'rojos') { $badgeClass = 'bg-danger'; }
                             if ($s == 'suspension') { $badgeClass = 'bg-secondary'; $iconClass = 'fa-ban'; }
+                            if ($s == 'cons de visita') { $badgeClass = 'bg-primary'; }
+                            if ($s == 'isometricos') { $badgeClass = 'bg-brown'; }
                         @endphp
                         <span class="badge {{ $badgeClass }} p-2">
                         <i class="fa {{ $iconClass }}"></i> {{ $sticker->nombre }}
@@ -77,7 +79,8 @@
                                             @php
                                                 $nombreClave = strtolower($stickerTipo->nombre);
                                                 $dotClass = 'dot-' . $nombreClave;
-                                                if (!in_array($dotClass, ['dot-amarillos', 'dot-rojos', 'dot-suspension'])) {
+
+                                                if (!in_array($dotClass, ['dot-amarillos', 'dot-rojos', 'dot-suspension', 'dot-cons de visita', 'dot-isometricos'])) {
                                                     $dotClass = 'dot-default';
                                                 }
                                             @endphp
@@ -97,7 +100,7 @@
                                             @php
                                                 $nombreTipo = strtolower(optional($registro->stickerTipo ?? $Stickers->firstWhere('id', $registro->id_sticker_tipo))->nombre);
                                                 $dotClass = 'dot-' . $nombreTipo;
-                                                if (!in_array($dotClass, ['dot-amarillos', 'dot-rojos', 'dot-suspension'])) {
+                                                if (!in_array($dotClass, ['dot-amarillos', 'dot-rojos', 'dot-suspension', 'dot-cons de visita', 'dot-isometricos'])) {
                                                     $dotClass = 'dot-default';
                                                 }
                                             @endphp
