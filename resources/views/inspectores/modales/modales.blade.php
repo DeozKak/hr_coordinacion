@@ -1,5 +1,5 @@
 <!-- Modal Editar Inspector -->
-<div class="modal fade" id="editInspectorModal" tabindex="-1" role="dialog" aria-labelledby="editInspectorModalLabel"
+<div class="modal fade modal-modern" id="editInspectorModal" tabindex="-1" role="dialog" aria-labelledby="editInspectorModalLabel"
 aria-hidden="true">
 <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -54,9 +54,8 @@ aria-hidden="true">
             </form>
         </div>
         <div class="modal-footer">
-            <button type="button" id="guardarEditarInspector" data-url="{{route('inspectores.update')}}"
-                class="btn btn-primary">Guardar</button>
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            <button type="button" class="btn-secondary-modern" data-dismiss="modal">Cerrar</button>
+            <button type="button" id="guardarEditarInspector" data-url="{{route('inspectores.update')}}" class="btn-gradient btn-gradient-primary">Guardar Cambios</button>
         </div>
     </div>
 </div>
@@ -64,7 +63,7 @@ aria-hidden="true">
 
 
 <!-- Modal Crear Inspector -->
-<div class="modal fade" id="createInspectorModal" tabindex="-1" role="dialog"
+<div class="modal fade modal-modern" id="createInspectorModal" tabindex="-1" role="dialog"
 aria-labelledby="createInspectorModalLabel" aria-hidden="true">
 <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -75,10 +74,12 @@ aria-labelledby="createInspectorModalLabel" aria-hidden="true">
             </button>
         </div>
         <div class="modal-body">
-            <small class="text-muted">Por favor colocar información tal cual está en movilidad con el fin de evitar
-                errores con el cruce de información entre las aplicaciones.</small>
-            <br>
-            <br>
+            <div class="alert-modern alert-info-modern">
+                <i class="fa fa-info-circle"></i>
+                Por favor colocar información tal cual está en movilidad con el fin de evitar
+                errores con el cruce de información entre las aplicaciones.
+            </div>
+
             <!-- Contenido de create.blade -->
             <form action="" autocomplete="off">
                 @csrf
@@ -123,10 +124,9 @@ aria-labelledby="createInspectorModalLabel" aria-hidden="true">
                 </div>
         </div>
         <div class="modal-footer">
-            <button type="button" id="guardarCrearInspector" data-url="{{ route('inspectores.store') }}"
-                class="btn btn-primary">Guardar</button>
+            <button type="button" id="guardarCrearInspector" data-url="{{ route('inspectores.store') }}" class="btn-gradient btn-gradient-success">Guardar</button>
             </form>
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            <button type="button" class="btn-secondary-modern" data-dismiss="modal">Cerrar</button>
         </div>
     </div>
 </div>
@@ -134,7 +134,7 @@ aria-labelledby="createInspectorModalLabel" aria-hidden="true">
 
 
 <!-- Modal Ver Desactivados -->
-<div class="modal fade" id="showDisabledInspectorsModal" tabindex="-1" role="dialog"
+<div class="modal fade modal-modern" id="showDisabledInspectorsModal" tabindex="-1" role="dialog"
 aria-labelledby="showDisabledInspectorsModalLabel" aria-hidden="true">
 <div class="modal-dialog modal-xl" role="document">
     <div class="modal-content">
@@ -166,7 +166,7 @@ aria-labelledby="showDisabledInspectorsModalLabel" aria-hidden="true">
             </div>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            <button type="button" class="btn-secondary-modern" data-dismiss="modal">Cerrar</button>
         </div>
     </div>
 </div>

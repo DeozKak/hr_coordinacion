@@ -165,18 +165,18 @@ $(document).ready(function () {
                     "<td>" + inspector.type_id + "</td>" +
                     "<td>" + inspector.cedula + "</td>" +
                     "<td>" + inspector.supervisor.name + "</td>" +
-                    "<td>" + "<span class='badge bg-warning text-dark'>SI</span>" + "</td>" +
+                    "<td>" + "<span class='badge-modern badge-warning-modern'>SI</span>" + "</td>" +
                     "<td>" +
                     (inspector.state == 1 ?
-                        "<span class='badge badge-success'>Activo</span>" :
-                        "<span class='badge badge-danger'>Inactivo</span>"
+                        "<span class='badge-modern badge-success-modern'>Activo</span>" :
+                        "<span class='badge-modern badge-danger-modern'>Inactivo</span>"
                     ) +
                     "</td>" +
                     "<td>" +
                     "<div class='btn-group' role='group' aria-label='Botones'>" +
-                    "<button class='btn btn-warning modalEditarInspector'>Editar</button>" +
+                    "<button class='btn-gradient btn-gradient-warning btn-sm modalEditarInspector'>Editar</button>" +
                     "<form class='d-inline'>" +
-                    "<button type='button' data-url='" + activeStateUrl.replace('__ID__', inspector.id) + "' class='btn btn-danger change_state'>Desactivar</button>" +
+                    "<button type='button' data-url='" + activeStateUrl.replace('__ID__', inspector.id) + "' class='btn-gradient btn-gradient-danger btn-sm change_state'>Desactivar</button>" +
                     "</form>" +
                     "</div>" +
                     "</td>" +
@@ -228,11 +228,11 @@ $(document).ready(function () {
                         "<td>" + inspector.type_id + "</td>" +
                         "<td>" + inspector.cedula + "</td>" +
                         "<td>" + inspector.supervisor.name + "</td>" +
-                        "<td><span class='badge badge-danger'>Inactivo</span></td>" +
+                        "<td><span class='badge-modern badge-danger-modern'>Inactivo</span></td>" +
                         "<td>" +
                         "<div class='btn-group' role='group' aria-label='Botones'>" +
                         "<form class='d-inline'>" +
-                        "<button type='button' data-url='" + activeStateUrl.replace('__ID__', inspector.id) + "' class='btn btn-success btn-sm active_state'>Activar</button>" +
+                        "<button type='button' data-url='" + activeStateUrl.replace('__ID__', inspector.id) + "' class='btn-gradient btn-gradient-success btn-sm active_state'>Activar</button>" +
                         "</form>" +
                         "</div>" +
                         "</td>" +

@@ -1707,7 +1707,8 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
     {
         // verificar si ya existe la programación
         $exist = tbl_programacion_contrato::where('CONTRATO', $row['B'])
-            ->where('ORDEN_TRABAJO', $row['A'])
+            //->where('ORDEN_TRABAJO', $row['A'])
+            ->where('FECHA_AGENDAMIENTO','>=',$scheduling)
             ->exists();
         if ($exist) {
             return 0;

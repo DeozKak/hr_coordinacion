@@ -1,0 +1,269 @@
+/* =================================================================== */
+/* ====   ESTILOS MODERNOS PARA LA VISTA DE INSPECTORES     ==== */
+/* =================================================================== */
+h1 {
+    color: #34495e;
+    font-weight: 600;
+}
+/* ==== Contenedor Principal ==== */
+.shadow-container {
+    background: #ffffff;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 32px rgba(44, 62, 80, 0.12);
+    border: 1px solid #e8eef3;
+    padding: 1.5rem;
+}
+
+/* ==== Barra de Herramientas (Acciones) ==== */
+.controls-header {
+    display: flex;
+    justify-content: flex-end; /* Alinea los botones a la derecha */
+    gap: 0.75rem;
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* ==== Estilos para la Tabla Principal (DataTables) ==== */
+table {
+    border-collapse: separate !important;
+    border-spacing: 0;
+    width: 100% !important;
+}
+ thead tr {
+    background: linear-gradient(90deg, #1d8cf8 0%, #3358f4 100%);
+}
+ thead th {
+    color: #ffffff; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em; font-size: 0.85rem; padding: 1rem 1.25rem;
+    background-color: transparent; border: none; text-align: left;
+}
+ thead th:first-child { border-top-left-radius: 0.8rem; }
+ thead th:last-child { border-top-right-radius: 0.8rem; }
+ tbody tr:hover {
+    background-color: #f5f9fe;
+}
+ tbody td {
+    padding: 0.75rem 1.25rem; vertical-align: middle;
+    color: #525f7f; border-bottom: 1px solid #e9ecef;
+    font-size: 0.9rem;
+}
+
+/* ==== Avisos (Badges) Modernos ==== */
+.badge-modern {
+    display: inline-block;
+    padding: 0.4em 0.8em;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 50em; /* Forma de píldora */
+    color: #fff;
+    text-transform: uppercase;
+}
+.badge-success-modern { background-color: #28a745; }
+.badge-danger-modern { background-color: #e53e3e; }
+.badge-warning-modern { background-color: #f59e0b; color: #212529; }
+.badge-secondary-modern { background-color: #6c757d; }
+
+/* ==== Botones con Gradiente y Base ==== */
+.btn-gradient {
+    border: none; color: #fff; padding: 0.6rem 1.2rem;
+    font-size: 0.9rem; font-weight: 600; border-radius: 8px;
+    cursor: pointer; display: inline-flex; align-items: center;
+    gap: 0.5rem; transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.btn-gradient.btn-sm { padding: 0.35rem 0.8rem; font-size: 0.8rem; }
+.btn-gradient-success { background: linear-gradient(90deg, #2ecc71 0%, #27ae60 100%); }
+.btn-gradient-primary { background: linear-gradient(90deg, #1d8cf8 0%, #3358f4 100%); }
+.btn-gradient-warning { background: linear-gradient(90deg, #f5a623 0%, #f8d800 100%); color: #594200; }
+.btn-gradient-danger { background: linear-gradient(90deg, #fa5252 0%, #e03131 100%); }
+
+/* (Añade también aquí los estilos para .dt-controls y .modal-modern si los necesitas) */
+/* =================================================================== */
+/* ====   ESTILOS MODERNOS PARA CONTROLES DE DATATABLE      ==== */
+/* =================================================================== */
+
+/* --- Contenedores de Controles --- */
+.dt-search, .dt-length {
+    margin-bottom: 1.5rem;
+}
+
+/* --- Texto y Etiquetas ("Buscar:", "Mostrar X registros", etc.) --- */
+.dt-search label, .dt-length label, .dt-info {
+    color: #525f7f;
+    font-weight: 500;
+    font-size: 0.95rem;
+    vertical-align: middle;
+}
+
+/* --- Campos de Búsqueda y Selectores --- */
+.dt-input {
+    border-radius: 8px !important;
+    border: 1px solid #d1d9e6 !important;
+    padding: 0.5rem 0.8rem !important;
+    font-size: 0.95rem;
+    transition: all 0.2s ease-in-out;
+    background-color: #f8f9fa;
+    margin-left: 0.5rem;
+    box-shadow: none !important;
+}
+
+.dt-input:focus {
+    background-color: #fff;
+    border-color: #3498db !important;
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1) !important;
+    outline: none;
+}
+
+/* --- Paginación --- */
+.dt-paging {
+    display: flex;
+    justify-content: flex-end;
+    gap: 5px;
+}
+
+.dt-paging-button {
+    border-radius: 8px !important;
+    padding: 0.5rem 0.9rem;
+    margin: 0 !important;
+    border: none !important;
+    background: transparent;
+    color: #525f7f;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+.dt-paging-button:not(.current):not(.disabled):hover {
+    background-color: #e9f3fe;
+    color: #1d8cf8;
+}
+
+.dt-paging-button.disabled {
+    color: #a0aec0 !important;
+    background-color: #f0f3f5 !important;
+    cursor: not-allowed;
+}
+
+/* Botón de página activa con alto contraste */
+.dt-paging-button.current, .dt-paging-button.current:hover {
+    background: linear-gradient(90deg, #1d8cf8 0%, #3358f4 100%);
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(29, 140, 248, 0.35);
+    font-weight: 700;
+    transform: translateY(-2px);
+    cursor: default;
+}
+
+/* =================================================================== */
+/* ====   ESTILOS MODERNOS PARA MODALES DE INSPECTORES      ==== */
+/* =================================================================== */
+
+/* --- Estructura Principal del Modal --- */
+.modal-modern .modal-content {
+    border-radius: 1.25rem;
+    border: none;
+    box-shadow: 0 4px 32px rgba(44, 62, 80, 0.15);
+    overflow: hidden;
+}
+
+.modal-modern .modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+}
+
+.modal-modern .modal-title {
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.modal-modern .close {
+    font-size: 1.5rem;
+    color: #6c757d;
+    text-shadow: none;
+    opacity: 0.8;
+}
+
+.modal-modern .modal-body {
+    padding: 1.5rem;
+}
+
+.modal-modern .modal-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+/* --- Estilos para Formularios dentro del Modal --- */
+.modal-modern .form-group {
+    margin-bottom: 1.25rem;
+}
+.modal-modern .form-label, .modal-modern .form-group label {
+    font-weight: 500;
+    color: #525f7f;
+    margin-bottom: 0.5rem;
+}
+.modal-modern .form-control {
+    border-radius: 8px;
+    border: 1px solid #d1d9e6;
+    padding: 0.6rem 1rem;
+    font-size: 0.95rem;
+}
+.modal-modern select.form-control {
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+}
+
+/* --- Botón Secundario Moderno (Cerrar) --- */
+.btn-secondary-modern {
+    padding: 0.6rem 1.2rem; font-size: 0.9rem; font-weight: 600;
+    border-radius: 8px; cursor: pointer; border: none;
+    background-color: #e9ecef; color: #34495e;
+}
+.btn-secondary-modern:hover { background-color: #d1d9e6; }
+
+/* --- Estilos para la Tabla dentro del Modal --- */
+.modal-modern #table_desactivar {
+    width: 100% !important; border-collapse: separate !important; border-spacing: 0;
+}
+.modal-modern #table_desactivar thead tr {
+    background: linear-gradient(90deg, #6c757d 0%, #343a40 100%);
+}
+
+.alert-modern {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px; /* Bordes redondeados */
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    border: 1px solid transparent;
+    border-left-width: 5px; /* Borde izquierdo más grueso */
+}
+
+.alert-modern i {
+    font-size: 1.2rem;
+    margin-right: 0.75rem;
+}
+/* --- Variante para Alertas de Información --- */
+.alert-info-modern {
+    background-color: #f0f9ff; /* Fondo azul pastel */
+    border-left-color: #3498db;  /* Borde izquierdo azul */
+    color: #0c5464;           /* Texto oscuro para legibilidad */
+}
+
+.alert-info-modern i {
+    color: #3498db;
+}
