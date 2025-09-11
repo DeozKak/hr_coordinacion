@@ -6,7 +6,6 @@
     <h1><i class="fa fa-sticky-note"></i> Control Stickers</h1>
 @stop
 
-
 @section('content')
 
     <link rel="stylesheet" href="{{ asset('css/stickers/indexV2.1.css')}}">

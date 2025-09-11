@@ -143,7 +143,7 @@ class Actualizar_Stickers extends Command
             //Visitas Fallidas
             $conteoFallidas = tbl_bitacora_fallida::whereBetween('FECHA', [$inicioRango->toDateString(), $finRango->toDateString()])
             ->where('CC_OPERARIO', $documentoInspector)
-            ->whereIn('TIPO_TRABAJO', $arrayFallidas)
+            ->whereIn('RESULTADO_CIERRE', $arrayFallidas)
             ->count();
 
             $conteo = [
