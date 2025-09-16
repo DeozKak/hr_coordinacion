@@ -12,6 +12,7 @@ use App\Models\Bitacoras\tbl_dv_insp;
 use App\Models\Bitacoras\tbl_temp_contrato;
 use App\Models\Bitacoras\tbl_temp_fallida;
 use App\Models\Movilidad;
+use App\Models\Programacion\tbl_programacion_base;
 use App\Models\tbl_insp_cali;
 use App\Models\User;
 use App\Models\Zonificacion\tbl_localidades_municipio;
@@ -588,14 +589,15 @@ class BitacoraController extends Controller
 
                     $duracion = $horaInicio->diff($horaFinal);
 
-                   /* if ($datos['categoria'] === null) {
-                        $consultaMovilidad = Movilidad::select('AttrCategoria')->where('NroSitio', $datos['contrato'])->where('IdTarea', $datos['no_acta'])->first();
+                    if ($datos['categoria'] === null) {
+                        $contrato =  str_replace(':', '', $datos['contrato']);
+                        $consultaCategoria = tbl_programacion_base::select('NOM_CATE')->where('CONTRATO',$contrato)->first();
 
-                        if (!is_null($consultaMovilidad) && $consultaMovilidad->AttrCategoria !== null) {
-                            $datos['categoria'] = $consultaMovilidad->AttrCategoria;
+                        if (!is_null($consultaCategoria) && $consultaCategoria->NOM_CATE !== null) {
+                            $datos['categoria'] = $consultaCategoria->NOM_CATE;
                         }
                         // Si $consultaMovilidad es null, no se ejecutará el bloque if y $datos['categoria'] seguirá siendo null
-                    }*/
+                    }
 
                     if ($datos['tipo_de_trabajo'] === 'SA 12164' || $datos['tipo_de_trabajo'] === 'SA 12163') {
                         $exist = tbl_bitacora_contrato::where('CONTRATO', $datos['contrato'])->where('ORDEN_TRABAJO', $datos['orden_de_trabajo'])->where('No_ACTA', $datos['no_acta'])->exists();

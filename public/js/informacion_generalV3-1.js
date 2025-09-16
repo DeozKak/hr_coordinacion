@@ -1,5 +1,3 @@
-
-
 document.addEventListener('DOMContentLoaded', () => {
     $('#cortes, #causal').DataTable({
         paging: false,
@@ -45,13 +43,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // });
 
-    $('#cortes').on('click', '.btn-primary[data-corte-id]', function () {
+    $('#cortes').on('click', '#btn_detallesCorte', function () {
+
         const corteId = $(this).data('corte-id');
         detallesCorte(corteId);
 
     });
 
-    $('#cortes').on('click', '.btn-secondary[data-corte-id]', function () {
+    $('#cortes').on('click', '#btn_fallidas', function () {
+
+        const corteId = $(this).data('corte-id');
+        fallidas(corteId);
+
+    });
+
+    $('#cortes').on('click', '#btn_graficos', function () {
         const corteId = $(this).data('corte-id');
         Graficos(corteId);
 
@@ -71,6 +77,9 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#crearCorte').removeClass('guardarCambiosCorte').addClass('guardarNuevoCorte');  // Cambiar la clase para detectar el modo
         $('#corteModal').modal('show');  // Mostrar el modal
     });
+    $(document).on('click', '#btn_cerrarCorte', function () {
+        $('#corteModal').modal('hide');
+    })
 
     $(document).on('click', '.guardarNuevoCorte', function () {
         let nombre = $('#nombreCorte').val().trim();
@@ -81,28 +90,28 @@ document.addEventListener('DOMContentLoaded', () => {
         let token = $('#token').val();
 
 
-            $.ajax({
-                url: 'cortes_produccion/store/Corte',
-                type: 'POST',
-                data: {
-                    nombre: nombre,
-                    fecha_inicio: fecha_inicio,
-                    fecha_fin: fecha_fin,
-                    meta: meta,
-                    dobles: dobles,
-                    _token: token
-                },
-                success: function (response) {
+        $.ajax({
+            url: 'cortes_produccion/store/Corte',
+            type: 'POST',
+            data: {
+                nombre: nombre,
+                fecha_inicio: fecha_inicio,
+                fecha_fin: fecha_fin,
+                meta: meta,
+                dobles: dobles,
+                _token: token
+            },
+            success: function (response) {
 
-                        $('#corteModal').modal('hide');
-                        $('#nombreCorte').val('');
-                        $('#fecha_inicio').val('');
-                        $('#fecha_fin').val('');
-                        $('#meta').val('');
-                        $('#dobles').val('');
+                $('#corteModal').modal('hide');
+                $('#nombreCorte').val('');
+                $('#fecha_inicio').val('');
+                $('#fecha_fin').val('');
+                $('#meta').val('');
+                $('#dobles').val('');
 
 
-                        let nuevaFila = `
+                let nuevaFila = `
                             <tr data-id="${response.success.id}">
                                 <td class="sorting_1">${response.success.nombre}</td>
                                 <td class="dt-type-date">${response.success.fecha_inicio}</td>
@@ -118,28 +127,28 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </td>
                             </tr>
                         `;
-                        $('#cortes tbody').append(nuevaFila);  // Agregar la nueva fila al cuerpo de la tabla
+                $('#cortes tbody').append(nuevaFila);  // Agregar la nueva fila al cuerpo de la tabla
 
-                        // Mostrar mensaje de éxito
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Éxito',
-                            text: 'El corte se ha creado correctamente.',
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
+                // Mostrar mensaje de éxito
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Éxito',
+                    text: 'El corte se ha creado correctamente.',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
 
-                },
-                error: function (xhr) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error al guardar',
-                        text: xhr.responseJSON.error,
-                    });
-                    console.log(xhr.responseText);
-                }
+            },
+            error: function (xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al guardar',
+                    text: xhr.responseJSON.error,
+                });
+                console.log(xhr.responseText);
+            }
 
-            })
+        })
 
     })
 
@@ -254,6 +263,10 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#crearCausal').text('Crear Causal'); // Cambiar el texto del botón
         $('#crearCausal').removeClass('guardarCambiosCausal').addClass('guardarNuevoCausal');  // Cambiar la clase para detectar el modo
         $('#causalModal').modal('show');  // Mostrar el modal
+    });
+
+    $(document).on('click', '#btn_cerrarCausal', function () {
+        $('#causalModal').modal('hide');
     });
 
     // Enviar el formulario para crear una nueva causal
@@ -536,7 +549,6 @@ function ValidarFormularioCortes() {
     const fechaMinimaFormateada = fechaMinima.getFullYear() + "-" + mesMin + "-" + diaMin;
 
 
-
     // Validar fechas al cambiar
     fechaInicioInput.addEventListener('input', validarFechas);
     fechaFinInput.addEventListener('input', validarFechas);
@@ -558,6 +570,10 @@ function ValidarFormularioCortes() {
 
 function detallesCorte(id) {
     window.location.href = `produccion/detalles_corte/${id}`;
+}
+
+function fallidas(id) {
+    window.location.href = `produccion/detalles/${id}`;
 }
 
 function Graficos(id) {

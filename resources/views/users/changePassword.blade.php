@@ -8,6 +8,7 @@
 @section('content')
 <link rel="stylesheet" href="{{asset('css/admin/edit.css')}}">
 <div class="container">
+
     <div class="row">
         <div class="col-sm-6 mx-auto">
             <div class="card">

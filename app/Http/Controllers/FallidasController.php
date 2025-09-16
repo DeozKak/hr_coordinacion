@@ -12,9 +12,17 @@ use Illuminate\Support\Facades\DB;
 
 class FallidasController extends Controller
 {
-    public function index(){
+    public function index()
+    {
         return view('produccion.fallidas');
     }
+
+    public function detalles($id){
+        session(['id_corte' => $id]);
+
+        return $this->index();
+    }
+
 
     public function getData(Request $request){
 
@@ -22,18 +30,6 @@ class FallidasController extends Controller
             $idCorte = session('id_corte') ?? $request->idCorteDetalles;
             $corte = tbl_produccion_corte::find($idCorte);
 
-            $exist = tbl_produccion_historico::where('id_corte', $corte->id)->exists();
-
-            if ($exist) {
-                $historico = tbl_produccion_historico::where('id_corte', $corte->id)->first();
-                $response = json_decode($historico->data);
-                session()->forget('id_corte');
-                session()->save();
-
-                session()->put('corteEnviar', $corte);
-
-                return response()->json($response);
-            }
         } else {
             $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
             $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));

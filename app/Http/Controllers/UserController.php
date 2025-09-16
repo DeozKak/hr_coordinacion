@@ -22,6 +22,7 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+
         $id = $request->input('id');
         $nombre = $request->input('nombres');
         $roles = $request->input('roles');

@@ -124,6 +124,7 @@
         const Mark_all_notification = "{{route('notifications.markAllAsRead')}}";
     </script>
     <script src="{{ asset('js/master/master.js') }}"></script>
+    <link rel="stylesheet" href="{{ asset('css/adminlte/adminlte.css') }}">
 </body>
 
 </html>

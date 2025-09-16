@@ -1,0 +1,291 @@
+/* =================================================================== */
+/* ====   ESTILOS MODERNOS PARA GESTIÓN DE USUARIOS         ==== */
+/* =================================================================== */
+h1 {
+    color: #34495e;
+    font-weight: 600;
+}
+/* ==== Contenedor Principal ==== */
+.shadow-container {
+    background: #ffffff;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 32px rgba(44, 62, 80, 0.12);
+    border: 1px solid #e8eef3;
+    padding: 1.5rem;
+}
+
+/* ==== Estilos para la Tabla Principal (DataTables) ==== */
+#table_users {
+    border-collapse: separate !important; border-spacing: 0; width: 100% !important;
+}
+#table_users thead tr {
+    background: linear-gradient(90deg, #1d8cf8 0%, #3358f4 100%);
+}
+#table_users thead th {
+    color: #ffffff; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em; font-size: 0.85rem; padding: 1rem 1.25rem;
+    background-color: transparent; border: none; text-align: left;
+}
+#table_users tbody td {
+    padding: 0.75rem 1.25rem; vertical-align: middle;
+    color: #525f7f; border-bottom: 1px solid #e9ecef;
+}
+#table_users tbody tr:hover { background-color: #f5f9fe; }
+
+/* ==== Estilos para la Tabla Principal (DataTables) ==== */
+#table_users {
+    border-collapse: separate !important;
+    border-spacing: 0;
+    width: 100% !important;
+}
+#table_users thead tr {
+    background: linear-gradient(90deg, #1d8cf8 0%, #3358f4 100%);
+}
+#table_users thead th {
+    color: #ffffff; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em; font-size: 0.85rem; padding: 1rem 1.25rem;
+    background-color: transparent; border: none; text-align: left;
+}
+/* ▼▼ REGLAS FALTANTES PARA REDONDEAR LAS ESQUINAS ▼▼ */
+#table_users thead th:first-child {
+    border-top-left-radius: 0.8rem;
+}
+#table_users thead th:last-child {
+    border-top-right-radius: 0.8rem;
+}
+
+/* ==== Avisos (Badges) Modernos ==== */
+.badge-modern {
+    display: inline-block; padding: 0.4em 0.8em; font-size: 0.8rem;
+    font-weight: 600; line-height: 1; text-align: center;
+    border-radius: 50em; color: #fff;
+}
+.badge-primary-modern { background-color: #5e72e4; }
+.badge-success-modern { background-color: #28a745; }
+.badge-danger-modern { background-color: #e53e3e; }
+
+
+/* ==== Botones con Gradiente y Base ==== */
+/* ▼▼ ESTA ES LA REGLA BASE COMPLETA QUE FALTABA ▼▼ */
+.btn-gradient {
+    border: none;
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    margin: 5px;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.btn-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.btn-gradient.btn-sm {
+    padding: 0.35rem 0.8rem;
+    font-size: 0.8rem;
+}
+.btn-gradient-assigned { background: linear-gradient(90deg, #1d8cf8 0%, #3358f4 100%); }
+.btn-gradient-success { background: linear-gradient(90deg, #2ecc71 0%, #27ae60 100%); }
+.btn-gradient-primary { background: linear-gradient(90deg, #5e72e4 0%, #825ee4 100%); }
+.btn-gradient-warning { background: linear-gradient(90deg, #f5a623 0%, #f8d800 100%); color: #594200; }
+.btn-gradient-danger { background: linear-gradient(90deg, #fa5252 0%, #e03131 100%); }
+.btn-secondary-modern {
+    /* Apariencia */
+    background-color: #e9ecef; /* Fondo gris claro */
+    color: #34495e;           /* Texto oscuro para contraste */
+    border: none;
+    border-radius: 8px;
+
+    /* Tamaño y tipografía */
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+
+    /* Comportamiento */
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+}
+
+.btn-secondary-modern:hover {
+    background-color: #d1d9e6; /* Un gris un poco más oscuro al pasar el mouse */
+}
+
+
+/* ==== Gestor de Permisos (Dual Listbox) ==== */
+.permissions-manager {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.permissions-manager select[multiple] {
+    height: 150px !important;
+}
+.permissions-manager .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+/* AHORA: Regla unificada para TODO el texto de los controles */
+.dt-search label,
+.dt-length label,
+.dt-info {
+    color: #525f7f;       /* Mismo color de texto */
+    font-weight: 500;    /* Mismo grosor de fuente */
+    font-size: 0.95rem;  /* Mismo tamaño de fuente */
+    vertical-align: middle; /* Ayuda a alinear todo perfectamente */
+}
+/* Estilo para el input de BÚSQUEDA y el SELECT de entradas (ambos usan .dt-input) */
+.dt-input {
+    border-radius: 8px !important;
+    border: 1px solid #d1d9e6 !important;
+    padding: 0.5rem 0.8rem !important;
+    font-size: 0.95rem;
+    transition: all 0.2s ease-in-out;
+    background-color: #f8f9fa;
+    margin-left: 0.5rem;
+    box-shadow: none !important; /* Reseteamos sombras por defecto */
+}
+
+.dt-input:focus {
+    background-color: #fff;
+    border-color: #3498db !important;
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1) !important;
+    outline: none;
+}
+/* ---- Estilos para la PAGINACIÓN ---- */
+
+/* Contenedor de los botones */
+.dt-paging {
+    display: flex;
+    justify-content: flex-end; /* Alineamos a la derecha */
+    gap: 5px; /* Espacio entre botones */
+}
+
+/* Estilo base para cada botón de la paginación */
+.dt-paging-button {
+    border-radius: 8px !important;
+    padding: 0.5rem 0.9rem;
+    margin: 0 !important;
+    border: none !important; /* Quitamos bordes */
+    background: transparent;
+    color: #525f7f;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+/* Efecto al pasar el mouse sobre un botón (que no sea el actual o desactivado) */
+.dt-paging-button:not(.current):not(.disabled):hover {
+    background-color: #e9f3fe;
+    color: #1d8cf8;
+}
+
+/* Botón de la página ACTIVA (ahora es .current) */
+.dt-paging-button.current {
+    /* Usamos un gradiente más oscuro y vibrante, como el del encabezado */
+    background: linear-gradient(90deg, #1d8cf8 0%, #3358f4 100%);
+    color: #ffffff !important;
+
+    /* Una sombra más notoria para que el botón "resalte" */
+    box-shadow: 0 4px 14px rgba(29, 140, 248, 0.35);
+
+    /* Hacemos el número más grueso y "levantamos" el botón */
+    font-weight: 700;
+    transform: translateY(-2px);
+    cursor: default;
+}
+.dt-paging-button.current:hover {
+    background: linear-gradient(90deg, #1d8cf8 0%, #3358f4 100%);
+    transform: translateY(-2px);
+}
+
+
+/* Botones deshabilitados (Previous/Next en los extremos) */
+.dt-paging-button.disabled {
+    color: #a0aec0 !important;
+    background-color: #f0f3f5 !important;
+    cursor: not-allowed;
+}
+
+/* Contenedor para las etiquetas de permisos */
+.permission-tags {
+    display: flex;
+    flex-wrap: wrap; /* Permite que las etiquetas se ajusten */
+    gap: 0.4rem;     /* Espacio entre etiquetas */
+    align-items: center;
+}
+
+/* Estilo para el botón "+X más" */
+.badge-more {
+    background-color: #e9ecef;
+    color: #495057;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.badge-more:hover {
+    background-color: #d1d9e6;
+}
+
+/* Contenedor para los permisos ocultos */
+.hidden-permissions {
+    display: none; /* Oculto por defecto */
+    flex-basis: 100%; /* Ocupa una nueva línea al mostrarse */
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+/* =================================================================== */
+/* ====   ESTILOS MODERNOS PARA MODAL DE EDICIÓN DE USUARIO   ==== */
+/* =================================================================== */
+.modal-modern{border-radius: 1.25rem;}
+
+/* --- Estructura Principal del Modal --- */
+.modal-modern .modal-content {
+    border-radius: 1.25rem !important; /* ¡LA CLAVE! Añadimos !important para darle prioridad */
+    border: none;
+    box-shadow: 0 4px 32px rgba(44, 62, 80, 0.15);
+    overflow: hidden; /* ¡MUY IMPORTANTE! Para que el header y footer respeten los bordes */
+}
+.modal-modern .modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+.modal-modern .modal-title { color: #2c3e50; font-weight: 600; }
+.modal-modern .modal-body { padding: 1.5rem; }
+.modal-modern .modal-footer {
+    background-color: #f8f9fa; border-top: 1px solid #e9ecef;
+    display: flex; justify-content: flex-end; gap: 0.75rem;
+}
+
+/* --- Formularios dentro del Modal --- */
+.modal-modern .form-group { margin-bottom: 1.25rem; }
+.modal-modern .form-group label {
+    font-weight: 500; color: #525f7f; margin-bottom: 0.5rem;
+}
+.modal-modern .form-control {
+    border-radius: 8px; border: 1px solid #d1d9e6; padding: 0.6rem 1rem;
+}
+
+/* --- Estilos para Tom Select (Gestor de Permisos) --- */
+.modal-modern .ts-control {
+    border-radius: 8px !important; border: 1px solid #d1d9e6 !important;
+    padding: 0.6rem 1rem !important; box-shadow: none !important;
+}
+.modal-modern .ts-control .item {
+    background-color: #5e72e4; /* Color de las etiquetas de permiso */
+    color: #fff;
+    border-radius: 6px;
+    padding: 0.2rem 0.5rem;
+}
+

@@ -336,13 +336,17 @@ class AutoGuardadoController extends Controller
         } catch (\Exception $e) {
             return redirect()->route('bitacora')->with('error', 'Error en el proceso');
         }
-        $super = tbl_temp_contrato::select('id_super')->where('id_bitacora', $id_bitacora)->first();
-        $id_super = $super->id_super;
-        $inspectores = tbl_insp_cali::where('SUPERVISOR', $id_super)
-            ->where('state', 1)
-            ->orderBy('apellidos', 'asc')
-            ->get();
-
+        try {
+            $super = tbl_temp_contrato::select('id_super')->where('id_bitacora', $id_bitacora)->first();
+            $id_super = $super->id_super;
+            $inspectores = tbl_insp_cali::where('SUPERVISOR', $id_super)
+                ->where('state', 1)
+                ->orderBy('apellidos', 'asc')
+                ->get();
+        }catch (\Exception $e) {
+            return redirect()->route('bitacora')->with('error', 'Error en el proceso, no se puede identificar el supervisor
+            por favor vuelve a generar la bitácora');
+        }
         foreach ($inspectores as $inspector) {
             $nombres[] = $inspector->apellidos . ' ' . $inspector->nombres;
             $cedulas[] = $inspector->cedula;

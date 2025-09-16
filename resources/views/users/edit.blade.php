@@ -6,6 +6,7 @@
 <h1>Editar Usuario</h1>
 @endsection
 @section('content')
+
 <link rel="stylesheet" href="{{asset('css/admin/edit.css')}}">
 <div class="container">
     <div class="row">
