@@ -2,7 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
-
+    {{--<link rel="stylesheet" href="{{ asset('css/adminlte/adminlte.css') }}">--}}
     {{-- Base Meta Tags --}}
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -124,7 +124,7 @@
         const Mark_all_notification = "{{route('notifications.markAllAsRead')}}";
     </script>
     <script src="{{ asset('js/master/master.js') }}"></script>
-    <link rel="stylesheet" href="{{ asset('css/adminlte/adminlte.css') }}">
+
 </body>
 
 </html>

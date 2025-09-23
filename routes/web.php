@@ -20,8 +20,26 @@ Route::middleware('web')->group(function () {
     Route::middleware('auth')->group(function () {
         Route::get('/home', [HomeController::class, 'index'])->name('home');
         Route::get('/jobs-pnd', function () {
-            return response()->json(DB::table('jobs')->where('queue', '=', 'Asignacion_tec')
-                ->count());
+
+            $job = DB::table('job_status')->where('status', 'running')->first();
+
+            if (!$job) {
+                return response()->json(['percentage' => null]); // No hay jobs corriendo
+            }
+
+            if ($job->total == 0 || $job->processed == 0) {
+                $percentage = 0; // Prevenir divisiones inválidas si no tiene datos todavía
+            } else {
+                $percentage = round(($job->processed / $job->total) * 100);
+            }
+
+            return response()->json([
+                'percentage' => $percentage,
+                'status' => $job->status,
+                'details' => $job->details,
+            ]);
+
+
         })->name('jobs.pnd');
 
 

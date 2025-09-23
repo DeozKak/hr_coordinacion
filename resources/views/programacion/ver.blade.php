@@ -110,12 +110,19 @@
                     .then(response => response.json())
                     .then(data => {
                         const mensajeDiv = document.getElementById('mensaje-programaciones');
-                        if (data) {
+                        console.log(data);
+                        if (data.percentage !== null) {
                             document.getElementById('btnBuscar').disabled = true;
-                            mensajeDiv.innerHTML = '<div class="alert-modern alert-info-modern">Sincronizando asignaciones tecnicos faltan ' + data + ' registros, espere por favor...</div>';
+
+                            mensajeDiv.innerHTML = `
+                    <div class="alert-modern alert-info-modern">
+                        Sincronizando asignaciones de técnicos. Porcentaje completado:
+                        <strong>${data.percentage}%</strong>. Por favor, espere...
+                    </div>
+                `;
                         } else {
                             document.getElementById('btnBuscar').disabled = false;
-                            mensajeDiv.innerHTML = ''; // Limpiar el mensaje si no hay jobs en cola
+                            mensajeDiv.innerHTML = ''; // Limpiar el mensaje si no hay jobs en ejecución
                         }
                     });
             }

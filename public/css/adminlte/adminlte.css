@@ -1,1 +1,60 @@
+/* =================================================================== */
+/* ====   DISEÑO MODERNO PARA BARRA LATERAL (VERSIÓN FINAL)   ==== */
+/* =================================================================== */
 
+/* --- 1. Barra Lateral (Sidebar) --- */
+.main-sidebar {
+    background-color: #cacaca !important; /* ¡CAMBIO! Fondo gris claro */
+    box-shadow: 0 4px 32px rgba(44, 62, 80, 0.1) !important;
+    border-right: none !important;
+    border-radius: 0 1.25rem 1.25rem 0 !important;
+    margin: 10px 0 10px 10px; /* Ajustamos el margen */
+}
+
+/* --- 2. Logo en la Parte Superior --- */
+.brand-link {
+    border-bottom: 1px solid #e9ecef !important;
+}
+
+/* --- 3. NUEVO: Barra de Búsqueda Moderna --- */
+.form-control-sidebar {
+    background-color: #e9ecef !important; /* Fondo gris para el campo */
+    border: 1px solid #d1d9e6 !important;
+    border-radius: 8px !important;
+    color: #34495e !important;
+    font-weight: 500;
+}
+.btn-sidebar {
+    background-color: #e9ecef !important; /* Fondo gris para el botón */
+    border: 1px solid #d1d9e6 !important;
+    border-left: none !important; /* Unimos el botón al campo */
+    border-radius: 0 8px 8px 0 !important;
+    color: #34495e !important;
+}
+
+/* --- 4. NUEVO: Títulos de Sección (ej. "Bitácoras", "PQRS") --- */
+.nav-header {
+    color: #6c757d !important; /* ¡CAMBIO! Color más oscuro y visible */
+    font-weight: 700 !important; /* Más grueso */
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    padding: 1rem 1rem 0.5rem 1rem;
+}
+
+/* --- 5. Items del Menú (se mantiene igual) --- */
+.nav-sidebar .nav-item .nav-link {
+    color: #34495e !important;
+    font-weight: 600;
+}
+.nav-sidebar .nav-item .nav-link .nav-icon {
+    color: #3498db !important;
+}
+
+/* --- 6. Item Activo / Hover (se mantiene igual) --- */
+.nav-sidebar .nav-item:hover > .nav-link,
+.nav-sidebar .nav-item > .nav-link.active {
+    background-color: #e9ecef !important; /* Un gris un poco más oscuro para el hover */
+    color: #1d8cf8 !important;
+    border-radius: 8px;
+}
+/* ... */

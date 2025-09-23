@@ -28,9 +28,11 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use App\Services\ExtraerFechas;
-use function Laravel\Prompts\error;
+use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use Illuminate\Support\Facades\Storage;
+use App\Jobs\ProcessExcelFileMacros;
 
 use ZipArchive;
 
@@ -152,208 +154,64 @@ class ProgramacionController extends Controller
                 'archivo.mimes' => 'El archivo debe ser de tipo XLS o XLSX.',
             ]);
 
-            $archivo = $request->file('archivo');
-            $spreadsheet = IOFactory::load($archivo);
-            $worksheet = $spreadsheet->getActiveSheet();
-            $indicador = $this->validacion($worksheet);
 
-            if (!$indicador) {
-                return response()->json(['errors' => 'El archivo no cumple los criterios requeridos'], 422);
+            // 1. Guardar el archivo en el storage de Laravel para que el Job pueda acceder a él.
+            // Esto lo guardará en la carpeta 'storage/app/excel-imports'
+            $path = $request->file('archivo')->store('excel-imports');
+
+            // 2. Realizar la validación RÁPIDA de los encabezados
+            $reader = ReaderEntityFactory::createXLSXReader();
+            // Usamos storage_path() para obtener la ruta absoluta del archivo guardado
+            $reader->open(storage_path('app/' . $path));
+
+            $isValid = false;
+            foreach ($reader->getSheetIterator() as $sheet) {
+                foreach ($sheet->getRowIterator() as $row) {
+                    // Validamos la primera fila y salimos del bucle inmediatamente.
+                    $isValid = $this->validacionConArray($row->toArray());
+                    break; // <-- Salimos después de leer la primera fila
+                }
+                break; // <-- Salimos después de leer la primera hoja
             }
+            $reader->close();
 
-            $valor = $this->insercion($worksheet);
-
-            if ($valor === true) {
-                return response()->json(['message' => 'Archivo subido exitosamente']);
-            } else {
-                return response()->json(['errors' => $valor], 422);
+            // 3. Si la validación falla, borramos el archivo y devolvemos un error.
+            if (!$isValid) {
+                Storage::delete($path); // Limpiamos el archivo subido
+                return response()->json(['errors' => 'La estructura del archivo o los encabezados no son correctos.'], 422);
             }
-        } catch (ValidationException $e) {
-            Log::error($e);
-            return response()->json(['errors' => $e], 422);
+            $originalName = $request->file('archivo')->getClientOriginalName(); // Obtener el nombre original
+
+            // 4. Si todo está bien, despachamos el Job pasándole la ruta del archivo.
+            ProcessExcelFileMacros::dispatch($path, Auth::user(), $originalName);
+
+            // 5. Devolvemos una respuesta inmediata al usuario.
+            // El código de estado 202 "Accepted" es ideal para esto.
+            return response()->json(['message' => 'El archivo ha sido aceptado y se está procesando en segundo plano.'], 202);
+
+        } catch (\Exception  $e) {
+            Log::error("Error en la subida inicial del archivo: " . $e->getMessage());
+            return response()->json(['errors' => 'No se pudo procesar la solicitud de subida.'], 500);
         }
     }
 
-    public function validacion($worksheet): bool
+    public function validacionConArray(array $headerRow): bool
     {
-        $indicador = true;
-        foreach (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'] as $columna) {
-            switch ($columna) {
-                case 'A':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "NUMERO_ORDEN") ? true : false;
-                    break;
-                case 'B':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "CONTRATO") ? true : false;
-                    break;
-                case 'C':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "DESC_ESTADO_PROD") ? true : false;
-                    break;
-                case 'D':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "NOMBRE") ? true : false;
-                    break;
-                case 'E':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "DESC_LOCALIDAD") ? true : false;
-                    break;
-                case 'F':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "BARRIO") ? true : false;
-                    break;
-                case 'G':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "DIRECCION") ? true : false;
-                    break;
-                case 'H':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "NOM_CATE") ? true : false;
-                    break;
-                case 'I':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "ID_TIPO_TRABAJO") ? true : false;
-                    break;
-                case 'J':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Código Técnico") ? true : false;
-                    break;
-                case 'K':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Fecha asignación") ? true : false;
-                    break;
-                case 'L':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Estado recepción") ? true : false;
-                    break;
-                case 'M':
-                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Fecha recepción") ? true : false;
-                    break;
-            }
-        }
-        return $indicador;
+        $expectedHeaders = [
+            "Orden", "Contrato", "Producto", "Numero solicitud", "Tipo solicitud"
+        ];
+
+        // Comparamos solo las primeras columnas necesarias
+        $headersToValidate = array_slice($headerRow, 0, count($expectedHeaders));
+
+        // Eliminamos espacios adicionales de los headers para evitar errores
+        $headersToValidate = array_map('trim', $headersToValidate);
+        $expectedHeaders = array_map('trim', $expectedHeaders);
+
+        return $headersToValidate === $expectedHeaders;
+
     }
 
-    public function insercion($worksheet): true|string
-    {
-        $registros = []; // Array para almacenar los registros en lotes
-        $tamañoLote = 2000; // Puedes ajustar el tamaño del lote según tus necesidades
-
-        tbl_programacion_base::truncate();
-
-        DB::beginTransaction(); // Iniciar una transacción
-
-        try {
-            foreach ($worksheet->getRowIterator() as $row) {
-                if ($row->getRowIndex() === 1) {
-                    continue; // Saltar la primera fila (encabezados)
-                }
-                $rowData = [];
-                $filaVacia = true;
-                foreach (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'] as $columna) {
-                    $valorCelda = $worksheet->getCell($columna . $row->getRowIndex())->getValue();
-
-                    // Verificar si la celda tiene algún valor
-                    if (!empty($valorCelda)) {
-                        $filaVacia = false; // La fila no está vacía si al menos una celda tiene valor
-                    }
-
-                    switch ($columna) {
-                        case 'A':
-                            $rowData["NUMERO_ORDEN"] = $valorCelda;
-                            break;
-                        case 'B':
-                            $rowData["CONTRATO"] = $valorCelda;
-                            break;
-                        case 'C':
-                            $rowData["DESC_ESTADO_PROD"] = $valorCelda;
-                            break;
-                        case 'D':
-                            $rowData["NOMBRE"] = $valorCelda;
-                            break;
-                        case 'E':
-                            $rowData["DESC_LOCALIDAD"] = $valorCelda;
-                            break;
-                        case 'F':
-                            $rowData["BARRIO"] = $valorCelda;
-                            break;
-                        case 'G':
-                            $rowData["DIRECCION"] = $valorCelda;
-                            break;
-                        case 'H':
-                            $rowData["NOM_CATE"] = $valorCelda;
-                            break;
-                        case 'I':
-                            $rowData["ID_TIPO_TRABAJO"] = $valorCelda;
-                            break;
-                        case 'J':
-                            $rowData["ID_TECNICO"] = $valorCelda;
-                            break;
-                        case 'K':
-                            try {
-                                if ($valorCelda !== null || $valorCelda !== "0") { // Verificar si la celda tiene un valor
-                                    $excelTimestamp = (float)$valorCelda;
-                                    $fechaAsignacion = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($excelTimestamp);
-                                    $rowData["FECHA_ASIGNACION"] = $fechaAsignacion->format('Y-m-d');
-                                } else {
-                                    $rowData["FECHA_ASIGNACION"] = null; // O cualquier otro valor predeterminado que desees
-                                }
-                            } catch (\Exception $e) {
-                                log::error($e);
-                                return "Error al convertir la fecha: " . $e->getMessage() . "
-                                revise columna K Fila " . $row->getRowIndex() . " ";
-                            }
-                            break;
-                        case 'L':
-                            $rowData["ESTADO_RECEPCION"] = $valorCelda;
-                            break;
-                        case 'M':
-                            try {
-                                if ($valorCelda !== null || $valorCelda !== "0") { // Verificar si la celda tiene un valor
-                                    $excelTimestamp = (float)$valorCelda;
-                                    $fechaAsignacion = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($excelTimestamp);
-                                    $rowData["FECHA_RECEPCION"] = $fechaAsignacion->format('Y-m-d');
-                                } else {
-                                    $rowData["FECHA_RECEPCION"] = null; // O cualquier otro valor predeterminado que desees
-                                }
-                            } catch (\Exception $e) {
-                                log::error($e);
-                                return "Error al convertir la fecha: " . $e->getMessage() . "
-                                revise columna M Fila " . $row->getRowIndex() . " ";
-                            }
-                            break;
-                    }
-                }
-
-                if ($filaVacia) {
-                    continue; // Saltar la fila si está vacía
-                }
-
-                if ($rowData["ID_TECNICO"] !== null) {
-                    if ($rowData["ID_TECNICO"] !== "0") {
-
-                        //modificar el tecnico asignado de la base dependiendo de la base en excel
-                        //se manda a segundo plano
-                        ActualizacionAsignacionTec::dispatch($rowData)->onQueue('Asignacion_tec');
-
-                    }
-                }
-
-                $registros[] = $rowData;
-
-                if (count($registros) >= $tamañoLote) {
-                    $this->insertarLoteConVerificacionDuplicados($registros);
-                    $registros = [];
-                }
-            }
-            // Insertar registros restantes (si los hay)
-            if (!empty($registros)) {
-                $this->insertarLoteConVerificacionDuplicados($registros);
-            }
-
-            DB::commit(); // Confirmar la transacción si todo tiene éxito
-            return true;
-        } catch (\Exception $e) {
-            DB::rollback(); // Revertir la transacción si ocurre un error
-            Log::error("Error al insertar datos: " . $e->getMessage()); // Registrar el error para depuración
-            return "Error al insertar datos: " . $e->getMessage();
-        }
-    }
-
-    private function insertarLoteConVerificacionDuplicados($registros): void
-    {
-        // Insertar los nuevos registros
-        tbl_programacion_base::insert($registros);
-    }
 
     public function busqueda($contrato): ?\Illuminate\Http\JsonResponse
     {
@@ -1708,7 +1566,7 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
         // verificar si ya existe la programación
         $exist = tbl_programacion_contrato::where('CONTRATO', $row['B'])
             //->where('ORDEN_TRABAJO', $row['A'])
-            ->where('FECHA_AGENDAMIENTO','>=',$scheduling)
+            ->where('FECHA_AGENDAMIENTO', '>=', $scheduling)
             ->exists();
         if ($exist) {
             return 0;
