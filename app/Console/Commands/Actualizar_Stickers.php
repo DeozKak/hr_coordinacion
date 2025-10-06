@@ -118,8 +118,7 @@ class Actualizar_Stickers extends Command
 
         foreach ($inspectores as $inspector) {
             // Usa el campo real del documento del inspector. Ajusta si en tu tabla se llama distinto (por ej. CEDULA)
-            $documentoInspector = $inspector->CC ?? $inspector->cedula ?? $inspector->documento ?? null;
-
+            $documentoInspector =  $inspector->cedula;
             if (empty($documentoInspector)) {
                 Log::warning("[Stickers] Inspector ID {$inspector->id} sin documento configurado. Saltando.");
                 continue;

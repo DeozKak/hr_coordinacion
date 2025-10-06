@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Calcular promedios (considerando celdas vacías)
     const promedios = []; // Array para guardar los promedios
     const filaPromedios = hot.countRows() - 2; // Penúltima fila (promedios)
-    totalColspan = totalColspan + 9;
+    totalColspan = totalColspan + 10;
     colProm = totalColspan;
     // Calcular promedios (considerando celdas vacías)
     for (let i = 0; i < colProm; i++) {

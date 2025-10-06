@@ -159,6 +159,42 @@ class BitacoraDiariaController extends Controller
                     $fila_datos[] = $valor;
                 }
 
+                DB::beginTransaction();
+                try{
+                    // Verificación para evitar duplicados
+                    $existeRegistro = DB::table('tbl_bitacora_diaria')->where([
+                        ['CC_OPERARIO', '=', $fila_datos[1]],
+                        ['MUNICIPIO', '=', $fila_datos[2]],
+                        ['FECHA', '=', $fila_datos[3]],
+                        ['ACTA', '=', $fila_datos[4]],
+                        ['TIPO_TRABAJO', '=', $fila_datos[5]],
+                        ['CONTRATO', '=', $fila_datos[6]],
+                        ['ORDEN', '=', $fila_datos[7]],
+                        ['ORDEN_EXT', '=', $fila_datos[8]],
+                        ['CATEGORIA', '=', $fila_datos[9]],
+                        ['RESULTADO_CIERRE', '=', $fila_datos[10]],
+                    ])->exists();
+
+                    if (!$existeRegistro) {
+                        DB::table('tbl_bitacora_diaria')->insert([
+                            'CC_OPERARIO' => $fila_datos[1],
+                            'MUNICIPIO' => $fila_datos[2],
+                            'FECHA' => $fila_datos[3],
+                            'ACTA' => $fila_datos[4],
+                            'TIPO_TRABAJO' => $fila_datos[5],
+                            'CONTRATO' => $fila_datos[6],
+                            'ORDEN' => $fila_datos[7],
+                            'ORDEN_EXT' => $fila_datos[8],
+                            'CATEGORIA' => $fila_datos[9],
+                            'RESULTADO_CIERRE' => $fila_datos[10],
+                        ]);
+                        DB::commit();
+                    }
+                }catch (\Exception $e){
+                    DB::rollBack();
+                    Log::error($e);
+                }
+
                 $hoja_informe->fromArray($fila_datos, null, 'A' . $fila_informe);
 
                 $this->EstilosInforme($hoja_informe,$fila_informe,$sheet,$row);;

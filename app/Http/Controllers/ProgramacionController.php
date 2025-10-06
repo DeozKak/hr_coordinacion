@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ActualizacionAsignacionTec;
+
 use App\Jobs\CorreoProgramacion;
-use App\Models\Movilidad;
+use App\Models\Bitacoras\tbl_bitacora_contrato;
 use App\Models\Programacion\tbl_programacion_base;
 use App\Models\Programacion\tbl_programacion_contrato;
 use App\Models\Programacion\tbl_programacion_usuario;
@@ -12,7 +12,6 @@ use App\Models\tbl_insp_cali;
 use App\Models\User;
 use Carbon\Carbon;
 use DateTime;
-use Dotenv\Exception\ValidationException;
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Database\QueryException;
@@ -33,7 +32,6 @@ use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\ProcessExcelFileMacros;
-
 use ZipArchive;
 
 class ProgramacionController extends Controller
@@ -283,33 +281,57 @@ class ProgramacionController extends Controller
         } elseif ($request->data[2] == "12162") {
             $tipo_trabajo = ["RN " . $request->data[2]];
         }
-        /*$contrato = ':' . $request->data[1];
-        $dosAnosAtras = Carbon::now()->subYears(2)->toDateString();
-        $movilidad = Movilidad::select('NombreOperario', 'FechaRealInicio', 'Cierre1', 'TipoTarea')
-            ->where('NroSitio', $contrato)
-            ->whereIn('TipoTarea', $tipo_trabajo)
-            ->where('Grupo', 'INSP-VALLE')
-            ->whereIn('Cierre1', $cierres)
+        $contrato = ':' . $request->data[1];
+       /* $dosAnosAtras = Carbon::now()->subYears(2)->toDateString();*/
+        $bitacora = tbl_bitacora_contrato::select('CC_OPERARIO', 'FECHA', 'RESULTADO_CIERRE', 'TIPO_TRABAJO')
+            ->where('CONTRATO', $contrato)
+            ->whereIn('TIPO_TRABAJO', $tipo_trabajo)
+            ->whereIn('RESULTADO_CIERRE', $cierres)
             ->first();
-        if ($movilidad) {
-
-            if (in_array($movilidad->Cierre1, ['INSPECCIONADA CON DEFECTO CRITICO VALLE', 'INSPECCIONADA CON DEFECTO NO CRITICO VALLE', 'INSPECCIONADA CON DEFECTO CRITICO VALLE']) && $movilidad->TipoTarea === 'SA 12164') {
+        if ($bitacora) {
+            if (in_array($bitacora->RESULTADO_CIERRE, ['INSPECCIONADA CON DEFECTO CRITICO VALLE', 'INSPECCIONADA CON DEFECTO NO CRITICO VALLE', 'INSPECCIONADA CON DEFECTO CRITICO VALLE']) && $bitacora->TIPO_TRABAJO === 'SA 12164') {
 
             } else {
-                $fecha_completa = $movilidad->FechaRealInicio;
+                $fecha_completa = $bitacora->FECHA;
                 $partes = explode(' ', $fecha_completa);
                 $fecha = $partes[0];
-                if ($fecha <= $dosAnosAtras) {
+               /* if ($fecha <= $dosAnosAtras) {
 
-                } else {
+                } else {*/
+                $inspector = tbl_insp_cali::where('cedula', $bitacora->CC_OPERARIO)->first();
                     return response()->json([
                         'movilidad' => 'Contrato ya ejecutado',
-                        'usuario' => $movilidad->NombreOperario,
+                        'usuario' => $inspector->apellidos.' '.$inspector->nombres,
                         'agendamiento' => $fecha
                     ]);
+               /* }*/
+            }
+        }else{
+            $consulta = DB::table('tbl_bitacora_diaria')->select('CC_OPERARIO', 'FECHA', 'RESULTADO_CIERRE', 'TIPO_TRABAJO')
+                ->where('CONTRATO', $contrato)
+                ->whereIn('TIPO_TRABAJO', $tipo_trabajo)
+                ->whereIn('RESULTADO_CIERRE', $cierres)
+                ->first();
+            if($consulta) {
+                if (in_array($consulta->RESULTADO_CIERRE, ['INSPECCIONADA CON DEFECTO CRITICO VALLE', 'INSPECCIONADA CON DEFECTO NO CRITICO VALLE', 'INSPECCIONADA CON DEFECTO CRITICO VALLE']) && $consulta->TIPO_TRABAJO === 'SA 12164') {
+
+                } else {
+                    $fecha_completa = $consulta->FECHA;
+                    $partes = explode(' ', $fecha_completa);
+                    $fecha = $partes[0];
+                    /* if ($fecha <= $dosAnosAtras) {
+
+                     } else {*/
+                    $inspector = tbl_insp_cali::where('cedula', $consulta->CC_OPERARIO)->first();
+                    return response()->json([
+                        'movilidad' => 'Contrato ya ejecutado',
+                        'usuario' => $inspector->apellidos.' '.$inspector->nombres,
+                        'agendamiento' => $fecha
+                    ]);
+                    /* }*/
                 }
             }
-        }*/
+        }
 
         try {
             DB::beginTransaction();

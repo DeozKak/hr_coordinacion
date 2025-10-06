@@ -111,12 +111,16 @@ class ProcessExcelFileMacros implements ShouldQueue
                         $fechaAsignacionExcel = $rowDataArray[31] ?? null;
                         $tecnico = $rowDataArray[30] ?? null;
                         $fechaRecepcionExcel = $rowDataArray[33] ?? null;
-                        $estado_recepcion = $rowDataArray[32] ?? null;
+                        $estado_recepcion = ($rowDataArray[32] ?? 0) === '' ? 0 : ($rowDataArray[32] ?? 0);
                         $nombre = $rowDataArray[7] ?? null;
                         $barrio = $rowDataArray[10] ?? null;
                         $direccion = $rowDataArray[11] ?? null;
                         $categoria = $rowDataArray[13] ?? null;
                         $localidad = $rowDataArray[9] ?? null;
+
+                    }else{
+                        // EN CASO DE QUE NO ES MACRO DE NUEVAS SE ASIGNA EL VALOR DE OTRA COLUMNA
+                        $estado_recepcion = ($rowDataArray[36] ?? 0) === '' ? 0 : ($rowDataArray[36] ?? 0);
                     }
 
                     // Mapeo de datos
@@ -135,7 +139,7 @@ class ProcessExcelFileMacros implements ShouldQueue
                         "ID_TIPO_TRABAJO" => $tipo_trabajo ?? $rowDataArray[16] ?? null,
                         "ID_TECNICO" => $tecnico ?? $rowDataArray[34] ?? null,
                         "FECHA_ASIGNACION" => $fechaAsignacion,
-                        "ESTADO_RECEPCION" => $estado_recepcion ?? $rowDataArray[36] ?? null,
+                        "ESTADO_RECEPCION" => $estado_recepcion,
                         "FECHA_RECEPCION" => $fechaRecepcion,
                     ];
 
@@ -156,9 +160,9 @@ class ProcessExcelFileMacros implements ShouldQueue
             // --- 3. FINALIZACIÓN Y NOTIFICACIÓN DE ÉXITO ---
             $stats['duracion'] = round(microtime(true) - $startTime); // Calcula la duración total
             Log::info("Archivo {$this->filePath} procesado exitosamente.");
-
+            $notification = new ProcesamientoMacro($this->user, $this->originalName, $stats);
             // Envía la notificación de éxito con las estadísticas
-            $this->user->notify(new ProcesamientoMacro($this->user, $this->originalName, $stats));
+            $this->user->notify($notification->delay(now()->addSeconds(10)));
 
         } catch (\Exception $e) {
             // --- 4. MANEJO DE ERRORES Y NOTIFICACIÓN DE FALLO ---
@@ -169,7 +173,10 @@ class ProcessExcelFileMacros implements ShouldQueue
                 'mensaje' => $e->getMessage(),
                 'fila' => $filaError
             ];
-            $this->user->notify(new ProcesamientoMacro($this->user, $this->originalName, [], $errorDetails));
+            $errorNotification = new ProcesamientoMacro($this->user, $this->originalName, [], $errorDetails);
+
+            // Envía la notificación de error también con un retraso para ser consistente
+            $this->user->notify($errorNotification->delay(now()->addSeconds(10)));
 
             $this->fail($e);
         } finally {
