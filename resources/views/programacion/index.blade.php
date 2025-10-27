@@ -118,6 +118,7 @@
                           action="{{ route('programacion.base') }}">
                         @csrf
                         <div class="mb-3">
+                            <input type="hidden" name="type" id="type" value="base">
                             <label for="archivo" class="form-label">Archivo:</label>
                             <input type="file" class="form-control" id="archivo" name="archivo">
                             <br>
@@ -155,6 +156,7 @@
                     <form action="#" id="masivoForm" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="form-group">
+                            <input type="hidden" name="type" id="type" value="programacion_tec">
                             <label for="archivo">Selecciona un archivo:</label>
 
                             <input class="form-control mb-3" type="file" name="archivo" id="archivo">
@@ -222,6 +224,7 @@
                     <form action="#" id="callcenterGDOForm" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="form-group">
+                            <input type="hidden" name="type" id="type" value="gdo">
                             <label for="archivo">Selecciona un archivo:</label>
 
                             <input class="form-control mb-3" type="file" name="archivo" id="archivo">

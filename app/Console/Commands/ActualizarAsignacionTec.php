@@ -71,15 +71,15 @@ class ActualizarAsignacionTec extends Command
                         $nombreCompleto = "{$base->ID_TECNICO}. {$inspector['apellidos']} {$inspector['nombres']}";
 
                         // Actualizar contratos relacionados
-                       $contrato = tbl_programacion_contrato::query()
+                        $contratos = tbl_programacion_contrato::query()
                             ->where('FECHA_AGENDAMIENTO', '>=', $fecha)
-                            ->where('ORDEN_TRABAJO', $base->NUMERO_ORDEN)
                             ->where('CONTRATO', $base->CONTRATO)
-                            ->first();
+                            ->get();
 
-                           $contrato->TECNICO = $nombreCompleto;
-                           $contrato->save();
-
+                        foreach ($contratos as $contrato) {
+                            $contrato->TECNICO = $nombreCompleto;
+                            $contrato->save();
+                        }
                         // Actualizar el progreso en la tabla 'job_status'
                         DB::table('job_status')
                             ->where('id', $this->jobId)

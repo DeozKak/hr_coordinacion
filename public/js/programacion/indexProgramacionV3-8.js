@@ -51,8 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('submit-masivo').disabled = true;
 
         const formData = new FormData(this);
-        const url = document.getElementById('url_masivo').value; // Ruta Laravel para procesar el formulario
-
+        const url = document.getElementById('url_base').value; // Ruta Laravel para procesar el formulario
 
         $.ajax({
             type: 'POST',

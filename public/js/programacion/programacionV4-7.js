@@ -183,9 +183,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         url: url_busqueda,
                         type: 'GET',
                         success: function (response) {
-                            if (response.errors) {
-                                alert(response.errors);
-                                H_tabla.setDataAtCell(row, 1, '');
+
+                            if (response.movilidad) {
+
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Advertencia',
+                                    text: 'Contrato ya Ejecutado',
+                                    showConfirmButton: true,
+                                    allowOutsideClick: false,
+                                    confirmButtonText: 'Aceptar'
+                                }).then((result) => {
+                                    if (result.value) {
+                                        const numCols = H_tabla.countCols(); // Obtener el número de columnas
+                                        H_tabla.setDataAtCell(row, 0, '');
+                                        for (let col = 2; col < numCols; col++) {
+                                            H_tabla.setDataAtCell(row, col, '');
+                                        }
+                                        H_tabla.setDataAtCell(row, 1, '');
+                                    }
+                                })
                                 return;
                             }
                             // Asegurarse de que la respuesta es un objeto
@@ -228,6 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                         }
                                     }
                                 }
+
                                 setTimeout(() => {
                                     guardarProgramacion(row);
                                 }, 200);
