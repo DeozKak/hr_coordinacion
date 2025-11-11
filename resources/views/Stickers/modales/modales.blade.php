@@ -1,168 +1,273 @@
-<!-- Modal Desasignar Stickers Múltiples -->
-<div class="modal fade modal-modern" id="modalDesasignarSticker" tabindex="-1">
-    <div class="modal-dialog">
-        <form id="formDesasignarSticker">
-            <div class="modal-content">
-                <div class="modal-header">
-                    {{-- Nueva estructura para el título --}}
-                    <div>
-                        <h5 class="modal-title">
-                            <i class="fa fa-minus-circle text-danger"></i>
-                            <span>Desasignar Stickers</span>
-                        </h5>
-                        {{-- El nombre del inspector ahora es un subtítulo --}}
-                        <div class="modal-subtitle">
-                             <span id="nombreInspectorDesasignar"></span>
-                        </div>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="idInspectorDesasignar" name="idInspectorDesasignar">
-                    <div class="alert-modern alert-info-modern">
-                        <i class="fa fa-info-circle"></i>
-                        Selecciona la cantidad de stickers que deseas desasignar. Los stickers serán devueltos al
-                        inventario.
-                    </div>
-                    <div id="stickerTypeRowsDesasignar">
-                        @foreach($Stickers as $tipo)
-                            <div class="mb-2 row align-items-center">
-                                <label class="col-sm-3 col-form-label">{{ $tipo->nombre }}</label>
-                                <div class="col-sm-3">
-                                    <input
-                                        type="text"
-                                        min="0"
-                                        class="form-control cantidad-sticker-desasignar"
-                                        name="stickers[{{ $tipo->id }}]"
-                                        data-id="{{ $tipo->id }}"
-                                        data-asignado="0"
-                                        placeholder="Cantidad"
-                                    >
-                                </div>
-                                <div class="col-sm-3">
-                                     <span class="badge-modern badge-info-modern">
-                                    Asignado: <span id="asignado-{{ $tipo->id }}">0</span>
-                                </span>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                    <div id="errorDesasignar" class="alert-modern alert-danger-modern d-none"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="btn_cerrarDesasignar" data-bs-dismiss="modal">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="btn-gradient btn-gradient-danger">
-                        <i class="fa fa-minus"></i> Desasignar
-                    </button>
-                </div>
+{{-- ================================================================= --}}
+{{-- MODAL AGREGAR STICKERS A INVENTARIO --}}
+{{-- ================================================================= --}}
+<div class="modal fade" id="agregarStickerModal" tabindex="-1" role="dialog" aria-labelledby="modalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLabel"><i class="fa fa-plus-circle"></i> Agregar Stickers a Inventario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-        </form>
-    </div>
-</div>
-
-<!-- Modal Agregar Stickers  -->
-<div class="modal fade modal-modern" id="agregarStickerModal" tabindex="-1">
-    <div class="modal-dialog">
-        <form id="formAgregarSticker" autocomplete="off">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fa fa-plus-circle text-success"></i> Agregar stickers al inventario
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
+            <form id="formAgregarSticker">
                 <div class="modal-body">
-
-                    <div class="alert-modern alert-danger-modern d-none" id="errorAgregar"></div>
-
-                    <div class="mb-3">
-                        <label class="form-label" for="tipoSticker">Tipo de sticker</label>
-                        <select class="form-select" id="tipoSticker" name="tipoSticker" >
-                            <option value="">Seleccionar...</option>
+                    <div class="form-group">
+                        <label for="tipoSticker">Tipo de Sticker</label>
+                        <select class="form-control" id="tipoSticker">
+                            <option value="">-- Seleccione un tipo --</option>
+                            {{-- Asumo que la variable $Stickers está disponible aquí, si no, hay que pasarla --}}
                             @foreach($Stickers as $sticker)
-                                <option value="{{$sticker->id}}">{{$sticker->nombre}}</option>
+                                <option value="{{ $sticker->id }}" data-nombre="{{ strtolower($sticker->nombre) }}">
+                                    {{ $sticker->nombre }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label" for="cantidad">Cantidad a agregar</label>
-                        <input type="text" class="form-control" id="cantidad" name="cantidad" min="1"
-                               placeholder="Ej: 50" >
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="btnCancelarSticker" data-bs-dismiss="modal">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="btn-gradient btn-gradient-success">
-                        <i class="fa fa-save"></i> Guardar
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-<!-- /Modal -->
 
-<!-- Modal Asignar Stickers Múltiples -->
-<div class="modal fade modal-modern" id="modalAsignarSticker" tabindex="-1">
-    <div class="modal-dialog">
-        <form id="formAsignarSticker">
-            <div class="modal-content">
-                <div class="modal-header">
-                    {{-- Nuevo grupo para título y subtítulo --}}
-                    <div class="modal-title-group">
-                        <h5 class="modal-title">
-                            <i class="fa fa-check-circle text-primary"></i>
-                            <span>Asignar Stickers</span>
-                        </h5>
-                        <div class="modal-subtitle" id="nombreInspector">
-                            {{-- El nombre se carga aquí con JS --}}
+                    {{-- CAMPO PARA CANTIDAD (Stickers normales) --}}
+                    <div class="form-group" id="campo_cantidad">
+                        <label for="cantidad">Cantidad a Agregar</label>
+                        <input type="number" class="form-control" id="cantidad" placeholder="Ej: 50" min="1" max="10000">
+                    </div>
+
+                    {{-- CAMPOS PARA SERIALES (Solo Actas) --}}
+                    <div id="campo_seriales" class="d-none">
+                        <div class="form-group">
+                            <label for="serial_inicio">Serial Inicial</label>
+                            <input type="number" class="form-control" id="serial_inicio" placeholder="Ej: 1001">
+                        </div>
+                        <div class="form-group">
+                            <label for="serial_fin">Serial Final</label>
+                            <input type="number" class="form-control" id="serial_fin" placeholder="Ej: 1100">
                         </div>
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="idInspector" name="idInspector">
-                    <div id="stickerTypeRows">
-                        @foreach($Stickers as $tipo)
-                            <div class="mb-2 row align-items-center">
-                                <label class="col-sm-3 col-form-label">{{ $tipo->nombre }}</label>
-                                <div class="col-sm-3">
-                                    <input
-                                        type="text"
-                                        min="0"
-                                        max="{{ $tipo->Inventario->cantidad_disponible ?? 0 }}"
-                                        class="form-control cantidad-sticker"
-                                        name="stickers[{{ $tipo->id }}]"
-                                        data-id="{{ $tipo->id }}"
-                                        data-inventario="{{ $tipo->Inventario->cantidad_disponible ?? 0 }}"
-                                        placeholder="Cantidad"
-                                    >
-                                </div>
 
-                                <div class="col-sm-3">
-                               <span class="badge-modern badge-secondary-modern">
-                                    Saldo: <span id="saldo-{{ $tipo->id }}">{{ $tipo->Inventario->cantidad_disponible ?? 0 }}</span>
-                                </span>
-                                </div>
-                            </div>
-                        @endforeach
-
-                    </div>
-                    <div id="errorAsignar" class="alert-modern alert-danger-modern d-none"></div>
+                    <div id="errorAgregar" class="alert alert-danger d-none"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="btn_cerrarAsignar" data-bs-dismiss="modal">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="btn-gradient btn-gradient-success">
-                        <i class="fa fa-check"></i> Asignar
-                    </button>
+                    <button type="button" class="btn btn-secondary" id="btnCancelarSticker" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i> Agregar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ================================================================= --}}
+{{-- MODAL ASIGNAR STICKERS --}}
+{{-- ================================================================= --}}
+<div class="modal fade" id="modalAsignarSticker" tabindex="-1" role="dialog" aria-labelledby="modalLabelAsignar"
+     aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLabelAsignar"><i class="fa fa-user-plus"></i> Asignar Stickers</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formAsignarSticker">
+                <div class="modal-body">
+                    <input type="hidden" id="idInspector">
+                    <p>Asignando a: <strong id="nombreInspector"></strong></p>
+
+                    <div id="stickerTypeRows">
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                            <tr>
+                                <th>Tipo de Sticker</th>
+                                <th>Entrada (Cantidad o Rango)</th>
+                                <th>Inventario Disponible</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach($Stickers as $sticker)
+                                <tr>
+                                    <td>
+                                            <span class="badge" style="background-color: {{ $sticker->color_hex ?? '#6c757d' }}; color: #fff;">
+                                                {{ $sticker->nombre }}
+                                            </span>
+                                    </td>
+
+                                    {{-- LÓGICA CONDICIONAL: Si es ACTA muestra seriales, si no, cantidad --}}
+                                    @if(strtolower($sticker->nombre) == 'actas')
+                                        <td>
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" class="form-control" id="acta_serial_inicio" placeholder="Serial Inicial">
+                                                <span class="input-group-text">-</span>
+                                                <input type="number" class="form-control" id="acta_serial_fin" placeholder="Serial Final">
+                                            </div>
+                                        </td>
+                                    @else
+                                        <td>
+                                            <input type="number"
+                                                   class="form-control form-control-sm cantidad-sticker"
+                                                   name="stickers[{{ $sticker->id }}]"
+                                                   data-id="{{ $sticker->id }}"
+                                                   data-inventario="{{ optional($sticker->Inventario)->cantidad_disponible ?? 0 }}"
+                                                   placeholder="Cantidad"
+                                                   min="0">
+                                        </td>
+                                    @endif
+
+                                    {{-- Columna de Saldo/Inventario --}}
+                                    <td class="text-center">
+                                        @if(strtolower($sticker->nombre) == 'actas')
+                                            <span class="badge bg-info" id="saldo-{{ $sticker->id }}">
+                                                    {{ optional($sticker->Inventario)->cantidad_disponible ?? 0 }}
+                                                </span>
+                                        @else
+                                            <span class="badge bg-info" id="saldo-{{ $sticker->id }}">
+                                                    {{ optional($sticker->Inventario)->cantidad_disponible ?? 0 }}
+                                                </span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="errorAsignar" class="alert alert-danger d-none mt-3"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btn_cerrarAsignar" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-success"><i class="fa fa-check"></i> Asignar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+{{-- ================================================================= --}}
+{{-- MODAL DESASIGNAR STICKERS --}}
+{{-- ================================================================= --}}
+<div class="modal fade" id="modalDesasignarSticker" tabindex="-1" role="dialog" aria-labelledby="modalLabelDesasignar"
+     aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLabelDesasignar"><i class="fa fa-user-minus"></i> Desasignar Stickers</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formDesasignarSticker">
+                <div class="modal-body">
+                    <input type="hidden" id="idInspectorDesasignar">
+                    <p>Desasignando de: <strong id="nombreInspectorDesasignar"></strong></p>
+
+                    <div id="stickerTypeRowsDesasignar">
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                            <tr>
+                                <th>Tipo de Sticker</th>
+                                <th>Entrada (Cantidad o Rango)</th>
+                                <th>Asignado Actualmente</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach($Stickers as $sticker)
+                                <tr>
+                                    <td>
+                                            <span class="badge" style="background-color: {{ $sticker->color_hex ?? '#6c757d' }}; color: #fff;">
+                                                {{ $sticker->nombre }}
+                                            </span>
+                                    </td>
+
+                                    {{-- LÓGICA CONDICIONAL: Si es ACTA muestra seriales, si no, cantidad --}}
+                                    @if(strtolower($sticker->nombre) == 'actas')
+                                        <td>
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" class="form-control cantidad-sticker-desasignar acta"  data-id="{{ $sticker->id }}" id="desasignar_acta_serial_inicio" placeholder="Serial Inicial">
+                                                <span class="input-group-text">-</span>
+                                                <input type="number" class="form-control" id="desasignar_acta_serial_fin" placeholder="Serial Final">
+                                            </div>
+                                        </td>
+                                    @else
+                                        <td>
+                                            <input type="number"
+                                                   class="form-control form-control-sm cantidad-sticker-desasignar"
+                                                   name="stickers[{{ $sticker->id }}]"
+                                                   data-id="{{ $sticker->id }}"
+                                                   data-asignado="0" {{-- Se llenará con JS --}}
+                                                   placeholder="Cantidad a devolver"
+                                                   min="0">
+                                        </td>
+                                    @endif
+
+                                    {{-- Columna de Asignado --}}
+                                    <td class="text-center">
+                                            <span class="badge bg-success" id="asignado-{{ $sticker->id }}">
+                                                0
+                                            </span>
+                                    </td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="errorDesasignar" class="alert alert-danger d-none mt-3"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btn_cerrarDesasignar" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-danger"><i class="fa fa-minus"></i> Desasignar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ================================================================= --}}
+{{-- MODAL VER SERIALES DE ACTAS EN INVENTARIO --}}
+{{-- ================================================================= --}}
+<div class="modal fade" id="modalVerSerialesActa" tabindex="-1" role="dialog" aria-labelledby="modalLabelSeriales"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLabelSeriales"><i class="fa fa-list-ol"></i> Seriales de Actas en Inventario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Mostrando rangos de seriales disponibles:</p>
+
+                {{-- Aquí se cargarán los seriales vía JS --}}
+                <div id="listaSerialesBody" style="max-height: 400px; overflow-y: auto;">
+                    <div class="text-center">
+                        <i class="fa fa-spinner fa-spin"></i> Cargando...
+                    </div>
                 </div>
             </div>
-        </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ================================================================= --}}
+{{-- MODAL VER SERIALES DE ACTAS ASIGNADOS A INSPECTOR --}}
+{{-- ================================================================= --}}
+<div class="modal fade" id="modalVerSerialesAsignados" tabindex="-1" role="dialog" aria-labelledby="modalLabelSerialesAsignados"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLabelSerialesAsignados"><i class="fa fa-user-check"></i> Seriales Asignados</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Seriales de Actas asignados a: <strong id="nombreInspectorSeriales"></strong></p>
+
+                {{-- Aquí se cargarán los seriales vía JS --}}
+                <div id="listaSerialesAsignadosBody" style="max-height: 400px; overflow-y: auto;">
+                    <div class="text-center" id="loaderSerialesAsignados">
+                        <i class="fa fa-spinner fa-spin"></i> Cargando...
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
     </div>
 </div>

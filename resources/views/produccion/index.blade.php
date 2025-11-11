@@ -68,18 +68,22 @@
                                 </div>
                             </div>
                         </div>
+                        @isset($inspectores)
                         <div class="col-md-6">
                             <!-- Selector de inspectores -->
                             <select class="form-select" id="inspectorSelectStackedbar">
                                 <option value="">Todos los inspectores</option>
+
                                 @foreach ($inspectores as $inspector)
                                     @if ($inspector->state == 1)
                                         <option
                                             value="{{ $inspector->cedula }}">{{ $inspector->apellidos.' '.$inspector->nombres }}</option>
                                     @endif
                                 @endforeach
+
                             </select>
                         </div>
+                        @endisset
                     </div>
                     <canvas id="inspeccionesDiarias"></canvas>
                 </x-adminlte-card>

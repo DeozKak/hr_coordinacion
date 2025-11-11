@@ -128,6 +128,7 @@ h1  {
 .dot-rojos { background-color: #f21b35; }
 .dot-suspension { background-color: #69747c; }
 .dot-default { background-color: #4d5863; }
+.dot-actas { background-color: #735677; }
 .dot-cons {
     background-color: #3498db; /* Azul */
     border: 1px solid #2c82c9;
@@ -139,14 +140,17 @@ h1  {
 
 /* Isométricos (brown) */
 .dot-isometricos {
-    background-color: #8B4513; /* Café (saddle brown) */
+    background-color: #8B4513; /* Café (sad-dle brown) */
     border: 1px solid #6b3a09;
     width: 15px;
     height: 15px;
     display: inline-block;
     border-radius: 50%;
 }
-
+.bg-acta {
+    background-color: #735677; /* Color gris personalizado */
+    color: #ffffff;           /* Texto blanco */
+}
 
 .history-item b {
     color: #2c3e50;
@@ -419,3 +423,19 @@ h1  {
     color: #e53e3e;
 }
 
+.sticker-item {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Espacio entre el dot, el número y el botón */
+}
+
+.sticker-count {
+    min-width: 15px; /* Da un poco de espacio al número */
+    text-align: left;
+}
+
+.btn-ver-seriales-inspector {
+    padding: 0px 4px;
+    font-size: 0.7rem;
+    line-height: 1.2;
+}

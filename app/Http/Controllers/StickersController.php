@@ -3,24 +3,31 @@
 namespace App\Http\Controllers;
 
 
-use App\Models\Bitacoras\tbl_bitacora_contrato;
-use App\Models\ControlStickers\tbl_controlstick_historico;
-use App\Models\ControlStickers\tbl_controlstick_semana;
 use App\Models\tbl_insp_cali;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Stickers\tbl_sticker_tipo;
 use App\Models\Stickers\tbl_sticker_inventario;
 use App\Models\Stickers\tbl_inspector_sticker;
 use App\Models\Stickers\tbl_asignacion_sticker_historial;
+use App\Models\Stickers\TblStickerActaSerial;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 
 class StickersController extends Controller
 {
+    private $idStickerActa;
+
+
+    public function __construct()
+    {
+        // Esto busca el ID del sticker "ACTA".
+        // Si el nombre cambia, solo debes ajustarlo aquí.
+        $stickerActa = tbl_sticker_tipo::where('nombre', 'ACTAS')->first();
+        $this->idStickerActa = $stickerActa ? $stickerActa->id : null;
+    }
     /**
      *
      * Funcion retorna vista con las variables de Stickers y los inspectores activos
@@ -78,33 +85,112 @@ class StickersController extends Controller
      */
     public function ActualizarInventario($id, Request $request): \Illuminate\Http\JsonResponse
     {
-        //Validación de entradas de usuario
-        $validator = Validator::make($request->all(), [
-            'cantidad' => 'required|numeric',
-        ], [
-            'cantidad.required' => 'la cantidad es requerida',
-            'cantidad.numeric' => 'Se tienen que ingresar numeros'
-        ]);
+// --- INICIO DE LÓGICA PARA ACTAS CON SERIALES ---
+        if ($id == $this->idStickerActa) {
 
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
+            $validator = Validator::make($request->all(), [
+                'serial_inicio' => 'required|numeric',
+                'serial_fin' => 'required|numeric|gte:serial_inicio', // gte = mayor o igual que serial_inicio
+            ], [
+                'serial_inicio.required' => 'El serial inicial es requerido.',
+                'serial_fin.required' => 'El serial final es requerido.',
+                'serial_fin.gte' => 'El serial final debe ser mayor o igual al inicial.'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['error' => $validator->errors()], 400);
+            }
+
+            $inicio = $request->serial_inicio;
+            $fin = $request->serial_fin;
+            $serialesNuevos = [];
+            $serialesExistentes = [];
+
+            // 1. Verificar cuáles seriales ya existen
+            for ($i = $inicio; $i <= $fin; $i++) {
+                $existe = TblStickerActaSerial::where('serial', $i)->where('id_sticker_tipo', $id)->exists();
+                if ($existe) {
+                    $serialesExistentes[] = $i;
+                } else {
+                    $serialesNuevos[] = $i;
+                }
+            }
+
+            if (count($serialesExistentes) > 0) {
+                return response()->json(['error' => 'Los siguientes seriales ya existen: ' . implode(', ', $serialesExistentes)], 409); // 409 Conflict
+            }
+
+            // 2. Insertar los nuevos seriales
+            try {
+                DB::beginTransaction();
+                $datosInsertar = [];
+                foreach ($serialesNuevos as $serial) {
+                    $datosInsertar[] = [
+                        'id_sticker_tipo' => $id,
+                        'serial' => $serial,
+                        'estado' => 'en_inventario',
+                        'id_inspector' => null,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+                TblStickerActaSerial::insert($datosInsertar);
+
+                // 3. Sincronizar el inventario total (para compatibilidad con la vista)
+                $inventarioTotalActas = TblStickerActaSerial::where('id_sticker_tipo', $id)
+                    ->where('estado', 'en_inventario')
+                    ->count();
+
+                $inventario = tbl_sticker_inventario::firstOrCreate(['id_sticker_tipo' => $id]);
+                $inventario->cantidad_disponible = $inventarioTotalActas;
+                $inventario->save();
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => 'Se agregaron ' . count($serialesNuevos) . ' seriales de Actas al inventario.',
+                    'value' => $inventario->cantidad_disponible
+                ], 200);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error('Error al agregar seriales de Actas: ' . $e->getMessage());
+                return response()->json(['error' => 'No se pudo actualizar el inventario ' . $e->getMessage()], 500);
+            }
+
         }
-        //guardar entrada a variable local
-        $cantidad = $request->cantidad;
-        //Actualizar valor ingresado a BD de inventario
-        try {
-            DB::beginTransaction();
-            $tipo = tbl_sticker_inventario::where('id_sticker_tipo', $id)->first();
-            $tipo->cantidad_disponible = $tipo->cantidad_disponible + $cantidad;
-            $tipo->save();
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            log::error($e->getMessage());
-            return response()->json(['error' => 'No se pudo actualizar el inventario ' . $e->getMessage()], 500);
+        // --- FIN DE LÓGICA PARA ACTAS ---
+
+        // --- LÓGICA ORIGINAL (para otros stickers) ---
+        else {
+            //Validación de entradas de usuario
+            $validator = Validator::make($request->all(), [
+                'cantidad' => 'required|numeric',
+            ], [
+                'cantidad.required' => 'la cantidad es requerida',
+                'cantidad.numeric' => 'Se tienen que ingresar numeros'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['error' => $validator->errors()], 400);
+            }
+            //guardar entrada a variable local
+            $cantidad = $request->cantidad;
+            //Actualizar valor ingresado a BD de inventario
+            try {
+                DB::beginTransaction();
+                $tipo = tbl_sticker_inventario::where('id_sticker_tipo', $id)->first();
+                $tipo->cantidad_disponible = $tipo->cantidad_disponible + $cantidad;
+                $tipo->save();
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                log::error($e->getMessage());
+                return response()->json(['error' => 'No se pudo actualizar el inventario ' . $e->getMessage()], 500);
+            }
+            return response()->json(['success' => 'Se actualizo el inventario correctamente',
+                'value' => $tipo->cantidad_disponible], 200);
         }
-        return response()->json(['success' => 'Se actualizo el inventario correctamente',
-            'value' => $tipo->cantidad_disponible], 200);
 
     }
 
@@ -123,16 +209,22 @@ class StickersController extends Controller
         //Validación de entrada de usuario
         $validator = Validator::make($request->all(), [
             'idInspector' => 'required',
-            'stickers' => 'required|array',
-            'stickers.*' => 'required|numeric', // <--- Valida que cada elemento sea numérico
-        ],
-            [
-                'idInspector.required' => 'el id de inspector es requerido',
-                'stickers.required' => 'los stickers son requeridos',
-                'stickers.*.required' => 'el id de sticker es requerido',
-                'stickers.*.numeric' => 'Se tienen que ingresar numeros'
-            ]
-        );
+            'stickers' => 'required_without:seriales_acta|array', // Obligatorio si no se incluye seriales_acta
+            'stickers.*' => 'required|numeric',
+            'seriales_acta' => 'required_without:stickers|array', // Obligatorio si no se incluye stickers
+            'seriales_acta.serial_inicio' => 'required_with:seriales_acta|numeric',
+            'seriales_acta.serial_fin' => 'required_with:seriales_acta|numeric|gte:seriales_acta.serial_inicio',
+        ], [
+            'idInspector.required' => 'El ID del inspector es requerido.',
+            'stickers.required_without' => 'Los stickers son requeridos si no se proporcionan los seriales de ACTA.',
+            'stickers.*.required' => 'Se requiere un ID válido para cada sticker.',
+            'stickers.*.numeric' => 'Los IDs de los stickers deben ser valores numéricos.',
+            'seriales_acta.required_without' => 'Los seriales de ACTA son requeridos si no se proporcionan stickers.',
+            'seriales_acta.serial_inicio.required_with' => 'El serial inicial es requerido cuando los seriales de ACTA están presentes.',
+            'seriales_acta.serial_fin.required_with' => 'El serial final es requerido cuando los seriales de ACTA están presentes.',
+            'seriales_acta.serial_fin.gte' => 'El serial final debe ser mayor o igual al serial inicial.',
+        ]);
+
 
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()], 400);
@@ -141,58 +233,114 @@ class StickersController extends Controller
         //id del inspector
         $id_inspector = $request->idInspector;
         // array con id_sticker_tipo => cantidad
-        $stickers = $request->stickers;
-
+        $stickers_cuantitativos = $request->stickers ?? [];
+        $seriales_acta_rango = $request->seriales_acta ?? null;
         //inicio de inserción a BD
         try {
             DB::beginTransaction();
-            // se itera el array de Stickers, el id de Sticker es la llave del array
-            foreach ($stickers as $id_sticker_tipo => $cantidad) {
+            // --- 1. PROCESAR STICKERS CUANTITATIVOS (los que no son ACTA) ---
+            foreach ($stickers_cuantitativos as $id_sticker_tipo => $cantidad) {
+
+                // Nos aseguramos de no procesar ACTA aquí por error
+                if ($id_sticker_tipo == $this->idStickerActa) continue;
 
                 // Buscar si el registro ya existe
                 $registro = tbl_inspector_sticker::where('id_inspector', $id_inspector)
                     ->where('id_sticker_tipo', $id_sticker_tipo)
                     ->first();
 
+                // Validar inventario
+                $inventario = tbl_sticker_inventario::where('id_sticker_tipo', $id_sticker_tipo)->first();
+                if (!$inventario || $inventario->cantidad_disponible < $cantidad) {
+                    throw new \Exception("Inventario insuficiente para el sticker tipo ID: {$id_sticker_tipo}");
+                }
 
                 if ($registro) {
-                    // Si existe, actualiza la cantidad
                     $registro->cantidad_asignada = $registro->cantidad_asignada + $cantidad;
                     $registro->save();
-                    // se resta de inventario la cantidad ingresada
-                    $inventario = tbl_sticker_inventario::where('id_sticker_tipo', $id_sticker_tipo)->first();
-                    $inventario->cantidad_disponible = $inventario->cantidad_disponible - $cantidad;
-                    $inventario->save();
-                    // se crea un registro de historial de lo asignado
-                    tbl_asignacion_sticker_historial::create([
-                        'id_inspector' => $id_inspector,
-                        'id_sticker_tipo' => $id_sticker_tipo,
-                        'cantidad' => $cantidad,
-                        'fecha_asignacion' => date('Y-m-d H:i:s'),
-                        'id_usuario_asigna' => auth()->user()->id
-                    ]);
-
                 } else {
-                    // Si no existe, crea el registro
                     tbl_inspector_sticker::create([
                         'id_inspector' => $id_inspector,
                         'id_sticker_tipo' => $id_sticker_tipo,
                         'cantidad_asignada' => $cantidad,
                     ]);
-                    // se crea un registro de historial de lo asignado
-                    tbl_asignacion_sticker_historial::create([
-                        'id_inspector' => $id_inspector,
-                        'id_sticker_tipo' => $id_sticker_tipo,
-                        'cantidad' => $cantidad,
-                        'fecha_asignacion' => date('Y-m-d H:i:s'),
-                        'id_usuario_asigna' => auth()->user()->id
-                    ]);
-                    // se resta de inventario la cantidad ingresada
-                    $inventario = tbl_sticker_inventario::where('id_sticker_tipo', $id_sticker_tipo)->first();
-                    $inventario->cantidad_disponible = $inventario->cantidad_disponible - $cantidad;
-                    $inventario->save();
-
                 }
+
+                // se resta de inventario la cantidad ingresada
+                $inventario->cantidad_disponible = $inventario->cantidad_disponible - $cantidad;
+                $inventario->save();
+
+                // se crea un registro de historial de lo asignado
+                tbl_asignacion_sticker_historial::create([
+                    'id_inspector' => $id_inspector,
+                    'id_sticker_tipo' => $id_sticker_tipo,
+                    'cantidad' => $cantidad,
+                    'fecha_asignacion' => now(),
+                    'id_usuario_asigna' => auth()->user()->id
+                ]);
+            }
+            // --- 2. PROCESAR STICKERS SERIALIZADOS (ACTAS) ---
+            if ($seriales_acta_rango && $this->idStickerActa) {
+                $inicio = $seriales_acta_rango['serial_inicio'];
+                $fin = $seriales_acta_rango['serial_fin'];
+                $cantidad_actas = ($fin - $inicio) + 1;
+                $serialesParaAsignar = [];
+
+                // Validar disponibilidad de seriales
+                $serialesNoDisponibles = [];
+                for ($i = $inicio; $i <= $fin; $i++) {
+                    $serial = TblStickerActaSerial::where('serial', $i)
+                        ->where('id_sticker_tipo', $this->idStickerActa)
+                        ->first();
+
+                    if (!$serial || $serial->estado != 'en_inventario') {
+                        $serialesNoDisponibles[] = $i;
+                    } else {
+                        $serialesParaAsignar[] = $serial->id; // Guardamos el ID del registro de serial
+                    }
+                }
+
+                if (count($serialesNoDisponibles) > 0) {
+                    throw new \Exception("Los siguientes seriales de ACTA no están disponibles en inventario: " . implode(', ', $serialesNoDisponibles));
+                }
+
+                // Asignar seriales al inspector
+                TblStickerActaSerial::whereIn('id', $serialesParaAsignar)->update([
+                    'estado' => 'asignado',
+                    'id_inspector' => $id_inspector
+                ]);
+
+                // Sincronizar tabla de totales del inspector (para compatibilidad)
+                $totalActasAsignadasInspector = TblStickerActaSerial::where('id_inspector', $id_inspector)
+                    ->where('id_sticker_tipo', $this->idStickerActa)
+                    ->where('estado', 'asignado')
+                    ->count();
+
+                $registroInspector = tbl_inspector_sticker::firstOrCreate(
+                    ['id_inspector' => $id_inspector, 'id_sticker_tipo' => $this->idStickerActa],
+                    ['cantidad_asignada' => 0]
+                );
+                $registroInspector->cantidad_asignada = $totalActasAsignadasInspector;
+                $registroInspector->save();
+
+                // Sincronizar inventario general (para compatibilidad)
+                $totalActasEnInventario = TblStickerActaSerial::where('id_sticker_tipo', $this->idStickerActa)
+                    ->where('estado', 'en_inventario')
+                    ->count();
+
+                $inventarioActas = tbl_sticker_inventario::where('id_sticker_tipo', $this->idStickerActa)->first();
+                $inventarioActas->cantidad_disponible = $totalActasEnInventario;
+                $inventarioActas->save();
+
+                // Guardar historial (guardamos la cantidad y un detalle de los rangos)
+                tbl_asignacion_sticker_historial::create([
+                    'id_inspector' => $id_inspector,
+                    'id_sticker_tipo' => $this->idStickerActa,
+                    'cantidad' => $cantidad_actas, // Cantidad total
+                    'fecha_asignacion' => now(),
+                    'id_usuario_asigna' => auth()->user()->id,
+                    'detalle_seriales' => "Asignados: {$inicio} al {$fin}" // Columna opcional (ver nota abajo)
+                ]);
             }
             DB::commit();
         } catch (\Exception $e) {
@@ -234,8 +382,11 @@ class StickersController extends Controller
         // Validación de entrada de usuario
         $validator = Validator::make($request->all(), [
             'idInspector' => 'required|integer',
-            'stickers' => 'required|array',
+            'stickers' => 'nullable|array', // stickers cuantitativos
             'stickers.*' => 'required|numeric|min:1',
+            'seriales_acta' => 'nullable|array', // stickers serializados (ACTA)
+            'seriales_acta.serial_inicio' => 'required_with:seriales_acta|numeric',
+            'seriales_acta.serial_fin' => 'required_with:seriales_acta|numeric|gte:seriales_acta.serial_inicio',
         ], [
             'idInspector.required' => 'El id de inspector es requerido',
             'idInspector.integer' => 'El id de inspector debe ser un número',
@@ -250,30 +401,27 @@ class StickersController extends Controller
         }
 
         $id_inspector = $request->idInspector;
-        $stickers = $request->stickers;
+        $stickers_cuantitativos = $request->stickers ?? [];
+        $seriales_acta_rango = $request->seriales_acta ?? null;
 
         try {
             DB::beginTransaction();
 
-            foreach ($stickers as $id_sticker_tipo => $cantidad) {
-                // Buscar el registro del inspector
+            // --- 1. PROCESAR STICKERS CUANTITATIVOS (los que no son ACTA) ---
+            foreach ($stickers_cuantitativos as $id_sticker_tipo => $cantidad) {
+
+                if ($id_sticker_tipo == $this->idStickerActa) continue;
+
                 $registro = tbl_inspector_sticker::where('id_inspector', $id_inspector)
                     ->where('id_sticker_tipo', $id_sticker_tipo)
                     ->first();
 
-                if (!$registro) {
-                    throw new \Exception("No se encontró asignación de sticker tipo {$id_sticker_tipo} para este inspector");
+                if (!$registro || $cantidad > $registro->cantidad_asignada) {
+                    throw new \Exception("No se puede desasignar más stickers (ID: {$id_sticker_tipo}) de los asignados.");
                 }
 
-                // Validar que no se desasigne más de lo asignado
-                if ($cantidad > $registro->cantidad_asignada) {
-                    throw new \Exception("No se puede desasignar más stickers de los asignados. Cantidad asignada: {$registro->cantidad_asignada}");
-                }
-
-                // Actualizar la cantidad asignada
                 $registro->cantidad_asignada = $registro->cantidad_asignada - $cantidad;
 
-                // Si la cantidad queda en 0, eliminar el registro
                 if ($registro->cantidad_asignada == 0) {
                     $registro->delete();
                 } else {
@@ -282,23 +430,89 @@ class StickersController extends Controller
 
                 // Devolver al inventario (sumar la cantidad)
                 $inventario = tbl_sticker_inventario::where('id_sticker_tipo', $id_sticker_tipo)->first();
-                if (!$inventario) {
-                    throw new \Exception("No se encontró inventario para el sticker tipo {$id_sticker_tipo}");
-                }
-
                 $inventario->cantidad_disponible = $inventario->cantidad_disponible + $cantidad;
                 $inventario->save();
 
-                // Crear registro histórico con cantidad negativa para indicar desasignación
+                // Crear registro histórico con cantidad negativa
                 tbl_asignacion_sticker_historial::create([
                     'id_inspector' => $id_inspector,
                     'id_sticker_tipo' => $id_sticker_tipo,
-                    'cantidad' => -$cantidad, // Cantidad negativa para distinguir desasignación
+                    'cantidad' => -$cantidad,
                     'fecha_asignacion' => now(),
                     'id_usuario_asigna' => auth()->user()->id
                 ]);
             }
+            // --- 2. PROCESAR STICKERS SERIALIZADOS (ACTAS) ---
+            if ($seriales_acta_rango && $this->idStickerActa) {
+                $inicio = $seriales_acta_rango['serial_inicio'];
+                $fin = $seriales_acta_rango['serial_fin'];
+                $cantidad_actas = ($fin - $inicio) + 1;
+                $serialesParaDesasignar = [];
 
+                // Validar que el inspector POSEE esos seriales
+                $serialesNoPertenecen = [];
+                for ($i = $inicio; $i <= $fin; $i++) {
+                    $serial = TblStickerActaSerial::where('serial', $i)
+                        ->where('id_sticker_tipo', $this->idStickerActa)
+                        ->where('id_inspector', $id_inspector)
+                        ->where('estado', 'asignado')
+                        ->first();
+
+                    if (!$serial) {
+                        $serialesNoPertenecen[] = $i;
+                    } else {
+                        $serialesParaDesasignar[] = $serial->id;
+                    }
+                }
+
+                if (count($serialesNoPertenecen) > 0) {
+                    throw new \Exception("Los siguientes seriales de ACTA no pertenecen al inspector o no están asignados: " . implode(', ', $serialesNoPertenecen));
+                }
+
+                // Desasignar seriales (devolver a inventario)
+                TblStickerActaSerial::whereIn('id', $serialesParaDesasignar)->update([
+                    'estado' => 'en_inventario',
+                    'id_inspector' => null
+                ]);
+
+                // Sincronizar tabla de totales del inspector
+                $totalActasAsignadasInspector = TblStickerActaSerial::where('id_inspector', $id_inspector)
+                    ->where('id_sticker_tipo', $this->idStickerActa)
+                    ->where('estado', 'asignado')
+                    ->count();
+
+                $registroInspector = tbl_inspector_sticker::where('id_inspector', $id_inspector)
+                    ->where('id_sticker_tipo', $this->idStickerActa)
+                    ->first();
+
+                if ($registroInspector) {
+                    if ($totalActasAsignadasInspector == 0) {
+                        $registroInspector->delete();
+                    } else {
+                        $registroInspector->cantidad_asignada = $totalActasAsignadasInspector;
+                        $registroInspector->save();
+                    }
+                }
+
+                // Sincronizar inventario general
+                $totalActasEnInventario = TblStickerActaSerial::where('id_sticker_tipo', $this->idStickerActa)
+                    ->where('estado', 'en_inventario')
+                    ->count();
+
+                $inventarioActas = tbl_sticker_inventario::where('id_sticker_tipo', $this->idStickerActa)->first();
+                $inventarioActas->cantidad_disponible = $totalActasEnInventario;
+                $inventarioActas->save();
+
+                // Guardar historial
+                tbl_asignacion_sticker_historial::create([
+                    'id_inspector' => $id_inspector,
+                    'id_sticker_tipo' => $this->idStickerActa,
+                    'cantidad' => -$cantidad_actas, // Negativo para indicar desasignación
+                    'fecha_asignacion' => now(),
+                    'id_usuario_asigna' => auth()->user()->id,
+                    'detalle_seriales' => "Devueltos: {$inicio} al {$fin}" // Opcional (ver nota arriba)
+                ]);
+            }
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
@@ -309,5 +523,118 @@ class StickersController extends Controller
         return response()->json(['success' => 'Stickers desasignados correctamente'], 200);
     }
 
+    /**
+     * Obtiene los seriales de ACTAS que están en inventario y los agrupa en rangos.
+     *
+     * @return JsonResponse
+     */
+    public function getSerialesInventarioActas(): JsonResponse
+    {
+        if (!$this->idStickerActa) {
+            return response()->json(['error' => 'Sticker "ACTA" no configurado.'], 404);
+        }
+
+        try {
+            // 1. Obtener todos los seriales en inventario, ordenados
+            $seriales = TblStickerActaSerial::where('id_sticker_tipo', $this->idStickerActa)
+                ->where('estado', 'en_inventario')
+                ->orderBy('serial', 'asc')
+                ->pluck('serial') // Solo nos interesa el número de serial
+                ->toArray();
+
+            // 2. Agrupar en rangos
+            $rangos = [];
+            if (count($seriales) > 0) {
+                $rangoInicio = $seriales[0];
+                $rangoPrevio = $seriales[0];
+
+                for ($i = 1; $i < count($seriales); $i++) {
+                    $actual = $seriales[$i];
+
+                    // Si el serial actual no es consecutivo al anterior
+                    if ($actual != $rangoPrevio + 1) {
+                        // Cerramos el rango anterior
+                        if ($rangoInicio == $rangoPrevio) {
+                            $rangos[] = (string)$rangoInicio; // Rango de uno solo
+                        } else {
+                            $rangos[] = $rangoInicio . ' - ' . $rangoPrevio; // Rango múltiple
+                        }
+                        // Empezamos un nuevo rango
+                        $rangoInicio = $actual;
+                    }
+                    $rangoPrevio = $actual;
+                }
+
+                // Asegurarse de añadir el último rango
+                if ($rangoInicio == $rangoPrevio) {
+                    $rangos[] = (string)$rangoInicio;
+                } else {
+                    $rangos[] = $rangoInicio . ' - ' . $rangoPrevio;
+                }
+            }
+
+            return response()->json(['rangos' => $rangos], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Error al obtener seriales de actas: ' . $e->getMessage());
+            return response()->json(['error' => 'No se pudieron obtener los seriales.'], 500);
+        }
+    }
+
+    /**
+     * Obtiene los seriales de ACTAS asignados a un inspector y los agrupa en rangos.
+     *
+     * @param int $idInspector
+     * @return JsonResponse
+     */
+    public function getSerialesAsignadosInspector($idInspector): JsonResponse
+    {
+        if (!$this->idStickerActa) {
+            return response()->json(['error' => 'Sticker "ACTA" no configurado.'], 404);
+        }
+
+        try {
+            // 1. Obtener todos los seriales asignados al inspector
+            $seriales = TblStickerActaSerial::where('id_sticker_tipo', $this->idStickerActa)
+                ->where('id_inspector', $idInspector)
+                ->where('estado', 'asignado') // <-- Filtro clave
+                ->orderBy('serial', 'asc')
+                ->pluck('serial')
+                ->toArray();
+
+            // 2. Agrupar en rangos (misma lógica que la función de inventario)
+            $rangos = [];
+            if (count($seriales) > 0) {
+                $rangoInicio = $seriales[0];
+                $rangoPrevio = $seriales[0];
+
+                for ($i = 1; $i < count($seriales); $i++) {
+                    $actual = $seriales[$i];
+                    if ($actual != $rangoPrevio + 1) {
+                        if ($rangoInicio == $rangoPrevio) {
+                            $rangos[] = (string)$rangoInicio;
+                        } else {
+                            $rangos[] = $rangoInicio . ' - ' . $rangoPrevio;
+                        }
+                        $rangoInicio = $actual;
+                    }
+                    $rangoPrevio = $actual;
+                }
+
+                // Añadir el último rango
+                if ($rangoInicio == $rangoPrevio) {
+                    $rangos[] = (string)$rangoInicio;
+                } else {
+                    $rangos[] = $rangoInicio . ' - ' . $rangoPrevio;
+                }
+            }
+
+            return response()->json(['rangos' => $rangos], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Error al obtener seriales asignados: ' . $e->getMessage());
+            return response()->json(['error' => 'No se pudieron obtener los seriales.'], 500);
+        }
+    }
 
 }

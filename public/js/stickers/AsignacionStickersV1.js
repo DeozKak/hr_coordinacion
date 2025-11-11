@@ -8,6 +8,12 @@ async function actualizarInventariosModal() {
             let input = document.querySelector(`.cantidad-sticker[data-id="${item.id}"]`);
             let saldo = document.getElementById('saldo-' + item.id);
 
+            // Actualiza también el saldo de ACTAS
+            if (!input && item.nombre.toLowerCase().includes('actas') && saldo) {
+                saldo.textContent = item.inventario;
+                return; // Salta al siguiente
+            }
+
             if (input && saldo) {
                 const actual = input.value ? parseInt(input.value, 10) : 0;
                 // Actualiza inventario "en vivo"
@@ -49,7 +55,6 @@ async function actualizarInventariosModal() {
 }
 
 
-
 // Cuando se abra el modal, limpia y pone los saldos en inventario
 async function asignarSticker(idInspector, nombreInspector) {
     // Actualizar inventario dinámicamente antes de mostrar el modal
@@ -57,6 +62,8 @@ async function asignarSticker(idInspector, nombreInspector) {
 
     document.getElementById('idInspector').value = idInspector;
     document.getElementById('nombreInspector').textContent = nombreInspector;
+
+    // Limpia campos de cantidad
     document.querySelectorAll('.cantidad-sticker').forEach(input => {
         input.value = '';
         let id = input.dataset.id;
@@ -64,13 +71,20 @@ async function asignarSticker(idInspector, nombreInspector) {
         document.getElementById('saldo-' + id).textContent = inventario;
     });
 
+    // *** NUEVO: Limpia campos de seriales de actas ***
+    if (document.getElementById('acta_serial_inicio')) {
+        document.getElementById('acta_serial_inicio').value = '';
+        document.getElementById('acta_serial_fin').value = '';
+    }
+
     document.getElementById('errorAsignar').classList.add('d-none');
-     modal = new bootstrap.Modal(document.getElementById('modalAsignarSticker'));
+    modal = new bootstrap.Modal(document.getElementById('modalAsignarSticker'));
     modal.show();
 
     document.getElementById('btn_cerrarAsignar').addEventListener('click', function () {
         modal.hide();
     })
+
     // Cuando cambias la cantidad, actualiza el saldo mostrado
     document.addEventListener('input', function (e) {
         if (e.target.classList.contains('cantidad-sticker')) {
@@ -91,26 +105,64 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('formAsignarSticker').addEventListener('submit', async function (e) {
         const url_asignar = document.getElementById('urlAsignarSticker').value;
         e.preventDefault();
+
         const idInspector = document.getElementById('idInspector').value;
-        // Lee todos los inputs de tipo sticker con su cantidad
-        const stickerInputs = document.querySelectorAll('#stickerTypeRows input');
-        // Construye objeto { id_sticker_tipo: cantidad }
-        let stickers = {};
-        stickerInputs.forEach(input => {
+        const errorDiv = document.getElementById('errorAsignar');
+        errorDiv.classList.add('d-none');
+
+        // *** MODIFICADO: Construir payload híbrido ***
+
+        // 1. Objeto para stickers cuantitativos
+        let stickersCuantitativos = {};
+        document.querySelectorAll('#stickerTypeRows .cantidad-sticker').forEach(input => {
             let val = parseInt(input.value, 10) || 0;
-            if(val > 0) { // Solo envía los mayores a 0
-                stickers[input.name.match(/\[(\d+)\]/)[1]] = val;
+            if (val > 0) { // Solo envía los mayores a 0
+                stickersCuantitativos[input.name.match(/\[(\d+)\]/)[1]] = val;
             }
         });
 
-        const errorDiv = document.getElementById('errorAsignar');
-        if (!idInspector || Object.keys(stickers).length === 0) {
-            errorDiv.textContent = "Debes asignar al menos un sticker.";
+        // 2. Objeto para stickers serializados (ACTA)
+        let serialesActa = null;
+        const serialInicioEl = document.getElementById('acta_serial_inicio');
+        const serialFinEl = document.getElementById('acta_serial_fin');
+
+        if (serialInicioEl && serialFinEl) {
+            const serialInicio = serialInicioEl.value;
+            const serialFin = serialFinEl.value;
+
+            if (serialInicio && serialFin) {
+                if (parseInt(serialFin) < parseInt(serialInicio)) {
+                    errorDiv.textContent = 'El serial final de ACTA debe ser mayor o igual al inicial.';
+                    errorDiv.classList.remove('d-none');
+                    return;
+                }
+                serialesActa = {
+                    serial_inicio: serialInicio,
+                    serial_fin: serialFin
+                };
+            } else if (serialInicio || serialFin) {
+                // Si solo llenó uno de los dos campos
+                errorDiv.textContent = 'Debe llenar tanto el serial inicial como el final para ACTAS, o dejar ambos vacíos.';
+                errorDiv.classList.remove('d-none');
+                return;
+            }
+        }
+
+        // 3. Validar que se asignó algo
+        if (!idInspector || (Object.keys(stickersCuantitativos).length === 0 && !serialesActa)) {
+            errorDiv.textContent = "Debes asignar al menos un sticker o un rango de actas.";
             errorDiv.classList.remove('d-none');
             return;
         }
 
-        // AJAX (ajusta según tu endpoint)
+        // 4. Construir body final para AJAX
+        const payload = {
+            idInspector: idInspector,
+            stickers: stickersCuantitativos,
+            seriales_acta: serialesActa
+        };
+
+        // AJAX
         try {
             const res = await fetch(url_asignar, {
                 method: 'POST',
@@ -118,29 +170,24 @@ document.addEventListener('DOMContentLoaded', function () {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.getElementById('token').value
                 },
-                body: JSON.stringify({
-                    idInspector,
-                    stickers
-                })
+                body: JSON.stringify(payload) // *** MODIFICADO ***
             });
             const data = await res.json();
+
             if (res.ok && data.success) {
                 modal.hide();
-
-                // Actualiza la tabla aquí si lo necesitas
+                Swal.fire({
+                    position: "top-end",
+                    icon: "success",
+                    title: data.success,
+                    showConfirmButton: false,
+                    toast: true,
+                    timer: 3000
+                })
+                setTimeout(() => {window.location.reload();},3100)
             } else {
                 throw new Error(data.error || 'Error al asignar');
             }
-            Swal.fire({
-                position: "top-end",
-                icon: "success",
-                title: data.success,
-                showConfirmButton: false,
-                toast: true,
-                timer: 3000
-            })
-            setTimeout(() => {window.location.reload();},3100)
-
         } catch (err) {
             console.log(err);
             errorDiv.textContent = err.message;

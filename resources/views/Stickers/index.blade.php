@@ -8,14 +8,17 @@
 
 @section('content')
 
-    <link rel="stylesheet" href="{{ asset('css/stickers/indexV2.1.css')}}">
+    <link rel="stylesheet" href="{{ asset('css/stickers/indexV2.3.css')}}">
     <input type="hidden" id="url_ActualizarInventario"
            value="{{ route('bitacora.stickers.ActualizarInventario',['id'=>':id']) }}">
     <input type="hidden" id="token" value="{{ csrf_token() }}">
+    <input type="hidden" id="urlGetSerialesAsignados" value="{{ route('bitacora.stickers.getSerialesAsignados', ['idInspector' => ':id']) }}">
+    <input type="hidden" id="urlGetSerialesActas" value="{{ route('bitacora.stickers.getSerialesActas') }}">
     <input type="hidden" id="urlGetInventario" value="{{ route('bitacora.stickers.getInventario') }}">
     <input type="hidden" id="urlAsignarSticker" value="{{ route('bitacora.stickers.asignar') }}">
     <input type="hidden" id="urlDesasignarSticker" value="{{ route('bitacora.stickers.desasignar') }}">
-    <input type="hidden" id="getStickersAsignados" value="{{ route('bitacora.stickers.getStickersAsignados',['idInspector' => ':id']) }}">
+    <input type="hidden" id="getStickersAsignados"
+           value="{{ route('bitacora.stickers.getStickersAsignados',['idInspector' => ':id']) }}">
 
     <div class="container">
         <div class="card-custom">
@@ -35,6 +38,7 @@
                             $s = strtolower($sticker->nombre);
                             $badgeClass = 'bg-primary';
                             $iconClass = 'fa-circle';
+                            if($s == 'actas'){$badgeClass = 'bg-acta';}
                             if ($s == 'amarillos') { $badgeClass = 'bg-warning text-dark'; }
                             if ($s == 'rojos') { $badgeClass = 'bg-danger'; }
                             if ($s == 'suspension') { $badgeClass = 'bg-secondary'; $iconClass = 'fa-ban'; }
@@ -44,8 +48,23 @@
                         <span class="badge {{ $badgeClass }} p-2">
                         <i class="fa {{ $iconClass }}"></i> {{ $sticker->nombre }}
                     </span>
-                        <div class="count" id="inventario_{{ strtolower($sticker->id) }}">
-                            {{ optional($sticker->Inventario)->cantidad_disponible ?? 0 }}
+                        {{-- CONTENEDOR PARA EL CONTADOR Y EL NUEVO BOTÓN --}}
+                        <div class="count-container">
+                            <div class="count" id="inventario_{{ strtolower($sticker->id) }}">
+                                {{ optional($sticker->Inventario)->cantidad_disponible ?? 0 }}
+                            </div>
+
+                            {{-- ================================================ --}}
+                            {{--  AQUÍ ESTÁ EL CAMBIO  --}}
+                            {{-- ================================================ --}}
+                            @if($s == 'actas')
+                                <button type="button" class="btn btn-outline-info btn-sm btn-ver-seriales"
+                                        id="btnVerSerialesActa"
+                                        title="Ver Seriales Disponibles">
+                                    <i class="fa fa-list-ol"></i>
+                                </button>
+                            @endif
+                            {{-- ================================================ --}}
                         </div>
                     </div>
                 @endforeach
@@ -79,7 +98,7 @@
                                                 $nombreClave = strtolower($stickerTipo->nombre);
                                                 $dotClass = 'dot-' . $nombreClave;
 
-                                                if (!in_array($dotClass, ['dot-amarillos', 'dot-rojos', 'dot-suspension', 'dot-cons de visita', 'dot-isometricos'])) {
+                                                if (!in_array($dotClass, ['dot-actas','dot-amarillos', 'dot-rojos', 'dot-suspension', 'dot-cons de visita', 'dot-isometricos'])) {
                                                     $dotClass = 'dot-default';
                                                 }
                                             @endphp
@@ -87,6 +106,14 @@
                                             <span>
                                             {{ optional($inspector->Stickers->firstWhere('id_sticker_tipo', $stickerTipo->id))->cantidad_asignada ?? 0 }}
                                         </span>
+                                            @if($nombreClave == 'actas')
+                                                <button type="button"
+                                                        class="btn btn-outline-info btn-xs btn-ver-seriales-inspector"
+                                                        onclick="verSerialesAsignados('{{ $inspector->id }}', '{{ $inspector->nombre_completo }}')"
+                                                        title="Ver Seriales Asignados">
+                                                    <i class="fa fa-list-ol"></i>
+                                                </button>
+                                            @endif
                                         </div>
                                     @endforeach
                                 </div>
@@ -99,7 +126,7 @@
                                             @php
                                                 $nombreTipo = strtolower(optional($registro->stickerTipo ?? $Stickers->firstWhere('id', $registro->id_sticker_tipo))->nombre);
                                                 $dotClass = 'dot-' . $nombreTipo;
-                                                if (!in_array($dotClass, ['dot-amarillos', 'dot-rojos', 'dot-suspension', 'dot-cons de visita', 'dot-isometricos'])) {
+                                                if (!in_array($dotClass, ['dot-actas','dot-amarillos', 'dot-rojos', 'dot-suspension', 'dot-cons de visita', 'dot-isometricos'])) {
                                                     $dotClass = 'dot-default';
                                                 }
                                             @endphp
@@ -114,10 +141,12 @@
                             @can('control_stickers')
                                 <td>
                                     <div class="buttons-container" style="justify-content: flex-start;">
-                                        <button class="btn-gradient btn-gradient-success btn-sm" onclick="asignarSticker('{{ $inspector->id }}', '{{ $inspector->nombre_completo }}')">
+                                        <button class="btn-gradient btn-gradient-success btn-sm"
+                                                onclick="asignarSticker('{{ $inspector->id }}', '{{ $inspector->nombre_completo }}')">
                                             <i class="fa fa-plus"></i> Asignar
                                         </button>
-                                        <button class="btn-gradient btn-gradient-danger btn-sm" onclick="desasignarSticker('{{ $inspector->id }}')">
+                                        <button class="btn-gradient btn-gradient-danger btn-sm"
+                                                onclick="desasignarSticker('{{ $inspector->id }}')">
                                             <i class="fa fa-minus"></i> Desasignar
                                         </button>
                                     </div>
@@ -136,10 +165,12 @@
     @include('stickers.modales.modales')
 
     @section('js')
-        <script src="{{ asset('js/stickers/index.js') }}?v={{ time() }}"></script>
-        <script src="{{ asset('js/stickers/AsignacionStickers.js') }}?v={{ time() }}"></script>
-        <script src="{{ asset('js/stickers/DesasgnarStickers.js') }}?v={{ time() }}"></script>
-
+        <script src="{{ asset('js/stickers/indexV1.js') }}?v={{ time() }}"></script>
+        <script src="{{ asset('js/stickers/AsignacionStickersV1.js') }}?v={{ time() }}"></script>
+        <script src="{{ asset('js/stickers/DesasgnarStickersV1.js') }}?v={{ time() }}"></script>
+        <script>
+            let id_acta = {{ $Stickers->firstWhere('nombre', 'ACTAS')->id ?? 0 }}
+        </script>
     @stop
 @stop
 
