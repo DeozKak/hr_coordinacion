@@ -122,6 +122,8 @@
                             <label for="archivo" class="form-label">Archivo:</label>
                             <input type="file" class="form-control" id="archivo" name="archivo">
                             <br>
+                             Cargue estado 5: <input type="checkbox" style="margin-left: 5px" id="check" name="check_estado5" value="1">
+                            <br>
                             <div id="loader" style="display: none;">
                                 <div class="spinner-border text-primary" role="status"></div>
                                 <span class="visually-hidden">Cargando...</span>

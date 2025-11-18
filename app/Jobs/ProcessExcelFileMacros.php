@@ -189,7 +189,7 @@ class ProcessExcelFileMacros implements ShouldQueue
         // En un Job, es mejor envolver cada lote en su propia transacción.
         DB::transaction(function () use ($registros) {
 
-            tbl_programacion_base::insert($registros);
+            tbl_programacion_base::insertOrIgnore($registros);
             // O usa upsert si es lo que necesitas
         });
     }

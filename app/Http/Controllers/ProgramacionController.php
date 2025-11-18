@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\CorreoProgramacion;
 use App\Jobs\ProcessExcelFileMacros;
+use App\Models\Programacion\tbl_programacion_base;
 use App\Models\Programacion\tbl_programacion_contrato;
 use App\Models\Programacion\tbl_programacion_usuario;
 use App\Models\tbl_insp_cali;
@@ -42,9 +43,10 @@ class ProgramacionController extends Controller
 
     public function __construct(
         private ProgramacionContratoService $programacionContratoService,
-        private ProgramacionUsuarioService $programacionUsuarioService,
-        private ProgramacionImportService $programacionImportService
-    ) {
+        private ProgramacionUsuarioService  $programacionUsuarioService,
+        private ProgramacionImportService   $programacionImportService
+    )
+    {
 
     }
 
@@ -156,6 +158,7 @@ class ProgramacionController extends Controller
         // Retornar la información del contrato como respuesta JSON
         return response()->json($resultado);
     }
+
     public function store(Request $request): \Illuminate\Http\JsonResponse
     {
 
@@ -170,6 +173,7 @@ class ProgramacionController extends Controller
         // Devuelve la respuesta de éxito.
         return response()->json($response);
     }
+
     /**
      * Actualiza un contrato de programación.
      *
@@ -193,6 +197,7 @@ class ProgramacionController extends Controller
 
         return response()->json(['message' => $response['message']]);
     }
+
     /**
      * Elimina un contrato de programación dado su ID.
      *
@@ -214,6 +219,7 @@ class ProgramacionController extends Controller
 
         return response()->json(['message' => $response['message']]);
     }
+
     /**
      * Finaliza una programación.
      *
@@ -241,6 +247,7 @@ class ProgramacionController extends Controller
 
     public function base(Request $request): JsonResponse
     {
+        $valorCheckBox = $request->input('check_estado5');
         $request->validate([
             'archivo' => 'required|file|mimes:xls,xlsx',
         ], [
@@ -249,21 +256,35 @@ class ProgramacionController extends Controller
             'archivo.mimes' => 'El archivo debe ser de tipo XLS o XLSX.',
         ]);
 
-
-            // 1. Guardar el archivo en el storage de Laravel para que el Job pueda acceder a él.
-            // Esto lo guardará en la carpeta 'storage/app/excel-imports'
-            $path = $request->file('archivo')->store('excel-imports');
-            $name_file = $request->file('archivo')->getClientOriginalName();
-            $response = $this->programacionImportService->processFile($path, $request->type,$name_file);
-
-            if (isset($response['errors'])) {
-                return response()->json(['errors' => $response['errors']], 422);
+        if ($valorCheckBox == 1) {
+            $file = IOFactory::load($request->file('archivo'));
+            $date = Datetime::createFromFormat('Y/m/d', Carbon::now()->format('Y/m/d'));
+            $worksheet = $file->getActiveSheet();
+            $indicador = $this->validacionGDO($worksheet);
+            if ($indicador == true) {
+               $indicador = $this->insertBase($worksheet);
+                if($indicador == true){
+                return response()->json(['message' => 'Se ha cargado correctamente la base de datos'], 200);
+                }else{
+                    return response()->json(['errors' => 'Error al cargar la base de datos'], 422);
+                }
+            } else {
+                return response()->json(['errors' => 'El archivo no cumple con el formato requerido'], 422);
             }
+        }
+        // 1. Guardar el archivo en el storage de Laravel para que el Job pueda acceder a él.
+        // Esto lo guardará en la carpeta 'storage/app/excel-imports'
+        $path = $request->file('archivo')->store('excel-imports');
+        $name_file = $request->file('archivo')->getClientOriginalName();
+        $response = $this->programacionImportService->processFile($path, $request->type, $name_file);
 
-            return response()->json(['message' => $response['message']]);
+        if (isset($response['errors'])) {
+            return response()->json(['errors' => $response['errors']], 422);
+        }
+
+        return response()->json(['message' => $response['message']]);
 
     }
-
 
 
     public function agendamiento(Request $request): \Illuminate\Http\JsonResponse
@@ -1278,5 +1299,41 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
 
 
     }
+
+    private function insertBase($sheet)
+    {
+
+        try {
+            foreach ($sheet->getRowIterator() as $row) {
+                if ($row->getRowIndex() === 1) {
+                    continue; // Saltar la primera fila (encabezados)
+                }
+
+                $rowData = [];
+                foreach ($row->getCellIterator() as $cell) {
+                    $columnLetter = $cell->getColumn(); // Obtiene la letra de la columna (A, B, C, etc.)
+                    $rowData[$columnLetter] = $cell->getValue(); // Usa la letra como clave del array
+                }
+
+                tbl_programacion_base::insertOrIgnore([
+                    'NUMERO_ORDEN' => $rowData['A'],
+                    'CONTRATO' => $rowData['B'],
+                    'DESC_ESTADO_PROD' => $rowData['T'],
+                    'NOMBRE' => $rowData['G'],
+                    'DESC_LOCALIDAD' => $rowData['I'],
+                    'BARRIO' => $rowData['J'],
+                    'DIRECCION' => $rowData['K'],
+                    'NOM_CATE' => $rowData['O'],
+                    'ID_TIPO_TRABAJO' => $rowData['Q'],
+                ]);
+
+            }
+            return true;
+        } catch (\Exception $e) {
+            log::error($e->getMessage());
+            return false;
+        }
+    }
+
 
 }
