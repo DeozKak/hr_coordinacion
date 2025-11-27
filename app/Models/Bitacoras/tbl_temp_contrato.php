@@ -28,6 +28,7 @@ class tbl_temp_contrato extends Model
         '4_RECINTOS',
         'id_bitacora',
         'id_usuario',
-        'id_super'
+        'id_super',
+        'G_DEVOLUCION'
     ];
 }

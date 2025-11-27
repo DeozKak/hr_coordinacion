@@ -238,7 +238,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-secondary" id="cerrarModal_actasInventario" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
@@ -266,7 +266,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-secondary"  id="cerrarModal_actasInspector" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>

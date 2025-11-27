@@ -246,6 +246,9 @@ function ManejoModalVerSeriales() {
             modalBody.innerHTML = `<p class="text-danger">Error: ${error.message}</p>`;
         }
     });
+    document.getElementById('cerrarModal_actasInventario').addEventListener('click', function () {
+        modalVer.hide();
+    })
 }
 
 async function verSerialesAsignados(idInspector, nombreInspector) {
@@ -264,7 +267,9 @@ async function verSerialesAsignados(idInspector, nombreInspector) {
     document.getElementById('nombreInspectorSeriales').textContent = nombreInspector;
     modalBody.innerHTML = loaderHTML;
     modalVerAsignados.show();
-
+    document.getElementById('cerrarModal_actasInspector').addEventListener('click', function () {
+        modalVerAsignados.hide();
+    })
     try {
         // 2. Hacer la llamada AJAX
         const response = await fetch(urlSeriales);

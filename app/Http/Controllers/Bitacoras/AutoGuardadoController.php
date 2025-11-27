@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Bitacoras;
 use App\Http\Controllers\Controller;
 use App\Models\Bitacoras\tbl_bitacora_archivo;
 use App\Models\Bitacoras\tbl_bitacoras_causal;
+use App\Models\Bitacoras\tbl_dv_insp;
 use App\Models\Bitacoras\tbl_temp_contrato;
 use App\Models\Bitacoras\tbl_temp_fallida;
 use App\Models\tbl_insp_cali;
@@ -287,7 +288,9 @@ class AutoGuardadoController extends Controller
 
                         //  Definimos los valores que también deben ser considerados como 'NO'.
                         $valoresInvalidos = ['1', '2', '3'];
-
+                        $contrato_devolucion = tbl_dv_insp::where('CONTRATO', $inspeccion['H'])
+                            ->where('GESTIONADO','=','0')->exists();
+                        $g_devolucion_val = $contrato_devolucion ? 1 : 0;
                         //  Verificamos si la clave 'S' existe y si su valor no está en la lista de inválidos.
                         if (isset($inspeccion['S']) && !in_array($inspeccion['S'], $valoresInvalidos)) {
                             // Si la condición es verdadera, usamos el valor original.
@@ -313,7 +316,8 @@ class AutoGuardadoController extends Controller
                             'PERIODO_GRACIA' => $inspeccion['R'],
                             'id_bitacora' => $bitacora->id,
                             'id_usuario' => $usuario->id,
-                            'id_super' => $super ?? 1
+                            'id_super' => $super ?? 1,
+                            'G_DEVOLUCION' => $g_devolucion_val,
                         ]);
                     }
                 }

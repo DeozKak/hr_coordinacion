@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 
-use App\Jobs\CorreoProgramacion;
-use App\Jobs\ProcessExcelFileMacros;
 use App\Models\Programacion\tbl_programacion_base;
 use App\Models\Programacion\tbl_programacion_contrato;
 use App\Models\Programacion\tbl_programacion_usuario;
@@ -14,7 +12,6 @@ use App\Services\ExtraerFechas;
 use App\Services\Programacion\ProgramacionContratoService;
 use App\Services\Programacion\ProgramacionImportService;
 use App\Services\Programacion\ProgramacionUsuarioService;
-use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 use Carbon\Carbon;
 use DateTime;
 use Exception;
@@ -27,7 +24,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Mpdf\Mpdf;
 use PhpOffice\PhpSpreadsheet\IOFactory;
