@@ -17,7 +17,7 @@
                 </tr>
                 <tr>
                     <td>
-                        <p>Se ha generado el siguiente reporte de quejas con más de 3 días pendientes:</p>
+                        <p>Se ha generado el siguiente reporte automático con las quejas que presentan más de 3 días pendientes o que han sido recepcionadas recientemente en el sistema GDW:</p>
                         <table width="100%" cellpadding="5" cellspacing="0" border="1"
                                style="border-collapse: collapse; margin-top: 15px;">
                             <thead style="background-color: #eee;">
@@ -29,6 +29,7 @@
                                 <th>DIAS</th>
                                 <th>INSPECTOR</th>
                                 <th>SUPERVISOR</th>
+                                <th>RECEPCIÓN</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -36,10 +37,15 @@
                                 <?php
                                 // Elige el color de fondo según los días
                                 $styleFila = '';
-                                if ($queja->DIAS == 3 || $queja->DIAS == 4) {
-                                    $styleFila = 'background-color: #ffe066;'; // amarillo suave
+                                if ($queja->recepcion == 'GDW') {
+                                    $styleFila = 'background-color: #dbeafe;'; // Azul (Prioridad Alta)
+
+// 2. Si NO es GDW, entonces miramos los días
                                 } elseif ($queja->DIAS >= 5) {
-                                    $styleFila = 'background-color: #ff8080;'; // rojo +
+                                    $styleFila = 'background-color: #ff8080;'; // Rojo (Prioridad Media)
+
+                                } elseif ($queja->DIAS == 3 || $queja->DIAS == 4) {
+                                    $styleFila = 'background-color: #ffe066;'; // Amarillo (Prioridad Baja)
                                 }
                                 ?>
                                 <tr style="<?php echo $styleFila; ?>">
@@ -50,6 +56,7 @@
                                     <td><?php echo $queja->DIAS; ?></td>
                                     <td><?php echo $queja->INSPECTOR; ?></td>
                                     <td><?php echo $queja->SUPERVISOR; ?></td>
+                                    <td><?php echo $queja->recepcion; ?></td>
                                 </tr>
 
                             <?php endforeach; ?>

@@ -49,20 +49,27 @@ class TiemposQuejas extends Notification
                 DB::raw("CONCAT(tbl_insp_cali.id, '. ', tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS INSPECTOR"),
                 // Aquí el CASE para la excepción:
                 DB::raw("CASE
-            WHEN tbl_insp_cali.id IN (101, 102, 200) THEN ''
-            ELSE users.name
-        END AS SUPERVISOR"),
+                WHEN tbl_insp_cali.id IN (100, 101, 102, 200) THEN ''
+                ELSE users.name
+                END AS SUPERVISOR"),
+                'recepcion'
             ])
             ->join('tbl_insp_cali', 'tbl_quejas.INSPECTOR', '=', 'tbl_insp_cali.id')
             ->leftJoin('users', 'tbl_insp_cali.SUPERVISOR', '=', 'users.id')
-            ->whereNull('recepcion')
-            ->where('DIAS', '>=', 3)
+
+            // CAMBIO: Agrupamos la lógica antigua y agregamos la excepción de GDW
+            ->where(function ($query) {
+                // Grupo 1: La regla original (Null Y >= 3 días)
+                $query->whereNull('recepcion')
+                    ->where('DIAS', '>=', 3);
+            })
+            ->orWhere('recepcion', 'GDW') // Grupo 2: O que sea GDW (sin importar días)
             ->orderBy('DIAS', 'DESC')
             ->get();
 
 
         return (new MailMessage)
-            ->subject('Reporte de Tiempos de Quejas ' . date('d-m-Y'))
+            ->subject('Reporte Automático: Quejas Pendientes (>3 días) y GDW ' . date('d-m-Y'))
             ->view('mail.tiemposQuejas', [
                 'quejas' => $quejas,
             ]);

@@ -1,5 +1,5 @@
 <?php
-
+use App\Http\Controllers\WhatsAppWebhookController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
@@ -63,4 +63,6 @@ Route::middleware('web')->group(function () {
 
 
     });
+    // Ruta para verificación (GET) y recepción de eventos (POST)
+    Route::match(['get', 'post'], '/webhook/whatsapp', [WhatsAppWebhookController::class, 'handle']);
 });

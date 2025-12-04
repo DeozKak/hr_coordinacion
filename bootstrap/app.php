@@ -38,7 +38,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->group('auth', [CheckUserStatus::class]);
         $middleware->web([LogUserHttpActivity::class]);
         $middleware->validateCsrfTokens(except: [
-            'guardar_tabla*', // Excluye solo esta ruta exacta
+            'guardar_tabla*',
+            'webhook/whatsapp*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

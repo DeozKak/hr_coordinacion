@@ -152,8 +152,10 @@ class PQRSImportController extends Controller
                 if($sheet->getCell('AO' . $row->getRowIndex())->getValue() === 1){
                     $queja->recepcion = "MACRO";
                 }else{
-                    $Consulta_movilidad = tbl_quejas_contrato::where('CONTRATO', $queja->CONTRATO)->
-                    where('ORDEN_TRABAJO', $sheet->getCell('A' . $row->getRowIndex())->getValue())->exists();
+                    $Consulta_movilidad = tbl_quejas_contrato::where('CONTRATO', $queja->CONTRATO)
+                        ->where('ORDEN_TRABAJO', $sheet->getCell('A' . $row->getRowIndex())->getValue())
+                        ->where('RESULTADO_CIERRE','EJECUTADA')
+                        ->exists();
                     if ($Consulta_movilidad === true){
                         $queja->recepcion = 'GDW';
                     }
