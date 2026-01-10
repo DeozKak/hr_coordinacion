@@ -13,11 +13,10 @@ class ExecutionVerifier
         'INSPECCIONADA CON DEFECTO CRITICO VALLE',
         'INSPECCIONADA CON DEFECTO NO CRITICO VALLE'
     ];
-   private array $tipos_trabajo_rp = array("10444", "12161");
-   private array $tipos_trabajo_sa = array("12163", "12164");
+    private array $tipos_trabajo_rp = array("10444", "12161");
+    private array $tipos_trabajo_sa = array("12163", "12164");
 
-    public function findExecuted($contrato,$tipo_trabajo)
-    {
+    public  function findExecuted($contrato,$tipo_trabajo,$orden){
 
         if (in_array($tipo_trabajo, $this->tipos_trabajo_rp)) {
             $tipo_trabajo = ["RP 10444", "RP 12161"];
@@ -28,9 +27,17 @@ class ExecutionVerifier
         }
 
         $contrato = ':' . $contrato;
-
+        if($tipo_trabajo === 'RP 12161'){
+            $bitacora = tbl_bitacora_contrato::select('CC_OPERARIO', 'FECHA', 'RESULTADO_CIERRE', 'TIPO_TRABAJO')
+                ->where('CONTRATO', $contrato)
+                ->where('ORDEN_EXT',$orden)
+                ->whereIn('TIPO_TRABAJO', $tipo_trabajo)
+                ->whereIn('RESULTADO_CIERRE', $this->cierres)
+                ->first();
+        }
         $bitacora = tbl_bitacora_contrato::select('CC_OPERARIO', 'FECHA', 'RESULTADO_CIERRE', 'TIPO_TRABAJO')
             ->where('CONTRATO', $contrato)
+            ->where('ORDEN_TRABAJO',$orden)
             ->whereIn('TIPO_TRABAJO', $tipo_trabajo)
             ->whereIn('RESULTADO_CIERRE', $this->cierres)
             ->first();
@@ -40,8 +47,17 @@ class ExecutionVerifier
             return $bitacora;
 
         }else{
+            if($tipo_trabajo === 'RP 12161'){
+                $consulta = tbl_bitacora_contrato::select('CC_OPERARIO', 'FECHA', 'RESULTADO_CIERRE', 'TIPO_TRABAJO')
+                    ->where('CONTRATO', $contrato)
+                    ->where('ORDEN_EXT',$orden)
+                    ->whereIn('TIPO_TRABAJO', $tipo_trabajo)
+                    ->whereIn('RESULTADO_CIERRE', $this->cierres)
+                    ->first();
+            }
             $consulta = DB::table('tbl_bitacora_diaria')->select('CC_OPERARIO', 'FECHA', 'RESULTADO_CIERRE', 'TIPO_TRABAJO')
                 ->where('CONTRATO', $contrato)
+                ->where('ORDEN',$orden)
                 ->whereIn('TIPO_TRABAJO', $tipo_trabajo)
                 ->whereIn('RESULTADO_CIERRE', $this->cierres)
                 ->first();

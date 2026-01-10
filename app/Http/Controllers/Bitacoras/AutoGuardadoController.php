@@ -44,7 +44,7 @@ class AutoGuardadoController extends Controller
         $usuario = Auth::user();
 
         $data_super = User::find($super);
-        $cedulas [] = $data_super->identification;
+        $cedulas [] = $data_super->identification ?? 0;
         try {
             $bitacora = tbl_bitacora_archivo::where('id_usuario', $usuario->id)->where('finished', '=', 0)->first();
             if (!$bitacora) {
@@ -97,7 +97,7 @@ class AutoGuardadoController extends Controller
                     if (
                         strpos($contrato, ":") === 0 &&
                         trim($cc_operario) === $cedulas[$index] &&
-                        $cedulas[$index] !== $data_super->identification &&
+                        $cedulas[$index] !== ($data_super->identification ?? 0)&&
                         in_array($cierre, ["CERTIFICADA", "CERTIFICADA CON NOVEDADES", "INSPECCIONADA CON DEFECTO CRITICO VALLE", "INSPECCIONADA CON DEFECTO NO CRITICO VALLE"])
 
                     ) {

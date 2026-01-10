@@ -193,7 +193,12 @@
 
                 Swal.fire({
                     title: '¿Estás seguro?',
-                    text: '¿Quieres cambiar el estado de la devolución?',
+                    // Insertamos el checkbox mediante HTML
+                    html: '¿Quieres cambiar el estado de la devolución?<br><br>' +
+                        '<div style="display: flex; flex-direction: row; align-items: center; justify-content: center; margin-bottom: 1em;">' +
+                        '<input type="checkbox" id="chk_produccion" style="margin-right: 10px; transform: scale(1.1); cursor: pointer;">' +
+                        '<label for="chk_produccion" style="margin-bottom: 0; cursor: pointer; font-weight: normal;">Agregar a producción</label>' +
+                        '</div>',
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#3085d6',
@@ -208,16 +213,31 @@
                         if (!observacion) {
                             Swal.showValidationMessage('Por favor, ingrese una observación.');
                         }
-                        return observacion; // Retornamos la observación para usarla luego
+                        // Buscamos el checkbox dentro del popup de SweetAlert
+                        const agregarProduccion = Swal.getPopup().querySelector('#chk_produccion').checked;
+
+                        // Retornamos un OBJETO con ambos datos
+                        return {
+                            observacion: observacion,
+                            agregarProduccion: agregarProduccion
+                        };
                     }
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Agregamos la observación al formulario antes de enviarlo
+                        // 1. Crear input para la Observación
                         let observacionInput = document.createElement('input');
                         observacionInput.type = 'hidden';
-                        observacionInput.name = 'observacion'; // Asegúrate de que este nombre coincida con el esperado en el servidor
-                        observacionInput.value = result.value;
+                        observacionInput.name = 'observacion';
+                        observacionInput.value = result.value.observacion; // Accedemos a la propiedad del objeto
                         currentForm.appendChild(observacionInput);
+
+                        // 2. Crear input para el Checkbox "Agregar a producción"
+                        let produccionInput = document.createElement('input');
+                        produccionInput.type = 'hidden';
+                        produccionInput.name = 'agregar_produccion'; // Este nombre recibirás en el Request de Laravel
+                        // Enviamos '1' si está marcado, '0' si no
+                        produccionInput.value = result.value.agregarProduccion ? 1 : 0;
+                        currentForm.appendChild(produccionInput);
 
                         currentForm.submit();
                     }

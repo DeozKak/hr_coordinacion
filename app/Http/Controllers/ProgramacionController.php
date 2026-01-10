@@ -903,7 +903,7 @@ class ProgramacionController extends Controller
                     }
                 }
 
-                $executed = $this->programacionService->findExecuted($programada->CONTRATO, $programada->TIPO_TRABAJO);
+                $executed = $this->programacionService->findExecuted($programada->CONTRATO, $programada->TIPO_TRABAJO,$programada->ORDEN_TRABAJO);
 
                 if ($executed) {
                     continue;
@@ -1248,7 +1248,7 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
             ->where('FECHA_AGENDAMIENTO', '>=', $scheduling)
             ->exists();
 
-        $executed = $this->programacionService->findExecuted($row['B'], $row['Q']);
+        $executed = $this->programacionService->findExecuted($row['B'], $row['Q'],$row['A']);
 
         if ($exist) {
             return 0;

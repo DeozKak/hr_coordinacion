@@ -12,7 +12,7 @@
     <script src="{{ asset('js/Zonas/zonasV1.2.js') }}"></script>
     <script src="{{ asset('js/Zonas/alerts.js') }}"></script>
     <script src="{{ asset('js/Zonas/asignador.js') }}"></script>
-    <script src="{{ asset('js/Zonas/buscadorV1.2.js') }}"></script>
+    <script src="{{ asset('js/Zonas/buscadorV1.3.js') }}"></script>
     <script src="{{ asset('js/Zonas/asigResponsablesV1.1.js') }}"></script>
     <script src="{{ asset('js/Zonas/insercionMasiva.js') }}"></script>
 
@@ -131,7 +131,7 @@
 
         {{-- Tarjeta Grupos --}}
 
-        <div class="col-md-6">
+      {{--  <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Grupos</h3>
@@ -150,7 +150,7 @@
                         @foreach ($grupos as $grupo)
                             <tr data-id="{{ $grupo->id }}">
                                 <td>{{ $grupo->grupo }}</td>
-                                <td>{{ $grupo->sede->nombre }}</td>
+                                <td>{{ $grupo->sede?->nombre ?? 'Sin Asignar' }}</td>
                                 <td>
                                     <div style="display: flex; gap: 5px; justify-content: center;">
                                         <button class="btn btn-info btn-sm abrirGrupoModal"
@@ -176,7 +176,7 @@
             </div>
         </div>
 
-        {{-- Tarjeta Sub Grupos --}}
+        --}}{{-- Tarjeta Sub Grupos --}}{{--
 
         <div class="col-md-6">
             <div class="card">
@@ -197,7 +197,7 @@
                         @foreach ($subgrupos as $subgrupo)
                             <tr data-id="{{ $subgrupo->id }}">
                                 <td>{{ $subgrupo->subgrupo }}</td>
-                                <td>{{ $subgrupo->sede->nombre }}</td>
+                                <td>{{ $subgrupo->sede?->nombre ?? 'Sin Asignar' }}</td>
                                 <td>
                                     <div style="display: flex; gap: 5px; justify-content: center;">
                                         <button class="btn btn-info btn-sm abrirSubGrupoModal"
@@ -212,10 +212,10 @@
                                                     data-subgrupo-id="{{ $subgrupo->id }}">Activar
                                             </button>
                                         @endif
-                                        {{-- <button class="btn btn-success btn-sm btnAbrirResponsables"
+                                        --}}{{-- <button class="btn btn-success btn-sm btnAbrirResponsables"
                                                  data-subgrupo-id="{{ $subgrupo->id }}">
                                              Insp Asignados
-                                         </button>--}}
+                                         </button>--}}{{--
                                     </div>
 
                                 </td>
@@ -225,7 +225,7 @@
                     </table>
                 </div>
             </div>
-        </div>
+        </div>--}}
     </div>
     @endcanany
 
@@ -235,14 +235,14 @@
             <div class="card-header">
                 <h3 class="card-title">Buscar Relaciones</h3>
                 <div class="card-tools">
-                    @canany(['ver_residente','ver_coordinacion_RP'])
+                  {{--  @canany(['ver_residente','ver_coordinacion_RP'])
                     <button type="button" class="btn btn-primary" id="btn-masivo" style="margin-right: 50px">Inserción
                         masiva
                     </button>
                     <button type="button" class="btn btn-secondary" id="btn-asignacion" style="margin-right: 25px">
                         Gestionar Asignación
                     </button>
-                    @endcanany
+                    @endcanany--}}
                     <button type="button" class="btn btn-tool" data-card-widget="collapse"><i
                             class="fas fa-minus"></i>
                     </button>
@@ -283,6 +283,16 @@
                             <option value="">Seleccione un barrio</option>
                             @foreach ($barrios as $barrio)
                                 <option value="{{ $barrio->id }}">{{ $barrio->barrio }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <br>
+                    <br>
+                    <div class="col-md-3">
+                        <select class="form-control" id="buscarInspector">
+                            <option value="">Seleccione un inspector</option>
+                            @foreach ($inspectores as $inspector)
+                                <option value="{{ $inspector->id }}">{{ $inspector->id }}. {{ $inspector->apellidos }} {{ $inspector->nombres }}</option>
                             @endforeach
                         </select>
                     </div>

@@ -459,13 +459,13 @@
 
                 });*/
 
-                const id_super = {!!json_encode($id_super) !!};
+                /*const id_super = {!!json_encode($id_super) !!};
 
                 if (id_super == null) {
 
                     document.getElementById('btnGuardar').click(); // Habilitar el botón
 
-                }
+                }*/
 
 
             });

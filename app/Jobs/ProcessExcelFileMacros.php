@@ -117,7 +117,9 @@ class ProcessExcelFileMacros implements ShouldQueue
                         $direccion = $rowDataArray[11] ?? null;
                         $categoria = $rowDataArray[13] ?? null;
                         $localidad = $rowDataArray[9] ?? null;
-
+                        $sede = $rowDataArray[51] ?? null;
+                        $grupo = $rowDataArray[52] ?? null;
+                        $subgrupo = $rowDataArray[53] ?? null;
                     }else{
                         // EN CASO DE QUE NO ES MACRO DE NUEVAS SE ASIGNA EL VALOR DE OTRA COLUMNA
                         $estado_recepcion = ($rowDataArray[36] ?? 0) === '' ? 0 : ($rowDataArray[36] ?? 0);
@@ -141,6 +143,9 @@ class ProcessExcelFileMacros implements ShouldQueue
                         "FECHA_ASIGNACION" => $fechaAsignacion,
                         "ESTADO_RECEPCION" => $estado_recepcion,
                         "FECHA_RECEPCION" => $fechaRecepcion,
+                        "SEDE" => $sede ?? $rowDataArray[65] ?? null,
+                        "GRUPO" => $grupo ?? $rowDataArray[66] ?? null,
+                        "SUB_GRUPO" => $subgrupo ?? $rowDataArray[67] ?? null
                     ];
 
                     $registros[] = array_map(fn($v) => $v === '' ? null : $v, $rowData);
@@ -173,6 +178,8 @@ class ProcessExcelFileMacros implements ShouldQueue
                 'mensaje' => $e->getMessage(),
                 'fila' => $filaError
             ];
+
+
             $errorNotification = new ProcesamientoMacro($this->user, $this->originalName, [], $errorDetails);
 
             // Envía la notificación de error también con un retraso para ser consistente

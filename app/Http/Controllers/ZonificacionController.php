@@ -8,6 +8,7 @@ use App\Models\Zonificacion\tbl_localidades_sede;
 use App\Models\Zonificacion\TblGrupo;
 use App\Models\Zonificacion\TblGruposDetalle;
 use App\Models\Zonificacion\TblSubgrupo;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Zonificacion\tbl_localidades_municipio;
@@ -123,12 +124,13 @@ class ZonificacionController extends Controller
             'barrio' => 'sometimes|nullable|integer',
             'grupo' => 'sometimes|nullable|integer',
             'subgrupo' => 'sometimes|nullable|integer',
+            'inspector' => 'sometimes|nullable|integer',
         ], [
             'required' => 'Debe proporcionar al menos un valor para municipio, barrio, grupo o subgrupo.',
         ]);
 
-        $validator->sometimes(['municipio', 'barrio', 'grupo', 'subgrupo'], 'required', function ($input) {
-            return empty($input->municipio) && empty($input->barrio) && empty($input->grupo) && empty($input->subgrupo);
+        $validator->sometimes(['municipio', 'barrio', 'grupo', 'subgrupo', 'inspector'], 'required', function ($input) {
+            return empty($input->municipio) && empty($input->barrio) && empty($input->grupo) && empty($input->subgrupo) && empty($input->inspector);
         });
 
         if ($validator->fails()) {
@@ -140,9 +142,10 @@ class ZonificacionController extends Controller
         $barrio = $request->input('barrio');
         $grupo = $request->input('grupo');
         $subgrupo = $request->input('subgrupo');
+        $inspector = $request->input('inspector');
         try {
             $busqueda = TblgruposDetalle::with(['tbl_grupo', 'tbl_subgrupo',
-                'tbl_barrios', 'tbl_localidades_municipio']);
+                'tbl_barrios', 'tbl_localidades_municipio','inspectores']);
             //$barrio = "PARQUE DE LA CAÑA";
             if ($municipio) {
                 $busqueda->where('id_mun', $municipio); // Filtra por el nombre del municipio
@@ -158,6 +161,13 @@ class ZonificacionController extends Controller
             //$subgrupo = "CE2";
             if ($subgrupo) {
                 $busqueda->where('id_subGrupo', $subgrupo);
+            }
+
+            if ($inspector) {
+                // Usamos whereHas para filtrar por la relación muchos a muchos
+                $busqueda->whereHas('inspectores', function ($query) use ($inspector) {
+                    $query->where('tbl_insp_cali.id', $inspector);
+                });
             }
 
             $resultados = $busqueda->get();
@@ -181,12 +191,13 @@ class ZonificacionController extends Controller
         $subgrupos = TblSubgrupo::all();
         $sedes = tbl_localidades_sede::all();
         $zonas = tbl_produccion_zona::all();
+        $inspectores = tbl_insp_cali::where('state', 1)->get();
 
         if ($mun_sin_grupo) {
             session()->flash('warning', 'Existen municipios sin grupo o sub grupo relacionado. ');
         }
 
-        return view('zonas.index', compact('municipios', 'sedes', 'zonas', 'barrios', 'grupos', 'subgrupos'));
+        return view('zonas.index', compact('municipios', 'sedes', 'zonas', 'barrios', 'grupos', 'subgrupos','inspectores'));
     }
 
     // ------------------- CRUD TABLA tbl_localidades_municipios ----------------------------------
@@ -718,9 +729,10 @@ class ZonificacionController extends Controller
         $barrio = $request->input('barrio');
         $grupo = $request->input('grupo');
         $subgrupo = $request->input('subgrupo');
+        $inspector = $request->input('inspector');
         try {
             $busqueda = TblgruposDetalle::with(['tbl_grupo', 'tbl_subgrupo',
-                'tbl_barrios', 'tbl_localidades_municipio']);
+                'tbl_barrios', 'tbl_localidades_municipio','inspectores']);
             //$barrio = "PARQUE DE LA CAÑA";
             if ($municipio) {
                 $busqueda->where('id_mun', $municipio); // Filtra por el nombre del municipio
@@ -738,7 +750,15 @@ class ZonificacionController extends Controller
                 $busqueda->where('id_subGrupo', $subgrupo);
             }
 
+            if ($inspector) {
+                // Usamos whereHas para filtrar por la relación muchos a muchos
+                $busqueda->whereHas('inspectores', function ($query) use ($inspector) {
+                    $query->where('tbl_insp_cali.id', $inspector);
+                });
+            }
+
             $resultados = $busqueda->get();
+           // dd($resultados);
             return response()->json(['data' => $resultados]);
         } catch (\Exception $e) {
             Log::error($e->getMessage());

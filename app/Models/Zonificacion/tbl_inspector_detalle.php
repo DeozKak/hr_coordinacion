@@ -11,5 +11,5 @@ class tbl_inspector_detalle extends Model implements AuditableContract
    protected $table = 'tbl_inspector_detalle';
 
     protected $fillable = ['detalle_id','inspector_id'];
-
+    public $timestamps = false;
 }

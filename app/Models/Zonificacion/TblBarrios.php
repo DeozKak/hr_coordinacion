@@ -12,6 +12,8 @@ class TblBarrios extends Model implements AuditableContract
 {
     use HasFactory, AuditableTrait;
 
+    protected $fillable = ['barrio'];
+
     public function municipios(){
         return $this->hasManyThrough(
             tbl_localidades_municipio::class,

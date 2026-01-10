@@ -4,6 +4,7 @@ let SelectMunicipio_b;
 let SelectBarrio_b;
 let SelectGrupo_b;
 let SelectSubGrupo_b;
+let SelectInspectores_b;
 //----------------------   Buscador HOT ----------------------------------------
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -12,12 +13,14 @@ document.addEventListener('DOMContentLoaded', function () {
      SelectBarrio_b = new TomSelect("#buscarBarrio", { maxItems: 1, create: false, placeholder: "Seleccione un barrio" });
      SelectGrupo_b = new TomSelect("#buscarGrupo", { maxItems: 1, create: false, placeholder: "Seleccione un grupo" });
      SelectSubGrupo_b = new TomSelect("#buscarSubGrupo", { maxItems: 1, create: false, placeholder: "Seleccione un sub grupo" });
+     SelectInspectores_b = new TomSelect("#buscarInspector", { maxItems: 1, create: false, placeholder: "Seleccione un Inspector" })
 
 
     SelectMunicipio_b.on('change', actualizar_selects);
     SelectBarrio_b.on('change', actualizar_selects);
     SelectGrupo_b.on('change', actualizar_selects);
     SelectSubGrupo_b.on('change', actualizar_selects);
+    SelectInspectores_b.on('change', actualizar_selects);
 
 
     //div para mensajes de error
@@ -59,14 +62,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const b_grupo = document.getElementById('buscarGrupo').value;
         const b_subgrupo = document.getElementById('buscarSubGrupo').value;
         const b_barrio = document.getElementById('buscarBarrio').value;
+        const b_inspector = document.getElementById('buscarInspector').value;
 
-        busqueda(b_municipio, b_grupo, b_subgrupo, b_barrio);
+        busqueda(b_municipio, b_grupo, b_subgrupo, b_barrio, b_inspector);
 
         $("#table").fadeIn(); // Muestra la tabla con efecto de desvanecimiento
     });
 });
 
-function busqueda(municipio, grupo, subgrupo, barrio) {
+function busqueda(municipio, grupo, subgrupo, barrio, inspector) {
     $.ajax({
         url: 'zonas/buscador',
         type: 'GET',
@@ -74,7 +78,8 @@ function busqueda(municipio, grupo, subgrupo, barrio) {
             municipio: municipio,
             grupo: grupo,
             subgrupo: subgrupo,
-            barrio: barrio
+            barrio: barrio,
+            inspector: inspector
         },
         success: function (response) {
 
@@ -186,6 +191,7 @@ function actualizar_selects() {
     const barrio    = SelectBarrio_b.getValue();         // Valor actual de barrio
     const grupo     = SelectGrupo_b.getValue();          // Valor actual de grupo
     const subgrupo  = SelectSubGrupo_b.getValue();
+    const inspector  = SelectInspectores_b.getValue();
 
     $.ajax({
         url: 'zonas/selects',
@@ -195,6 +201,7 @@ function actualizar_selects() {
             barrio: barrio,
             grupo: grupo,
             subgrupo: subgrupo,
+            inspector: inspector
         },
         success: function (response) {
 
@@ -202,11 +209,13 @@ function actualizar_selects() {
             const barrios    = extraerUnicos(response.data || [], 'tbl_barrios');
             const grupos     = extraerUnicos(response.data || [], 'tbl_grupo');
             const subgrupos  = extraerUnicos(response.data || [], 'tbl_subgrupo');
+            const inspector  = extraerInspectores(response.data || [], 'inspectores');
 
             actualizarTomSelect(SelectMunicipio_b, municipios, 'id', 'nombre');
             actualizarTomSelect(SelectBarrio_b, barrios, 'id', 'barrio');
             actualizarTomSelect(SelectGrupo_b, grupos, 'id', 'grupo');
             actualizarTomSelect(SelectSubGrupo_b, subgrupos, 'id', 'subgrupo');
+            actualizarTomSelect(SelectInspectores_b, inspector, 'id', 'nombre');
 
 
         },error: function (xhr, status) {
@@ -219,7 +228,9 @@ function actualizar_selects() {
 function extraerUnicos(lista, campo) {
     // filtra items válidos y elimina duplicados por ID
     const map = new Map();
+
     lista.forEach(item => {
+
         let obj = item[campo];
         if (obj && obj.id && !map.has(obj.id)) {
             map.set(obj.id, obj);
@@ -228,6 +239,25 @@ function extraerUnicos(lista, campo) {
     return Array.from(map.values());
 }
 
+function extraerInspectores(lista, campo) {
+    const map = new Map();
+
+    lista.forEach(item => {
+        let listadoInspectores = item[campo];
+
+        // Validamos que sea un array antes de intentar recorrerlo
+        if (Array.isArray(listadoInspectores)) {
+            listadoInspectores.forEach(i => {
+                if (i && i.id && !map.has(i.id)) {
+                    // Aquí formateamos el nombre unificando ID, Apellidos y Nombres
+                    i.nombre = `${i.id}. ${i.apellidos} ${i.nombres}`;
+                    map.set(i.id, i);
+                }
+            });
+        }
+    });
+    return Array.from(map.values());
+}
 
 function actualizarTomSelect(selectInstance, data, valueField = 'id', labelField = 'nombre') {
     // Limpiar opciones previas
@@ -242,6 +272,7 @@ function actualizarTomSelect(selectInstance, data, valueField = 'id', labelField
     // Actualiza el boceto visual si hay algo seleccionado
     selectInstance.refreshOptions(false);
 }
+
 
 
 function asignar_barrio(barrio,id) {

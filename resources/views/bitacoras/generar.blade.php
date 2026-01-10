@@ -54,7 +54,7 @@
                         <label for="supervisor" class="form-label mt-3">Supervisor:</label>
                         <select class="form-control" name="supervisor" id="supervisor">
                             <option value="">Seleccione Supervisor</option>
-                            
+                            <option value="0">Todos</option>
                             @foreach ($supervisores as $supervisor)
                                 <option value="{{$supervisor->id}}">{{$supervisor->name}}</option>
                             @endforeach

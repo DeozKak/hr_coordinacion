@@ -14,7 +14,7 @@ class tbl_localidades_municipio extends Model implements AuditableContract
     use HasFactory, AuditableTrait;
 
     public $timestamps = false;
-
+    protected $fillable = ['nombre'];
     public function barrios(): HasManyThrough
     {
         return $this->HasManyThrough(

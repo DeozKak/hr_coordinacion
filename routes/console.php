@@ -15,6 +15,8 @@ Schedule::command('app:actualizar_-stickers')->dailyAt('12:00');
 
 Schedule::command('app:actualizar-asignacion-tec')->dailyAt('20:00');
 
+Schedule::command('app:actualizar_zonificacion')->dailyAt('00:00');
+
 Schedule::command('app:clean-table-bitacora-diaria')->dailyAt('06:00');
 
 
