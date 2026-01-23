@@ -1244,8 +1244,8 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
     {
         // verificar si ya existe la programación
         $exist = tbl_programacion_contrato::where('CONTRATO', $row['B'])
-            //->where('ORDEN_TRABAJO', $row['A'])
-            ->where('FECHA_AGENDAMIENTO', '>=', $scheduling)
+            ->where('ORDEN_TRABAJO', $row['A'])
+            //->where('FECHA_AGENDAMIENTO', '>=', $scheduling)
             ->exists();
 
         $executed = $this->programacionService->findExecuted($row['B'], $row['Q'],$row['A']);

@@ -95,7 +95,6 @@ function busqueda(municipio, grupo, subgrupo, barrio, inspector) {
 
                 };
             });
-            console.log(processedData);
 
             hot.loadData(processedData)
             // Actualizar la variable barrios_dis con los nuevos datos recibidos
