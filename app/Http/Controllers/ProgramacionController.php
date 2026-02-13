@@ -1248,14 +1248,14 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
             //->where('FECHA_AGENDAMIENTO', '>=', $scheduling)
             ->exists();
 
-        $executed = $this->programacionService->findExecuted($row['B'], $row['Q'],$row['A']);
+        //$executed = $this->programacionService->findExecuted($row['B'], $row['Q'],$row['A']);
 
-        if ($exist) {
+        /*if ($exist) {
             return 0;
         }
         if ($executed) {
             return 3;
-        }
+        }*/
         // Insertar los datos si es que ya no existe
         try {
             $registro = new tbl_programacion_contrato();

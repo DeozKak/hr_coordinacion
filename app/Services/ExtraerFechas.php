@@ -29,14 +29,16 @@ class ExtraerFechas
         $patrones = [
             // Patrón para fechas numéricas completas (yyyy-mm-dd, dd/mm/yyyy, etc.)
             '/(?:\d{1,4}\s*[\/\-]\s*\d{1,2}\s*[\/\-]\s*\d{1,4})/iu',
+            // Patrón para "Año-Mes-Día" con nombre de mes (ej. 2026-FEBRERO-02)
+            '/(?:\d{4}\s*[\/\-]\s*(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s*[\/\-]\s*\d{1,2})/iu',
             // Patrón para fechas con nombre de mes (11 de Junio de 2025)
             '/(?:(?:lunes|martes|miercoles|jueves|viernes|sabado|domingo)\s*,?\s*)?(?:\d{1,2})\s+(?:de\s+)?(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)(?:\s*,?\s*(?:de\s+)?\d{2,4})?/iu',
-            // NUEVO: Patrón para "Mes Día" (ej. Junio 17)
+            // Patrón para "Mes Día" (ej. Junio 17)
             '/\b(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+(0?[1-9]|[12]\d|3[01])(?:,?\s+\d{2,4})?\b/iu',
             // Patrón para "nombre de día + número" (Miércoles 11)
             '/(?:(?:lunes|martes|miercoles|jueves|viernes|sabado|domingo)\s+\d{1,2})\b/iu',
-            // Patrón para "número + nombre de mes" (14/junio)
-            '/(?:\d{1,2}\s*[\/\-]\s*(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre))/iu',
+            // Patrón para "número + nombre de mes" (14/junio) - Nota el \b
+            '/(?:\b\d{1,2}\s*[\/\-]\s*(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre))/iu',
             // Patrón para "día/mes" (11/06) con validación estricta
             '/(?:(0?[1-9]|[12]\d|3[01])\s*[\/\-]\s*(0?[1-9]|1[0-2]))\b/iu',
             // Patrón para palabras clave relativas
@@ -50,9 +52,35 @@ class ExtraerFechas
             }
         }
 
-        // Eliminar duplicados exactos que puedan surgir de las múltiples búsquedas
-        $coincidencias[0] = array_unique($todasLasCoincidencias);
-        // <-- FIN DEL CAMBIO DE ESTRATEGIA -->
+        // 1. Eliminar duplicados exactos
+        $todasLasCoincidencias = array_unique($todasLasCoincidencias);
+
+        // <-- NUEVO: FILTRO DE PRIORIDAD POR LONGITUD (SUBCADENAS) -->
+        // Ordenamos por longitud de mayor a menor para procesar primero las fechas más completas.
+        usort($todasLasCoincidencias, function($a, $b) {
+            return strlen($b) - strlen($a);
+        });
+
+        $coincidenciasFiltradas = [];
+        foreach ($todasLasCoincidencias as $candidato) {
+            $esSubcadena = false;
+            // Revisamos si este candidato está contenido dentro de alguno ya aceptado
+            foreach ($coincidenciasFiltradas as $aceptado) {
+                if (stripos($aceptado, $candidato) !== false) {
+                    $esSubcadena = true;
+                    break;
+                }
+            }
+
+            // Si NO está contenido en ninguno más grande, lo guardamos
+            if (!$esSubcadena) {
+                $coincidenciasFiltradas[] = $candidato;
+            }
+        }
+
+        // Asignamos el array filtrado a la variable que usa el resto de tu código
+        $coincidencias[0] = $coincidenciasFiltradas;
+        // <-- FIN DEL FILTRO -->
 
         $fechasEncontradas = [];
 
@@ -93,7 +121,7 @@ class ExtraerFechas
                         try {
                             $fechaObj = new DateTime(date('Y-m-d H:i:s', strtotime($terminosRelativos[$textoAProcesar], $timestampDeReferencia)));
                         } catch (\Exception $e) {
-                             log::error($e->getMessage() . " " . $texto);
+                            log::error($e->getMessage() . " " . $texto);
                             return 1000;
                         }
                     } else {
@@ -105,16 +133,28 @@ class ExtraerFechas
                         $textoAProcesar = strtr($textoAProcesar, $meses_es);
                         $textoAProcesar = trim($textoAProcesar);
                         $textoAProcesar = preg_replace('/\s*-\s*/', '-', $textoAProcesar);
+                        // Detectar si hay letras (mes escrito)
+                        if (preg_match('/[a-zA-Z]/', $textoAProcesar)) {
+                            // 1. Reemplazamos guiones por espacios (ej: 2026-feb-5 -> 2026 feb 5)
+                            $textoAProcesar = str_replace('-', ' ', $textoAProcesar);
 
-                     /*   if ($id_reg == 105) {
-                            // Ahora dd() mostrará ambas coincidencias
-                            dd($textoAProcesar);
-                        }*/
+                            // 2. CORRECCIÓN CLAVE: Si detectamos formato "AÑO MES DÍA", lo volteamos a "DÍA MES AÑO"
+                            // Ejemplo: Transforma "2026 feb 5" en "5 feb 2026"
+                            if (preg_match('/^(\d{4})\s+([a-z]{3})\s+(\d{1,2})$/i', $textoAProcesar, $matches)) {
+                                // $matches[1] = Año, $matches[2] = Mes, $matches[3] = Día
+                                $textoAProcesar = $matches[3] . ' ' . $matches[2] . ' ' . $matches[1];
+                            }
+                        }
+
                         if (!empty($textoAProcesar)) {
                             try {
                                 $fechaObj = new DateTime(date('Y-m-d H:i:s', strtotime($textoAProcesar, $timestampDeReferencia)));
+                               /* if ($id_reg == 279) {
+                                    // Ahora dd() mostrará ambas coincidencias
+                                    dd($fechaObj,$textoAProcesar);
+                                }*/
                             } catch (\Exception $e) {
-                                 log::error($e->getMessage() . " " . $texto);
+                                log::error($e->getMessage() . " " . $texto);
                                 return 1000;
                             }
                         }
@@ -123,8 +163,9 @@ class ExtraerFechas
                     if ($fechaObj) {
                         $fechasEncontradas[] = $fechaObj;
                     }
+
                 } catch (\Exception $e) {
-                     log::error($e->getMessage() . " " . $texto);
+                    log::error($e->getMessage() . " " . $texto);
                     return 1000;
                 }
             }
