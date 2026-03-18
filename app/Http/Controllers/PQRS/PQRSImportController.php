@@ -1,19 +1,16 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\PQRS;
 
-use App\Models\tbl_insp_cali;
+use App\Http\Controllers\Controller;
+use App\Jobs\CorreoTiemposQuejas;
+use App\Models\tbl_queja;
 use App\Models\tbl_quejas_contrato;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use Illuminate\Support\Facades\Log;
-use App\Models\tbl_queja;
-use App\Jobs\CorreoTiemposQuejas;
-use DateTime;
 
 class PQRSImportController extends Controller
 {

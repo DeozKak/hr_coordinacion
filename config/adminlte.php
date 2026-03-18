@@ -500,6 +500,14 @@ return [
                      'can' => 'ver_PQRS',
                      'label_color' => 'success',
                  ],
+                 [
+                     'text' => 'Coordinación',
+                     'url' => 'pqrs/coordinacion',
+                     'icon' => 'far fa-circle',
+                     'can' => 'ver_PQRS',
+                     'label_color' => 'success',
+                 ],
+
              ],
 
         //         [
@@ -781,7 +789,7 @@ return [
             [
                 'type' => 'js',
                 'asset' => true,
-                'location' => '//cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js',
+                'location' => '//cdn.jsdelivr.net/npm/handsontable@16.0/dist/handsontable.full.min.js',
             ],
             [
                 'type' => 'js',
@@ -791,7 +799,7 @@ return [
             [
                 'type' => 'css',
                 'asset' => true,
-                'location' => '//cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css',
+                'location' => '//cdn.jsdelivr.net/npm/handsontable@16.0/dist/handsontable.full.min.css',
             ],
         ],
     ],

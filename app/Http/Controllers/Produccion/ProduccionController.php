@@ -257,6 +257,7 @@ class ProduccionController extends Controller
 
     public function datosDetalles(Request $request)
     {
+        $f = [];
         if (session('id_corte') || $request->idCorteDetalles) {
             $idCorte = session('id_corte') ?? $request->idCorteDetalles;
             $corte = tbl_produccion_corte::find($idCorte);
@@ -344,12 +345,13 @@ class ProduccionController extends Controller
 
         // Calcular la fecha de inicio y fin del rango de 1 mes antes y 1 mes después
         $fechaInicioRango = $fechaInicio->copy()->subMonth();
-        $fechaFinRango = $fechaFin->copy()->addMonth();
+        $fechaFinRango = $fechaFin->copy();
 
         // Generar una clave única para la caché basada en las fechas del rango
         $cacheKeyRango = 'dias_festivos_rango_' . $fechaInicioRango->format('Ymd') . '_' . $fechaFinRango->format('Ymd');
 
         // Verificar si los días festivos en el rango ya están en caché
+        //$diasFestivosRango = "";
         $diasFestivosRango = Cache::get($cacheKeyRango);
 
         /* Cache::forget($cacheKeyRango); */
@@ -497,6 +499,7 @@ class ProduccionController extends Controller
                 foreach ($diasFestivosRango as $festivo) {
                     if ($festivo == $contrato->fecha) {
                         $contadorFestivos += $contrato->total_contratos;
+                        $f[$contrato->fecha] = $contrato->total_contratos;
                     }
                 }
                 $fechas[$contrato->fecha] = $contrato->total_contratos;
@@ -564,6 +567,7 @@ class ProduccionController extends Controller
             $datosInspector['matrices'] = $contadorMatrices;
 
             $datosInspector['festivos'] = $totalFestivos - $contadorFestivosDomingos + $contadorDiasSabados;
+
             $datosInspector['diseños_especiales'] = $contadorDiseñosEspeciales;
             $datosInspector['4_recintos'] = $contratos4recintosRedondeado;
             $datosInspector['comerciales'] = $contadorComerciales;
@@ -579,7 +583,7 @@ class ProduccionController extends Controller
             $datosInspector['promedio'] = number_format($datosInspector['sub_total'] / $datosInspector['dias_laborados'], 1);
             $datosInspector['meta'] = $corte->meta;
             $datosInspector['porcentaje_meta'] = '%' . number_format(($datosInspector['sub_total'] / $datosInspector['meta']) * 100, 2);
-
+            //dd($f);
             $produccionInspector[] = $datosInspector;
 
         }
@@ -620,6 +624,7 @@ class ProduccionController extends Controller
             'corte' => $corte->id,
             'sabadosDoblesManuales' => $jsonDobles_sabados,
         ];
+        //dd($reponse);
 
         $exist = tbl_produccion_historico::where('id_corte', $corte->id)->exists();
 
@@ -675,174 +680,103 @@ class ProduccionController extends Controller
 
     public function calcularDobles($fechaInicio, $fechaFin, $inspector, $diasFestivos, $valDobles,$sqlHistorico)
     {
-        $inicioSemana = $fechaInicio->copy()->startOfWeek();
-
         // Inicializar variables para contadores
-        $contadorDiasSabados = null;
+        $contadorDiasSabados = 0;
         $sabadosdobles = array();
 
-        $todosLosContratosDelInspector = tbl_bitacora_contrato::where('CC_OPERARIO', $inspector->cedula)
+        // Obtenemos solo los contratos del rango que sean sábados
+        $contratosSabado = tbl_bitacora_contrato::where('CC_OPERARIO', $inspector->cedula)
             ->where('state', 1)
-            ->whereBetween('FECHA', [$inicioSemana->format('Y-m-d'), $fechaFin->format('Y-m-d')])
+            ->whereBetween('FECHA', [$fechaInicio->format('Y-m-d'), $fechaFin->format('Y-m-d')])
             ->whereNotIn('TIPO_TRABAJO', [
                 'FI-29 revisión periódica línea matriz',
                 'FI-31 REVISIÓN NUEVA LINEA MATRIZ',
             ])
-            ->select('FECHA') // Solo necesitamos la fecha para agrupar y contar
+            ->select('FECHA', 'HORA_INICIO', 'HORA_FINAL')
             ->get()
-            ->map(function ($contrato) {
-                // Agregamos el día de la semana para filtrar fácilmente después
-                $contrato->dayOfWeek = Carbon::parse($contrato->FECHA)->dayOfWeekIso; // 1 (Lunes) a 7 (Domingo)
-                return $contrato;
+            ->filter(function ($contrato) {
+                // Filtrar solo para quedarnos con los sábados (día 6)
+                return \Carbon\Carbon::parse($contrato->FECHA)->dayOfWeekIso === 6;
             });
 
-        // Generar las semanas en el rango del corte
-        $semanas = [];
-        for ($date = $fechaInicio->copy(); $date->lte($fechaFin); $date->addWeek()) {
-            $inicioSemana = $date->copy()->startOfWeek();
-            $finSemana = $date->copy()->endOfWeek();
+        // Agrupamos los contratos de sábado por su fecha exacta
+        $contratosPorSabado = $contratosSabado->groupBy('FECHA');
 
-            // Ajustar la fecha de fin de semana si excede la fecha final
-            if ($finSemana->gt($fechaFin)) {
-                $finSemana = $fechaFin->copy(); // Limitar al último día del rango
+        $jsonSabadosDobles = json_decode($sqlHistorico->dobles_sabados, true);
+        $jsonNoDobles = json_decode($sqlHistorico->no_dobles, true);
+
+        foreach ($contratosPorSabado as $fechaSabado => $contratos) {
+            // Verificamos que el sábado no sea un festivo general
+            if (in_array($fechaSabado, $diasFestivos)) {
+                continue;
             }
 
-            $semanas[] = [
-                'inicio' => $inicioSemana->format('Y-m-d'),
-                'fin' => $finSemana->format('Y-m-d'),
-                'contratos' => 0,
-                'festivos' => 0,
-            ];
-        }
-
-        $registro = array();
-        foreach ($semanas as $index => $semana) {
-            // Inicializar el total de contratos
-            $totalContratos = 0;
-
-            // Verificar si hay días festivos en la semana
-            $hayFestivoEnSemana = false;
-            foreach ($diasFestivos as $festivo) {
-                $diaSemana = date('N', strtotime($festivo)); // Obtener el número del día de la semana (1 para lunes, 7 para domingo)
-
-                if ($diaSemana >= 1 && $diaSemana <= 5) { // Verificar si el día festivo cae en un día de la semana (de lunes a viernes)
-                    if ($festivo >= $semana['inicio'] && $festivo <= $semana['fin']) {
-                        $hayFestivoEnSemana = true;
-                        break;
-                    }
-                }
-            }
-
-            // Obtener contratos de lunes a viernes para la semana actual
-            $totalContratos = $todosLosContratosDelInspector
-                ->whereBetween('FECHA', [$semana['inicio'], $semana['fin']])
-                ->whereBetween('dayOfWeek', [1, 5]) // Lunes a Viernes
-                ->count();
-
-
-            // Obtener contratos del sábado para la semana actual
-            $contratosSabado = $todosLosContratosDelInspector
-                ->whereBetween('FECHA', [$semana['inicio'], $semana['fin']])
-                ->where('dayOfWeek', 6); // Sábado
-
-
-            // Ajustar los límites de las condicionales si hay un festivo en la semana
-            $limiteContratos = $hayFestivoEnSemana ? $valDobles - 10 : $valDobles;
-            $limiteContratosBajo = $hayFestivoEnSemana ? $valDobles - 12 : $valDobles - 2;
-            $limiteContratosMedio = $hayFestivoEnSemana ? $valDobles - 11 : $valDobles - 1;
-            if ($contratosSabado->count() > 0) {
-
-                $fechaSabado = $contratosSabado->first()->fecha;
-                $esSabadoFestivo = in_array($fechaSabado, $diasFestivos);
-
-                if (!$esSabadoFestivo) {
-
-                    $jsonSabadosDobles = json_decode($sqlHistorico->dobles_sabados, true);
-
-                    if ($jsonSabadosDobles != null) {
-                        foreach ($jsonSabadosDobles as $datos) {
-                            foreach ($datos as $item) {
-                                if ($item['datos']['cc_inspector'] == $inspector->cedula) {
-                                    foreach ($item['datos']['totalInspecciones'] as $sabado) {
-                                        if ($sabado['fecha'] == $fechaSabado) {
-                                            $sabadosdobles[] = [
-                                                'fecha' => $sabado['fecha'],
-                                                'cc_inspector' => $item['datos']['cc_inspector']
-                                            ];
-                                        }
-                                    }
+            // 1. Agregar los sábados manuales si existen en el JSON de dobles_sabados
+            if ($jsonSabadosDobles != null) {
+                foreach ($jsonSabadosDobles as $datos) {
+                    foreach ($datos as $item) {
+                        if ($item['datos']['cc_inspector'] == $inspector->cedula) {
+                            foreach ($item['datos']['totalInspecciones'] as $sabado) {
+                                if ($sabado['fecha'] == $fechaSabado) {
+                                    $sabadosdobles[] = [
+                                        'fecha' => $sabado['fecha'],
+                                        'cc_inspector' => $item['datos']['cc_inspector']
+                                    ];
                                 }
                             }
                         }
                     }
-
-                    $jsonNoDobles = json_decode($sqlHistorico->no_dobles, true);
-
-                    if ($jsonNoDobles != null) {
-                        foreach ($jsonNoDobles as $datos) {
-                            foreach ($datos as $item) {
-                                if ($inspector->cedula == $item['datos']['cc_inspector'] && in_array($contratosSabado->first()->FECHA, $item['datos']['fechas'])) {
-                                    continue 3;
-                                }
-                            }
-                        }
-                    }
-
-
-                    if ($totalContratos >= $limiteContratos) {
-
-                        // Sumar los contratos del sábado
-                        $totalContratosSabado = $contratosSabado->count();
-                        $contadorDiasSabados += $totalContratosSabado;
-                        /*if($index === 1){
-                            dd($contratosSabado->count());
-                        }*/
-                        try {
-                            $sabadosdobles[] = [
-                                'fecha' => $contratosSabado->first()->FECHA,
-                                'cc_inspector' => $inspector->cedula,
-                                'totalContratosSabado' => $totalContratosSabado
-                            ];
-
-                        } catch (\Exception $e) {
-                        }
-                    } elseif ($totalContratos < $limiteContratos && $totalContratos >= $limiteContratosBajo) {
-                        // Sumar los contratos del sábado con ajustes
-                        $totalContratosSabado = $contratosSabado->count();
-                        $totalContratosSabado = ($totalContratos === $limiteContratosMedio) ? $totalContratosSabado - 1 : $totalContratosSabado - 2;
-
-                        // Validación para evitar contar valores cero o negativos
-                        if ($totalContratosSabado > 0) {
-                            $contadorDiasSabados += $totalContratosSabado;
-                        }
-
-                        // Validación para el array de sábados dobles
-                        if ($totalContratosSabado > 0 && $contratosSabado->isNotEmpty()) { // <-- Nueva condición
-                            try {
-                                $sabadosdobles[] = [
-                                    'fecha' => $contratosSabado->first()->FECHA,
-                                    'cc_inspector' => $inspector->cedula,
-                                    'totalContratosSabado' => $totalContratosSabado
-                                ];
-                            } catch (\Exception $e) {
-                                // Manejo de excepciones (opcional)
-                            }
-                        }
-                    }
-                } else {
                 }
             }
-            // Guardar el total de contratos en el array de semanas
-            $semanas[$index]['contratos'] = $totalContratos;
 
+            // 2. Verificar exclusiones manuales del JSON de no_dobles
+            $esNoDoble = false;
+            if ($jsonNoDobles != null) {
+                foreach ($jsonNoDobles as $datos) {
+                    foreach ($datos as $item) {
+                        if ($inspector->cedula == $item['datos']['cc_inspector'] && in_array($fechaSabado, $item['datos']['fechas'])) {
+                            $esNoDoble = true;
+                            break 2;
+                        }
+                    }
+                }
+            }
 
+            // Si no fue excluido manualmente, verificamos la regla de duración y cantidad
+            if (!$esNoDoble) {
+                $contratosValidos = 0;
+
+                foreach ($contratos as $contrato) {
+                    if (!empty($contrato->HORA_INICIO) && !empty($contrato->HORA_FINAL)) {
+                        $horaInicioInspeccion = \Carbon\Carbon::parse($contrato->HORA_INICIO);
+                        $horaFinalInspeccion = \Carbon\Carbon::parse($contrato->HORA_FINAL);
+
+                        // Si la hora final es menor que la de inicio, asumimos que cruzó la medianoche
+                        if ($horaFinalInspeccion->lt($horaInicioInspeccion)) {
+                            $horaFinalInspeccion->addDay();
+                        }
+
+                        // Validamos que la diferencia sea ESTRÍCTAMENTE MAYOR a 20 minutos
+                        if ($horaInicioInspeccion->diffInMinutes($horaFinalInspeccion) > 20) {
+                            $contratosValidos++;
+                        }
+                    }
+                }
+
+                // Regla final: si hizo más de 6 inspecciones válidas, cuenta doble
+                if ($contratosValidos > 5) {
+                    $doblesCalculados = $contratosValidos - 5;
+                    $contadorDiasSabados += $doblesCalculados;
+
+                    $sabadosdobles[] = [
+                        'fecha' => $fechaSabado,
+                        'cc_inspector' => $inspector->cedula,
+                        'totalContratosSabado' => $doblesCalculados
+                    ];
+                }
+            }
         }
-        // Descomentar para depuración
-        /*if ($inspector->cedula === '1107080079') {
-            dd($sabadosdobles);
-        }*/
-        // Descomentar para ver el resultado final
-        // dd($contadorDiasSabados);
+
         return [
             'contadorDiasSabados' => $contadorDiasSabados,
             'sabadosdobles' => $sabadosdobles

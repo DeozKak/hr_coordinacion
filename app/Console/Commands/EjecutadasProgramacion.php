@@ -56,10 +56,15 @@ class EjecutadasProgramacion extends Command
 
             $contrato = ":" . $programada->CONTRATO;
            // $dosAnosAtras = Carbon::now()->subYears(2)->toDateString();
+            $orden = $programada->ORDEN_TRABAJO;
             $bitacora = tbl_bitacora_contrato::select('CC_OPERARIO', 'FECHA', 'RESULTADO_CIERRE', 'TIPO_TRABAJO')
                 ->where('CONTRATO', $contrato)
                 ->whereIn('TIPO_TRABAJO', $tipo_trabajo)
                 ->whereIn('RESULTADO_CIERRE', $cierres)
+                ->where(function ($query) use ($orden) {
+                    $query->where('ORDEN_TRABAJO', $orden)
+                        ->orWhere('ORDEN_EXT', $orden);
+                })
                 ->first();
 
             if($bitacora){
@@ -81,6 +86,10 @@ class EjecutadasProgramacion extends Command
                     ->where('CONTRATO', $contrato)
                     ->whereIn('TIPO_TRABAJO', $tipo_trabajo)
                     ->whereIn('RESULTADO_CIERRE', $cierres)
+                    ->where(function ($query) use ($orden) {
+                        $query->where('ORDEN', $orden)
+                            ->orWhere('ORDEN_EXT', $orden);
+                    })
                     ->first();
                 if($consulta) {
                     if (in_array($consulta->RESULTADO_CIERRE, ['INSPECCIONADA CON DEFECTO CRITICO VALLE', 'INSPECCIONADA CON DEFECTO NO CRITICO VALLE', 'INSPECCIONADA CON DEFECTO CRITICO VALLE']) && $consulta->TIPO_TRABAJO === 'SA 12164') {

@@ -1,0 +1,349 @@
+/* =================================================================== */
+/* ====   ESTILOS MODERNOS PARA VISTA DE PROGRAMACIÓN       ==== */
+/* =================================================================== */
+h1 {
+    color: #34495e;
+    font-weight: 600;
+}
+h5{
+    color: #34495e;
+    font-weight: 600;
+}
+
+/* ==== Contenedor Principal ==== */
+.shadow-container {
+    background: #ffffff;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 32px rgba(44, 62, 80, 0.12);
+    border: 1px solid #e8eef3;
+    padding: 1.5rem;
+}
+
+/* ==== Barra de Controles (Botones y Búsqueda) ==== */
+.controls-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+.actions-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+.search-group {
+    min-width: 250px;
+}
+.search-group .form-control {
+    border-radius: 8px;
+    border: 1px solid #d1d9e6;
+    padding: 0.6rem 1rem;
+}
+
+/* ==== Estilos para la Tabla Principal (DataTables) ==== */
+table {
+    border-collapse: separate !important;
+    border-spacing: 0;
+    width: 100% !important;
+}
+#programacion thead tr {
+    background: linear-gradient(90deg, #1d8cf8 0%, #3358f4 100%);
+}
+thead th {
+    color: #ffffff; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em; font-size: 0.85rem; padding: 1rem 1.25rem;
+    background-color: transparent; border: none; text-align: left;
+}
+tbody td {
+    padding: 0.75rem 1.25rem; vertical-align: middle;
+    color: #525f7f; border-bottom: 1px solid #e9ecef;
+}
+#programacion tbody tr:hover { background-color: #e0ecf3; }
+
+/* ==== Botones con Gradiente y Base ==== */
+.btn-base { /* ... estilos base del botón ... */ }
+.btn-gradient {
+    border: none; color: #fff; padding: 0.6rem 1.2rem;
+    font-size: 0.9rem; font-weight: 600; border-radius: 8px;
+    cursor: pointer; display: inline-flex; align-items: center;
+    gap: 0.5rem; transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.btn-gradient.btn-sm { padding: 0.35rem 0.8rem; font-size: 0.8rem; }
+.btn-gradient-success { background: linear-gradient(90deg, #2ecc71 0%, #27ae60 100%); }
+.btn-gradient-primary { background: linear-gradient(90deg, #1d8cf8 0%, #3358f4 100%); }
+.btn-gradient-warning { background: linear-gradient(90deg, #f5a623 0%, #f8d800 100%); color: #594200; }
+.btn-secondary-modern {
+    background: linear-gradient(90deg, #8a96a8 0%, #6c757d 100%);
+}
+/* Aseguramos que los botones tengan una transición suave */
+.btn-gradient {
+    transition: all 0.3s ease;
+}
+
+/* Botón Amarillo (Editar) */
+.btn-gradient-warning:hover {
+    /* Gradiente invertido para un cambio de color sutil */
+    background: linear-gradient(90deg, #f8d800 0%, #f5a623 100%);
+    transform: translateY(-2px); /* Mantenemos el efecto de levantamiento */
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+}
+
+/* Botón Verde (Ver) */
+.btn-gradient-success:hover {
+    /* Gradiente invertido */
+    background: linear-gradient(90deg, #27ae60 0%, #2ecc71 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.2);
+}
+
+/* ==== Estilos para Modales ==== */
+.modal-modern .modal-content {
+    border-radius: 1.25rem;
+    border: none;
+    box-shadow: 0 4px 32px rgba(44, 62, 80, 0.15);
+    overflow: hidden; /* ¡ESTA ES LA LÍNEA CLAVE! */
+}
+.modal-modern .modal-header {
+    background-color: #f8f9fa; border-bottom: 1px solid #e9ecef;
+}
+.modal-modern .modal-title {
+    color: #2c3e50; font-weight: 600;
+}
+.modal-modern .form-control {
+    border-radius: 8px; border: 1px solid #d1d9e6;
+}
+.modal-modern .modal-footer {
+    background-color: #f8f9fa; border-top: 1px solid #e9ecef;
+    gap: 0.75rem;
+}
+
+.modal-modern .form-control[type="file"] {
+    padding: 0; /* CLAVE: Quitamos el padding del contenedor principal */
+    border: 1px solid #d1d9e6;
+    border-radius: 8px;
+    /* Usamos flexbox para alinear el botón y el texto */
+    display: flex;
+    align-items: center;
+}
+
+/* Botón interno "Seleccionar archivo" */
+.modal-modern .form-control[type="file"]::file-selector-button {
+    background: linear-gradient(90deg, #e9ecef 0%, #d1d9e6 100%);
+    color: #34495e;
+    border: none;
+
+    /* El padding ahora está solo en el botón y define la altura */
+    padding: 0.4rem 1rem;
+
+    margin-right: 1rem; /* Espacio entre el botón y el texto "Ningún archivo..." */
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+
+    /* CLAVE: Añadimos un borde derecho para que no se vea cortado */
+    border-right: 1px solid #d1d9e6;
+}
+
+.modal-modern .form-control[type="file"]::file-selector-button:hover {
+    background: linear-gradient(90deg, #d1d9e6 0%, #e9ecef 100%);
+}
+
+
+/* =================================================================== */
+/* ====   ESTILOS MODERNOS PARA CONTROLES DE DATATABLE      ==== */
+/* =================================================================== */
+
+/* ==== Estilos para la Tabla Principal (DataTables) ==== */
+
+
+/* 1. Aplicamos el fondo de gradiente a la FILA del encabezado */
+thead tr {
+    background: linear-gradient(90deg, #1d8cf8 0%, #3358f4 100%);
+}
+
+
+
+/* 3. Redondeamos las esquinas de la primera y última celda */
+thead th:first-child {
+    border-top-left-radius: 0.8rem;
+}
+
+thead th:last-child {
+    border-top-right-radius: 0.8rem;
+}
+
+/* El resto de tus estilos para tbody, etc., se mantienen igual */
+
+.dt-search, .dt-length {
+    margin-bottom: 1.5rem;
+}
+
+.dt-search label, .dt-length label, .dt-info {
+    color: #525f7f;
+    font-weight: 500;
+    font-size: 0.95rem;
+    vertical-align: middle;
+}
+
+.dt-input {
+    border-radius: 8px !important;
+    border: 1px solid #d1d9e6 !important;
+    padding: 0.5rem 0.8rem !important;
+    font-size: 0.95rem;
+    transition: all 0.2s ease-in-out;
+    background-color: #f8f9fa;
+    margin-left: 0.5rem;
+    box-shadow: none !important;
+}
+
+.dt-input:focus {
+    background-color: #fff;
+    border-color: #3498db !important;
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1) !important;
+    outline: none;
+}
+
+/* --- Paginación --- */
+.dt-paging {
+    display: flex;
+    justify-content: flex-end;
+    gap: 5px;
+}
+
+.dt-paging-button {
+    border-radius: 8px !important;
+    padding: 0.5rem 0.9rem;
+    margin: 0 !important;
+    border: none !important;
+    background: transparent;
+    color: #525f7f;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+.dt-paging-button:not(.current):not(.disabled):hover {
+    background-color: #e9f3fe;
+    color: #1d8cf8;
+}
+
+.dt-paging-button.disabled {
+    color: #a0aec0 !important;
+    background-color: #f0f3f5 !important;
+}
+
+/* Botón de página activa con alto contraste */
+.dt-paging-button.current, .dt-paging-button.current:hover {
+    background: linear-gradient(90deg, #1d8cf8 0%, #3358f4 100%);
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(29, 140, 248, 0.35);
+    font-weight: 700;
+    transform: translateY(-2px);
+}
+
+/* =================================================================== */
+/* ====   ESTILO MODERNO PARA LISTA DE RESULTADOS DE BÚSQUEDA   ==== */
+/* =================================================================== */
+
+.search-results-modern {
+    /* Contenedor de la lista */
+    max-height: 250px;
+    overflow-y: auto;
+    background-color: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px; /* Bordes redondeados */
+    box-shadow: 0 4px 16px rgba(44, 62, 80, 0.1); /* Sombra suave */
+    margin-top: 0.5rem; /* Espacio respecto a la barra de búsqueda */
+}
+
+.search-results-modern ul {
+    list-style: none;
+    padding: 0.5rem 0;
+    margin: 0;
+}
+
+/* Cada elemento de la lista */
+.search-results-modern li {
+    padding: 0.75rem 1.25rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    justify-content: space-between; /* Alinea el texto y el ID */
+    align-items: center;
+}
+
+/* Efecto al pasar el mouse */
+.search-results-modern li:hover {
+    background-color: #f5f9fe; /* Nuestro azul pastel */
+    color: #1d8cf8;
+}
+
+/* Estilo para el texto principal del resultado */
+.search-results-modern .result-text {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+/* Estilo para el ID (más sutil) */
+.search-results-modern .result-id {
+    font-size: 0.85rem;
+    color: #6c757d;
+    background-color: #e9ecef;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+}
+
+/* El texto cambia de color también en hover */
+.search-results-modern li:hover .result-text,
+.search-results-modern li:hover .result-id {
+    color: #1d8cf8;
+}
+
+/* --- Estilo Moderno para Alertas de Error en Formularios --- */
+.alert-modern.alert-danger-modern {
+    background-color: #fff5f5; /* Rojo pastel */
+    border-left: 5px solid #e53e3e;
+    color: #c53030;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+.alert-modern.alert-danger-modern ul {
+    margin: 0.5rem 0 0 1rem;
+    padding: 0;
+}
+#tabla .handsontable {
+    font-size: 11px !important;
+}
+#tabla .handsontable th {
+    font-size: 11px !important;
+    white-space: normal !important;
+}
+/* Ajustamos para permitir nuestro layout Flex con el botón de "ver más" */
+#tabla .handsontable td {
+    vertical-align: middle;
+}
+/* Ajustamos para permitir nuestro layout Flex con el botón de "ver más" y forzamos letra negra */
+.handsontable td {
+    vertical-align: middle;
+    color: #000000 !important; /* <--- Fuerza la fuente negra en todas las celdas de datos */
+}
+.cell-content-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+.cell-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-grow: 1;
+}

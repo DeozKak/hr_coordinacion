@@ -20,6 +20,7 @@
 
     <input type="hidden" name="url_callcenterGDO" id="url_callcenterGDO"
            value="{{ route('programacion.callCenterGDO')}}">
+    <input type="hidden" id="url_update_asignado" value="{{ route('pqrs.coordinacion.updateAsignado') }}">
 
 
     <div class="shadow-container">

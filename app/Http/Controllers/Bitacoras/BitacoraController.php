@@ -51,7 +51,9 @@ class BitacoraController extends Controller
 
             return view('bitacoras.generar', compact('supervisores', 'temp'));
         }
-        $supervisores = User::role('Supervisor')->get();
+        $supervisores = User::role('Supervisor')
+            ->where('state', 1)
+            ->get();
 
         $temp = tbl_bitacora_archivo::where('id_usuario', '=', $id_user)->where('finished', '=', 0)->first();
 
