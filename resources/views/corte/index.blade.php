@@ -126,7 +126,7 @@
                         <input type="text" class="form-control" id="meta" name="meta">
                     </div>
                     <div class="form-group">
-                        <label for="dobles">Dobles</label>
+                        <label for="dobles">Umbral dobles sabado</label>
                         <input type="text" class="form-control" id="dobles" name="dobles">
                     </div>
                 </div>

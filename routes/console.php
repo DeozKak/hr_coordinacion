@@ -19,4 +19,12 @@ Schedule::command('app:actualizar_zonificacion')->dailyAt('00:00');
 
 Schedule::command('app:clean-table-bitacora-diaria')->dailyAt('06:00');
 
+Schedule::command('app:tiempos_quejas')
+    ->dailyAt('11:00')
+    ->days([1, 2, 3, 4, 5, 6]);
+
+Schedule::command('app:update_recepcion_quejas')
+    ->everyThirtyMinutes()
+    ->days([1, 2, 3, 4, 5, 6]);
+
 

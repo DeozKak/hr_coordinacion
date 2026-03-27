@@ -889,9 +889,27 @@ class ProgramacionController extends Controller
                             try {
                                 $resultados = tbl_insp_cali::whereRaw("CONCAT(apellidos, ' ', nombres) = ?", [$valorCelda])
                                     ->first();
-                                if ($resultados) {
+                                if ($resultados->aprendiz === 0) {
                                     $programada->TECNICO = $resultados->id . ". " . $valorCelda;
-                                } else {
+                                } else if ($resultados->aprendiz === 1) {
+                                    $valor_orden = $worksheet->getCell('T' . $row->getRowIndex())->getValue();
+                                    if ($valor_orden <> "" || $valor_orden <> null) {
+                                        $macro = tbl_programacion_base::where('NUMERO_ORDEN', $valor_orden)->first();
+                                        if(!$macro){$programada->TECNICO = "100. OFICINA";
+                                            break;
+                                        }
+                                        $tecnico = tbl_insp_cali::where('id', $macro->ID_TECNICO)->first();
+                                        $programada->TECNICO = $tecnico->id . ". " . $tecnico->apellidos . " " . $tecnico->nombres;
+                                    } else {
+                                        $valor_orden = $worksheet->getCell('S' . $row->getRowIndex())->getValue();
+                                        $macro = tbl_programacion_base::where('NUMERO_ORDEN', $valor_orden)->first();
+                                        if(!$macro){$programada->TECNICO = "100. OFICINA";
+                                            break;
+                                        }
+                                        $tecnico = tbl_insp_cali::where('id', $macro->ID_TECNICO)->first();
+                                        $programada->TECNICO = $tecnico->id . ". " . $tecnico->apellidos . " " . $tecnico->nombres;
+                                    }
+                                }else {
                                     DB::rollBack();
                                     return 'Tecnico no encontrado. revise columna B Fila ' . $row->getRowIndex();
                                 }

@@ -12,7 +12,7 @@ class CoordinacionPQRSLectorHTML
 {
 
 
-    private function extraerDatosDesdeHtml($fechaAsignacion, $codUnidad, $numeroOrden)
+    private static function extraerDatosDesdeHtml($fechaAsignacion, $codUnidad, $numeroOrden)
     {
         // Arreglo base por si no se encuentra la información
         $datosVacios = [
@@ -97,11 +97,18 @@ class CoordinacionPQRSLectorHTML
         return $datosVacios;
     }
 
-    public function CrearArchivos($datosGDW)
+    public static function CrearArchivos($datosGDW)
     {
         // 1. Preparamos los arreglos donde guardaremos las filas de ambos CSV
         $filasPuntoInteres = [];
         $filasTareas = [];
+
+        // --- NUEVO: FUNCIÓN PARA LIMPIAR TEXTOS (Evita celdas altas y espacios dobles) ---
+        $limpiarTexto = function($texto) {
+            if (empty($texto)) return '';
+            // Convierte saltos de línea, tabulaciones y múltiples espacios en un solo espacio normal
+            return trim(preg_replace('/\s+/', ' ', $texto));
+        };
 
         // OPTIMIZACIÓN: Traemos todas las cédulas de los inspectores de una vez en un arreglo [id => cedula]
         $inspectores = tbl_insp_cali::pluck('cedula', 'id')->toArray();
@@ -115,25 +122,26 @@ class CoordinacionPQRSLectorHTML
             if (!empty($queja->FECHA_ASIGNACION) && !empty($queja->COD_UNIDAD_OPER) && !empty($queja->NUMERO_ORDEN)) {
 
                 // Extraemos los datos del HTML
-                $datosExtraidos = $this->extraerDatosDesdeHtml(
+                $datosExtraidos = self::extraerDatosDesdeHtml(
                     $queja->FECHA_ASIGNACION,
                     $queja->COD_UNIDAD_OPER,
                     $queja->NUMERO_ORDEN
                 );
 
                 // --- PREPARACIÓN DE DATOS COMUNES ---
-                $observacionOriginal = $queja->OBSERVACION_SOLICITUD ?? '';
+                $observacionOriginal = $limpiarTexto($queja->OBSERVACION_SOLICITUD);
                 $contratoFormateado = '::' . ($queja->CONTRATO ?? '');
-
+                $direccionLimpia = $limpiarTexto($queja->DIRECCION);
+                $clienteLimpio = $limpiarTexto($queja->NOMBRE);
                 // --- LÓGICA PARA PUNTO DE INTERÉS ---
                 $obsChunks = str_split($observacionOriginal, 99);
                 $fechaLimite = $queja->FECHA_LIMITE ? Carbon::parse($queja->FECHA_LIMITE)->format('d/m/Y') : '';
 
                 $filasPuntoInteres[] = [
-                    'Direccion' => $queja->DIRECCION ?? '',
+                    'Direccion' => $direccionLimpia ?? '',
                     'Departamento' => $queja->DESC_DEPART ?? '',
                     'Localidad' => $queja->DESC_LOCALIDAD ?? '',
-                    'Cliente' => $queja->NOMBRE ?? '',
+                    'Cliente' => $clienteLimpio ?? '',
                     'Contrato' => $contratoFormateado,
                     'Contacto' => $datosExtraidos['Telefono_Contacto'] !== 'No detectado' ? $datosExtraidos['Telefono_Contacto'] : '',
                     'EMAIL' => '',
@@ -172,7 +180,7 @@ class CoordinacionPQRSLectorHTML
 
                 $filasTareas[] = [
                     'Nro contrato' => $contratoFormateado,
-                    'Direccion' => $queja->DIRECCION ?? '',
+                    'Direccion' => $direccionLimpia ?? '',
                     'fecha Visita' => $fechaVisita,
                     'fecha Fin programado' => $fechaFinProgramado,
                     'Grupo' => 'INSP-VALLE',

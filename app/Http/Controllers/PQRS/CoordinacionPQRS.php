@@ -3,28 +3,21 @@
 namespace App\Http\Controllers\PQRS;
 
 use App\Http\Controllers\Controller;
-use App\Models\Bitacoras\tbl_bitacora_contrato;
 use App\Models\tbl_insp_cali;
 use App\Models\Zonificacion\tbl_localidades_sede;
-use App\Models\Zonificacion\TblGrupo;
-use App\Models\Zonificacion\TblSubgrupo;
 use App\Models\asignadas_quejas;
 use App\Services\PQRS\CoordinacionPQRSImportService;
-use DateTime;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
-use App\Models\tbl_quejas_contrato;
-use DOMDocument;
-use DOMXPath;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use App\Services\PQRS\CoordinacionPQRSLectorHTML;
+use App\Services\PQRS\CoordinacionUpdateRecepcion;
 class CoordinacionPQRS extends Controller
 {
     public function __construct(
         private CoordinacionPQRSImportService $PQRSImportService,
-        private CoordinacionPQRSLectorHTML $PQRSLectorHTML
     )
     {
 
@@ -34,11 +27,12 @@ class CoordinacionPQRS extends Controller
     {
         set_time_limit(400);
 
+        $permiso_editar = false;
         $inspectores = tbl_insp_cali::where('state', 1)->get();
-        $groups = TblGrupo::all();
-        $subgroups = TblSubgrupo::all();
-        // Armar array para el Dropdown (id. apellidos nombres)
 
+        if (auth()->user()->can('coordinacion_pqrs')) {
+            $permiso_editar = true;
+        }
         $listaInspectoresArray = $inspectores->map(function ($i) {
             return "{$i->id}. {$i->apellidos} {$i->nombres}";
         })->toArray();
@@ -47,8 +41,8 @@ class CoordinacionPQRS extends Controller
         $query = asignadas_quejas::select("*")->where('estado', 1);
         $completeData = $query->get();
 
-        $this->Responsables($completeData);
-        $this->verificarYActualizarRecepcion($completeData);
+        CoordinacionUpdateRecepcion::Responsables($completeData);
+        CoordinacionUpdateRecepcion::verificarYActualizarRecepcion($completeData);
 
         // --- NUEVO: Cálculo de fecha límite y días faltantes ---
         $hoy = Carbon::now()->startOfDay();
@@ -92,66 +86,53 @@ class CoordinacionPQRS extends Controller
                 $queja->DIAS_FALTANTES = null;
             }
         }
-        // traemos las sedes para crear el selector en el modal de impresion masiva
-        $sedes = tbl_localidades_sede::all();
 
         // $fechaActual = new DateTime();
 
-        return view('pqrs.coordinacion', compact('inspectores', 'listaInspectoresArray', 'groups', 'subgroups', 'completeData', 'sedes'));
+        return view('pqrs.coordinacion', compact('inspectores', 'listaInspectoresArray', 'completeData','permiso_editar'));
 
     }
 
-    private function Responsables($completeData)
+
+    public function getDatosActualizados()
     {
-        $todos_inspectores = tbl_insp_cali::all();
-        $tipos_trabajo_rp = array("10444", "12161");
-        $tipos_trabajo_sa = array("12163", "12164");
+        // Misma lógica de consulta que en tu método index()
+        $completeData = asignadas_quejas::select("*")->where('estado', 1)->get();
 
-        $contratosConPrefijo = $completeData->pluck('CONTRATO')
-            ->filter()
-            ->unique()
-            ->map(fn($item) => ':' . $item);
+        CoordinacionUpdateRecepcion::Responsables($completeData);
+        CoordinacionUpdateRecepcion::verificarYActualizarRecepcion($completeData);
 
-        // 2. Realizamos la consulta ordenando por fecha descendente
-        $bitacoras = tbl_bitacora_contrato::whereIn('CONTRATO', $contratosConPrefijo)
-            ->select('CONTRATO', 'TIPO_TRABAJO', 'CC_OPERARIO', 'FECHA')
-            ->orderBy('FECHA', 'desc') // Los más recientes primero
-            ->get()
-            // 3. Filtramos la colección para dejar solo un registro por contrato
-            ->unique('CONTRATO')
-            // 4. Agrupamos por contrato para mantener tu estructura original
-            ->groupBy('CONTRATO');
-
-        // Mapeamos responsable en los datos
+        $hoy = Carbon::now()->startOfDay();
         foreach ($completeData as $queja) {
-            // Si el responsable ya está guardado en BD, lo dejamos así
-            // Si está vacío, intentamos buscarlo y actualizar la BD
-            if (empty($queja->RESPONSABLE) && $queja->CONTRATO && $queja->TIPO_TRABAJO_CIERRE_ULTIMA) {
-                if (in_array($queja->TIPO_TRABAJO_CIERRE_ULTIMA, $tipos_trabajo_rp)) {
-                    $tipo_trabajo = "RP ".$queja->TIPO_TRABAJO_CIERRE_ULTIMA;
-                } elseif (in_array($queja->TIPO_TRABAJO_CIERRE_ULTIMA, $tipos_trabajo_sa)) {
-                    $tipo_trabajo = "SA " . $queja->TIPO_TRABAJO_CIERRE_ULTIMA;
-                } elseif ($queja->TIPO_TRABAJO_CIERRE_ULTIMA == "12162") {
-                    $tipo_trabajo = "RN " . $queja->TIPO_TRABAJO_CIERRE_ULTIMA;
-                }
-                //dd($tipo_trabajo);
-                $quejaBitacoras = $bitacoras->get(":".$queja->CONTRATO);
+            if (!empty($queja->FECHA_ASIGNACION)) {
+                $fechaCorta = explode(' ', trim($queja->FECHA_ASIGNACION))[0];
 
-                if ($quejaBitacoras) {
-                    $bitacora = $quejaBitacoras->firstWhere('TIPO_TRABAJO', $tipo_trabajo);
-                    if ($bitacora && $bitacora->CC_OPERARIO) {
-                        $inspector = $todos_inspectores->firstWhere('cedula', $bitacora->CC_OPERARIO);
-                        if ($inspector) {
-                            $responsableFormat = "{$inspector->id}. {$inspector->apellidos} {$inspector->nombres}";
-                            $queja->RESPONSABLE = $responsableFormat;
-                            // Guardamos el responsable encontrado para futuras consultas
-                            $queja->save();
-                        }
+                try {
+                    if (strpos($fechaCorta, '/') !== false) {
+                        $fechaAsignacion = Carbon::createFromFormat('d/m/Y', $fechaCorta)->startOfDay();
+                    } elseif (preg_match('/^\d{4}-/', $fechaCorta)) {
+                        $fechaAsignacion = Carbon::createFromFormat('Y-m-d', $fechaCorta)->startOfDay();
+                    } else {
+                        $fechaAsignacion = Carbon::createFromFormat('d-m-Y', $fechaCorta)->startOfDay();
                     }
+
+                    $fechaLimite = $fechaAsignacion->copy()->addDays(4);
+                    $queja->FECHA_LIMITE = $fechaLimite->format('Y-m-d');
+                    $queja->DIAS_FALTANTES = $hoy->diffInDays($fechaLimite, false);
+                } catch (\Exception $e) {
+                    $queja->FECHA_LIMITE = null;
+                    $queja->DIAS_FALTANTES = null;
                 }
+            } else {
+                $queja->FECHA_LIMITE = null;
+                $queja->DIAS_FALTANTES = null;
             }
         }
+
+        // En lugar de retornar una vista, retornamos los datos en JSON
+        return response()->json(['data' => $completeData]);
     }
+
 
     public function ImportOSF(Request $request)
     {
@@ -221,6 +202,13 @@ class CoordinacionPQRS extends Controller
             'Presentacion personal',
             'Solicitud de dineros',
             'No aplica'];
+
+        $op_recepcion = [
+            '',
+            'ACCEDE',
+            'NO ACCEDE',
+            'GDW'
+        ];
         $queja = asignadas_quejas::where('NUMERO_ORDEN', $request->orden)
             ->where('CONTRATO', $request->contrato)
             ->first();
@@ -294,6 +282,14 @@ class CoordinacionPQRS extends Controller
                 $dataToUpdate['SUPERVISOR'] = null;
             }
 
+            if($request->campo === 'RECEPCION'){
+                if(!in_array($request->valor,$op_recepcion)){
+                    return response()->json([
+                        'error' => 'Opción no válida',
+                        'revert' => true
+                    ], 422);
+                }
+            }
 
             if($request->campo === 'MOTIVO_DE_PQR'){
 
@@ -373,38 +369,7 @@ class CoordinacionPQRS extends Controller
         return response()->json(['error' => 'Registro no encontrado o campo no permitido'], 404);
     }
 
-    // --- NUEVO MÉTODO PARA VERIFICAR RECEPCIÓN AUTOMÁTICA ---
-    private function verificarYActualizarRecepcion($completeData)
-    {
-        // Traemos las quejas cruzadas para optimizar
-        $ordenes = $completeData->pluck('NUMERO_ORDEN')->filter()->unique();
-        $quejasContrato = tbl_quejas_contrato::whereIn('ORDEN_TRABAJO', $ordenes)
-            ->get(['CONTRATO', 'ORDEN_TRABAJO', 'RESULTADO_CIERRE'])
-            ->groupBy('ORDEN_TRABAJO');
-        //dd($quejasContrato);
-        foreach ($completeData as $queja) {
-            // Solo actualizamos automáticamente si el campo RECEPCION está vacío
-            if (empty($queja->RECEPCION) && $queja->NUMERO_ORDEN) {
-                // Buscamos si existe en tbl_quejas_contrato
-                $cruces = $quejasContrato->get($queja->NUMERO_ORDEN);
 
-                if ($cruces) {
-                    // Validamos contrato y estado
-                    // NOTA: en tbl_quejas_contrato puede que el contrato no tenga prefijo o tenga ":". Ajustamos si es necesario.
-                    $match = $cruces->first(function($item) use ($queja) {
-                        return (str_replace(':', '', $item->CONTRATO) == str_replace(':', '', $queja->CONTRATO))
-                            && (trim(strtoupper($item->RESULTADO_CIERRE)) === 'EJECUTADA');
-                    });
-
-                    if ($match) {
-                        $queja->RECEPCION = 'GDW';
-                        $queja->FECHA_RECEPCION = date('Y-m-d'); // <-- Se asigna la fecha automáticamente
-                        $queja->save();
-                    }
-                }
-            }
-        }
-    }
 
     // --- NUEVO MÉTODO PARA HISTÓRICO ---
     public function getHistorico(Request $request)
@@ -444,36 +409,53 @@ class CoordinacionPQRS extends Controller
         ]);
     }
 
-    // --- NUEVO MÉTODO PARA EXPORTAR A GDW ---
+    // MÉTODO PARA EXPORTAR A GDW ---
     public function exportarGDW(Request $request)
     {
+        // Validamos que la fecha sea obligatoria SOLAMENTE si el checkbox no fue enviado
         $request->validate([
-            'fecha_exportacion' => 'required|date'
+            'exportar_pendientes' => 'nullable',
+            'fecha_exportacion' => 'required_without:exportar_pendientes|nullable|date'
         ]);
 
-        $fechaInput = $request->input('fecha_exportacion');
-        $fechaDmY = Carbon::parse($fechaInput)->format('d/m/Y');
-
+        // Base de la consulta: Estado 1 y que tenga técnico asignado
         $query = asignadas_quejas::where('estado', 1)
             ->whereNotNull('ASIGNADO')
-            ->where('ASIGNADO', '!=', '')
-            ->where(function($q) use ($fechaInput, $fechaDmY) {
+            ->where('ASIGNADO', '!=', '');
+
+        // Verificamos si el usuario marcó el checkbox de "Pendientes"
+        if ($request->has('exportar_pendientes') && $request->exportar_pendientes == 'on') {
+
+            // Si está marcado, buscamos donde RECEPCION sea nulo o vacío
+            $query->where(function($q) {
+                $q->whereNull('RECEPCION')
+                    ->orWhere('RECEPCION', '');
+            });
+
+        } else {
+            // Si NO está marcado, filtramos normalmente por la fecha
+            $fechaInput = $request->input('fecha_exportacion');
+            $fechaDmY = Carbon::parse($fechaInput)->format('d/m/Y');
+
+            $query->where(function($q) use ($fechaInput, $fechaDmY) {
                 $q->where('FECHA_ASIGNACION', 'LIKE', $fechaInput . '%')
                     ->orWhere('FECHA_ASIGNACION', 'LIKE', $fechaDmY . '%');
             });
+        }
 
+        // Ejecutamos la consulta
         $datosGDW = $query->get();
 
         // Verificamos que haya datos antes de generar los archivos
         if ($datosGDW->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'mensaje' => 'No se encontraron registros para exportar en esta fecha.'
+                'mensaje' => 'No se encontraron registros para exportar con los criterios seleccionados.'
             ]);
         }
 
         // Delegamos TODA la lógica de creación de archivos al Servicio
-        $resultadoArchivos = $this->PQRSLectorHTML->CrearArchivos($datosGDW);
+        $resultadoArchivos = CoordinacionPQRSLectorHTML::CrearArchivos($datosGDW);
 
         // Agregamos la cantidad encontrada para mostrarla en la alerta del Frontend
         $resultadoArchivos['cantidad_encontrada'] = $datosGDW->count();

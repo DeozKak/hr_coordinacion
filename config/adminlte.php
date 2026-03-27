@@ -484,27 +484,27 @@ return [
             ]
         ],
 
-         ['header' => 'PQRS', 'can' => ['ver_PQRS'],],
+         ['header' => 'PQRS', 'can' => ['ver_PQRS','coordinacion_pqrs'],],
 
 
          [
              'text' => 'PQRS',
-             'can' => ['ver_PQRS'],
+             'can' => ['ver_PQRS','coordinacion_pqrs'],
              'icon' => 'fas fa-phone',
              'submenu' => [
 
                  [
-                     'text' => 'Ver Quejas',
-                     'url' => 'pqrs',
+                     'text' => 'Estadísticas',
+                     'url' => 'pqrs/coordinacion/estadisticas',
                      'icon' => 'far fa-circle',
-                     'can' => 'ver_PQRS',
+                     'can' => ['ver_PQRS','coordinacion_pqrs'],
                      'label_color' => 'success',
                  ],
                  [
                      'text' => 'Coordinación',
                      'url' => 'pqrs/coordinacion',
                      'icon' => 'far fa-circle',
-                     'can' => 'ver_PQRS',
+                     'can' => ['ver_PQRS','coordinacion_pqrs'],
                      'label_color' => 'success',
                  ],
 

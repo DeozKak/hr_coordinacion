@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\PQRS;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\CorreoTiemposQuejas;
+
 use App\Models\tbl_queja;
 use App\Models\tbl_quejas_contrato;
 use Illuminate\Http\Request;

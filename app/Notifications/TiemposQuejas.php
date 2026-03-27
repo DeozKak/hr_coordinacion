@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\tbl_queja;
+use App\Models\asignadas_quejas;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -39,37 +40,36 @@ class TiemposQuejas extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         // Hacemos join para traer los datos del inspector
-        $quejas = \App\Models\tbl_queja::query()
+        $quejas = asignadas_quejas::query()
             ->select([
                 'CONTRATO',
-                'LOCALIDAD',
+                'DESC_LOCALIDAD',
                 'BARRIO',
                 'DIRECCION',
-                'DIAS',
-                DB::raw("CONCAT(tbl_insp_cali.id, '. ', tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS INSPECTOR"),
-                // Aquí el CASE para la excepción:
-                DB::raw("CASE
-                WHEN tbl_insp_cali.id IN (100, 101, 102, 200) THEN ''
-                ELSE users.name
-                END AS SUPERVISOR"),
-                'recepcion'
+                'DIAS_FALTANTES',
+                'ASIGNADO',
+                'SUPERVISOR',
+                'RECEPCION'
             ])
-            ->join('tbl_insp_cali', 'tbl_quejas.INSPECTOR', '=', 'tbl_insp_cali.id')
-            ->leftJoin('users', 'tbl_insp_cali.SUPERVISOR', '=', 'users.id')
 
             // CAMBIO: Agrupamos la lógica antigua y agregamos la excepción de GDW
             ->where(function ($query) {
-                // Grupo 1: La regla original (Null Y >= 3 días)
-                $query->whereNull('recepcion')
-                    ->where('DIAS', '>=', 3);
+                // Regla 1: Pendientes por recibir con pocos días
+                $query->where(function ($q) {
+                    $q->whereNull('RECEPCION')
+                        ->where('DIAS_FALTANTES', '<=', 3);
+                })
+                    // Regla 2: O que ya sean GDW
+                    ->orWhere('RECEPCION', 'GDW');
             })
-            ->orWhere('recepcion', 'GDW') // Grupo 2: O que sea GDW (sin importar días)
-            ->orderBy('DIAS', 'DESC')
+            ->whereNotNull('ASIGNADO')
+            // CAMBIO AQUÍ: ASC para que los negativos (-5, -4...) salgan primero
+            ->orderBy('DIAS_FALTANTES', 'ASC')
             ->get();
 
 
         return (new MailMessage)
-            ->subject('Reporte Automático: Quejas Pendientes (>3 días) y GDW ' . date('d-m-Y'))
+            ->subject('Reporte Automático:Quejas por vencer (< 3 días) y GDW ' . date('d-m-Y'))
             ->view('mail.tiemposQuejas', [
                 'quejas' => $quejas,
             ]);

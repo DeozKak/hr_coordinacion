@@ -764,8 +764,8 @@ class ProduccionController extends Controller
                 }
 
                 // Regla final: si hizo más de 6 inspecciones válidas, cuenta doble
-                if ($contratosValidos > 5) {
-                    $doblesCalculados = $contratosValidos - 5;
+                if ($contratosValidos > $valDobles) {
+                    $doblesCalculados = $contratosValidos - $valDobles;
                     $contadorDiasSabados += $doblesCalculados;
 
                     $sabadosdobles[] = [

@@ -4,9 +4,16 @@ let colHeaders;
 let verMasModalInstance = null;
 let modalExportar;
 document.addEventListener("DOMContentLoaded",function(){
+
+    //logica para permiso de edicion de coordinacion
+
     // --- Lógica para abrir el modal "Exportar a GDW" ---
     const btnExportarGDW = document.getElementById('openExportarGDWBtn');
-
+    if(!permisoEditar){
+        btnExportarGDW.disabled = true;
+        document.getElementById('openModalBtn').disabled = true;
+        document.getElementById('openHistoricoBtn').disabled = 'none';
+    }
     if (btnExportarGDW) {
         btnExportarGDW.addEventListener('click', function() {
             // Obtenemos el elemento HTML del modal
@@ -20,6 +27,26 @@ document.addEventListener("DOMContentLoaded",function(){
 
             // Mostramos el modal
             modalExportar.show();
+
+            // --- Lógica para el checkbox de Exportar Pendientes ---
+            const checkExportarPendientes = document.getElementById('exportar_pendientes');
+            const inputFechaExportacion = document.getElementById('fecha_exportacion');
+
+            if (checkExportarPendientes && inputFechaExportacion) {
+                checkExportarPendientes.addEventListener('change', function() {
+                    if (this.checked) {
+                        // Si está marcado: deshabilitamos la fecha y quitamos el 'required'
+                        inputFechaExportacion.disabled = true;
+                        inputFechaExportacion.required = false;
+                        // Opcional: limpiar el valor que tuviera
+                        inputFechaExportacion.value = '';
+                    } else {
+                        // Si se desmarca: volvemos a habilitar y exigimos la fecha
+                        inputFechaExportacion.disabled = false;
+                        inputFechaExportacion.required = true;
+                    }
+                });
+            }
         });
     }
 
@@ -173,12 +200,8 @@ document.addEventListener("DOMContentLoaded",function(){
     }
 
     InitializeTable();
-
+    iniciarActualizacionAutomatica();
 });
-
-// Registrar el renderizador de celdas personalizado
-
-
 
 
 function InitializeTable(){
@@ -206,7 +229,7 @@ function InitializeTable(){
                 td.style.backgroundColor = '#ff9535';
             } else if (diasNum <= 0) {
                 td.style.backgroundColor = '#ff8493'; // Rojo claro / Rosado (día 0 o menor)
-            } else if (diasNum === 2) {
+            } else if (diasNum === 2 || diasNum === 1) {
                 td.style.backgroundColor = '#f8f849'; // Amarillo claro
             }
         }
@@ -247,6 +270,9 @@ function InitializeTable(){
     });
 
     const columnsConfig = colHeaders.map((header) => {
+        if(!permisoEditar){
+            return { readOnly: true };
+        }
         if(header === 'FECHA SOLICITUD CIERRE'){
             const fechaMinima = new Date();
             // Restamos 2 días a la fecha actual
@@ -340,13 +366,18 @@ function InitializeTable(){
             dropdownMenu: true,
             manualColumnResize: true,
             manualRowResize: true,
-            contextMenu: true,
-
+            contextMenu: false,
             autoWrapRow: false,
             autoWrapCol: false,
             wordWrap: false,
-
-            colWidths: 150,
+            colWidths: function(index) {
+                // La columna 22 es RESPONSABLE y la 23 es ASIGNADO
+                if (index === 22 || index === 23) {
+                    return 250; // Un tamaño bien amplio para los nombres completos
+                }
+                // Para todas las demás columnas, mantén el 150 que ya tenías
+                return 150;
+            },
 
             // --- APLICAR RENDERIZADOR PERSONALIZADO CUIDANDO EL DROPDOWN Y LA FECHA ---
             cells: function (row, col) {
@@ -509,6 +540,69 @@ function InitializeTable(){
     }
 
 
+}
+
+function iniciarActualizacionAutomatica() {
+    const url = document.getElementById('url_get_datos_actualizados').value;
+
+    // Se ejecutará cada 60000 milisegundos (1 minuto)
+    setInterval(() => {
+        // TRUCO: Si la tabla no está lista o el usuario está editando una celda (dropdown abierto o escribiendo),
+        // cancelamos la actualización en este ciclo para no interrumpirlo.
+        if (!hot || (hot.getActiveEditor() && hot.getActiveEditor().isOpened())) {
+            return;
+        }
+
+        fetch(url)
+            .then(response => response.json())
+            .then(result => {
+                if(result.data) {
+                    // Mapeamos los datos exactamente con el mismo orden que en Blade
+                    const newData = result.data.map(row => [
+                        row.NUMERO_ORDEN, row.CONTRATO, row.CEDULA, row.NOMBRE,
+                        row.DESC_DEPART, row.DESC_LOCALIDAD, row.BARRIO, row.DIRECCION,
+                        row.DESC_CATEGORIA, row.COD_UNIDAD_OPER, row.DESC_TIPO_TRABAJO,
+                        row.FECHA_ASIGNACION, row.OBSERVACION_SOLICITUD, row.FECHA_CIERRE_ULTIMA,
+                        row.OBSERVACIÓN_CIERRE_ULTIMA, row.TIPO_TRABAJO_CIERRE_ULTIMA,
+                        row.DESC_CAUSAL_CIERRE_ULTIMA, row.FECHA_ASIGNACIÓN_ULTIMA,
+                        row.OBSERVACIÓN_ASIGNACIÓN_ULTIMA, row.GESTIÓN_ASIGNACIÓN_ULTIMA,
+                        row.TIPO_TRABAJO_ASIGNACIÓN_ULTIMA, row.MOTIVO_DE_PQR, row.RESPONSABLE,
+                        row.ASIGNADO, row.SUPERVISOR, row.FECHA_ASIGNADO, row.RECEPCION,
+                        row.FECHA_RECEPCION, row.FECHA_SOLICITUD_CIERRE, row.OBSERVACION_GESTION,
+                        row.CODIGO_AUTORIZACION, row.FECHA_RESPUESTA, row.FECHA_LIMITE,
+                        row.DIAS_FALTANTES
+                    ]);
+
+                    // 1. Obtenemos los plugins
+                    const sortPlugin = hot.getPlugin('columnSorting');
+                    const filtersPlugin = hot.getPlugin('filters');
+
+                    // 2. Guardamos el estado ACTUAL (Orden y Filtros)
+                    const currentSortConfig = sortPlugin.getSortConfig();
+                    const currentFilters = filtersPlugin.conditionCollection.exportAllConditions();
+
+                    hot.loadData(newData);
+
+                    // 4. Restauramos los Filtros primero
+                    if (currentFilters && currentFilters.length > 0) {
+                        filtersPlugin.conditionCollection.importAllConditions(currentFilters);
+                        filtersPlugin.filter(); // Le decimos a la tabla que aplique el filtro
+                    }
+
+                    // 5. Restauramos el Ordenamiento después
+                    if (currentSortConfig && currentSortConfig.length > 0) {
+                        sortPlugin.sort(currentSortConfig);
+                    } else {
+                        // Si no había orden del usuario, forzamos tu orden por defecto
+                        const diasFaltantesCol = colHeaders.indexOf('DÍAS FALTANTES');
+                        sortPlugin.sort({ column: diasFaltantesCol, sortOrder: 'asc' });
+                    }
+
+
+                }
+            })
+            .catch(error => console.error('Error actualizando la tabla en segundo plano:', error));
+    }, 60000); // <-- Cambia a 30000 si quieres que sea cada medio minuto
 }
 
 function showValidationErrors(errors, addmodal, errorContainer) {

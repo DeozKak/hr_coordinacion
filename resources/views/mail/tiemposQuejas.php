@@ -25,8 +25,8 @@
                                 <th>CONTRATO</th>
                                 <th>LOCALIDAD</th>
                                 <th>BARRIO</th>
-                                <th>DIRECCION</th>
-                                <th>DIAS</th>
+                                <th>DIRECCIÓN</th>
+                                <th>DIAS FALTANTES</th>
                                 <th>INSPECTOR</th>
                                 <th>SUPERVISOR</th>
                                 <th>RECEPCIÓN</th>
@@ -37,26 +37,26 @@
                                 <?php
                                 // Elige el color de fondo según los días
                                 $styleFila = '';
-                                if ($queja->recepcion == 'GDW') {
+                                if ($queja->RECEPCION == 'GDW') {
                                     $styleFila = 'background-color: #dbeafe;'; // Azul (Prioridad Alta)
 
 // 2. Si NO es GDW, entonces miramos los días
-                                } elseif ($queja->DIAS >= 5) {
+                                } elseif ($queja->DIAS_FALTANTES <= 1) {
                                     $styleFila = 'background-color: #ff8080;'; // Rojo (Prioridad Media)
 
-                                } elseif ($queja->DIAS == 3 || $queja->DIAS == 4) {
+                                } elseif ($queja->DIAS_FALTANTES == 2 || $queja->DIAS_FALTANTES == 3) {
                                     $styleFila = 'background-color: #ffe066;'; // Amarillo (Prioridad Baja)
                                 }
                                 ?>
                                 <tr style="<?php echo $styleFila; ?>">
                                     <td><?php echo $queja->CONTRATO; ?></td>
-                                    <td><?php echo $queja->LOCALIDAD; ?></td>
+                                    <td><?php echo $queja->DESC_LOCALIDAD; ?></td>
                                     <td><?php echo $queja->BARRIO; ?></td>
                                     <td><?php echo $queja->DIRECCION; ?></td>
-                                    <td><?php echo $queja->DIAS; ?></td>
-                                    <td><?php echo $queja->INSPECTOR; ?></td>
+                                    <td><?php echo $queja->DIAS_FALTANTES; ?></td>
+                                    <td><?php echo $queja->ASIGNADO; ?></td>
                                     <td><?php echo $queja->SUPERVISOR; ?></td>
-                                    <td><?php echo $queja->recepcion; ?></td>
+                                    <td><?php echo $queja->RECEPCION; ?></td>
                                 </tr>
 
                             <?php endforeach; ?>
