@@ -560,7 +560,7 @@ h1, h5 {
 }
 #tabla .handsontable th {
     font-size: 11px !important;
-    white-space: normal !important;
+    white-space: nowrap !important;
 }
 /* Ajustamos para permitir nuestro layout Flex con el botón de "ver más" */
 #tabla .handsontable td {
@@ -584,4 +584,24 @@ h1, h5 {
     flex-grow: 1;
 }
 
+/*-------------------*/
 
+/* Estilo para el select nativo dentro del modal */
+#selectSupervisor.form-select,
+#selectSupervisor.form-control {
+    height: 45px !important; /* Un poco más alto para que sea fácil de clickear */
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    background-color: #fff;
+    display: block;
+    width: 100%;
+}
+
+/* Asegurar que el label no esté pegado */
+.modal-body .form-label {
+    margin-bottom: 0.5rem;
+    color: #495057;
+}

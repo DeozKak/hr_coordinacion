@@ -18,6 +18,8 @@
     <input type="hidden" id="url_get_historico" value="{{ route('pqrs.coordinacion.historico') }}">
     <input type="hidden" id="url_exportar_gdw" value="{{ route('pqrs.coordinacion.exportarGDW') }}">
     <input type="hidden" id="url_get_datos_actualizados" value="{{ route('pqrs.coordinacion.datosActualizados') }}">
+    <input type="hidden" id="url_get_supervisores" value="{{ route('pqrs.coordinacion.getSupervisores') }}">
+    <input type="hidden" id="url_export_supervisor_excel" value="{{ route('pqrs.coordinacion.exportarSupervisores') }}">
 
     <div class="shadow-container">
         <div class="controls-header">
@@ -30,6 +32,9 @@
                 </button>
                 <button id="openExportarGDWBtn" class="btn-gradient btn-gradient-success btn-sm">
                     <i class="fas fa-file-excel"></i> Exportar a GDW
+                </button>
+                <button id="openExportarSupervisoresBtn" class="btn-gradient btn-secondary-modern btn-sm">
+                    <i class="fas fa-user-shield"></i> Exportar Supervisores
                 </button>
             </div>
         </div>
@@ -193,6 +198,33 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade modal-modern" id="exportarSupervisorModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-file-excel text-success"></i> Exportar por Supervisor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formExportSupervisor">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Seleccione el Supervisor:</label>
+                            <select id="selectSupervisor" class="form-select form-control">
+                                <option value="">Cargando supervisores...</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btnEjecutarExport" class="btn-gradient btn-gradient-success w-100">
+                        <i class="fas fa-download"></i> Generar Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 @section('js')
 
@@ -212,9 +244,9 @@
                 'OBSERVACIÓN SOLICITUD', 'FECHA CIERRE ÚLTIMA', 'OBSERVACIÓN CIERRE ÚLTIMA',
                 'TIPO TRABAJO CIERRE ÚLTIMA', 'CAUSAL CIERRE ÚLTIMA', 'FECHA ASIGNACIÓN ÚLTIMA',
                 'OBSERVACIÓN ASIGNACIÓN ÚLTIMA', 'GESTIÓN ASIGNACIÓN ÚLTIMA', 'TIPO TRABAJO ASIGNACIÓN ÚLTIMA',
-                 'MOTIVO DE PQR','RESPONSABLE', 'ASIGNADO','SUPERVISOR' ,'FECHA ASIGNADO','RECEPCIÓN',
+                 'MOTIVO DE PQR','RESPONSABLE', 'ASIGNADO','SUPERVISOR' ,'FECHA ASIGNADO','INSTRUCCIONES CAMPO','OBSERVACION SUPERVISOR','RECEPCIÓN',
                  'FECHA RECEPCIÓN','FECHA SOLICITUD CIERRE', 'OBSERVACIÓN GESTIÓN', 'CÓDIGO AUTORIZACIÓN', 'FECHA RESPUESTA',
-                 'FECHA LÍMITE', 'DÍAS FALTANTES'
+                  'FECHA LÍMITE', 'DÍAS RESTANTES'
              ];
 
             // Mapeamos los datos
@@ -245,6 +277,8 @@
                 row.ASIGNADO,
                 row.SUPERVISOR,
                 row.FECHA_ASIGNADO,
+                row.INSTRUCCIONES_CAMPO,
+                row.OBSERVACION_SUPERVISOR,
                 row.RECEPCION,
                 row.FECHA_RECEPCION,
                 row.FECHA_SOLICITUD_CIERRE,
@@ -252,7 +286,8 @@
                 row.CODIGO_AUTORIZACION,
                 row.FECHA_RESPUESTA,
                 row.FECHA_LIMITE,
-                row.DIAS_FALTANTES
+                row.DIAS_FALTANTES,
+
             ]);
 
 

@@ -4,6 +4,7 @@ namespace App\Services\PQRS;
 
 use App\Jobs\ProcessExcelFileMacros;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
+use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -191,15 +192,60 @@ class CoordinacionPQRSImportService
                     ->first();
 
                 if ($queja) {
-                    //dd($cells);
-                    // Si existe, actualizamos los datos y pasamos estado a 0
+                    // 1. Obtenemos la fecha de legalización limpia
+                    $fechaLegalizacionStr = $this->cleanDate($cells[2] ?? null);
+
+                    $diasFaltantes = null;
+                    $fechaLimiteStr = $queja->FECHA_LIMITE; // Mantenemos la actual por si acaso
+
+                    // 2. Lógica para calcular Días Faltantes basado en la legalización
+                    if (!empty($queja->FECHA_ASIGNACION) && !empty($fechaLegalizacionStr)) {
+                        try {
+                            // --- Parsear FECHA_ASIGNACION ---
+                            $fechaCortaAsig = explode(' ', trim($queja->FECHA_ASIGNACION))[0];
+                            if (strpos($fechaCortaAsig, '/') !== false) {
+                                $carbonAsignacion = Carbon::createFromFormat('d/m/Y', $fechaCortaAsig)->startOfDay();
+                            } elseif (preg_match('/^\d{4}-/', $fechaCortaAsig)) {
+                                $carbonAsignacion = Carbon::createFromFormat('Y-m-d', $fechaCortaAsig)->startOfDay();
+                            } else {
+                                $carbonAsignacion = Carbon::createFromFormat('d-m-Y', $fechaCortaAsig)->startOfDay();
+                            }
+
+                            // --- Parsear FECHA_LEGALIZACION ---
+                            $fechaCortaLeg = explode(' ', trim($fechaLegalizacionStr))[0];
+                            if (strpos($fechaCortaLeg, '/') !== false) {
+                                $carbonLegalizacion = Carbon::createFromFormat('d/m/Y', $fechaCortaLeg)->startOfDay();
+                            } elseif (preg_match('/^\d{4}-/', $fechaCortaLeg)) {
+                                $carbonLegalizacion = Carbon::createFromFormat('Y-m-d', $fechaCortaLeg)->startOfDay();
+                            } else {
+                                $carbonLegalizacion = Carbon::createFromFormat('d-m-Y', $fechaCortaLeg)->startOfDay();
+                            }
+
+                            // --- Calcular Fecha Límite (+ 4 días desde asignación) ---
+                            $carbonLimite = $carbonAsignacion->copy()->addDays(4);
+                            $fechaLimiteStr = $carbonLimite->format('Y-m-d');
+
+                            // --- Calcular Días Faltantes al momento del cierre ---
+                            // Si se legalizó antes del límite = positivo (A tiempo)
+                            // Si se legalizó después del límite = negativo (Vencida)
+                            $diasFaltantes = $carbonLegalizacion->diffInDays($carbonLimite, false);
+
+                        } catch (\Exception $e) {
+                            // Si la fecha viene corrupta o vacía, ignoramos el cálculo matematico
+                            // para que el sistema no se detenga con un error fatal.
+                        }
+                    }
+                    //dd($diasFaltantes);
+                    // 3. Actualizamos los datos en la base de datos
                     $queja->update([
                         'estado' => 0,
-                        'FECHA_LEGALIZACION' => $this->cleanDate($cells[2] ?? null),
+                        'FECHA_LEGALIZACION' => $fechaLegalizacionStr,
                         'DESC_CAUSAL_LEGALIZACION' => $cells[3] ?? null,
                         'OBSERVACION_LEGALIZACION' => $cells[4] ?? null,
+                        'FECHA_LIMITE' => $fechaLimiteStr,
+                        // Si el cálculo fue exitoso guarda el nuevo, si falló, deja el que ya tenía.
+                        'DIAS_FALTANTES' => $diasFaltantes !== null ? $diasFaltantes : $queja->DIAS_FALTANTES,
                     ]);
-
                 }
             }
         }

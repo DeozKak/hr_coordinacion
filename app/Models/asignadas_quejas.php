@@ -50,6 +50,8 @@ class asignadas_quejas extends Model
         'CODIGO_AUTORIZACION',
         'FECHA_RESPUESTA',
         'FECHA_LIMITE',
-        'DIAS_FALTANTES'
+        'DIAS_FALTANTES',
+        'INSTRUCCIONES_CAMPO',
+        'OBSERVACION_SUPERVISOR'
     ];
 }

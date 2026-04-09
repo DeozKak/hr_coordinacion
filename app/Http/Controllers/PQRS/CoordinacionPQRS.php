@@ -4,7 +4,6 @@ namespace App\Http\Controllers\PQRS;
 
 use App\Http\Controllers\Controller;
 use App\Models\tbl_insp_cali;
-use App\Models\Zonificacion\tbl_localidades_sede;
 use App\Models\asignadas_quejas;
 use App\Services\PQRS\CoordinacionPQRSImportService;
 use Carbon\Carbon;
@@ -14,6 +13,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\PQRS\CoordinacionPQRSLectorHTML;
 use App\Services\PQRS\CoordinacionUpdateRecepcion;
+use App\Services\PQRS\CoordinacionPQRSExportService;
+use App\Models\User;
+
 class CoordinacionPQRS extends Controller
 {
     public function __construct(
@@ -213,11 +215,22 @@ class CoordinacionPQRS extends Controller
             ->where('CONTRATO', $request->contrato)
             ->first();
 
-        // Agregamos las nuevas columnas permitidas
-        $camposPermitidos = [
-            'ASIGNADO', 'RESPONSABLE', 'RECEPCION', 'OBSERVACION_GESTION',
-            'CODIGO_AUTORIZACION','MOTIVO_DE_PQR','FECHA_SOLICITUD_CIERRE'
-        ];
+        if(auth()->user()->hasPermissionTo('coordinacion_pqrs')){
+            // Agregamos las nuevas columnas permitidas
+            $camposPermitidos = [
+                'ASIGNADO', 'RESPONSABLE', 'RECEPCION', 'OBSERVACION_GESTION',
+                'CODIGO_AUTORIZACION','MOTIVO_DE_PQR','FECHA_SOLICITUD_CIERRE',
+                'INSTRUCCIONES_CAMPO','OBSERVACION_SUPERVISOR'
+            ];
+
+        }else{
+            // Agregamos las nuevas columnas permitidas
+            $camposPermitidos = [
+                'OBSERVACION_SUPERVISOR'
+            ];
+        }
+
+
 
         if ($queja && in_array($request->campo, $camposPermitidos)) {
 
@@ -369,8 +382,6 @@ class CoordinacionPQRS extends Controller
         return response()->json(['error' => 'Registro no encontrado o campo no permitido'], 404);
     }
 
-
-
     // --- NUEVO MÉTODO PARA HISTÓRICO ---
     public function getHistorico(Request $request)
     {
@@ -461,5 +472,48 @@ class CoordinacionPQRS extends Controller
         $resultadoArchivos['cantidad_encontrada'] = $datosGDW->count();
 
         return response()->json($resultadoArchivos);
+    }
+
+    public function getSupervisores()
+    {
+        // Buscamos usuarios activos con el rol de supervisor
+        // Ajusta 'Supervisor' al nombre exacto de tu rol en la BD
+        $supervisores = User::role('Supervisor')
+            ->where('state', 1)
+            ->get(['id', 'name']);
+
+        return response()->json($supervisores);
+    }
+
+    public function exportarSupervisorExcel(Request $request)
+    {
+        $nombreSupervisor = $request->input('supervisor_name');
+
+        // Consulta de datos
+        $quejas = asignadas_quejas::where('estado', 1)
+            ->where('SUPERVISOR', $nombreSupervisor)
+            ->where(function($q) {
+                $q->whereNull('RECEPCION')
+                    ->orWhere('RECEPCION', '')
+                    ->orWhere('RECEPCION', 'GDW');
+            })
+            ->select('CONTRATO', 'ASIGNADO', 'OBSERVACION_SOLICITUD', 'INSTRUCCIONES_CAMPO')
+            ->get();
+
+        if ($quejas->isEmpty()) {
+            return response()->json(['error' => "No se encontraron registros para el supervisor: $nombreSupervisor"], 404);
+        }
+
+        // Delegamos la lógica al servicio
+        try {
+            $urlFirmada = CoordinacionPQRSExportService::generarExcelSupervisor($quejas, $nombreSupervisor);
+
+            return response()->json([
+                'success' => true,
+                'downloadUrl' => $urlFirmada
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => "Error al generar el archivo: " . $e->getMessage()], 500);
+        }
     }
 }

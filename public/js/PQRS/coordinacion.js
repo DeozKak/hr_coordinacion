@@ -5,7 +5,94 @@ let verMasModalInstance = null;
 let modalExportar;
 document.addEventListener("DOMContentLoaded",function(){
 
-    //logica para permiso de edicion de coordinacion
+    const btnOpenExportSup = document.getElementById('openExportarSupervisoresBtn');
+    const modalSupEl = new bootstrap.Modal(document.getElementById('exportarSupervisorModal'));
+    const selectSup = document.getElementById('selectSupervisor');
+
+    if (btnOpenExportSup) {
+        btnOpenExportSup.addEventListener('click', function() {
+            modalSupEl.show();
+
+            // Si el select solo tiene la opción de "Cargando", traemos los datos
+            if (selectSup.options.length <= 1) {
+                const url = document.getElementById('url_get_supervisores').value;
+
+                fetch(url)
+                    .then(res => res.json())
+                    .then(data => {
+                        // Limpiamos el select
+                        selectSup.innerHTML = '<option value="">-- Seleccione un Supervisor --</option>';
+
+                        // Llenamos con los datos del servidor
+                        data.forEach(sup => {
+                            let opt = document.createElement('option');
+                            opt.value = sup.name;
+                            opt.textContent = sup.name;
+                            selectSup.appendChild(opt);
+                        });
+                    })
+                    .catch(err => {
+                        console.error("Error cargando supervisores:", err);
+                        selectSup.innerHTML = '<option value="">Error al cargar</option>';
+                    });
+            }
+        });
+    }
+
+    document.getElementById('btnEjecutarExport').addEventListener('click', function() {
+        const supervisor = selectSup.value;
+        const btn = this;
+
+        if (!supervisor) {
+            alert("Por favor seleccione un supervisor.");
+            return;
+        }
+
+        const urlExport = document.getElementById('url_export_supervisor_excel').value;
+        const token = document.querySelector('input[name="_token"]').value;
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+
+        fetch(urlExport, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ supervisor_name: supervisor })
+        })
+            .then(async response => {
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Error en el servidor');
+                }
+                return data;
+            })
+            .then(data => {
+                if (data.downloadUrl) {
+                    // No recargamos la página actual, abrimos la descarga en un iframe oculto o link
+                    const link = document.createElement('a');
+                    link.href = data.downloadUrl;
+                    link.download = ''; // El navegador usará el nombre del server
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    modalSupEl.hide();
+                }
+            })
+            .catch(error => {
+                // Alerta profesional en caso de error o falta de datos
+                console.error('Error:', error);
+                alert("Error al exportar: " + error.message);
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-download"></i> Generar Excel';
+            });
+    });
 
     // --- Lógica para abrir el modal "Exportar a GDW" ---
     const btnExportarGDW = document.getElementById('openExportarGDWBtn');
@@ -212,7 +299,7 @@ function InitializeTable(){
 
         // Obtenemos los índices dinámicamente
         const recepcionCol = colHeaders.indexOf('RECEPCIÓN');
-        const diasFaltantesCol = colHeaders.indexOf('DÍAS FALTANTES');
+        const diasFaltantesCol = colHeaders.indexOf('DÍAS RESTANTES');
 
         const recepcion = instance.getDataAtCell(row, recepcionCol);
         const dias = instance.getDataAtCell(row, diasFaltantesCol);
@@ -271,20 +358,20 @@ function InitializeTable(){
 
     const columnsConfig = colHeaders.map((header) => {
         if(!permisoEditar){
+            if (header === 'OBSERVACION SUPERVISOR') {
+                return {
+                    type: 'text',
+                    readOnly: false
+                };
+            }
             return { readOnly: true };
         }
         if(header === 'FECHA SOLICITUD CIERRE'){
-            const fechaMinima = new Date();
-            // Restamos 2 días a la fecha actual
-            fechaMinima.setDate(fechaMinima.getDate() - 2);
 
             return {
                 type: 'date',
                 dateFormat: 'YYYY-MM-DD',
                 readOnly: false,
-                datePickerConfig: {
-                    minDate: fechaMinima
-                }
             };
         }
         if (header === 'ASIGNADO' || header === 'RESPONSABLE') {
@@ -340,7 +427,18 @@ function InitializeTable(){
                 readOnly: false
             };
         }
-
+        if (header === 'INSTRUCCIONES CAMPO') {
+            return {
+                type: 'text',
+                readOnly: false
+            };
+        }
+        if (header === 'OBSERVACION SUPERVISOR') {
+            return {
+                type: 'text',
+                readOnly: false
+            };
+        }
         return { readOnly: true }; // El resto son solo lectura
     });
     // Contenedor de la tabla
@@ -358,7 +456,7 @@ function InitializeTable(){
             filters: true,
             columnSorting: {
                 initialConfig: {
-                    column: colHeaders.indexOf('DÍAS FALTANTES'), // Encuentra la columna automáticamente
+                    column: colHeaders.indexOf('DÍAS RESTANTES'), // Encuentra la columna automáticamente
                     sortOrder: 'asc' // Orden ascendente (menor a mayor)
                 }
             },
@@ -371,12 +469,25 @@ function InitializeTable(){
             autoWrapCol: false,
             wordWrap: false,
             colWidths: function(index) {
-                // La columna 22 es RESPONSABLE y la 23 es ASIGNADO
-                if (index === 22 || index === 23) {
-                    return 250; // Un tamaño bien amplio para los nombres completos
+                const headerName = colHeaders[index];
+
+                // 1. Columnas de personal (nombres completos que necesitan espacio)
+                if (headerName === 'ASIGNADO' || headerName === 'RESPONSABLE' || headerName === 'SUPERVISOR') {
+                    return 250;
                 }
-                // Para todas las demás columnas, mantén el 150 que ya tenías
-                return 150;
+
+                // 2. Columnas de observaciones (párrafos de texto grandes)
+                if (headerName === 'OBSERVACIÓN SOLICITUD' || headerName === 'OBSERVACIÓN GESTIÓN' || headerName === 'OBSERVACION SUPERVISOR' || headerName === 'INSTRUCCIONES CAMPO') {
+                    return 300;
+                }
+
+                // 3. ¡LA MAGIA! Calculamos el ancho dinámico para que quepa todo el encabezado.
+                // Multiplicamos la cantidad de letras por 8 píxeles (tamaño aprox de la letra)
+                // y le sumamos 40 píxeles extra para dejar espacio al ícono de la flechita del filtro.
+                const anchoCalculado = (headerName.length * 8) + 40;
+
+                // Devolvemos el ancho calculado, pero asegurando que ninguna columna sea menor a 100px
+                return Math.max(100, anchoCalculado);
             },
 
             // --- APLICAR RENDERIZADOR PERSONALIZADO CUIDANDO EL DROPDOWN Y LA FECHA ---
@@ -415,10 +526,13 @@ function InitializeTable(){
                 } else if (col >= 21 && col <= 25) {
                     // Azul Rey (el que ya tenías) desde RESPONSABLE hasta FECHA ASIGNADO
                     TH.style.backgroundColor = "#4F81BD";
-                } else if (col >= 26 && col <= 31) {
+                }else if (col >= 26 && col <= 27) {
+                    // Rojo claro desde RECEPCIÓN hasta Campos supervisores
+                    TH.style.backgroundColor = "#595858";
+                } else if (col >= 28 && col <= 33) {
                     // Rojo claro desde RECEPCIÓN hasta FECHA RESPUESTA
                     TH.style.backgroundColor = "#ed5e5b";
-                } else if (col >= 32 && col <= 33) {
+                } else if (col >= 34 && col <= 35) {
                     // Amarillo desde FECHA LÍMITE hasta DÍAS FALTANTES
                     TH.style.backgroundColor = "#ffa43b";
                     // Cambiamos el texto a negro en esta sección para que contraste mejor con el fondo amarillo
@@ -435,7 +549,7 @@ function InitializeTable(){
 
                     // Si cambia alguno de los campos permitidos, disparamos AJAX
                     const camposEditables = ['ASIGNADO', 'RESPONSABLE', 'RECEPCIÓN', 'OBSERVACIÓN GESTIÓN', 'CÓDIGO AUTORIZACIÓN',
-                        'MOTIVO DE PQR','FECHA SOLICITUD CIERRE'];
+                        'MOTIVO DE PQR','FECHA SOLICITUD CIERRE','INSTRUCCIONES CAMPO','OBSERVACION SUPERVISOR'];
 
                     // Si cambia ASIGNADO o RESPONSABLE, disparamos AJAX
                     if (camposEditables.includes(headerName) && oldValue !== newValue) {
@@ -451,6 +565,9 @@ function InitializeTable(){
                         if (headerName === 'CÓDIGO AUTORIZACIÓN') campoBD = 'CODIGO_AUTORIZACION';
                         if (headerName === 'MOTIVO DE PQR') campoBD = 'MOTIVO_DE_PQR';
                         if (headerName === 'FECHA SOLICITUD CIERRE') campoBD = 'FECHA_SOLICITUD_CIERRE';
+                        if(headerName === 'INSTRUCCIONES CAMPO') campoBD = 'INSTRUCCIONES_CAMPO';
+                        if(headerName === 'OBSERVACION SUPERVISOR') campoBD = 'OBSERVACION_SUPERVISOR';
+
 
                         $.ajax({
                             url: url,
@@ -567,10 +684,11 @@ function iniciarActualizacionAutomatica() {
                         row.DESC_CAUSAL_CIERRE_ULTIMA, row.FECHA_ASIGNACIÓN_ULTIMA,
                         row.OBSERVACIÓN_ASIGNACIÓN_ULTIMA, row.GESTIÓN_ASIGNACIÓN_ULTIMA,
                         row.TIPO_TRABAJO_ASIGNACIÓN_ULTIMA, row.MOTIVO_DE_PQR, row.RESPONSABLE,
-                        row.ASIGNADO, row.SUPERVISOR, row.FECHA_ASIGNADO, row.RECEPCION,
+                        row.ASIGNADO, row.SUPERVISOR, row.FECHA_ASIGNADO,row.INSTRUCCIONES_CAMPO,
+                        row.OBSERVACION_SUPERVISOR,row.RECEPCION,
                         row.FECHA_RECEPCION, row.FECHA_SOLICITUD_CIERRE, row.OBSERVACION_GESTION,
                         row.CODIGO_AUTORIZACION, row.FECHA_RESPUESTA, row.FECHA_LIMITE,
-                        row.DIAS_FALTANTES
+                        row.DIAS_FALTANTES,
                     ]);
 
                     // 1. Obtenemos los plugins
