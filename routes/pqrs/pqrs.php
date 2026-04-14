@@ -25,5 +25,6 @@ Route::middleware('web')->group(function () {
         Route::get('/pqrs/coordinacion/estadisticas', [CoordinacionEstadisticas::class, 'index'])->name('pqrs.coordinacion.estadisticas')->middleware(CheckPermission::class . ':ver_PQRS');
         Route::post('/pqrs/coordinacion/exportar-supervisores', [CoordinacionPQRS::class, 'exportarSupervisorExcel'])->name('pqrs.coordinacion.exportarSupervisores')->middleware(CheckPermission::class . ':ver_PQRS');
         Route::get('/pqrs/coordinacion/getSupervisores', [CoordinacionPQRS::class, 'getSupervisores'])->name('pqrs.coordinacion.getSupervisores')->middleware(CheckPermission::class . ':ver_PQRS');
+        Route::post('/pqrs/coordinacion/exportar-historico', [CoordinacionPQRS::class, 'exportarHistoricoExcel'])->name('pqrs.coordinacion.exportarHistorico')->middleware(CheckPermission::class . ':coordinacion_pqrs');
     });
 });

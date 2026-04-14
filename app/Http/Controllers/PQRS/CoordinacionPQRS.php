@@ -446,11 +446,11 @@ class CoordinacionPQRS extends Controller
         } else {
             // Si NO está marcado, filtramos normalmente por la fecha
             $fechaInput = $request->input('fecha_exportacion');
-            $fechaDmY = Carbon::parse($fechaInput)->format('d/m/Y');
+          // $fechaDmY = Carbon::parse($fechaInput)->format('d/m/Y');
 
-            $query->where(function($q) use ($fechaInput, $fechaDmY) {
-                $q->where('FECHA_ASIGNACION', 'LIKE', $fechaInput . '%')
-                    ->orWhere('FECHA_ASIGNACION', 'LIKE', $fechaDmY . '%');
+            $query->where(function($q) use ($fechaInput) {
+                $q->where('FECHA_ASIGNADO', 'LIKE', $fechaInput . '%');
+                  //  ->orWhere('FECHA_ASIGNACION', 'LIKE', $fechaDmY . '%');
             });
         }
 
@@ -497,7 +497,7 @@ class CoordinacionPQRS extends Controller
                     ->orWhere('RECEPCION', '')
                     ->orWhere('RECEPCION', 'GDW');
             })
-            ->select('CONTRATO', 'ASIGNADO', 'OBSERVACION_SOLICITUD', 'INSTRUCCIONES_CAMPO')
+            ->select('CONTRATO', 'ASIGNADO', 'OBSERVACION_SOLICITUD', 'INSTRUCCIONES_CAMPO','OBSERVACION_SUPERVISOR')
             ->get();
 
         if ($quejas->isEmpty()) {
@@ -514,6 +514,28 @@ class CoordinacionPQRS extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => "Error al generar el archivo: " . $e->getMessage()], 500);
+        }
+    }
+
+    public function exportarHistoricoExcel(Request $request)
+    {
+        // Recibimos la matriz de datos desde Handsontable
+        $datosTabla = $request->input('datos_tabla');
+
+        if (empty($datosTabla)) {
+            return response()->json(['error' => "No se recibieron datos para exportar."], 400);
+        }
+
+        try {
+            // Pasamos la matriz directamente al servicio
+            $urlFirmada = CoordinacionPQRSExportService::generarExcelDesdeMatriz($datosTabla);
+
+            return response()->json([
+                'success' => true,
+                'downloadUrl' => $urlFirmada
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => "Error al generar Excel: " . $e->getMessage()], 500);
         }
     }
 }

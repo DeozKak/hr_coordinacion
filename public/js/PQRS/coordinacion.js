@@ -527,7 +527,7 @@ function InitializeTable(){
                     // Azul Rey (el que ya tenías) desde RESPONSABLE hasta FECHA ASIGNADO
                     TH.style.backgroundColor = "#4F81BD";
                 }else if (col >= 26 && col <= 27) {
-                    // Rojo claro desde RECEPCIÓN hasta Campos supervisores
+                    // Cafe Campos supervisores
                     TH.style.backgroundColor = "#595858";
                 } else if (col >= 28 && col <= 33) {
                     // Rojo claro desde RECEPCIÓN hasta FECHA RESPUESTA

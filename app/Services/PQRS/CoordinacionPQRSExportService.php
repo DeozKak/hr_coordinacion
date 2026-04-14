@@ -21,7 +21,7 @@ class CoordinacionPQRSExportService
         $sheet = $spreadsheet->getActiveSheet();
 
         // 1. Encabezados
-        $headers = ['CONTRATO', 'ASIGNADO', 'OBSERVACIÓN SOLICITUD', 'INSTRUCCIONES CAMPO'];
+        $headers = ['CONTRATO', 'ASIGNADO', 'OBSERVACIÓN SOLICITUD', 'INSTRUCCIONES CAMPO','OBSERVACION SUPERVISOR'];
         $sheet->fromArray($headers, NULL, 'A1');
 
         // 2. Llenar Datos
@@ -31,6 +31,7 @@ class CoordinacionPQRSExportService
             $sheet->setCellValue('B' . $fila, $item->ASIGNADO);
             $sheet->setCellValue('C' . $fila, $item->OBSERVACION_SOLICITUD);
             $sheet->setCellValue('D' . $fila, $item->INSTRUCCIONES_CAMPO);
+            $sheet->setCellValue('E' . $fila, $item->OBSERVACION_SUPERVISOR);
             $fila++;
         }
         $ultimaFila = $fila - 1;
@@ -89,8 +90,8 @@ class CoordinacionPQRSExportService
         ];
 
         // Aplicar a celdas
-        $sheet->getStyle('A1:D1')->applyFromArray($styleHeader);
-        $sheet->getStyle('A1:D' . $ultimaFila)->applyFromArray($styleBorders);
+        $sheet->getStyle('A1:E1')->applyFromArray($styleHeader);
+        $sheet->getStyle('A1:E' . $ultimaFila)->applyFromArray($styleBorders);
 
         // --- CONFIGURACIÓN DE ANCHOS DE COLUMNA ---
 
@@ -110,5 +111,82 @@ class CoordinacionPQRSExportService
 
         // Alineación vertical superior para todas las celdas (mejor legibilidad con textos largos)
         $sheet->getStyle('A1:D' . $ultimaFila)->getAlignment()->setVertical(Alignment::VERTICAL_TOP);
+    }
+
+    public static function generarExcelDesdeMatriz($datosTabla)
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // 1. Definir los encabezados (Los mismos que tienes en Handsontable)
+        $headers = [
+            'NÚMERO ORDEN', 'CONTRATO', 'CÉDULA', 'NOMBRE', 'DEPARTAMENTO',
+            'LOCALIDAD', 'BARRIO', 'DIRECCIÓN', 'CATEGORÍA',
+            'COD UNIDAD OPERATIVA', 'TIPO TRABAJO', 'FECHA ASIGNACIÓN',
+            'OBSERVACIÓN SOLICITUD', 'FECHA CIERRE ÚLTIMA', 'OBSERVACIÓN CIERRE ÚLTIMA',
+            'TIPO TRABAJO CIERRE ÚLTIMA', 'CAUSAL CIERRE ÚLTIMA', 'FECHA ASIGNACIÓN ÚLTIMA',
+            'OBSERVACIÓN ASIGNACIÓN ÚLTIMA', 'GESTIÓN ASIGNACIÓN ÚLTIMA', 'TIPO TRABAJO ASIGNACIÓN ÚLTIMA',
+            'RESPONSABLE', 'ASIGNADO','SUPERVISOR' ,'FECHA ASIGNADO','RECEPCIÓN',
+            'FECHA RECEPCIÓN', 'OBSERVACIÓN GESTIÓN', 'CÓDIGO AUTORIZACIÓN', 'FECHA RESPUESTA',
+            'FECHA LEGALIZACIÓN', 'CAUSAL LEGALIZACIÓN', 'OBSERVACIÓN LEGALIZACIÓN'
+        ];
+
+        $sheet->fromArray($headers, NULL, 'A1');
+
+        // 2. Volcar todos los datos recibidos desde la fila 2
+        // Como $datosTabla ya es un array de arrays, fromArray lo inserta todo de golpe (muy eficiente)
+        $sheet->fromArray($datosTabla, NULL, 'A2');
+
+        $ultimaFila = count($datosTabla) + 1;
+        $highestColumn = $sheet->getHighestColumn();
+
+        // 3. Aplicar Estilos (Cabecera y Bordes)
+        $styleHeader = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '007BFF']],
+        ];
+        $styleBorders = [
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']]],
+        ];
+
+        $sheet->getStyle('A1:' . $highestColumn . '1')->applyFromArray($styleHeader);
+        $sheet->getStyle('A1:' . $highestColumn . $ultimaFila)->applyFromArray($styleBorders);
+
+        // 4. Ajuste Inteligente de Columnas
+        $columnIndex = 1;
+        while ($columnIndex <= \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn)) {
+            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($columnIndex);
+            $headerValue = $sheet->getCell($colLetter . '1')->getValue();
+
+            // Limitamos el ancho de las columnas de observación
+            if (strpos(strtoupper($headerValue), 'OBSERVACI') !== false) {
+                $sheet->getColumnDimension($colLetter)->setWidth(50);
+                $sheet->getStyle($colLetter . '2:' . $colLetter . $ultimaFila)->getAlignment()->setWrapText(true);
+            } else {
+                $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+            }
+            $columnIndex++;
+        }
+
+        $sheet->getStyle('A1:' . $highestColumn . $ultimaFila)->getAlignment()->setVertical(Alignment::VERTICAL_TOP);
+
+        // 5. Guardar el archivo físicamente
+        $nombreArchivo = 'Historico_Quejas_' . time() . '.xlsx';
+
+        if (!Storage::exists('uploads')) {
+            Storage::makeDirectory('uploads');
+        }
+
+        $rutaAbsoluta = storage_path('app/uploads/' . $nombreArchivo);
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($rutaAbsoluta);
+
+        // 6. Retornar URL firmada
+        return URL::temporarySignedRoute(
+            'descargar.archivo',
+            now()->addMinutes(10),
+            ['file' => $nombreArchivo]
+        );
     }
 }

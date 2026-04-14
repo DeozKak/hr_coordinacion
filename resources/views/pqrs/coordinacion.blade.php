@@ -20,6 +20,7 @@
     <input type="hidden" id="url_get_datos_actualizados" value="{{ route('pqrs.coordinacion.datosActualizados') }}">
     <input type="hidden" id="url_get_supervisores" value="{{ route('pqrs.coordinacion.getSupervisores') }}">
     <input type="hidden" id="url_export_supervisor_excel" value="{{ route('pqrs.coordinacion.exportarSupervisores') }}">
+    <input type="hidden" id="url_export_historico_excel" value="{{ route('pqrs.coordinacion.exportarHistorico') }}">
 
     <div class="shadow-container">
         <div class="controls-header">
@@ -103,6 +104,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+
                     <form id="formHistorico" class="mb-4 bg-white p-3 rounded shadow-sm border">
                         <div class="row g-3 align-items-end">
                             <div class="col-md-3">
@@ -128,11 +130,16 @@
                             </div>
                         </div>
                     </form>
-
+                    <div id="headerAccionesHistorico" class="text-end mb-2">
+                        <button type="button" id="btnExportarHistorico" class="btn-gradient btn-gradient-success btn-sm">
+                            <i class="fas fa-file-csv"></i> Exportar Resultados
+                        </button>
+                    </div>
                     <div class="table-responsive bg-white p-2 rounded border">
                         <div id="tabla_historico" style="position: relative; width: 100%; height: 400px; overflow: hidden;"></div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>

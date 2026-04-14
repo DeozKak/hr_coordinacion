@@ -68,6 +68,80 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+
+    // --- LÓGICA DE EXPORTACIÓN A EXCEL (.XLSX) DESDE HOT ---
+    if (btnExportarHistorico) {
+        btnExportarHistorico.addEventListener('click', function() {
+            if (!hotHistorico) {
+                alert("No hay datos cargados para exportar.");
+                return;
+            }
+
+            const btn = this;
+            const urlExport = document.getElementById('url_export_historico_excel').value;
+            const token = document.querySelector('input[name="_token"]').value;
+
+            // 1. Extraer los datos EXACTOS que se están viendo en la tabla (respeta filtros y orden)
+            const rowCount = hotHistorico.countRows();
+            const colCount = hotHistorico.countCols();
+            const tableData = [];
+
+            for (let r = 0; r < rowCount; r++) {
+                const rowArray = [];
+                for (let c = 0; c < colCount; c++) {
+                    // getDataAtCell obtiene el dato visual actual
+                    rowArray.push(hotHistorico.getDataAtCell(r, c));
+                }
+                tableData.push(rowArray);
+            }
+
+            if (tableData.length === 0) {
+                alert("La tabla está vacía después de aplicar los filtros.");
+                return;
+            }
+
+            // Bloquear botón
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando Excel...';
+
+            // 2. Enviar los datos al backend
+            fetch(urlExport, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ datos_tabla: tableData })
+            })
+                .then(async response => {
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Error al exportar');
+                    }
+                    return data;
+                })
+                .then(data => {
+                    if (data.downloadUrl) {
+                        const link = document.createElement('a');
+                        link.href = data.downloadUrl;
+                        link.download = '';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert("No se pudo exportar: " + error.message);
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-file-excel"></i> Exportar Resultados';
+                });
+        });
+    }
+
 });
 
 function inicializarTablaHistorico(datosDB, container) {
