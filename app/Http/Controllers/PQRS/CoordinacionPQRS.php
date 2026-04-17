@@ -408,8 +408,8 @@ class CoordinacionPQRS extends Controller
 
             // Si las fechas en BD están en formato DD/MM/YYYY
             // Lo ideal es tenerlas en Y-m-d, pero si no, tendrás que ajustar la consulta.
-            $query->whereBetween(DB::raw('STR_TO_DATE(FECHA_ASIGNACION, "%d/%m/%Y")'), [$fechaInicio, $fechaFin])
-                ->orWhereBetween('FECHA_ASIGNACION', [$fechaInicio, $fechaFin]);
+            $query->whereBetween(DB::raw('STR_TO_DATE(FECHA_LEGALIZACION, "%d/%m/%Y")'), [$fechaInicio, $fechaFin])
+                ->orWhereBetween('FECHA_LEGALIZACION', [$fechaInicio, $fechaFin]);
         }
 
         $datosHistorico = $query->get();
