@@ -3,6 +3,22 @@ let tableData;
 let colHeaders;
 let verMasModalInstance = null;
 let modalExportar;
+let conteoContratos = {};
+
+function actualizarConteoContratos(dataArray) {
+    conteoContratos = {};
+    const contratoColIndex = colHeaders.indexOf('CONTRATO');
+
+    if (contratoColIndex === -1) return;
+
+    dataArray.forEach(row => {
+        const contrato = row[contratoColIndex];
+        // Si el contrato existe, le sumamos 1 a su contador
+        if (contrato) {
+            conteoContratos[contrato] = (conteoContratos[contrato] || 0) + 1;
+        }
+    });
+}
 document.addEventListener("DOMContentLoaded",function(){
 
     const btnOpenExportSup = document.getElementById('openExportarSupervisoresBtn');
@@ -293,6 +309,7 @@ document.addEventListener("DOMContentLoaded",function(){
 
 function InitializeTable(){
 
+
     // --- NUEVO RENDERIZADOR PARA LA COLUMNA CONTRATO ---
     Handsontable.renderers.registerRenderer('contratoRenderer', function (instance, td, row, col, prop, value, cellProperties) {
         Handsontable.renderers.TextRenderer.apply(this, arguments); // Aplica el texto y formato base
@@ -304,13 +321,28 @@ function InitializeTable(){
         const recepcion = instance.getDataAtCell(row, recepcionCol);
         const dias = instance.getDataAtCell(row, diasFaltantesCol);
 
+        // Reseteamos el estilo por defecto antes de aplicar la lógica
+        td.style.backgroundColor = '';
+        td.style.color = '#000000'; // Aseguramos que el texto normal sea negro
+        td.style.fontWeight = 'normal';
+        td.title = ''; // Limpiamos tooltips anteriores
+
         // Reseteamos el color por defecto antes de aplicar la lógica
         td.style.backgroundColor = '';
+
+        // 1. LÓGICA DE CONTRATOS REPETIDOS
+        if (value && conteoContratos[value] > 1) {
+            td.style.color = '#d32f2f'; // Texto rojo oscuro
+            td.style.fontWeight = 'bold'; // Negrita para destacar
+            td.title = `¡Atención! Este contrato está repetido ${conteoContratos[value]} veces.`; // Tooltip al pasar el mouse
+        }
 
         // Lógica de colores según tus requerimientos
         if (recepcion === 'ACCEDE' || recepcion === 'NO ACCEDE') {
             td.style.backgroundColor = '#90EE90'; // Verde claro
-        } else if (dias !== null && dias !== '') {
+        }else if(recepcion === 'NO PROCEDENTE'){
+            td.style.backgroundColor = '#83b7f1';
+        }else if (dias !== null && dias !== '') {
             const diasNum = parseInt(dias, 10);
             if(diasNum === 0){
                 td.style.backgroundColor = '#ff9535';
@@ -390,7 +422,7 @@ function InitializeTable(){
         if (header === 'RECEPCIÓN') {
             return {
                 type: 'dropdown',
-                source: ['', 'ACCEDE', 'NO ACCEDE', 'GDW'], // Opciones
+                source: ['', 'ACCEDE', 'NO ACCEDE', 'GDW','NO PROCEDENTE'], // Opciones
                 readOnly: false
             };
         }
@@ -443,7 +475,7 @@ function InitializeTable(){
     });
     // Contenedor de la tabla
     const container = document.getElementById('tabla');
-
+    actualizarConteoContratos(tableData);
     if (container && typeof Handsontable !== 'undefined') {
         hot = new Handsontable(container, {
             data: tableData,

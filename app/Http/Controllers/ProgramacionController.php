@@ -21,6 +21,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Session;
@@ -614,8 +615,8 @@ class ProgramacionController extends Controller
 
             // Crear carpeta temporal
             $carpetaTmp = storage_path('app/uploads/');
-            if (!file_exists($carpetaTmp)) {
-                mkdir($carpetaTmp, 0777, true);
+            if (!File::exists($carpetaTmp)) {
+                File::makeDirectory($carpetaTmp, 0755, true);
             }
             $archivos = [];
 

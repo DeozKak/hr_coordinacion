@@ -84,7 +84,7 @@
 
     @section('js')
 
-        <script src="{{ asset('js/programacion/verProgramacionV4.3.js') }}"></script>
+        <script src="{{ asset('js/programacion/verProgramacionV4.4.js') }}"></script>
         <script>
             const tecnicos = @json($tecnicos);
             let permiso_modTec = 0;
