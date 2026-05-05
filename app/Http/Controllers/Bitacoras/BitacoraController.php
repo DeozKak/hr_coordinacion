@@ -1033,7 +1033,9 @@ class BitacoraController extends Controller
             $exist = tbl_bitacora_contrato::where('CONTRATO', $devolucion->CONTRATO)->where('ORDEN_TRABAJO', $devolucion->ORDEN_TRABAJO)->exists();
             if ($exist) {
                 // Obtener los usuarios que deben recibir la notificación
-                $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN'])->get();
+                $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN'])
+                    ->where('state',1)
+                    ->get();
                 $usuarioLog = Auth::user();
                 // Enviar la notificación a cada usuario
                 foreach ($usuarios as $usuario) {
