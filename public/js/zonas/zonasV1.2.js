@@ -687,7 +687,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     })
 
-    // ------------------------- Jquey Crear Zonas --------------------------------
+    // ------------------------- Jquey Crear zonas --------------------------------
 
     $(document).on('click', '#btnCrearZona', function () {
         $('#idGuardarZona').val('');  // Limpiar el campo de ID
@@ -748,7 +748,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    // ------------------------- Jquey Editar Zonas --------------------------------
+    // ------------------------- Jquey Editar zonas --------------------------------
 
     $(document).on('click', '.abrirZonaModal', function () {
         let id = $(this).attr('data-zona-id')

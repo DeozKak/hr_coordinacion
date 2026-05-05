@@ -174,7 +174,7 @@
     </div>
 </div>
 
-<!-- Modal para Sedes y Zonas -->
+<!-- Modal para Sedes y zonas -->
 
 <div class="modal fade" id="extraCardsModal" tabindex="-1" role="dialog" aria-labelledby="extraCardsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl" role="document">
@@ -227,7 +227,7 @@
                         </div>
                     </div>
 
-                    <!-- Tarjeta Zonas -->
+                    <!-- Tarjeta zonas -->
 
                     <div class="col-md-6">
                         <div class="card">

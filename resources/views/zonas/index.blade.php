@@ -9,12 +9,12 @@
 @section('content')
 
     <input type="hidden" id="token" value="{{ csrf_token() }}">
-    <script src="{{ asset('js/Zonas/zonasV1.2.js') }}"></script>
-    <script src="{{ asset('js/Zonas/alerts.js') }}"></script>
-    <script src="{{ asset('js/Zonas/asignador.js') }}"></script>
-    <script src="{{ asset('js/Zonas/buscadorV1.3.js') }}"></script>
-    <script src="{{ asset('js/Zonas/asigResponsablesV1.1.js') }}"></script>
-    <script src="{{ asset('js/Zonas/insercionMasiva.js') }}"></script>
+    <script src="{{ asset('js/zonas/zonasV1.2.js') }}"></script>
+    <script src="{{ asset('js/zonas/alerts.js') }}"></script>
+    <script src="{{ asset('js/zonas/asignador.js') }}"></script>
+    <script src="{{ asset('js/zonas/buscadorV1.3.js') }}"></script>
+    <script src="{{ asset('js/zonas/asigResponsablesV1.1.js') }}"></script>
+    <script src="{{ asset('js/zonas/insercionMasiva.js') }}"></script>
 
     <link rel="stylesheet" href="{{ asset ('css/zonas/zonas.css')}}">
     <input type="hidden" id="token" value="{{ csrf_token() }}">
@@ -23,7 +23,7 @@
     @canany(['ver_residente','ver_coordinacion_RP'])
     <div class="row">
 
-        {{-- Tarjeta Sedes y Zonas --}}
+        {{-- Tarjeta Sedes y zonas --}}
 
         <div class="col-md-12">
             <div class="card">
