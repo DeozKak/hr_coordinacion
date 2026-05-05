@@ -1,0 +1,39 @@
+services:
+    # Servidor Web y PHP
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: hr_coordinacion
+        ports:
+            - "8080:80"
+        volumes:
+            - .:/var/www/html
+        depends_on:
+            - db
+
+    # Base de Datos (MySQL)
+    db:
+        image: mysql:8.0
+        restart: always
+        environment:
+            MYSQL_DATABASE: segoperacion
+            MYSQL_ROOT_PASSWORD: root
+        ports:
+            - "33060:3306"
+        volumes:
+            - db_data:/var/lib/mysql
+
+    phpmyadmin:
+        image: phpmyadmin
+        container_name: hr_coordinacion-phpmyadmin
+        restart: always
+        ports:
+            - "8081:80"
+        environment:
+            - PMA_ARBITRARY=1
+            - PMA_HOST=db
+
+
+volumes:
+    db_data:

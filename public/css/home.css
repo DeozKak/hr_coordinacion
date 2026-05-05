@@ -1,0 +1,69 @@
+/* --- Estilos Modernos Extraídos de Estadísticas --- */
+.modern-card {
+    background: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-bottom: 25px;
+}
+.modern-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+.modern-card-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    padding: 1.25rem 1.5rem;
+    border-radius: 15px 15px 0 0;
+}
+.modern-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #2c3e50;
+    margin: 0;
+}
+.filter-bar {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    border-left: 5px solid #4F81BD;
+}
+.btn-modern {
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 0.4rem 1rem;
+    transition: all 0.3s ease;
+}
+.btn-gradient-primary {
+    background: linear-gradient(135deg, #4F81BD 0%, #3b608c 100%);
+    color: white;
+    border: none;
+}
+.btn-gradient-primary:hover {
+    background: linear-gradient(135deg, #3b608c 0%, #284261 100%);
+    color: white;
+    box-shadow: 0 4px 10px rgba(79, 129, 189, 0.4);
+}
+.custom-select-modern {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    padding: 0.4rem 0.75rem;
+    color: #495057;
+}
+.custom-select-modern:focus {
+    border-color: #4F81BD;
+    box-shadow: 0 0 0 0.2rem rgba(79, 129, 189, 0.25);
+    outline: none;
+}
+/* Ajustes visuales para DataTables dentro de tarjetas modernas */
+.dataTables_wrapper .dataTables_filter input {
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    padding: 4px 15px;
+    outline: none;
+}
+.dataTables_wrapper .dataTables_filter input:focus {
+    border-color: #4F81BD;
+    box-shadow: 0 0 5px rgba(79,129,189,0.3);
+}

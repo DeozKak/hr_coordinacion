@@ -2,64 +2,66 @@
 
 namespace App\Http\Controllers;
 
-
+use App\Jobs\ActualizacionAsignacionTec;
+use App\Models\Bitacoras\tbl_bitacora_contrato;
+use App\Services\ProgramacionService;
+use App\Jobs\CorreoProgramacion;
 use App\Models\Programacion\tbl_programacion_base;
 use App\Models\Programacion\tbl_programacion_contrato;
 use App\Models\Programacion\tbl_programacion_usuario;
 use App\Models\tbl_insp_cali;
 use App\Models\User;
-use App\Services\ExtraerFechas;
-use App\Services\Programacion\ProgramacionContratoService;
-use App\Services\Programacion\ProgramacionImportService;
-use App\Services\Programacion\ProgramacionUsuarioService;
 use Carbon\Carbon;
 use DateTime;
+use Dotenv\Exception\ValidationException;
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Database\QueryException;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Mpdf\Mpdf;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-
+use App\Services\ExtraerFechas;
+use function Laravel\Prompts\error;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
+use Illuminate\Support\Facades\Storage;
+use App\Jobs\ProcessExcelFileMacros;
+use Illuminate\Support\Facades\File;
 use ZipArchive;
 
 class ProgramacionController extends Controller
 {
 
-    public function __construct(
-        private ProgramacionContratoService $programacionContratoService,
-        private ProgramacionUsuarioService  $programacionUsuarioService,
-        private ProgramacionImportService   $programacionImportService
-    )
+    private $programacionService;
+
+    public function __construct(ProgramacionService $programacionService)
     {
-
+        $this->programacionService = $programacionService;
     }
-
 
     public function index()
     {
-        // Llama al método del servicio para obtener los datos
-        $resultado = $this->programacionUsuarioService->obtenerProgramacionesUsuario(Auth::user());
 
-        // Asignación de los resultados
-        $datos = $resultado['terminadas'];
-        $temp = $resultado['enCurso'];
+        if (Auth::user()->haspermissionTo('ver_programacion')) {
+            $datos = tbl_programacion_usuario::where('finished', 1)->with('usuario')->get();
+            $temp = tbl_programacion_usuario::where('finished', 0)->where('id_usuario', Auth::id())->first();
+        } else {
+            $datos = tbl_programacion_usuario::where('finished', 1)->where('id_usuario', Auth::id())->with('usuario')->get();
+            $temp = tbl_programacion_usuario::where('finished', 0)->where('id_usuario', Auth::id())->first();
+        }
 
         if (!is_null($temp)) {
             session()->flash('warning', 'Ya tienes una tabla de programación en curso ¿Deseas continuar?');
+
             return view('programacion.index', compact('datos', 'temp'));
         }
 
@@ -68,183 +70,91 @@ class ProgramacionController extends Controller
 
     public function create()
     {
-        // Obtén el usuario autenticado
-        $user = Auth::user();
+        $programacion = tbl_programacion_usuario::where('finished', 0)->where('id_usuario', Auth::id())->first();
 
-        // Usa el servicio para crear/verificar una programación
-        $response = $this->programacionUsuarioService->crearNuevaProgramacion($user);
+        if (is_null($programacion)) {
+            try {
+                DB::beginTransaction();
+                $fechaActual = Carbon::now();
+                $soloFecha = $fechaActual->format('Y-m-d');
+                $programacion = new tbl_programacion_usuario;
+                $programacion->nombre = "Programación " . $soloFecha;
+                $programacion->id_usuario = Auth::id();
+                $programacion->save();
 
-        // Manejo si ocurre un error en la creación
-        if (isset($response['error'])) {
-            Session::flash('error', $response['error']);
-            return redirect()->route('programacion.index');
-        }
+                $tecnicos = tbl_insp_cali::select('id', 'apellidos', 'nombres')
+                    ->where('state', 1)
+                    ->orderBy('apellidos') // Ordenar por apellidos ascendente
+                    ->get();
 
-        // Si ya existe una programación activa y debe redirigirse
-        if (isset($response['redirect']) && $response['redirect']) {
+                $user = Auth::user();
+                DB::commit();
+                return view('programacion.create', compact('tecnicos', 'user', 'programacion'));
+            } catch (\Exception $e) {
+                Log::error($e);
+                DB::rollback();
+                session()->flash('error', 'Ocurrió un error al crear tabla ' . $e->getMessage());
+                return redirect()->route('programacion.index');
+            }
+        } else {
             return $this->index();
-        }
+            /*  $tecnicos = tbl_insp_cali::select('id', 'apellidos', 'nombres')
+                ->where('state', 1)
+                ->orderBy('apellidos') // Ordenar por apellidos ascendente
+                ->get();
 
-        // Retorna la vista de creación con los datos necesarios
-        return view('programacion.create', [
-            'tecnicos' => $response['tecnicos'],
-            'user' => $response['user'],
-            'programacion' => $response['programacion'],
-        ]);
+            $user = Auth::user(); */
+        }
     }
 
     public function show(Request $request, $id)
     {
         $action = $request->query('action');
-        $id = (int)$id;
-        // Llamamos al servicio para manejar toda la lógica de la programación
-        $response = $this->programacionUsuarioService->obtenerDetalleProgramacion($id, $action);
 
-        // Manejo de errores
-        if (isset($response['error'])) {
-            session()->flash('error', $response['error']);
-            return redirect()->route('programacion.index');
-        }
-
-        // Variables para la vista
-        $tecnicos = $response['tecnicos'];
-        $user = $response['user'];
-        $programacion = $response['programacion'];
-        $tabla = $response['tabla'];
-
-        // Renderizamos vistas según la acción
-        if ($action === 'view') {
-            $view = true; // Indicador para vista
-            return view('programacion.create', compact('tecnicos', 'user', 'programacion', 'tabla', 'view'));
-        }
+        $programacion = tbl_programacion_usuario::find($id);
+        $tabla = tbl_programacion_contrato::where('id_programacion', $id)->get();
 
         if ($action === 'edit') {
-            return view('programacion.create', compact('tecnicos', 'user', 'programacion', 'tabla'));
+            if (auth()->user()->haspermissionTo('generar_programacion')) {
+                try {
+                    DB::beginTransaction();
+                    $programacion->finished = 0;
+                    $programacion->save();
+                    DB::commit();
+                } catch (\Exception $e) {
+                    log::error($e);
+                    DB::rollback();
+                    session()->flash('error', 'Ocurrió un error al cargar tabla ' . $e->getMessage());
+                    return redirect()->route('programacion.index');
+                }
+            } else {
+                session()->flash('error', 'Acción no autorizada.');
+                return redirect()->route('programacion.index');
+            }
         }
 
-        // Si no hay una acción válida, redirigimos al índice
-        return redirect()->route('programacion.index');
-    }
+        $user = User::find($programacion->id_usuario);
 
-    public function erase(int $id): JsonResponse
-    {
-        // Llama al servicio para manejar la lógica
-        $response = $this->programacionUsuarioService->eliminarProgramacion($id);
 
-        if (isset($response['error'])) {
-            return response()->json(['error' => $response['error']], 500);
+        $tecnicos = tbl_insp_cali::select('id', 'apellidos', 'nombres')
+            ->where('state', 1)
+            ->orderBy('apellidos') // Ordenar por apellidos ascendente
+            ->get();
+
+        if ($action === 'view') {
+
+            $view = true;
+            return view('programacion.create', compact('tecnicos', 'user', 'programacion', 'tabla', 'view', 'user'));
         }
+        if ($action === 'edit') {
 
-        return response()->json(['message' => $response['message']]);
-    }
-
-    public function busqueda($contrato): ?\Illuminate\Http\JsonResponse
-    {
-        // Llamar al servicio para manejar la lógica
-        $resultado = $this->programacionContratoService->buscarContratoBase($contrato);
-
-        // Si no se encuentra nada, devolver null
-        if ($resultado === null) {
-            return null;
+            return view('programacion.create', compact('tecnicos', 'user', 'programacion', 'tabla', 'user'));
         }
-
-        // Si hay un error, devolverlo como respuesta JSON con un código 422
-        if (isset($resultado['error'])) {
-            return response()->json(['movilidad' => $resultado['error']]);
-        }
-
-        // Retornar la información del contrato como respuesta JSON
-        return response()->json($resultado);
     }
 
-    public function store(Request $request): \Illuminate\Http\JsonResponse
+    public function base(Request $request): \Illuminate\Http\JsonResponse
     {
 
-        // Llama al servicio para manejar la lógica.
-        $response = $this->programacionContratoService->crearProgramacionContrato($request->all());
-
-        // Si hay un error, devolver el mensaje con el código HTTP apropiado.
-        if ($response['error']) {
-            return response()->json($response);
-        }
-
-        // Devuelve la respuesta de éxito.
-        return response()->json($response);
-    }
-
-    /**
-     * Actualiza un contrato de programación.
-     *
-     * @param int $id ID del contrato.
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function update($id, Request $request): JsonResponse
-    {
-        // Extraer campo y valor de la solicitud
-        $campo = $request->input('propiedad');
-        $valor = $request->input('valor');
-
-        // Llamar al servicio para manejar la lógica de actualización
-        $response = $this->programacionContratoService->actualizarProgramacionContrato($id, $campo, $valor);
-
-        // Manejar la respuesta del servicio
-        if ($response['error']) {
-            return response()->json(['error' => $response['message']], 422);
-        }
-
-        return response()->json(['message' => $response['message']]);
-    }
-
-    /**
-     * Elimina un contrato de programación dado su ID.
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function destroy(Request $request): JsonResponse
-    {
-        // Extraer el ID de la solicitud
-        $id = $request->input('data');
-
-        // Llamar al servicio para manejar la lógica de eliminación
-        $response = $this->programacionContratoService->eliminarProgramacionContrato($id);
-
-        // Manejar la respuesta del servicio
-        if ($response['error']) {
-            return response()->json(['error' => $response['message']], 500);
-        }
-
-        return response()->json(['message' => $response['message']]);
-    }
-
-    /**
-     * Finaliza una programación.
-     *
-     * @param int $id ID de la programación.
-     * @return JsonResponse
-     */
-    public function finish(int $id): JsonResponse
-    {
-        // Llamar al servicio para finalizar la programación
-        $response = $this->programacionContratoService->finalizarProgramacion($id);
-
-        // Manejar la respuesta del servicio
-        if ($response['error']) {
-            return response()->json(['error' => $response['message']], 500);
-        }
-
-        return response()->json(['ok' => $response['message']]);
-    }
-
-    public function detalles()
-    {
-        $tecnicos = tbl_insp_cali::where('state', '1')->get();
-        return view('programacion.ver', compact('tecnicos'));
-    }
-
-    public function base(Request $request): JsonResponse
-    {
         $valorCheckBox = $request->input('check_estado5');
         $request->validate([
             'archivo' => 'required|file|mimes:xls,xlsx',
@@ -254,36 +164,352 @@ class ProgramacionController extends Controller
             'archivo.mimes' => 'El archivo debe ser de tipo XLS o XLSX.',
         ]);
 
-        if ($valorCheckBox == 1) {
-            $file = IOFactory::load($request->file('archivo'));
-            $date = Datetime::createFromFormat('Y/m/d', Carbon::now()->format('Y/m/d'));
-            $worksheet = $file->getActiveSheet();
-            $indicador = $this->validacionGDO($worksheet);
-            if ($indicador == true) {
-               $indicador = $this->insertBase($worksheet);
-                if($indicador == true){
-                return response()->json(['message' => 'Se ha cargado correctamente la base de datos'], 200);
-                }else{
-                    return response()->json(['errors' => 'Error al cargar la base de datos'], 422);
+        try {
+            if ($valorCheckBox == 1) {
+                $file = IOFactory::load($request->file('archivo'));
+                $date = Datetime::createFromFormat('Y/m/d', Carbon::now()->format('Y/m/d'));
+                $worksheet = $file->getActiveSheet();
+                $indicador = $this->validacionGDO($worksheet);
+                if ($indicador == true) {
+                    $indicador = $this->insertBase($worksheet);
+                    if($indicador == true){
+                        return response()->json(['message' => 'Se ha cargado correctamente la base de datos'], 200);
+                    }else{
+                        return response()->json(['errors' => 'Error al cargar la base de datos'], 422);
+                    }
+                } else {
+                    return response()->json(['errors' => 'El archivo no cumple con el formato requerido'], 422);
                 }
-            } else {
-                return response()->json(['errors' => 'El archivo no cumple con el formato requerido'], 422);
             }
-        }
-        // 1. Guardar el archivo en el storage de Laravel para que el Job pueda acceder a él.
-        // Esto lo guardará en la carpeta 'storage/app/excel-imports'
-        $path = $request->file('archivo')->store('excel-imports');
-        $name_file = $request->file('archivo')->getClientOriginalName();
-        $response = $this->programacionImportService->processFile($path, $request->type, $name_file);
+            // 1. Guardar el archivo en el storage de Laravel para que el Job pueda acceder a él.
+            // Esto lo guardará en la carpeta 'storage/app/excel-imports'
+            $path = $request->file('archivo')->store('excel-imports');
 
-        if (isset($response['errors'])) {
-            return response()->json(['errors' => $response['errors']], 422);
-        }
+            // 2. Realizar la validación RÁPIDA de los encabezados
+            $reader = ReaderEntityFactory::createXLSXReader();
+            // Usamos storage_path() para obtener la ruta absoluta del archivo guardado
+            $reader->open(storage_path('app/' . $path));
 
-        return response()->json(['message' => $response['message']]);
+            $isValid = false;
+            foreach ($reader->getSheetIterator() as $sheet) {
+                foreach ($sheet->getRowIterator() as $row) {
+                    // Validamos la primera fila y salimos del bucle inmediatamente.
+                    $isValid = $this->validacionConArray($row->toArray());
+                    break; // <-- Salimos después de leer la primera fila
+                }
+                break; // <-- Salimos después de leer la primera hoja
+            }
+            $reader->close();
+
+            // 3. Si la validación falla, borramos el archivo y devolvemos un error.
+            if (!$isValid) {
+                Storage::delete($path); // Limpiamos el archivo subido
+                return response()->json(['errors' => 'La estructura del archivo o los encabezados no son correctos.'], 422);
+            }
+            $originalName = $request->file('archivo')->getClientOriginalName(); // Obtener el nombre original
+
+            // 4. Si todo está bien, despachamos el Job pasándole la ruta del archivo.
+            ProcessExcelFileMacros::dispatch($path, Auth::user(), $originalName);
+
+            // 5. Devolvemos una respuesta inmediata al usuario.
+            // El código de estado 202 "Accepted" es ideal para esto.
+            return response()->json(['message' => 'El archivo ha sido aceptado y se está procesando en segundo plano.'], 202);
+
+        } catch (\Exception  $e) {
+            Log::error("Error en la subida inicial del archivo: " . $e->getMessage());
+            return response()->json(['errors' => 'No se pudo procesar la solicitud de subida.'], 500);
+        }
+    }
+
+    public function validacionConArray(array $headerRow): bool
+    {
+        $expectedHeaders = [
+            "Orden", "Contrato", "Producto", "Numero solicitud", "Tipo solicitud"
+        ];
+
+        // Comparamos solo las primeras columnas necesarias
+        $headersToValidate = array_slice($headerRow, 0, count($expectedHeaders));
+
+        // Eliminamos espacios adicionales de los headers para evitar errores
+        $headersToValidate = array_map('trim', $headersToValidate);
+        $expectedHeaders = array_map('trim', $expectedHeaders);
+
+        return $headersToValidate === $expectedHeaders;
 
     }
 
+
+    public function busqueda($contrato): ?\Illuminate\Http\JsonResponse
+    {
+        // Validación numérica
+        if (!is_numeric($contrato)) {
+            return null;
+        }
+
+        if ($contrato == '') {
+            return null;
+        }
+
+        $datos = tbl_programacion_base::where('CONTRATO', $contrato)->first();
+        if ($datos == null) {
+            return null;
+        }
+
+        if ($datos?->ESTADO_RECEPCION !== null) {
+            if ($datos->ESTADO_RECEPCION == '1' || $datos->ESTADO_RECEPCION == '2') {
+                return response()->json(['errors' => 'El contrato ya ha sido ejecutado']);
+            }
+        }
+        if ($datos) {
+            $id_inspector = $datos->ID_TECNICO;
+
+            $inspector = tbl_insp_cali::where('id', $datos->ID_TECNICO)->first();
+            if ($inspector !== null) {
+                // Modificar la propiedad ID_TECNICO con el resultado de la consulta
+                $datos->ID_TECNICO = $id_inspector . '. ' . $inspector->apellidos . ' ' . $inspector->nombres;
+            } else {
+                $datos->ID_TECNICO = null;
+            }
+            return response()->json($datos);
+        } else {
+            return response()->json(['errors' => 'No se encontraron registros'], 422);
+        }
+    }
+
+    public function store(Request $request): \Illuminate\Http\JsonResponse
+    {
+
+        $data = $request->data;
+
+
+        $executed = $this->programacionService->findExecuted($request->data[1],$request->data[2],$request->data[6]);
+
+        if($executed) {
+            if ($executed->TIPO_TRABAJO === 'SA 12164') {
+
+            } else {
+                $fecha_completa = $executed->FECHA;
+                $partes = explode(' ', $fecha_completa);
+                $fecha = $partes[0];
+                /* if ($fecha <= $dosAnosAtras) {
+
+                 } else {*/
+                $inspector = tbl_insp_cali::where('cedula', $executed->CC_OPERARIO)->first();
+                return response()->json([
+                    'movilidad' => 'Contrato ya ejecutado',
+                    'usuario' => $inspector->apellidos.' '.$inspector->nombres,
+                    'agendamiento' => $fecha
+                ]);
+                /* }*/
+            }
+        }
+
+        if(in_array($request->data[2],['10444','12161'])){
+            // Validar si ya existe el contrato con los mismos datos.
+            $exist = tbl_programacion_contrato::where('CONTRATO', $request->data[1])
+                ->whereIn('TIPO_TRABAJO', ['10444','12161'])
+                ->first();
+        }else{
+            $exist = tbl_programacion_contrato::where('CONTRATO', $request->data[1])
+                ->where('ORDEN_TRABAJO', $request->data[6])
+                ->first();
+        }
+        if ($exist) {
+            return response()->json([
+                'exist' => 'Ya existe una programación con estos datos',
+                'id' => $exist->id,
+                'usuario' => $exist->PORQUE_PROGRAMO,
+                'agendamiento' => $exist->FECHA_AGENDAMIENTO
+            ]);
+        }
+
+        try {
+            DB::beginTransaction();
+            $programacion = new tbl_programacion_contrato();
+            $programacion->CONTRATO = $request->data[1];
+            $programacion->TIPO_TRABAJO = $request->data[2];
+            $programacion->FECHA = $request->data[3];
+            $programacion->CELULAR = $request->data[4];
+            $programacion->NOMBRE_USUARIO = $request->data[5];
+            $programacion->ORDEN_TRABAJO = $request->data[6];
+            $programacion->DIRECCION = $request->data[7];
+            $programacion->BARRIO = $request->data[8];
+            $programacion->CIUDAD = $request->data[9];
+            $programacion->ACTIVA = $request->data[10];
+            $programacion->SUSPENDIDO = $request->data[11];
+            $programacion->CATEGORIA = $request->data[12];
+            $programacion->FECHA_AGENDAMIENTO = $request->data[13];
+            $programacion->OBSERVACIONES = $request->data[14];
+            $programacion->PORQUE_PROGRAMO = $request->data[15];
+            $programacion->TECNICO = $request->data[16];
+            $programacion->HORA_INICIO = $request->data[17];
+            $programacion->HORA_FINAL = $request->data[18];
+            $programacion->id_programacion = $request->tabla;
+            $programacion->save();
+            DB::commit();
+        } catch (QueryException $e) {
+            log::error($e);
+            DB::rollback();
+            return response()->json(['error' => 'Error al guardar en base de datos. ' . $e->getMessage()]);
+        }
+
+        return response()->json(['message' => 'Registro guardado correctamente', 'id' => $programacion->id]);
+    }
+
+    public function update($id, Request $request): \Illuminate\Http\JsonResponse
+    {
+
+        try {
+            DB::beginTransaction();
+
+            $programacion = tbl_programacion_contrato::find($id);
+            $campo = $request->propiedad;
+            if ($campo === 'FECHA_AGENDAMIENTO') {
+                try {
+                    $fecha = Carbon::createFromFormat('Y-m-d', $request->valor);
+                    // Validación extra para rechazar fechas no exactas al formato (como '2024-1-9')
+                    if ($fecha->format('Y-m-d') !== $request->valor) {
+                        return response()->json(['error' => 'La fecha debe tener el formato correcto (Y-m-d).'], 422);
+                    }
+                } catch (\Exception $e) {
+                    return response()->json(['error' => 'La fecha debe tener el formato correcto (Y-m-d).'], 422);
+                }
+            }
+
+
+            $programacion->$campo = $request->valor;
+            $programacion->save();
+            DB::commit();
+        } catch (QueryException $e) {
+            Log::error($e);
+            DB::rollback();
+            return response()->json(['error' => 'Error al actualizar registro. ' . $e->getMessage()],500);
+        }
+        return response()->json(['message' => 'Registro actualizado correctamente']);
+    }
+
+    public function destroy(Request $request): \Illuminate\Http\JsonResponse
+    {
+
+        try {
+            DB::beginTransaction();
+            $id = $request->data;
+            $programacion = tbl_programacion_contrato::find($id);
+            $programacion->delete();
+            DB::commit();
+        } catch (QueryException $e) {
+            Log::error($e);
+            DB::rollback();
+            return response()->json(['error' => 'Error al eliminar registro. ' . $e]);
+        }
+        return response()->json(['message' => 'Registro eliminado correctamente']);
+    }
+
+    public function erase($id): \Illuminate\Http\JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+            $programacion = tbl_programacion_usuario::find($id);
+            $contratos = tbl_programacion_contrato::where('id_programacion', $id)->get();
+            $contratos->each->delete();
+            $programacion->delete();
+            DB::commit();
+        } catch (QueryException $e) {
+            log::error($e);
+            DB::rollback();
+            return response()->json(['error' => 'Error al eliminar Programación. ' . $e]);
+        }
+        return response()->json(['message' => 'Programación eliminada correctamente']);
+    }
+
+    public function finish($id): \Illuminate\Http\JsonResponse
+    {
+
+        try {
+            DB::beginTransaction();
+            $programacion = tbl_programacion_usuario::find($id);
+            $programacion->finished = 1;
+            $programacion->save();
+            $user = User::find($programacion->id_usuario);
+            $programadas = tbl_programacion_contrato::where('id_programacion', $id)->get();
+
+            if ($programacion->mensaje == 0) {
+
+                $programacion->mensaje = 1;
+                $programacion->save();
+                CorreoProgramacion::dispatch($user, $id);
+            }
+
+            foreach ($programadas as $programada) {
+
+                if ($programada->CELULAR == null || $programada->CELULAR == '' || $programada->mensaje == 1) {
+                    continue;
+                }
+                // Establecer la zona horaria a Colombia
+                date_default_timezone_set('America/Bogota');
+
+                $horaActual = date('H'); // Obtener la hora actual en formato de 24 horas
+
+                if ($horaActual >= 5 && $horaActual < 12) {
+                    $saludo = "Buenos días";
+                } elseif ($horaActual >= 12 && $horaActual < 19) {
+                    $saludo = "Buenas tardes";
+                } else {
+                    $saludo = "Buenas noches";
+                }
+
+                try {
+                    $fecha_carbon = Carbon::createFromFormat('Y-m-d', $programada->FECHA_AGENDAMIENTO);
+                    // Validación extra para rechazar fechas no exactas al formato (como '2024-1-9')
+                    if ($fecha_carbon->format('Y-m-d') !== $programada->FECHA_AGENDAMIENTO) {
+                        return response()->json(['error' => 'La fecha debe tener el formato correcto (Y-m-d).'], 422);
+                    }
+                } catch (\Exception $e) {
+                    return response()->json(['error' => 'La fecha debe tener el formato correcto (Y-m-d).'], 422);
+                }
+                // Formatear la fecha en español
+                // locale es importante para obtener los nombres de los meses en español
+                $fecha_formateada = $fecha_carbon->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
+
+                //quitar numero al tecnico
+
+                $tecnico = $programada->TECNICO;
+                $tecnico_sin_numero = substr($tecnico, strpos($tecnico, ". ") + 2);
+
+                /* $bodyData = [
+                    'typing_time' => 0,
+                    'to' => '57' . $programada->CELULAR,
+                    'body' => $saludo . ', Sr./Sra. ' . $programada->NOMBRE_USUARIO . '. 👋' .
+                        'Le informamos que la inspección de la red de gas en su predio está programada para el día ' . $fecha_formateada . '  entre las ' . $programada->HORA_INICIO . ' a ' . $programada->HORA_FINAL . '  La persona encargada de realizar la inspección será ' . $tecnico_sin_numero . '. 👷‍♂️' .
+                        'Agradecemos su atención y colaboración. 🙏'
+                ];
+                $client = new Client();
+                $response = $client->request('POST', 'https://gate.whapi.cloud/messages/text', [
+                    'json' => $bodyData,
+                    'headers' => [
+                        'accept' => 'application/json',
+                        'authorization' => 'Bearer bGBktWXeKxgX1syNGKtT8al4rfZHRemt',
+                        'content-type' => 'application/json',
+                    ],
+                ]);*/
+                $programada->mensaje = 1;
+                $programada->save();
+            }
+            DB::commit();
+        } catch (QueryException $e) {
+            Log::error($e);
+            DB::rollback();
+            return response()->json(['error' => 'Error al finalizar Programación. ' . $e]);
+        }
+        session()->flash('success', 'Programación finalizada correctamente');
+        return response()->json(['ok' => 'Programación finalizada correctamente']);
+    }
+
+    public function detalles()
+    {
+        $tecnicos = tbl_insp_cali::where('state','1')->get();
+        return view('programacion.ver',compact('tecnicos'));
+    }
 
     public function agendamiento(Request $request): \Illuminate\Http\JsonResponse
     {
@@ -331,8 +557,10 @@ class ProgramacionController extends Controller
                         'pc.HORA_FINAL',
                     );
 
+
                 $plantilla = DB::table('tbl_programacion_contratos')
                     ->where('FECHA_AGENDAMIENTO', '=', $fecha_inicio)
+                    ->where('EJECUTADA', '=', 0)
                     ->where('plantilla', 1)
                     ->select(
                         'id',
@@ -397,6 +625,7 @@ class ProgramacionController extends Controller
                 $plantilla = DB::table('tbl_programacion_contratos')
                     ->where('FECHA_AGENDAMIENTO', '>=', $fecha_inicio)
                     ->where('FECHA_AGENDAMIENTO', '<=', $fecha_fin)
+                    ->where('EJECUTADA', '=', 0)
                     ->where('plantilla', 1)
                     ->select(
                         'id',
@@ -423,8 +652,7 @@ class ProgramacionController extends Controller
 
             $plantilla = $plantilla->orderBy('TECNICO')->get();
             $busqueda = $busqueda->orderBy('TECNICO')->get();
-
-
+            // dd($busqueda);
             // Agregar primero los registros de plantilla
             $finalData = [];
 
@@ -461,7 +689,7 @@ class ProgramacionController extends Controller
     {
 
         $data = $request->data;
-
+        //dd($data);
         // Ignoramos el token ya que no es relevante para el CSV
         $rows = [];
 
@@ -510,6 +738,7 @@ class ProgramacionController extends Controller
                 }
 
                 $fecha_original = $item[13];
+                //modificacion hora inicio para que salgan desde la mañana
                 $hora_inicio = '06:59:00 a.m.';
                 $hora_final = $item[18];
                 if ($hora_inicio == null || $hora_final == null || $fecha_original == null) {
@@ -549,6 +778,7 @@ class ProgramacionController extends Controller
                     ''
                 ];
             } catch (\Exception $e) {
+                // dd($data, $index);
                 return response()->json(['error' => 'Error al exportar. ' . $e->getMessage()], 500);
             }
         }
@@ -660,18 +890,17 @@ class ProgramacionController extends Controller
     private function generarPdfSupervisor($supervisor, $registros, $destino, $fechaInicio, $fechaFin): string
     {
         $html = view('reportes.supervisor_pdf', compact('supervisor', 'registros'))->render();
-        $mpdf = new Mpdf([
-                'orientation' => 'L' // L = Landscape (horizontal)
-            ]
-        );
-        // Limpia y construye el nombre
+        $mpdf = new Mpdf(['orientation' => 'L']);
+
         $nombreLimpio = preg_replace('/[^A-Za-z0-9_\-]/', '_', $supervisor->nombre);
-        $fileName = 'reporte_' . $nombreLimpio . " " . ($fechaInicio ? str_replace('-', '_', $fechaInicio) : '')
-            . ($fechaFin ? ('_' . str_replace('-', '_', $fechaFin)) : '') . '.pdf';
+        if (empty($nombreLimpio)) { $nombreLimpio = "supervisor_" . $supervisor->id; }
+
+        $fileName = 'reporte_' . $nombreLimpio . "_" . time() . '.pdf'; // Añadimos time() para evitar colisiones
         $filePath = $destino . $fileName;
 
         $mpdf->WriteHTML($html);
         $mpdf->Output($filePath, \Mpdf\Output\Destination::FILE);
+
         return $filePath;
     }
 
@@ -735,11 +964,24 @@ class ProgramacionController extends Controller
     private function empaquetarArchivosZip($archivos, $zipPath)
     {
         $zip = new ZipArchive;
-        $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
-        foreach ($archivos as $archivo) {
-            $zip->addFile($archivo, basename($archivo));
+
+        // Intentar abrir/crear el archivo ZIP
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+            foreach ($archivos as $archivo) {
+                // VERIFICACIÓN CRÍTICA: ¿El archivo realmente existe en el disco?
+                if (file_exists($archivo) && is_readable($archivo)) {
+                    $zip->addFile($archivo, basename($archivo));
+                } else {
+                    Log::error("El archivo no pudo ser agregado al ZIP porque no existe: " . $archivo);
+                    // Opcional: lanzar una excepción si prefieres detener el proceso
+                    // throw new Exception("Archivo faltante: " . basename($archivo));
+                }
+            }
+            $zip->close();
+        } else {
+            throw new Exception("No se pudo crear el archivo ZIP en: " . $zipPath);
         }
-        $zip->close();
+
         return $zipPath;
     }
 
@@ -769,6 +1011,89 @@ class ProgramacionController extends Controller
         return array_values($resultado);
     }
 
+    public function masivos(Request $request): \Illuminate\Http\JsonResponse
+    {
+
+        $request->validate([
+            'archivo' => 'required|file|mimes:xls,xlsx',
+        ], [
+            'archivo.required' => 'El campo archivo es obligatorio.',
+            'archivo.file' => 'El valor debe ser un archivo.',
+            'archivo.mimes' => 'El archivo debe ser de tipo XLS o XLSX.',
+        ]);
+
+        $archivo = $request->file('archivo');
+        $spreadsheet = IOFactory::load($archivo);
+        $worksheet = $spreadsheet->getActiveSheet();
+
+        $indicador = $this->validacionMasivas($worksheet);
+
+        if (!$indicador) {
+            return response()->json(['errors' => 'El archivo no cumple los criterios requeridos'], 422);
+        }
+
+        $datos = $this->Extdatos($worksheet);
+        //$indicador = $this->notificacion($datos);
+        if ($datos === true) {
+            session()->flash('success', 'Archivo subido exitosamente');
+            return response()->json(['message' => 'Archivo subido exitosamente']);
+        } else {
+            // en caso de error o no cumplir con requisitos $datos devuelve un string con el mensaje
+            return response()->json(['errors' => $datos], 422);
+        }
+    }
+
+    private function validacionMasivas($worksheet)
+    {
+        $indicador = true;
+        foreach (['F', 'D', 'E', 'K', 'J', 'S', 'T', 'H', 'G', 'I', 'C', 'N', 'P', 'B'] as $columna) {
+            switch ($columna) {
+                case 'F':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Codigo de Instalacion") ? true : false;
+                    break;
+                case 'D':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Tipo de trabajo") ? true : false;
+                    break;
+                case 'E':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Fecha de ejecucion") ? true : false;
+                    break;
+                case 'K':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Telefono de Contacto1") ? true : false;
+                    break;
+                case 'J':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Nombre Usuario") ? true : false;
+                    break;
+                case 'S':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "ORDE MASIVA") ? true : false;
+                    break;
+                case 'T':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Orden externa") ? true : false;
+                    break;
+                case 'H':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Direccion") ? true : false;
+                    break;
+                case 'G':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Sector Operativo") ? true : false;
+                    break;
+                case 'I':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Municipio") ? true : false;
+                    break;
+                case 'C':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Categoria") ? true : false;
+                    break;
+                case 'N':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Fecha de Agendamiento") ? true : false;
+                    break;
+                case 'P':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Observacion de Agendamiento") ? true : false;
+                    break;
+                case 'B':
+                    $indicador = ($worksheet->getCell($columna . '1')->getValue() === "Inspector") ? true : false;
+                    break;
+            }
+        }
+        return $indicador;
+    }
 
     private function Extdatos($worksheet): true|string
     {
@@ -789,6 +1114,7 @@ class ProgramacionController extends Controller
                 $valor_filtro = $worksheet->getCell('N' . $row->getRowIndex())->getValue();
                 $tipo_trabajo = $worksheet->getCell('D' . $row->getRowIndex())->getValue();
                 $orden_masiva = $worksheet->getCell('S' . $row->getRowIndex())->getValue();
+
                 if ($valor_filtro === "" || $valor_filtro === null || $tipo_trabajo === null || $orden_masiva === null) {
                     continue;
                 }
@@ -911,26 +1237,29 @@ class ProgramacionController extends Controller
                                         $programada->TECNICO = $tecnico->id . ". " . $tecnico->apellidos . " " . $tecnico->nombres;
                                     }
                                 }else {
-                                    DB::rollBack();
-                                    return 'Tecnico no encontrado. revise columna B Fila ' . $row->getRowIndex();
+                                    $programada->TECNICO = "100. OFICINA";
+                                    //DB::rollBack();
+                                    //return 'Tecnico no encontrado. revise columna B Fila ' . $row->getRowIndex();
                                 }
                             } catch (\Exception $e) {
                                 log::error($e);
-                                DB::rollBack();
-                                return 'Error al consultar tecnico. revise columna B Fila ' . $row->getRowIndex();
+                                $programada->TECNICO = "100. OFICINA";
+                                //DB::rollBack();
+                                //return 'Error al consultar tecnico. revise columna B Fila ' . $row->getRowIndex();
                             }
                             break;
                     }
                 }
 
-                $executed = $this->programacionService->findExecuted($programada->CONTRATO, $programada->TIPO_TRABAJO,$programada->ORDEN_TRABAJO);
+                $executed = $this->programacionService->findExecuted($programada->CONTRATO,$programada->TIPO_TRABAJO,$programada->ORDEN_TRABAJO);
 
                 if ($executed) {
                     continue;
                 }
+
                 $date = date('Y-m-d');
                 $exist = tbl_programacion_contrato::where('CONTRATO', $programada->CONTRATO)
-                    ->where('FECHA_AGENDAMIENTO', '>=', $date)
+                    ->where('FECHA_AGENDAMIENTO','>=',$date)
                     ->first();
 
                 if ($exist) {
@@ -1188,9 +1517,9 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
                         } else if ($resultado == 0) {
                             $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Ya existe una programación para esta orden');
                             $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFECA2CE');
-                        } else if ($resultado == 3) {
+                        }else if ($resultado == 3) {
                             $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Orden Ya Ejecutada');
-                            $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF333333');
+                            $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFECA2CE');
                         }
                     } catch (\Exception $e) {
                         // No afecta a las otras filas, solo esta
@@ -1265,17 +1594,17 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
         // verificar si ya existe la programación
         $exist = tbl_programacion_contrato::where('CONTRATO', $row['B'])
             ->where('ORDEN_TRABAJO', $row['A'])
-            //->where('FECHA_AGENDAMIENTO', '>=', $scheduling)
+            //->where('FECHA_AGENDAMIENTO','>=',$scheduling)
             ->exists();
 
-        //$executed = $this->programacionService->findExecuted($row['B'], $row['Q'],$row['A']);
+        $executed = $this->programacionService->findExecuted($row['B'],$row['Q'],$row['A']);
 
-        /*if ($exist) {
+        if ($exist) {
             return 0;
         }
-        if ($executed) {
+        if($executed){
             return 3;
-        }*/
+        }
         // Insertar los datos si es que ya no existe
         try {
             $registro = new tbl_programacion_contrato();
@@ -1350,6 +1679,5 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
             return false;
         }
     }
-
 
 }

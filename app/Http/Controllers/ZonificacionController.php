@@ -34,7 +34,7 @@ class ZonificacionController extends Controller
 
     public function datosAsignador(): \Illuminate\Http\JsonResponse
     {
-        $municipios_sin_grupo = $this->municipioService->MunicipiosSinGrupo();
+        //$municipios_sin_grupo = $this->municipioService->MunicipiosSinGrupo();
         $municipios = tbl_localidades_municipio::all();
         $barrios_disponibles = TblBarrios::whereDoesntHave('detalle')->get();
         $barrios_asignados = TblBarrios::with('municipios')->get();
@@ -45,7 +45,7 @@ class ZonificacionController extends Controller
 
         return response()->json(
             [
-                'municipios_sin_grupo' => $municipios_sin_grupo,
+                //'municipios_sin_grupo' => $municipios_sin_grupo,
                 'municipios' => $municipios,
                 'barrios_d' => $barrios_disponibles,
                 'barrios_a' => $barrios_asignados,

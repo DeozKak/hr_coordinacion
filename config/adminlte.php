@@ -579,6 +579,7 @@ return [
                     'can' => 'reporte_produccion',
                     'label_color' => 'success',
                 ],
+
             ]
         ],
 

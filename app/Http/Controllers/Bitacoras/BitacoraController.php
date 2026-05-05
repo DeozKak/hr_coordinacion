@@ -668,7 +668,7 @@ class BitacoraController extends Controller
                             $horaFinal->modify('+1 day'); // Añadir un día si la hora final es menor que la hora de inicio
                         }
 
-                        /*  if ($dato['categoria'] === null) {
+                        /* if ($dato['categoria'] === null) {
                               $consultaMovilidad = Movilidad::select('AttrCategoria')->where('NroSitio', $dato['contrato'])->where('IdTarea', $dato['No_ACTA'])->first();
                               $dato['categoria'] = $consultaMovilidad->AttrCategoria;
                           }*/

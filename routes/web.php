@@ -18,6 +18,7 @@ Route::middleware('web')->group(function () {
     });
 
     Route::middleware('auth')->group(function () {
+        Route::post('/estado-asignacion/guardar-tecnicos', [HomeController::class, 'guardarAsignacion'])->name('asignacion.guardar_tecnicos');
         Route::get('/home', [HomeController::class, 'index'])->name('home');
         Route::get('/jobs-pnd', function () {
 

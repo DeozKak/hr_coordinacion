@@ -87,7 +87,7 @@ class EjecutadasProgramacion extends Command
                     ->whereIn('TIPO_TRABAJO', $tipo_trabajo)
                     ->whereIn('RESULTADO_CIERRE', $cierres)
                     ->where(function ($query) use ($orden) {
-                        $query->where('ORDEN', $orden)
+                        $query->where('ORDEN_TRABAJO', $orden)
                             ->orWhere('ORDEN_EXT', $orden);
                     })
                     ->first();

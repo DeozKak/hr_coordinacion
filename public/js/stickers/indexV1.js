@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
         "order": [[1, 'desc']]
     });
 
-    ManejoModal();
+
 
 });
 
@@ -70,6 +70,13 @@ function ManejoModal(){
     document.getElementById('formAgregarSticker').addEventListener('submit', async function (e) {
         e.preventDefault();
 
+        // 1. Referencia al botón y deshabilitación inmediata
+        const btnSubmit = this.querySelector('button[type="submit"]');
+        const originalHTML = btnSubmit.innerHTML; // Guardamos el texto original (ej: "Agregar")
+
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Procesando...';
+
         const tipoSelect = document.getElementById('tipoSticker');
         const tipo = tipoSelect.value;
         const optionText = (tipoSelect.options[tipoSelect.selectedIndex].dataset.nombre || '').toLowerCase();
@@ -78,9 +85,13 @@ function ManejoModal(){
         errorDiv.classList.add('d-none');
         errorDiv.textContent = '';
 
+        // Validación básica
         if (!tipo) {
             errorDiv.textContent = "Debe seleccionar un tipo de sticker.";
             errorDiv.classList.remove('d-none');
+            // Re-habilitamos si hay error de validación
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = originalHTML;
             return;
         }
 
@@ -124,8 +135,17 @@ function ManejoModal(){
         if (resultado !== 1) {
             errorDiv.textContent = resultado;
             errorDiv.classList.remove('d-none');
+            // Re-habilitamos si el servidor devolvió un error
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = originalHTML;
             return;
         }
+
+        // Si tuvo éxito, el reload refrescará la página,
+        // pero es buena práctica resetear por si acaso
+        agregarStickerModal.hide();
+        this.reset();
+        window.location.reload();
 
         // Cierra el modal y limpia
         agregarStickerModal.hide();
@@ -270,6 +290,7 @@ async function verSerialesAsignados(idInspector, nombreInspector) {
     document.getElementById('cerrarModal_actasInspector').addEventListener('click', function () {
         modalVerAsignados.hide();
     })
+
     try {
         // 2. Hacer la llamada AJAX
         const response = await fetch(urlSeriales);

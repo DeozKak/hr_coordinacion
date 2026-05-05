@@ -29,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             __DIR__ . '/../routes/zoning/zoning.php',
             __DIR__ . '/../routes/sst/sst.php',
             __DIR__ . '/../routes/pqrs/pqrs.php',
+            __DIR__ . '/../routes/production/assignment_status.php',
         ],
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
