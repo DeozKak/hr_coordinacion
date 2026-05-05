@@ -94,18 +94,12 @@
                                         @endif
                                         @haspermission('mod_devoluciones')
                                         @if ($dato->GESTIONADO === 0 )
-                                            @if($dato->CAUSAL === "ORDEN YA REGISTRADA" || $dato->CAUSAL === "INFORMACION ERRADA" || $dato->CAUSAL === "CONTRATO ERRADO" || $dato->CAUSAL === "NUMERO DE CUOTAS" || $dato->CAUSAL === "FALTA CARTA")
                                                 <td>
                                                     <form action="{{route('bitacoras.actualizar_devolucion',['id' => $dato->id])}}" method="POST">
                                                     @csrf
                                                         <button type="submit" class="btn btn-gradient btn-gradient-info btn-sm">Cambiar</button>
                                                     </form>
                                                 </td>
-                                            @else
-                                                <td>
-                                                -
-                                                </td>
-                                            @endif
                                         @else
                                             <td>
                                                 -
