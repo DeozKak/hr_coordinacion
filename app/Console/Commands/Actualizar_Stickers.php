@@ -49,7 +49,7 @@ class Actualizar_Stickers extends Command
         $inicioRango = $ayer->copy(); // Último día no festivo encontrado
         $finRango = $hoy->copy()->subDay(); // Día anterior al actual
 
-        Log::info('[Stickers] Rango de días seleccionado.', [
+        Log::info('[stickers] Rango de días seleccionado.', [
             'inicio_rango' => $inicioRango->toDateString(),
             'fin_rango' => $finRango->toDateString(),
         ]);
@@ -84,7 +84,7 @@ class Actualizar_Stickers extends Command
 
         foreach ($tiposNecesarios as $tn) {
             if (!isset($tipos[$tn])) {
-                Log::warning("[Stickers] Tipo de sticker no encontrado en tbl_sticker_tipos: {$tn}");
+                Log::warning("[stickers] Tipo de sticker no encontrado en tbl_sticker_tipos: {$tn}");
             }
         }
 
@@ -94,7 +94,7 @@ class Actualizar_Stickers extends Command
             ->get();
 
         if ($inspectores->isEmpty()) {
-            Log::info('[Stickers] No hay inspectores activos para procesar.');
+            Log::info('[stickers] No hay inspectores activos para procesar.');
             $this->info('No hay inspectores activos para procesar.');
             return Command::SUCCESS;
         }
@@ -123,7 +123,7 @@ class Actualizar_Stickers extends Command
             // Usa el campo real del documento del inspector. Ajusta si en tu tabla se llama distinto (por ej. CEDULA)
             $documentoInspector = $inspector->cedula;
             if (empty($documentoInspector)) {
-                Log::warning("[Stickers] Inspector ID {$inspector->id} sin documento configurado. Saltando.");
+                Log::warning("[stickers] Inspector ID {$inspector->id} sin documento configurado. Saltando.");
                 continue;
             }
 
@@ -229,7 +229,7 @@ class Actualizar_Stickers extends Command
 
                     $tipoId = $tipos[$nombreTipo] ?? null;
                     if (!$tipoId) {
-                        Log::warning("[Stickers] No se pudo descontar: tipo '{$nombreTipo}' no existe. Inspector {$inspector->id}");
+                        Log::warning("[stickers] No se pudo descontar: tipo '{$nombreTipo}' no existe. Inspector {$inspector->id}");
                         return;
                     }
 
@@ -260,7 +260,7 @@ class Actualizar_Stickers extends Command
                 $restar($ACTAS, $descuentoActas);
             });
 
-            Log::info('[Stickers] Descuentos aplicados', [
+            Log::info('[stickers] Descuentos aplicados', [
                 'inspector_id' => $inspector->id,
                 'documento' => $documentoInspector,
                 'fecha' => $hoy->toDateString(),

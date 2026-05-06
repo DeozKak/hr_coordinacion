@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', 'Stickers')
+@section('title', 'stickers')
 
 @section('content_header')
     <h1>Control Stickers</h1>
@@ -32,7 +32,7 @@
 @section('js')
 <script>
     const id_semana = {{ $id }};
-   
+
 </script>
 <script src="{{ asset('js/stickers/show.js') }}?v={{ time() }}"></script>
 

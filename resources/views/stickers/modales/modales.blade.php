@@ -15,7 +15,7 @@
                         <label for="tipoSticker">Tipo de Sticker</label>
                         <select class="form-control" id="tipoSticker">
                             <option value="">-- Seleccione un tipo --</option>
-                            {{-- Asumo que la variable $Stickers está disponible aquí, si no, hay que pasarla --}}
+                            {{-- Asumo que la variable $stickers está disponible aquí, si no, hay que pasarla --}}
                             @foreach($Stickers as $sticker)
                                 <option value="{{ $sticker->id }}" data-nombre="{{ strtolower($sticker->nombre) }}">
                                     {{ $sticker->nombre }}
@@ -24,7 +24,7 @@
                         </select>
                     </div>
 
-                    {{-- CAMPO PARA CANTIDAD (Stickers normales) --}}
+                    {{-- CAMPO PARA CANTIDAD (stickers normales) --}}
                     <div class="form-group" id="campo_cantidad">
                         <label for="cantidad">Cantidad a Agregar</label>
                         <input type="number" class="form-control" id="cantidad" placeholder="Ej: 50" min="1" max="10000">

@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', 'Stickers')
+@section('title', 'stickers')
 
 @section('content_header')
     <h1><i class="fa fa-sticky-note"></i> Control Stickers</h1>

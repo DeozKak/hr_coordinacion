@@ -30,13 +30,13 @@ class StickersController extends Controller
     }
     /**
      *
-     * Funcion retorna vista con las variables de Stickers y los inspectores activos
+     * Funcion retorna vista con las variables de stickers y los inspectores activos
      * @return \Illuminate\Contracts\View\View
      */
     public function index(): \Illuminate\Contracts\View\View
     {
         $Stickers = tbl_sticker_tipo::with('Inventario')->OrderBy('nombre')->get();
-        // dd($Stickers);
+        // dd($stickers);
         // Consulta a inspectores activos y la última fecha de asignación por tipo de sticker
         $inspectores = tbl_insp_cali::where('state', 1)
             ->selectRaw('id, CONCAT(apellidos, " ", nombres) as nombre_completo')
@@ -77,7 +77,7 @@ class StickersController extends Controller
     }
 
     /**
-     * funcion dedicada a actualizar el inventario total de Stickers para cada uno
+     * funcion dedicada a actualizar el inventario total de stickers para cada uno
      *
      * @param $id
      * @param Request $request
@@ -198,7 +198,7 @@ class StickersController extends Controller
      * Función dedicada a recibir entradas de usuario para la asignación de uno o diferentes
      * tipos de Sticker a un inspector y registrar en BD en las tablas correspondientes,
      * además de guardar un histórico de lo asignado
-     * @param Request $request el id del inspector al cual se van a asignar la cantidad de Stickers
+     * @param Request $request el id del inspector al cual se van a asignar la cantidad de stickers
      * @param array $stickers  con los tipos de stickers y cantidad a asignar
      *
      * @return JsonResponse
@@ -348,7 +348,7 @@ class StickersController extends Controller
             log::error($e->getMessage());
             return response()->json(['error' => 'No se pudo Asignar' . $e->getMessage()], 500);
         }
-        return response()->json(['success' => 'Stickers asignados correctamente'], 200);
+        return response()->json(['success' => 'stickers asignados correctamente'], 200);
     }
 
     /**
@@ -520,7 +520,7 @@ class StickersController extends Controller
             return response()->json(['error' => 'No se pudieron desasignar los stickers: ' . $e->getMessage()], 500);
         }
 
-        return response()->json(['success' => 'Stickers desasignados correctamente'], 200);
+        return response()->json(['success' => 'stickers desasignados correctamente'], 200);
     }
 
     /**
