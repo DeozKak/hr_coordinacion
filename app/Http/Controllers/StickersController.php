@@ -206,7 +206,7 @@ class StickersController extends Controller
      * */
     public function asignar(Request $request): \Illuminate\Http\JsonResponse
     {
-        
+
         //Validación de entrada de usuario
         $validator = Validator::make($request->all(), [
             'idInspector' => 'required',

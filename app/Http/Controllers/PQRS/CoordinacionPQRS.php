@@ -275,7 +275,7 @@ class CoordinacionPQRS extends Controller
                     $fechaAsignado = date('Y-m-d');
                     $dataToUpdate['FECHA_ASIGNADO'] = $fechaAsignado;
 
-                    $inspectoresExcluidos = [100, 101, 102];
+                    $inspectoresExcluidos = [100];
 
                     if (in_array((int)$inspectorId, $inspectoresExcluidos)) {
                         $nombreSupervisor = null;
