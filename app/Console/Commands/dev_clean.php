@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 use App\Models\Bitacoras\tbl_dv_insp;
+use DateTime;
 use Illuminate\Console\Command;
 
 class dev_clean extends Command
@@ -21,9 +22,7 @@ class dev_clean extends Command
     protected $description = 'Cambia de estado a las devoluciones que fueron gestionadas para limpiar cuadro
     de devoluciones';
 
-    /**
-     * Execute the console command.
-     */
+    
     public function handle()
     {
         $gestionadas = tbl_dv_insp::where('ACTIVADO', 1)
