@@ -22,7 +22,7 @@ class dev_clean extends Command
     protected $description = 'Cambia de estado a las devoluciones que fueron gestionadas para limpiar cuadro
     de devoluciones';
 
-    
+
     public function handle()
     {
         $gestionadas = tbl_dv_insp::where('ACTIVADO', 1)

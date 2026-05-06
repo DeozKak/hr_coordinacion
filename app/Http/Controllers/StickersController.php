@@ -206,12 +206,13 @@ class StickersController extends Controller
      * */
     public function asignar(Request $request): \Illuminate\Http\JsonResponse
     {
+        
         //Validación de entrada de usuario
         $validator = Validator::make($request->all(), [
             'idInspector' => 'required',
             'stickers' => 'required_without:seriales_acta|array', // Obligatorio si no se incluye seriales_acta
             'stickers.*' => 'required|numeric',
-            'seriales_acta' => 'required_without:stickers|array', // Obligatorio si no se incluye stickers
+            'seriales_acta' => 'nullable|required_without:stickers|array', // Obligatorio si no se incluye stickers
             'seriales_acta.serial_inicio' => 'required_with:seriales_acta|numeric',
             'seriales_acta.serial_fin' => 'required_with:seriales_acta|numeric|gte:seriales_acta.serial_inicio',
         ], [
