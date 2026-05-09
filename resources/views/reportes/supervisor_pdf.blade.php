@@ -47,8 +47,7 @@
         <th>Observacion</th>
         <th>Quien programo</th>
         <th>Tecnico</th>
-        <th>Hora inicio</th>
-        <th>Hora Final</th>
+        <th>Jornada</th>
         <!-- ... -->
     </tr>
     </thead>
@@ -72,7 +71,7 @@
             <td>{{ $registro[15] }}</td>
             <td>{{ $registro[16] }}</td>
             <td>{{ $registro[17] }}</td>
-            <td>{{ $registro[18] }}</td>
+
             <!-- ... -->
         </tr>
     @endforeach

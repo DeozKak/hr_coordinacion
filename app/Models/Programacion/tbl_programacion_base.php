@@ -26,7 +26,8 @@ class tbl_programacion_base extends Model
         'FECHA_RECEPCION',
         'SEDE',
         'GRUPO',
-        'SUB_GRUPO'
+        'SUB_GRUPO',
+        'MESES'
     ];
     public static $rules = [
         'NUMERO_ORDEN' => 'unique:tbl_programacion_base',

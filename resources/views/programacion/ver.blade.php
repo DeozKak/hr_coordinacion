@@ -63,7 +63,6 @@
                 <div class="card-header card-header-modern d-flex justify-content-between align-items-center">
                     <h3 class="card-title-modern mb-0"><i class="fas fa-tasks"></i>Resultados de la Búsqueda</h3>
                     <div class="card-tools">
-
                         <button id="btnExportarSup" class="btn btn-sm btn-export-sup">
                             <i class="fas fa-file-export"></i> Plantilla Supervisores
                         </button>
@@ -84,7 +83,7 @@
 
     @section('js')
 
-        <script src="{{ asset('js/programacion/verProgramacionV4.4.js') }}"></script>
+        <script src="{{ asset('js/programacion/verProgramacionV4.4.js') }}?v={{ time() }}"></script>
         <script>
             const tecnicos = @json($tecnicos);
             let permiso_modTec = 0;

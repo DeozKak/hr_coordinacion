@@ -1,196 +1,149 @@
-<?php /** @noinspection ALL */
+<?php
 
 namespace App\Services;
 
 use DateTime;
 use Illuminate\Support\Facades\Log;
+use OpenAI;
 
 class ExtraerFechas
 {
+    protected $client;
 
+    public function __construct()
+    {
+        // Inicializamos el cliente apuntando a Groq
+        $this->client = OpenAI::factory()
+            ->withApiKey(env('GROQ_API_KEY'))
+            ->withBaseUri('https://api.groq.com/openai/v1')
+            ->make();
+    }
 
     /**
-     * @return void
-     * función dedicada a extraer fechas del campo de observaciones de OSF de GDO
+     * @return array
+     * Función dedicada a extraer fechas y jornada 100% con IA (Llama 3.1)
      */
-    public function findDates(string $texto, ?string $fechaDeReferencia = null, $id_reg)
+    public function findDates(string $texto, ?string $fechaDeReferencia = null, $id_reg = null)
     {
         date_default_timezone_set('America/Bogota');
-        // REGLAS de limpieza previas (sin cambios)
-        $texto = str_ireplace('LA MAÑANA', '', $texto);
-        $texto = preg_replace('/FECHA MAX\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}/i', '', $texto);
-        $texto = preg_replace('/\\((FS|FA):\\s*.*?\\)/i', '', $texto);
 
-        $ahora = $fechaDeReferencia ? new DateTime($fechaDeReferencia) : new DateTime();
-        $timestampDeReferencia = $ahora->getTimestamp();
+        // ====================================================================
+        // 1. REGLAS DE LIMPIEZA ANTIALUCINACIONES (VITALES PARA LA IA)
+        // ====================================================================
+        $textoLimpio = preg_replace('/FECHA MAX\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}/i', '', $texto);
+        $textoLimpio = preg_replace('/\\((FS|FA):\\s*.*?\\)/i', '', $textoLimpio);
 
-        // <-- CAMBIO 1: ESTRATEGIA DE MÚLTIPLES PATRONES -->
-        // En lugar de un patrón gigante, creamos un arreglo de patrones individuales.
-        $patrones = [
-            // Patrón para fechas numéricas completas (yyyy-mm-dd, dd/mm/yyyy, etc.)
-            '/(?:\d{1,4}\s*[\/\-]\s*\d{1,2}\s*[\/\-]\s*\d{1,4})/iu',
-            // Patrón para "Año-Mes-Día" con nombre de mes (ej. 2026-FEBRERO-02)
-            '/(?:\d{4}\s*[\/\-]\s*(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s*[\/\-]\s*\d{1,2})/iu',
-            // Patrón para fechas con nombre de mes (11 de Junio de 2025)
-            '/(?:(?:lunes|martes|miercoles|jueves|viernes|sabado|domingo)\s*,?\s*)?(?:\d{1,2})\s+(?:de\s+)?(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)(?:\s*,?\s*(?:de\s+)?\d{2,4})?/iu',
-            // Patrón para "Mes Día" (ej. Junio 17)
-            '/\b(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+(0?[1-9]|[12]\d|3[01])(?:,?\s+\d{2,4})?\b/iu',
-            // Patrón para "nombre de día + número" (Miércoles 11)
-            '/(?:(?:lunes|martes|miercoles|jueves|viernes|sabado|domingo)\s+\d{1,2})\b/iu',
-            // Patrón para "número + nombre de mes" (14/junio) - Nota el \b
-            '/(?:\b\d{1,2}\s*[\/\-]\s*(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre))/iu',
-            // Patrón para "día/mes" (11/06) con validación estricta
-            '/(?:(0?[1-9]|[12]\d|3[01])\s*[\/\-]\s*(0?[1-9]|1[0-2]))\b/iu',
-            // Patrón para palabras clave relativas
-            '/\b(?:mañana|hoy|ayer|lunes|martes|miercoles|jueves|viernes|sabado|domingo)\b/iu'
-        ];
+        // Borramos todo lo que confunde a la IA
+        $textoLimpio = preg_replace('/\b3\d{9}\b/', '', $textoLimpio); // Celulares
+        $textoLimpio = preg_replace('/\$[0-9.,]+/', '', $textoLimpio); // Precios ($138900)
+        $textoLimpio = preg_replace('/\b\d{1,2}\s*A\s*\d{1,2}\s*(DH|DIAS HABILES|MESES|DIAS)\b/i', '', $textoLimpio); // Rangos
+        $textoLimpio = preg_replace('/\b\d{1,2}\s*(DH|DIAS HABILES|MESES|DIAS)\b/i', '', $textoLimpio); // Tiempos exactos
+        // 🟢 NUEVO: Borramos CUALQUIER secuencia de 5 o más números (Precios sin $, Cédulas, Celulares, Contratos)
+        $textoLimpio = preg_replace('/\b\d{5,}\b/', '', $textoLimpio);
+        // 🟢 MAGIA DINÁMICA: Voltea CUALQUIER fecha DD/MM/YYYY a YYYY-MM-DD
+        $textoLimpio = preg_replace('/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})\b/', '$3-$2-$1', $textoLimpio);
 
-        $todasLasCoincidencias = [];
-        foreach ($patrones as $patron) {
-            if (preg_match_all($patron, $texto, $coincidencias)) {
-                $todasLasCoincidencias = array_merge($todasLasCoincidencias, $coincidencias[0]);
-            }
-        }
+        // 🟢 MAGIA DINÁMICA MEJORADA: Voltea fechas y detecta años de 2 dígitos inteligentemente
+        $textoLimpio = preg_replace_callback('/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2}|\d{4})\b/', function($matches) {
+            $mes = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
 
-        // 1. Eliminar duplicados exactos
-        $todasLasCoincidencias = array_unique($todasLasCoincidencias);
+            if (strlen($matches[3]) === 4) {
+                // Formato clásico con año de 4 dígitos (ej. 12/05/2026)
+                $anio = $matches[3];
+                $dia = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+            } else {
+                // Formato con año de 2 dígitos (ej. 26/05/27 o 27/05/26)
+                $val1 = (int)$matches[1];
+                $val3 = (int)$matches[3];
+                $anioActual = (int)date('y'); // Extrae automáticamente '26' (del 2026)
 
-        // <-- NUEVO: FILTRO DE PRIORIDAD POR LONGITUD (SUBCADENAS) -->
-        // Ordenamos por longitud de mayor a menor para procesar primero las fechas más completas.
-        usort($todasLasCoincidencias, function($a, $b) {
-            return strlen($b) - strlen($a);
-        });
-
-        $coincidenciasFiltradas = [];
-        foreach ($todasLasCoincidencias as $candidato) {
-            $esSubcadena = false;
-            // Revisamos si este candidato está contenido dentro de alguno ya aceptado
-            foreach ($coincidenciasFiltradas as $aceptado) {
-                if (stripos($aceptado, $candidato) !== false) {
-                    $esSubcadena = true;
-                    break;
+                // Si el primer número es exactamente el año actual (26/05/27)
+                if ($val1 === $anioActual && $val3 !== $anioActual) {
+                    $anio = '20' . $val1;
+                    $dia = str_pad($val3, 2, '0', STR_PAD_LEFT);
+                }
+                // Si el último número es exactamente el año actual (27/05/26)
+                elseif ($val3 === $anioActual && $val1 !== $anioActual) {
+                    $anio = '20' . $val3;
+                    $dia = str_pad($val1, 2, '0', STR_PAD_LEFT);
+                }
+                // Si programan para otro año o ambos coinciden (ej. 15/05/28), asumimos DD/MM/YY por defecto
+                else {
+                    $anio = '20' . str_pad($val3, 2, '0', STR_PAD_LEFT);
+                    $dia = str_pad($val1, 2, '0', STR_PAD_LEFT);
                 }
             }
 
-            // Si NO está contenido en ninguno más grande, lo guardamos
-            if (!$esSubcadena) {
-                $coincidenciasFiltradas[] = $candidato;
-            }
+            return $anio . '-' . $mes . '-' . $dia;
+        }, $textoLimpio);
+        // ====================================================================
+        // 2. VALIDACIÓN DE SEGURIDAD: ¿QUEDAN NÚMEROS?
+        // ====================================================================
+        // Si después de limpiar celulares y precios no quedan dígitos,
+        // asumimos que no hay fecha explícita y evitamos la llamada a la IA.
+        if (!preg_match('/\d/', $textoLimpio)) {
+            return [
+                'fechas' => [],
+                'jornada' => null
+            ];
         }
 
-        // Asignamos el array filtrado a la variable que usa el resto de tu código
-        $coincidencias[0] = $coincidenciasFiltradas;
-        // <-- FIN DEL FILTRO -->
+        // ====================================================================
+        // 3. PROCESAMIENTO EXCLUSIVO CON IA (GROQ)
+        // ====================================================================
+        try {
+            // Prompt actualizado con reglas estrictas para formato latinoamericano y jornadas
+            $promptSistema = "Extrae SOLO fechas explícitas de agendamiento y jornada (MAÑANA/TARDE/TODO EL DIA). " .
+                "La fecha me lo entregas en el siguiente formato YYYY-MM-DD".
+                "Dar prioridad a la fecha que esta en seguida de la palabra FECHA DE VISITA o FECHA SUGERIDA".
+                "REGLA VITAL: Si el texto NO contiene una fecha de visita, retorna ESTRICTAMENTE {\"fechas\": [], \"jornada\": null}. " .
+                "IGNORA números sueltos y no asumas fechas. " .
+                "Regla jornada: Cualquier hora con 'AM' = mañana; Cualquier hora con 'PM' = tarde. Retorna SOLO JSON.";
 
-        $fechasEncontradas = [];
+            $response = $this->client->chat()->create([
+                'model' => 'llama-3.1-8b-instant',
+                'messages' => [
+                    ['role' => 'system', 'content' => $promptSistema],
+                    ['role' => 'user', 'content' => $textoLimpio],
+                ],
+                'response_format' => ['type' => 'json_object'],
+                'temperature' => 0.0 // 100% robótico, nada de inventos
+            ]);
+            dd($response,$textoLimpio);
+            $resultado = json_decode($response->choices[0]->message->content, true);
+            $fechasExtraidas = $resultado['fechas'] ?? [];
+            $jornadaExtraida = $resultado['jornada'] ?? null;
 
-        if (!empty($coincidencias[0])) {
+            $fechasUnicas = [];
+            $mapaFechas = [];
 
-            $terminosRelativos = [
-                'hoy' => 'today', 'mañana' => 'tomorrow', 'ayer' => 'yesterday',
-                'lunes' => 'next Monday', 'martes' => 'next Tuesday', 'miercoles' => 'next Wednesday',
-                'jueves' => 'next Thursday', 'viernes' => 'next Friday', 'sabado' => 'next Saturday',
-                'domingo' => 'next Sunday'
+            // Convertimos los strings a objetos DateTime
+            foreach ($fechasExtraidas as $fechaStr) {
+                try {
+                    $fechaObj = new DateTime($fechaStr);
+                    $key = $fechaObj->format('Y-m-d');
+
+                    if (!isset($mapaFechas[$key])) {
+                        $mapaFechas[$key] = true;
+                        $fechasUnicas[] = $fechaObj;
+                    }
+                } catch (\Exception $e) {
+                    Log::error("Error parseando fecha de IA: " . $fechaStr);
+                }
+            }
+
+            return [
+                'fechas' => $fechasUnicas,
+                'jornada' => $jornadaExtraida
             ];
 
-            // Lógica de prioridad (sin cambios)
-            $fechasExplicitas = [];
-            $palabrasClaveRelativas = [];
-
-            foreach ($coincidencias[0] as $match) {
-                if (preg_match('/\\d/', $match)) {
-                    $fechasExplicitas[] = $match;
-                } else if (isset($terminosRelativos[mb_strtolower($match, 'UTF-8')])) {
-                    $palabrasClaveRelativas[] = $match;
-                }
-            }
-
-            $listaAProcesar = !empty($fechasExplicitas) ? $fechasExplicitas : $palabrasClaveRelativas;
-
-            $meses_es = ['enero' => 'jan', 'febrero' => 'feb', 'marzo' => 'mar', 'abril' => 'apr', 'mayo' => 'may', 'junio' => 'jun', 'julio' => 'jul', 'agosto' => 'aug', 'septiembre' => 'sep', 'octubre' => 'oct', 'noviembre' => 'nov', 'diciembre' => 'dec'];
-            // Corregí tu mapeo de días para que sea a inglés y funcione con strtotime
-            $dias_es = ['lunes' => 'monday', 'martes' => 'tuesday', 'miercoles' => 'wednesday', 'jueves' => 'thursday', 'viernes' => 'friday', 'sabado' => 'saturday', 'domingo' => 'sunday'];
-
-            foreach ($listaAProcesar as $posibleFecha) {
-                try {
-                    // Tu lógica de procesamiento (sin cambios)
-                    $textoAProcesar = mb_strtolower(str_replace(',', '', $posibleFecha), 'UTF-8');
-                    $fechaObj = null;
-
-                    if (isset($terminosRelativos[$textoAProcesar])) {
-                        try {
-                            $fechaObj = new DateTime(date('Y-m-d H:i:s', strtotime($terminosRelativos[$textoAProcesar], $timestampDeReferencia)));
-                        } catch (\Exception $e) {
-                            log::error($e->getMessage() . " " . $texto);
-                            return 1000;
-                        }
-                    } else {
-                        // Reemplazar nombres de días en español por inglés antes de procesar
-                        $textoAProcesar = str_ireplace(array_keys($dias_es), array_values($dias_es), $textoAProcesar);
-
-                        $textoAProcesar = str_replace('/', '-', $textoAProcesar);
-                        $textoAProcesar = str_replace(' de ', ' ', $textoAProcesar);
-                        $textoAProcesar = strtr($textoAProcesar, $meses_es);
-                        $textoAProcesar = trim($textoAProcesar);
-                        $textoAProcesar = preg_replace('/\s*-\s*/', '-', $textoAProcesar);
-                        // Detectar si hay letras (mes escrito)
-                        if (preg_match('/[a-zA-Z]/', $textoAProcesar)) {
-                            // 1. Reemplazamos guiones por espacios (ej: 2026-feb-5 -> 2026 feb 5)
-                            $textoAProcesar = str_replace('-', ' ', $textoAProcesar);
-
-                            // 2. CORRECCIÓN CLAVE: Si detectamos formato "AÑO MES DÍA", lo volteamos a "DÍA MES AÑO"
-                            // Ejemplo: Transforma "2026 feb 5" en "5 feb 2026"
-                            if (preg_match('/^(\d{4})\s+([a-z]{3})\s+(\d{1,2})$/i', $textoAProcesar, $matches)) {
-                                // $matches[1] = Año, $matches[2] = Mes, $matches[3] = Día
-                                $textoAProcesar = $matches[3] . ' ' . $matches[2] . ' ' . $matches[1];
-                            }
-                        }
-
-                        if (!empty($textoAProcesar)) {
-                            try {
-                                $fechaObj = new DateTime(date('Y-m-d H:i:s', strtotime($textoAProcesar, $timestampDeReferencia)));
-                               /* if ($id_reg == 279) {
-                                    // Ahora dd() mostrará ambas coincidencias
-                                    dd($fechaObj,$textoAProcesar);
-                                }*/
-                            } catch (\Exception $e) {
-                                log::error($e->getMessage() . " " . $texto);
-                                return 1000;
-                            }
-                        }
-                    }
-
-                    if ($fechaObj) {
-                        $fechasEncontradas[] = $fechaObj;
-                    }
-
-                } catch (\Exception $e) {
-                    log::error($e->getMessage() . " " . $texto);
-                    return 1000;
-                }
-            }
+        } catch (\Exception $e) {
+            // Si la API se cae o da error de rate limit, devuelve vacío para no romper el Excel
+            Log::error("Error Groq API: " . $e->getMessage() . " | ID_REG: " . $id_reg . " | Texto: " . $textoLimpio);
+            return [
+                'fechas' => [],
+                'jornada' => null
+            ];
         }
-
-        $fechasUnicas = [];
-        $mapaFechas = [];
-        foreach ($fechasEncontradas as $fecha) {
-            $key = $fecha->format('Y-m-d');
-            if (!isset($mapaFechas[$key])) {
-                $mapaFechas[$key] = true;
-                $fechasUnicas[] = $fecha;
-            }
-        }
-
-        // Si hay dos o más fechas, eliminamos la fecha indeseada
-        if (count($fechasUnicas) >= 2) {
-            $fechasUnicas = array_filter($fechasUnicas, function($fecha) {
-                return $fecha->format('Y-m-d H:i:s') !== '1969-12-31 19:00:00';
-            });
-            // Reindexa el array por si necesitas índices consecutivos
-            $fechasUnicas = array_values($fechasUnicas);
-        }
-
-
-        return $fechasUnicas;
     }
 }

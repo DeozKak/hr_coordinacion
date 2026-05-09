@@ -65,7 +65,7 @@
                         <p style="margin-top: 20px;">Por favor, revise y gestione según corresponda.</p>
 
                         <p style="text-align: left; margin: 25px 0;">
-                            <a href="<?php echo (route('pqrs.index')) ?>"
+                            <a href="<?php echo (route('pqrs.coordinacion')) ?>"
                                class="button"
                                style="display: inline-block; background-color: #007bff;
                                           color: white; padding: 13px 23px; text-decoration: none;

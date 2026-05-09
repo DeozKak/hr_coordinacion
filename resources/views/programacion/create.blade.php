@@ -140,17 +140,13 @@
                     </select>
                 </div>
                 <div class="form-field-group">
-                    <label><i class="fas fa-clock"></i> Horario:</label>
+                    <label><i class="fas fa-clock"></i> Jornada:</label>
                     <div style="display: flex; gap: 1rem;">
-                        <select class="form-control" name="hora_inicio" id="HORA_INICIO">
-                            <option value="">Seleccione Hora inicio</option>
-                            <option value="06:59:00 a.m.">06:59:00 a.m.</option>
-                            <option value="11:59:00 a.m.">11:59:00 a.m.</option>
-                        </select>
-                        <select class="form-control" name="hora_fin" id="HORA_FINAL">
-                            <option value="">Seleccione Hora final</option>
-                            <option value="11:59:00 a.m.">11:59:00 a.m.</option>
-                            <option value="04:59:00 p.m.">04:59:00 p.m.</option>
+                        <select class="form-control" name="hora_inicio" id="JORNADA">
+                            <option value="">Seleccione Jornada</option>
+                            <option value="mañana">mañana</option>
+                            <option value="tarde">tarde</option>
+                            <option value="todo el dia">todo el dia</option>
                         </select>
                     </div>
                 </div>
@@ -209,7 +205,7 @@ $tabla = isset($tabla) ? $tabla : []; // Si $tabla no está definida, se asigna 
     minimumInputLength: 2 // Mínimo de caracteres para iniciar la búsqueda
   });
 </script>
-<script src="{{ asset('js/programacion/programacionV4-7.js') }}" type="text/javascript"></script>
-<script src="{{ asset('js/formPlantilla.js') }}" type="text/javascript"></script>
+<script src="{{ asset('js/programacion/programacionV4-7.js') }}?v={{ time() }}" type="text/javascript"></script>
+<script src="{{ asset('js/formPlantilla.js') }}?v={{ time() }}" type="text/javascript"></script>
 @stop
 @stop

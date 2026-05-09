@@ -1,7 +1,7 @@
 
 const url_plantilla = document.getElementById('url_plantilla').value;
 const columns = ['id', 'CONTRATO', 'TIPO_TRABAJO', 'FECHA', 'CELULAR', 'NOMBRE_USUARIO', 'ORDEN_TRABAJO', 'DIRECCION', 'BARRIO', 'CIUDAD', 'ACTIVA',
-    'SUSPENDIDO', 'CATEGORIA', 'FECHA_AGENDAMIENTO', 'OBSERVACIONES', 'PORQUE_PROGRAMO', 'TECNICO', 'HORA_INICIO', 'HORA_FINAL'
+    'SUSPENDIDO', 'CATEGORIA', 'FECHA_AGENDAMIENTO', 'OBSERVACIONES', 'PORQUE_PROGRAMO', 'TECNICO', 'JORNADA'
 ];
 // Esperamos a que el documento esté completamente cargado
 document.addEventListener('DOMContentLoaded', function () {
@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Capturamos el valor de la fecha
         formData.FECHA = document.getElementById('FECHA').value;
 
-        // Capturamos el valor del select para el municipio 
+        // Capturamos el valor del select para el municipio
         formData.CIUDAD = document.getElementById('CIUDAD').value;
 
         // Capturamos el estado (activo o suspendido)
@@ -101,11 +101,11 @@ document.addEventListener('DOMContentLoaded', function () {
         formData.TECNICO = document.getElementById('TECNICO').value;
 
         // Capturamos las horas de inicio y fin
-        formData.HORA_INICIO = document.getElementById('HORA_INICIO').value;
-        formData.HORA_FINAL = document.getElementById('HORA_FINAL').value;
+        formData.JORNADA = document.getElementById('JORNADA').value;
+
 
         // Validación de campos obligatorios
-        const camposObligatorios = ['CONTRATO', 'CELULAR', 'NOMBRE_USUARIO', 'DIRECCION', 'BARRIO', 'TIPO_TRABAJO', 'CIUDAD', 'FECHA_AGENDAMIENTO', 'CATEGORIA', 'OBSERVACIONES', 'TECNICO', 'HORA_INICIO', 'HORA_FINAL'];
+        const camposObligatorios = ['CONTRATO', 'CELULAR', 'NOMBRE_USUARIO', 'DIRECCION', 'BARRIO', 'TIPO_TRABAJO', 'CIUDAD', 'FECHA_AGENDAMIENTO', 'CATEGORIA', 'OBSERVACIONES', 'TECNICO', 'JORNADA'];
 
         let hayCamposVacios = false; // Variable para controlar si hay campos vacíos
 
@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     lastRowWithData--;
                 }
-                
+
                 // Obtener el número total de filas existentes
                 let rowCount = H_tabla.countRows();
 

@@ -251,7 +251,7 @@
     </div>
     </body>
     @section('js')
-        <script src="{{ asset('js/programacion/indexProgramacionV3-8.js') }}" type="text/javascript"></script>
+        <script src="{{ asset('js/programacion/indexProgramacionV3-8.js') }}?v={{ time() }}" type="text/javascript"></script>
 
 
         @if (session('success'))

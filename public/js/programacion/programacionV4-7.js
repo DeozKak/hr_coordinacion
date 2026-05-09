@@ -1,9 +1,9 @@
 let columnasEditables;
 let H_tabla;
 if (ver_programacion === "true") {
-    columnasEditables = ['TECNICO', 'CELULAR', 'FECHA_AGENDAMIENTO', 'OBSERVACIONES', 'HORA_INICIO', 'HORA_FINAL'];
+    columnasEditables = ['TECNICO', 'CELULAR', 'FECHA_AGENDAMIENTO', 'OBSERVACIONES', 'JORNADA'];
 } else {
-    columnasEditables = ['CELULAR', 'FECHA_AGENDAMIENTO', 'OBSERVACIONES', 'HORA_INICIO', 'HORA_FINAL'];
+    columnasEditables = ['CELULAR', 'FECHA_AGENDAMIENTO', 'OBSERVACIONES', 'JORNADA'];
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -112,27 +112,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             },
             {
-                data: 'HORA_INICIO',
-                title: 'HORA INICIO',
-                type: 'time',
-                timeFormat: 'hh:mm:ss a',
-                correctFormat: true,
-                defaultDate: '06:59:00 a.m.',
+                data: 'JORNADA',
+                title: 'JORNADA',
+                type: 'dropdown',
                 readOnly: true, // Permitimos la edición para el combobox
                 editor: 'select', // Usamos el editor 'select' para el combobox
-                selectOptions: ['06:59:00 a.m.', '11:59:00 a.m.'], // Opciones predefinidas
+                selectOptions: ['mañana', 'tarde','todo el dia'], // Opciones predefinidas
             },
-            {
-                data: 'HORA_FINAL',
-                title: 'HORA FINAL',
-                type: 'time',
-                timeFormat: 'hh:mm:ss a',
-                correctFormat: true,
-                defaultDate: '04:59:00 p.m.',
-                readOnly: true, // Permitimos la edición para el combobox
-                editor: 'select', // Usamos el editor 'select' para el combobox
-                selectOptions: ['11:59:00 a.m.', '04:59:00 p.m.'], // Opciones predefinidas
-            }
+
         ],
 
         data: tabla_data,

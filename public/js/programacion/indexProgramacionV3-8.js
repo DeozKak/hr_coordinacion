@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('submit-masivo').disabled = true;
 
         const formData = new FormData(this);
-        const url = document.getElementById('url_base').value; // Ruta Laravel para procesar el formulario
+        const url = document.getElementById('url_masivo').value; // Ruta Laravel para procesar el formulario
 
         $.ajax({
             type: 'POST',
@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
             processData: false,
             contentType: false,
             success: function (response) {
+                console.log(response);
                 document.getElementById('submit-masivo').disabled = false;
 
                 // Manejo de la respuesta exitosa (opcional)
@@ -69,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 location.reload();
             },
             error: function (xhr, status, error) {
+                console.log(xhr.responseText);
                 document.getElementById('submit-masivo').disabled = false;
 
                 if (xhr.status === 422) {
@@ -266,20 +268,17 @@ document.addEventListener('DOMContentLoaded', () => {
             success: function (response) {
                 document.getElementById('submit-callcenterGDO').disabled = false;
 
-
-                // Manejo de la respuesta exitosa (opcional)
+                // Mostramos que el archivo se está procesando
                 Swal.fire({
-                    position: "top-end",
-                    icon: "success",
-                    title: response.message,
-                    showConfirmButton: false,
-                    toast: true,
-                    timer: 4000
+                    position: "center",
+                    icon: "info",
+                    title: "Procesando en segundo plano",
+                    text: response.message,
+                    showConfirmButton: true,
+                }).then(() => {
+                    location.reload(); // Recarga para ver la nueva tabla en estado "Procesando"
                 });
-                window.location.href = response.url;
-                setTimeout(function () {
-                    location.reload();
-                }, 1000)
+
                 errorContainercallcenterGDO.innerHTML = '';
                 errorContainercallcenterGDO.classList.remove('alert', 'alert-danger');
                 callcenterGDO.hide();

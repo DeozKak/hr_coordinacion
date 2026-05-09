@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ActualizacionAsignacionTec;
-use App\Models\Bitacoras\tbl_bitacora_contrato;
+
 use App\Services\ProgramacionService;
 use App\Jobs\CorreoProgramacion;
 use App\Models\Programacion\tbl_programacion_base;
@@ -13,7 +12,6 @@ use App\Models\tbl_insp_cali;
 use App\Models\User;
 use Carbon\Carbon;
 use DateTime;
-use Dotenv\Exception\ValidationException;
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Database\QueryException;
@@ -29,7 +27,6 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use App\Services\ExtraerFechas;
-use function Laravel\Prompts\error;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
@@ -37,6 +34,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Jobs\ProcessExcelFileMacros;
 use Illuminate\Support\Facades\File;
 use ZipArchive;
+use App\Jobs\ProcessCallCenterGdo;
 
 class ProgramacionController extends Controller
 {
@@ -342,8 +340,7 @@ class ProgramacionController extends Controller
             $programacion->OBSERVACIONES = $request->data[14];
             $programacion->PORQUE_PROGRAMO = $request->data[15];
             $programacion->TECNICO = $request->data[16];
-            $programacion->HORA_INICIO = $request->data[17];
-            $programacion->HORA_FINAL = $request->data[18];
+            $programacion->JORNADA = $request->data[17];
             $programacion->id_programacion = $request->tabla;
             $programacion->save();
             DB::commit();
@@ -376,6 +373,10 @@ class ProgramacionController extends Controller
                 }
             }
 
+            if($campo === 'JORNADA'){
+                $programacion->HORA_INICIO = "06:59:00 a.m.";
+                $programacion->HORA_FINAL = "04:59:00 p.m.";
+            }
 
             $programacion->$campo = $request->valor;
             $programacion->save();
@@ -525,6 +526,8 @@ class ProgramacionController extends Controller
             if ($fecha_fin === null) {
 
                 $columnasTabla = Schema::getColumnListing('tbl_programacion_contratos');
+                $elemento = array_splice($columnasTabla, 19, 1);
+                array_splice($columnasTabla, 17, 0, $elemento);
                 $columnasAExcluir = ['updated_at', 'created_at'];
                 $columnasAIncluir = array_diff($columnasTabla, $columnasAExcluir);
 
@@ -553,8 +556,8 @@ class ProgramacionController extends Controller
                         'pc.OBSERVACIONES',
                         'pc.PORQUE_PROGRAMO',
                         'pc.TECNICO',
-                        'pc.HORA_INICIO',
-                        'pc.HORA_FINAL',
+                        'pc.JORNADA',
+
                     );
 
 
@@ -580,11 +583,12 @@ class ProgramacionController extends Controller
                         'OBSERVACIONES',
                         'PORQUE_PROGRAMO',
                         'TECNICO',
-                        'HORA_INICIO',
-                        'HORA_FINAL',
+                        'JORNADA',
                     );
             } else {
                 $columnasTabla = Schema::getColumnListing('tbl_programacion_contratos');
+                $elemento = array_splice($columnasTabla, 19, 1);
+                array_splice($columnasTabla, 17, 0, $elemento);
                 $columnasAExcluir = ['updated_at', 'created_at'];
                 $columnasAIncluir = array_diff($columnasTabla, $columnasAExcluir);
 
@@ -618,8 +622,7 @@ class ProgramacionController extends Controller
                         'pc.OBSERVACIONES',
                         'pc.PORQUE_PROGRAMO',
                         'pc.TECNICO',
-                        'pc.HORA_INICIO',
-                        'pc.HORA_FINAL',
+                        'pc.JORNADA',
                     );
 
                 $plantilla = DB::table('tbl_programacion_contratos')
@@ -645,14 +648,13 @@ class ProgramacionController extends Controller
                         'OBSERVACIONES',
                         'PORQUE_PROGRAMO',
                         'TECNICO',
-                        'HORA_INICIO',
-                        'HORA_FINAL',
+                        'JORNADA',
                     );
             }
 
             $plantilla = $plantilla->orderBy('TECNICO')->get();
             $busqueda = $busqueda->orderBy('TECNICO')->get();
-            // dd($busqueda);
+
             // Agregar primero los registros de plantilla
             $finalData = [];
 
@@ -740,7 +742,7 @@ class ProgramacionController extends Controller
                 $fecha_original = $item[13];
                 //modificacion hora inicio para que salgan desde la mañana
                 $hora_inicio = '06:59:00 a.m.';
-                $hora_final = $item[18];
+                $hora_final = '05:59:00 p.m.';
                 if ($hora_inicio == null || $hora_final == null || $fecha_original == null) {
                     return response()->json(['error' => 'Falta hora inicio o hora final, revise fila ' . $index + 1], 422);
                 }
@@ -913,7 +915,7 @@ class ProgramacionController extends Controller
         $headers = [
             'Contrato', 'Tipo de trabajo', 'Fecha', 'Celular', 'Nombre de Usuario', 'Orden de trabajo', 'Direccion',
             'Barrio', 'Ciudad', 'Activa', 'Suspendida', 'Categoria', 'Fecha de agendamiento', 'Observaciones',
-            'Quien programo', 'Tecnico', 'Hora  inicio', 'Hora final'
+            'Quien programo', 'Tecnico', 'Jornada'
         ];
         $sheet->fromArray($headers, NULL, 'A1');
 
@@ -1021,7 +1023,7 @@ class ProgramacionController extends Controller
             'archivo.file' => 'El valor debe ser un archivo.',
             'archivo.mimes' => 'El archivo debe ser de tipo XLS o XLSX.',
         ]);
-
+        //dd("HOLA");
         $archivo = $request->file('archivo');
         $spreadsheet = IOFactory::load($archivo);
         $worksheet = $spreadsheet->getActiveSheet();
@@ -1127,21 +1129,17 @@ class ProgramacionController extends Controller
                 $programada->mensaje = 1;
 
                 if (strpos($worksheet->getCell('O' . $row->getRowIndex())->getValue(), "MAÑANA") !== false) {
-                    $programada->HORA_INICIO = "06:59:00 a.m.";
-                    $programada->HORA_FINAL = "11:59:00 a.m.";
+                   $programada->JORNADA = "mañana";
                 } elseif (strpos($worksheet->getCell('O' . $row->getRowIndex())->getValue(), "TARDE") !== false) {
-                    $programada->HORA_INICIO = "11:59:00 a.m.";
-                    $programada->HORA_FINAL = "04:59:00 p.m.";
+                    $programada->JORNADA = "tarde";
                 } elseif (strpos($worksheet->getCell('O' . $row->getRowIndex())->getValue(), "TRANSCURSO DEL DIA") !== false) {
-                    $programada->HORA_INICIO = "06:59:00 a.m.";
-                    $programada->HORA_FINAL = "04:59:00 p.m.";
+                    $programada->JORNADA = "todo el dia";
                 } else {
-                    // Valores por defecto si no se cumple ninguna condición
-                    $programada->HORA_INICIO = "06:59:00 a.m.";
-                    $programada->HORA_FINAL = "04:59:00 p.m.";
+                    $programada->JORNADA = "todo el dia";
                 }
 
-
+                $programada->HORA_INICIO = "06:59:00 a.m.";
+                $programada->HORA_FINAL = "11:59:00 a.m.";
                 foreach (['F', 'D', 'E', 'K', 'J', 'S', 'H', 'G', 'I', 'C', 'N', 'P', 'B'] as $columna) {
 
                     $valorCelda = $worksheet->getCell($columna . $row->getRowIndex())->getValue();
@@ -1409,8 +1407,9 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
             $programacion->OBSERVACIONES = $request->data['OBSERVACIONES'];
             $programacion->PORQUE_PROGRAMO = $request->data['PORQUE_PROGRAMO'];
             $programacion->TECNICO = $request->data['TECNICO'];
-            $programacion->HORA_INICIO = $request->data['HORA_INICIO'];
-            $programacion->HORA_FINAL = $request->data['HORA_FINAL'];
+            $programacion->JORNADA = $request->data['JORNADA'];
+            $programacion->HORA_INICIO = "06:59:00 a.m.";
+            $programacion->HORA_FINAL = "04:59:00 p.m.";
             $programacion->id_programacion = $request->tabla;
             $programacion->plantilla = 1;
             $programacion->save();
@@ -1426,7 +1425,6 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
 
     public function callCenterGdo(Request $request)
     {
-
         $validator = Validator::make($request->all(), [
             'archivo' => 'required|file|mimes:xls,xlsx',
         ], [
@@ -1441,116 +1439,40 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
 
         date_default_timezone_set('America/Bogota');
         $file = IOFactory::load($request->file('archivo'));
-        $date = Datetime::createFromFormat('Y/m/d', Carbon::now()->format('Y/m/d'));
         $worksheet = $file->getActiveSheet();
-        $indicador = $this->validacionGDO($worksheet);
 
-        if (!$indicador) {
+        // Validación rápida de cabeceras
+        if (!$this->validacionGDO($worksheet)) {
             return response()->json(['error' => 'El archivo no cumple los criterios requeridos'], 422);
         }
 
-        $worksheet->setCellValue('AB1', 'Resultado');
-
         DB::beginTransaction();
-        $programacion = new tbl_programacion_usuario;
-        $programacion->nombre = "Programación GDO " . Carbon::now()->format('Y-m-d');
-        $programacion->id_usuario = Auth::id();
-        $programacion->finished = 1;
-        $programacion->mensaje = 1;
-        $programacion->save();
+        try {
+            // Creamos la tabla padre indicando que NO ha terminado (finished = 0)
+            $programacion = new tbl_programacion_usuario;
+            $programacion->nombre = "Programación GDO " . Carbon::now()->format('Y-m-d');
+            $programacion->id_usuario = Auth::id();
+            $programacion->finished = 2;
+            $programacion->mensaje = 1;
+            $programacion->save();
 
-        foreach ($worksheet->getRowIterator() as $row) {
-            if ($row->getRowIndex() === 1) {
-                continue;
-            }
-            $rango = 'A' . $row->getRowIndex() . ':AA' . $row->getRowIndex();
+            // Guardamos el archivo en storage temporalmente para que el Job lo lea
+            $path = $request->file('archivo')->store('excel-imports-gdo');
 
-            $string = $worksheet->getCell('S' . $row->getRowIndex())->getValue();
-            if ($string == "" || $string == null) {
-                continue;
-            }
-            // Obtienes el valor numéric FECHA de la celda
-            $valorNumericoExcel = $worksheet->getCell('R' . $row->getRowIndex())->getValue();
+            // Despachamos el trabajo en segundo plano
+            ProcessCallCenterGdo::dispatch($path, $programacion->id, Auth::id());
 
-            // Usas la función de la librería para convertirlo
-            $fechaComoDateTime = Date::excelToDateTimeObject($valorNumericoExcel);
-            $fechas = new ExtraerFechas();
-            //servicio para encontrar fechas en la columna de observación
-            $array = $fechas->findDates($string, $fechaComoDateTime->format('Y-m-d'), $row->getRowIndex());
+            DB::commit();
 
+            // Ya no devolvemos una URL porque el archivo apenas se va a procesar
+            return response()->json([
+                'message' => 'El archivo se está procesando con IA en segundo plano. Te notificaremos cuando termine.'
+            ], 202);
 
-            //validación de array y que tengan objetos tipo DATE TIME
-            if (is_array($array) && count($array) > 0 && collect($array)->every(fn($item) => $item instanceof DateTime)) {
-                $fechaArray = Carbon::instance($array[0]);
-                $fechaComparar = Carbon::instance($date);
-                $diferenciaMeses = $fechaComparar->diffInMonths($fechaArray);
-
-
-                if (count($array) >= 2) {
-                    $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Hay dos o mas fechas, verificar ');
-                    $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFECC862');
-                } else if ($date->format('Y-m-d') > $array[0]->format('Y-m-d')) {
-                    $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Fecha menor al actual, verificar ' . $array[0]->format('Y-m-d'));
-                    $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFECC862');
-                } else if ($diferenciaMeses > 4) {
-                    $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Fecha de programación supera limite de diferencia ' . $array[0]->format('Y-m-d'));;
-                    $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFFF5353');
-                } else {
-                    //obtener datos de la fila para mandar a inserción
-                    $filaArray = $worksheet->rangeToArray(
-                        'A' . $row->getRowIndex() . ':AA' . $row->getRowIndex(),
-                        null,      // default null for empty cells
-                        true,      // calculate formulas
-                        false,     // do not format values
-                        true      // return associative array (false: numeric)
-                    );
-                    $valoresFila = $filaArray[$row->getRowIndex()];
-                    //funcion para insertar datos
-                    try {
-                        $resultado = $this->insertarDatosGDO($valoresFila, $programacion->id, $array[0]->format('Y-m-d'), $string);
-                        if ($resultado == 1) {
-                            $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Programado para ' . $array[0]->format('Y-m-d'));
-                            $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF6FF658');
-                        } else if ($resultado == 2) {
-                            $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Error al programar, intente manualmente ' . $array[0]->format('Y-m-d'));
-                            $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFFFABAB');
-                        } else if ($resultado == 0) {
-                            $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Ya existe una programación para esta orden');
-                            $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFECA2CE');
-                        }else if ($resultado == 3) {
-                            $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Orden Ya Ejecutada');
-                            $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFECA2CE');
-                        }
-                    } catch (\Exception $e) {
-                        // No afecta a las otras filas, solo esta
-                        $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Error inesperado: ' . $e->getMessage());
-                        $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFFFABAB');
-                    }
-
-
-                }
-            } else
-                if ($array == 1000) {
-                    $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Error en Interpretación, revisar');
-                    $worksheet->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFFFABAB');
-                } else {
-                    $worksheet->setCellValue('AB' . $row->getRowIndex(), 'Registro no Valido');
-                }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Error al iniciar proceso: ' . $e->getMessage()], 500);
         }
-        // Guardar el archivo modificado en almacenamiento temporal
-        $nombreArchivo = 'Resultados Programadas GDO ' . date('Y-m-d H-i-s') . '.xlsx';
-        $ruta = storage_path('app/uploads/' . $nombreArchivo);
-        $writer = new Xlsx($file);
-        $writer->save($ruta);
-
-        $url = url()->temporarySignedRoute(
-            'descargar.archivo', // Usa la nueva ruta genérica
-            now()->addMinutes(5), // Expiración en 10 minutos
-            ['file' => $nombreArchivo] // Archivo como parámetro
-        );
-        DB::commit();
-        return response()->json(['url' => $url,
-            'message' => 'Archivo procesado correctamente']);
     }
 
     private function validacionGDO($worksheet): bool
@@ -1588,62 +1510,7 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
      * @return void
      *
      */
-    private
-    function insertarDatosGDO($row, $id_programacion, $scheduling, $observation)
-    {
-        // verificar si ya existe la programación
-        $exist = tbl_programacion_contrato::where('CONTRATO', $row['B'])
-            ->where('ORDEN_TRABAJO', $row['A'])
-            //->where('FECHA_AGENDAMIENTO','>=',$scheduling)
-            ->exists();
 
-        $executed = $this->programacionService->findExecuted($row['B'],$row['Q'],$row['A']);
-
-        if ($exist) {
-            return 0;
-        }
-        if($executed){
-            return 3;
-        }
-        // Insertar los datos si es que ya no existe
-        try {
-            $registro = new tbl_programacion_contrato();
-            $registro->CONTRATO = $row['B'];
-            $registro->TIPO_TRABAJO = $row['Q'];
-            $registro->FECHA = date('Y-m-d');
-            $registro->CELULAR = '-';
-            $registro->NOMBRE_USUARIO = $row['G'];
-            $registro->ORDEN_TRABAJO = $row['A'];
-            $registro->DIRECCION = $row['K'];
-            $registro->BARRIO = $row['J'];
-            $registro->CIUDAD = $row['I'];
-            if ($row['T'] == 'Activo') {
-                $registro->ACTIVA = 'Si';
-                $registro->SUSPENDIDO = 'No';
-            } else {
-                $registro->ACTIVA = 'No';
-                $registro->SUSPENDIDO = 'Si';
-            }
-            $registro->CATEGORIA = $row['O'];
-            $registro->FECHA_AGENDAMIENTO = $scheduling;
-            $registro->OBSERVACIONES = $observation;
-            $registro->PORQUE_PROGRAMO = 'PROGRAMACION GDO';
-            $registro->TECNICO = '100. OFICINA';
-            $registro->HORA_INICIO = "06:59:00 a.m.";
-            $registro->HORA_FINAL = "04:59:00 p.m.";
-            $registro->id_programacion = $id_programacion;
-            $registro->mensaje = 1;
-            $registro->plantilla = 0;
-            $registro->EJECUTADA = 0;
-            $registro->save();
-            return 1;
-        } catch (\Exception $e) {
-            log::error($e->getMessage());
-            return 2;
-        }
-
-
-    }
 
     private function insertBase($sheet)
     {

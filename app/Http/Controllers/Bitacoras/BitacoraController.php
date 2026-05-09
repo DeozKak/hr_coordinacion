@@ -1033,14 +1033,14 @@ class BitacoraController extends Controller
             $exist = tbl_bitacora_contrato::where('CONTRATO', $devolucion->CONTRATO)->where('ORDEN_TRABAJO', $devolucion->ORDEN_TRABAJO)->exists();
             if ($exist) {
                 // Obtener los usuarios que deben recibir la notificación
-                $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN'])
-                    ->where('state',1)
-                    ->get();
-                $usuarioLog = Auth::user();
+               // $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN'])
+               //     ->where('state',1)
+                //    ->get();
+              //  $usuarioLog = Auth::user();
                 // Enviar la notificación a cada usuario
-                foreach ($usuarios as $usuario) {
-                    $usuario->notify(new Mod_Devolucion($usuarioLog->name, $devolucion->CONTRATO, $devolucion->id_bitacora));
-                }
+              //  foreach ($usuarios as $usuario) {
+                //    $usuario->notify(new Mod_Devolucion($usuarioLog->name, $devolucion->CONTRATO, $devolucion->id_bitacora));
+              //  }
                 return redirect()->route('bitacora.devoluciones');
             }
 
@@ -1065,13 +1065,13 @@ class BitacoraController extends Controller
             $contrato->save();
 
             // Obtener los usuarios que deben recibir la notificación
-            $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN', 'Auxiliar_coordinacion'])->get();
-            $usuarioLog = Auth::user();
+           // $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN', 'Auxiliar_coordinacion'])->get();
+           // $usuarioLog = Auth::user();
 
             // Enviar la notificación a cada usuario
-            foreach ($usuarios as $usuario) {
-                $usuario->notify(new Mod_Devolucion($usuarioLog->name, $devolucion->CONTRATO, $devolucion->id_bitacora));
-            }
+            //foreach ($usuarios as $usuario) {
+             //   $usuario->notify(new Mod_Devolucion($usuarioLog->name, $devolucion->CONTRATO, $devolucion->id_bitacora));
+            //}
         }
         return redirect()->route('bitacora.devoluciones');
     }

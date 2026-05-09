@@ -209,7 +209,8 @@ class CoordinacionPQRS extends Controller
             '',
             'ACCEDE',
             'NO ACCEDE',
-            'GDW'
+            'GDW',
+            'NO PROCEDENTE'
         ];
         $queja = asignadas_quejas::where('NUMERO_ORDEN', $request->orden)
             ->where('CONTRATO', $request->contrato)
