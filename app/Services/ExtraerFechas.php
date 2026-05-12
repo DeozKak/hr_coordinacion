@@ -12,9 +12,10 @@ class ExtraerFechas
 
     public function __construct()
     {
+        $apiKey = config('services.groq.key');
         // Inicializamos el cliente apuntando a Groq
         $this->client = OpenAI::factory()
-            ->withApiKey(env('GROQ_API_KEY'))
+            ->withApiKey($apiKey)
             ->withBaseUri('https://api.groq.com/openai/v1')
             ->make();
     }
