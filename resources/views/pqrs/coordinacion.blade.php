@@ -251,7 +251,10 @@
                 'OBSERVACIÓN SOLICITUD', 'FECHA CIERRE ÚLTIMA', 'OBSERVACIÓN CIERRE ÚLTIMA',
                 'TIPO TRABAJO CIERRE ÚLTIMA', 'CAUSAL CIERRE ÚLTIMA', 'FECHA ASIGNACIÓN ÚLTIMA',
                 'OBSERVACIÓN ASIGNACIÓN ÚLTIMA', 'GESTIÓN ASIGNACIÓN ÚLTIMA', 'TIPO TRABAJO ASIGNACIÓN ÚLTIMA',
-                 'MOTIVO DE PQR','RESPONSABLE', 'ASIGNADO','SUPERVISOR' ,'FECHA ASIGNADO','INSTRUCCIONES CAMPO','OBSERVACION SUPERVISOR','RECEPCIÓN',
+                 'MOTIVO DE PQR','RESPONSABLE', 'ASIGNADO','SUPERVISOR' ,'FECHA ASIGNADO',
+                 /* --- NUEVOS CAMPOS AQUÍ --- */
+                 'TÉCNICO PROXIMA PROGRAMACION', 'FECHA AGENDAMIENTO PROGRAMACION'
+                 ,'INSTRUCCIONES CAMPO','OBSERVACION SUPERVISOR','RECEPCIÓN',
                  'FECHA RECEPCIÓN','FECHA SOLICITUD CIERRE', 'OBSERVACIÓN GESTIÓN', 'CÓDIGO AUTORIZACIÓN', 'FECHA RESPUESTA',
                   'FECHA LÍMITE', 'DÍAS RESTANTES'
              ];
@@ -284,6 +287,9 @@
                 row.ASIGNADO,
                 row.SUPERVISOR,
                 row.FECHA_ASIGNADO,
+                /* --- NUEVOS CAMPOS AQUÍ --- */
+                row.TECNICO_AGENDADO,
+                row.FECHA_AGENDAMIENTO,
                 row.INSTRUCCIONES_CAMPO,
                 row.OBSERVACION_SUPERVISOR,
                 row.RECEPCION,
@@ -294,7 +300,6 @@
                 row.FECHA_RESPUESTA,
                 row.FECHA_LIMITE,
                 row.DIAS_FALTANTES,
-
             ]);
 
 

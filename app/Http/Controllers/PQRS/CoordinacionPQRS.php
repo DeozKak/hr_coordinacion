@@ -40,7 +40,27 @@ class CoordinacionPQRS extends Controller
         })->toArray();
         array_unshift($listaInspectoresArray, '');
 
-        $query = asignadas_quejas::select("*")->where('estado', 1);
+        // 1. Subconsulta para traer el técnico de la programación más reciente
+        $tecnicoSubquery = DB::table('tbl_programacion_contratos')
+            ->select('TECNICO') // <-- CAMBIA por tu columna real de técnico
+            ->whereColumn('tbl_programacion_contratos.CONTRATO', 'asignadas_quejas.CONTRATO')
+            ->orderBy('FECHA_AGENDAMIENTO', 'desc') // <-- CAMBIA por tu columna real de fecha
+            ->limit(1);
+
+        // 2. Subconsulta para traer la fecha de la programación más reciente
+        $fechaSubquery = DB::table('tbl_programacion_contratos')
+            ->select('FECHA_AGENDAMIENTO') // <-- CAMBIA por tu columna real de fecha
+            ->whereColumn('tbl_programacion_contratos.CONTRATO', 'asignadas_quejas.CONTRATO')
+            ->orderBy('FECHA_AGENDAMIENTO', 'desc') // <-- CAMBIA por tu columna real de fecha
+            ->limit(1);
+
+        // 3. Agregamos las subconsultas a la consulta principal
+        $query = asignadas_quejas::select("*")
+            ->selectSub($tecnicoSubquery, 'TECNICO_AGENDADO')
+            ->selectSub($fechaSubquery, 'FECHA_AGENDAMIENTO')
+            ->where('estado', 1);
+
+
         $completeData = $query->get();
 
         CoordinacionUpdateRecepcion::Responsables($completeData);
@@ -89,6 +109,7 @@ class CoordinacionPQRS extends Controller
             }
         }
 
+
         // $fechaActual = new DateTime();
 
         return view('pqrs.coordinacion', compact('inspectores', 'listaInspectoresArray', 'completeData','permiso_editar'));
@@ -98,8 +119,26 @@ class CoordinacionPQRS extends Controller
 
     public function getDatosActualizados()
     {
-        // Misma lógica de consulta que en tu método index()
-        $completeData = asignadas_quejas::select("*")->where('estado', 1)->get();
+
+        // 1. Subconsulta para traer el técnico de la programación más reciente
+        $tecnicoSubquery = DB::table('tbl_programacion_contratos')
+            ->select('tecnico') // <-- CAMBIA por tu columna real de técnico
+            ->whereColumn('tbl_programacion_contratos.contrato', 'asignadas_quejas.CONTRATO')
+            ->orderBy('fecha_agendamiento', 'desc') // <-- CAMBIA por tu columna real de fecha
+            ->limit(1);
+
+        // 2. Subconsulta para traer la fecha de la programación más reciente
+        $fechaSubquery = DB::table('tbl_programacion_contratos')
+            ->select('fecha_agendamiento') // <-- CAMBIA por tu columna real de fecha
+            ->whereColumn('tbl_programacion_contratos.contrato', 'asignadas_quejas.CONTRATO')
+            ->orderBy('fecha_agendamiento', 'desc') // <-- CAMBIA por tu columna real de fecha
+            ->limit(1);
+
+        $completeData = asignadas_quejas::select("*")
+            ->selectSub($tecnicoSubquery, 'TECNICO_AGENDADO')
+            ->selectSub($fechaSubquery, 'FECHA_AGENDAMIENTO')
+            ->where('estado', 1)
+            ->get();
 
         CoordinacionUpdateRecepcion::Responsables($completeData);
         CoordinacionUpdateRecepcion::verificarYActualizarRecepcion($completeData);

@@ -544,30 +544,22 @@ function InitializeTable(){
 
             licenseKey: "non-commercial-and-evaluation",
             afterGetColHeader: function (col, TH) {
-                // Configuraciones de fuente por defecto para todas las cabeceras
                 TH.style.color = "white";
                 TH.style.fontWeight = "bold";
 
                 // Evaluamos el índice de la columna para asignar el color por sección
                 if (col >= 0 && col <= 12) {
-                    // Verde hasta OBSERVACIÓN SOLICITUD
-                    TH.style.backgroundColor = "#5ab15d";
+                    TH.style.backgroundColor = "#5ab15d"; // Verde
                 } else if (col >= 13 && col <= 20) {
-                    // Morado claro desde FECHA CIERRE ÚLTIMA hasta TIPO TRABAJO ASIGNACIÓN ÚLTIMA
-                    TH.style.backgroundColor = "#BA68C8";
-                } else if (col >= 21 && col <= 25) {
-                    // Azul Rey (el que ya tenías) desde RESPONSABLE hasta FECHA ASIGNADO
-                    TH.style.backgroundColor = "#4F81BD";
-                }else if (col >= 26 && col <= 27) {
-                    // Cafe Campos supervisores
-                    TH.style.backgroundColor = "#595858";
-                } else if (col >= 28 && col <= 33) {
-                    // Rojo claro desde RECEPCIÓN hasta FECHA RESPUESTA
-                    TH.style.backgroundColor = "#ed5e5b";
-                } else if (col >= 34 && col <= 35) {
-                    // Amarillo desde FECHA LÍMITE hasta DÍAS FALTANTES
-                    TH.style.backgroundColor = "#ffa43b";
-                    // Cambiamos el texto a negro en esta sección para que contraste mejor con el fondo amarillo
+                    TH.style.backgroundColor = "#BA68C8"; // Morado claro
+                } else if (col >= 21 && col <= 27) {
+                    TH.style.backgroundColor = "#4F81BD"; // Azul Rey (¡Se expandió para incluir las 2 nuevas!)
+                } else if (col >= 28 && col <= 29) {
+                    TH.style.backgroundColor = "#595858"; // Cafe Campos supervisores (se movió +2)
+                } else if (col >= 30 && col <= 35) {
+                    TH.style.backgroundColor = "#ed5e5b"; // Rojo claro (se movió +2)
+                } else if (col >= 36 && col <= 37) {
+                    TH.style.backgroundColor = "#ffa43b"; // Amarillo (se movió +2)
                     TH.style.color = "black";
                 }
             },
@@ -716,7 +708,10 @@ function iniciarActualizacionAutomatica() {
                         row.DESC_CAUSAL_CIERRE_ULTIMA, row.FECHA_ASIGNACIÓN_ULTIMA,
                         row.OBSERVACIÓN_ASIGNACIÓN_ULTIMA, row.GESTIÓN_ASIGNACIÓN_ULTIMA,
                         row.TIPO_TRABAJO_ASIGNACIÓN_ULTIMA, row.MOTIVO_DE_PQR, row.RESPONSABLE,
-                        row.ASIGNADO, row.SUPERVISOR, row.FECHA_ASIGNADO,row.INSTRUCCIONES_CAMPO,
+                        row.ASIGNADO, row.SUPERVISOR, row.FECHA_ASIGNADO,
+                        /* --- NUEVOS CAMPOS --- */
+                        row.TECNICO_AGENDADO, row.FECHA_AGENDAMIENTO,
+                        row.INSTRUCCIONES_CAMPO,
                         row.OBSERVACION_SUPERVISOR,row.RECEPCION,
                         row.FECHA_RECEPCION, row.FECHA_SOLICITUD_CIERRE, row.OBSERVACION_GESTION,
                         row.CODIGO_AUTORIZACION, row.FECHA_RESPUESTA, row.FECHA_LIMITE,
