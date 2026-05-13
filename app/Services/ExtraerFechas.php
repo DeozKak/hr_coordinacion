@@ -110,7 +110,7 @@ class ExtraerFechas
                 'response_format' => ['type' => 'json_object'],
                 'temperature' => 0.0 // 100% robótico, nada de inventos
             ]);
-            dd($response,$textoLimpio);
+
             $resultado = json_decode($response->choices[0]->message->content, true);
             $fechasExtraidas = $resultado['fechas'] ?? [];
             $jornadaExtraida = $resultado['jornada'] ?? null;

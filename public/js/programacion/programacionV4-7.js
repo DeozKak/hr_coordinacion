@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         type: 'GET',
                         success: function (response) {
 
-                            if (response.movilidad) {
+                            if (response.movilidad || response.errors) {
 
                                 Swal.fire({
                                     icon: 'warning',

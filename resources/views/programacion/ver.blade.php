@@ -79,7 +79,29 @@
             </div>
         </div>
     </div>
-
+    {{-- Modal para Ver Más (Pégalo antes de cerrar la sección content) --}}
+    <div class="modal fade modal-modern" id="verMasModal" tabindex="-1" aria-labelledby="verMasModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="verMasModalLabel">
+                        <i class="fas fa-info-circle text-primary"></i> Información Completa
+                    </h5>
+                    {{-- Agregamos id="btnCerrarVerMasTop" --}}
+                    <button type="button" class="btn-close" id="btnCerrarVerMasTop" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="bg-white p-3 rounded border shadow-sm">
+                        <p id="verMasContent" style="white-space: pre-wrap; word-break: break-word; color: #4a5568; line-height: 1.6;"></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    {{-- Agregamos id="btnCerrarVerMasFooter" --}}
+                    <button type="button" class="btn btn-secondary px-4" id="btnCerrarVerMasFooter">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     @section('js')
 
