@@ -1,5 +1,6 @@
 let columnasEditables;
 let H_tabla;
+let verMasModalInstance = null;
 if (ver_programacion === "true") {
     columnasEditables = ['TECNICO', 'CELULAR', 'FECHA_AGENDAMIENTO', 'OBSERVACIONES', 'JORNADA'];
 } else {
@@ -7,6 +8,48 @@ if (ver_programacion === "true") {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+
+// --- NUEVO: Registrar el Renderizador del Ojo ---
+    Handsontable.renderers.registerRenderer('verMasRenderer', function (instance, td, row, col, prop, value, cellProperties) {
+        Handsontable.renderers.TextRenderer.apply(this, arguments);
+
+        if (value && typeof value === 'string' && value.length > 30) {
+            td.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; height: 100%; overflow: hidden; white-space: nowrap;">
+                    <span title="${value}" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
+                        ${value}
+                    </span>
+                    <button class="btn btn-xs ver-mas-btn px-1 text-primary border-0 bg-transparent" style="cursor: pointer; flex-shrink: 0; margin-left: 5px;">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            `;
+            td.style.paddingRight = '2px';
+
+            const btn = td.querySelector('.ver-mas-btn');
+            if (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    document.getElementById('verMasContent').textContent = value;
+
+                    if (!verMasModalInstance) {
+                        const verMasModalElement = document.getElementById('verMasModal');
+                        verMasModalInstance = new bootstrap.Modal(verMasModalElement);
+                    }
+                    verMasModalInstance.show();
+                });
+            }
+        }
+    });
+
+    // --- NUEVO: Lógica de botones para cerrar el modal ---
+    const btnCerrarTop = document.getElementById('btnCerrarVerMasTop');
+    const btnCerrarFooter = document.getElementById('btnCerrarVerMasFooter');
+    const cerrarModalVerMas = function() {
+        if (verMasModalInstance) verMasModalInstance.hide();
+    };
+    if (btnCerrarTop) btnCerrarTop.addEventListener('click', cerrarModalVerMas);
+    if (btnCerrarFooter) btnCerrarFooter.addEventListener('click', cerrarModalVerMas);
 
     tabla = document.querySelector('#tabla_programacion');
 
@@ -88,15 +131,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
             },
             {
-                data: 'OBSERVACIONES', // O la columna que deseas ajustar
+                data: 'OBSERVACIONES',
                 title: 'OBSERVACIONES',
-                width: 200, // Ancho máximo horizontal deseado
-                wordWrap: true, // Habilita el ajuste de línea
-                renderer: function (instance, td, row, col, prop, value, cellProperties) {
-                    // Renderizador personalizado para ajustar el alto de la celda
-                    Handsontable.renderers.TextRenderer.apply(this, arguments); // Renderiza el texto
-                    td.style.height = 'auto'; // Permite que la altura se ajuste al contenido
-                },
+                width: 300, // Le damos 300px fijos
+                renderer: 'verMasRenderer', // NUEVO: Llamamos al ojito
                 className: 'htCenter',
                 readOnly: true,
             },
@@ -126,6 +164,12 @@ document.addEventListener('DOMContentLoaded', () => {
         rowHeaders: true,
         dropdownMenu: true,
         filters: true,
+        // --- NUEVO: Evita que el texto baje de línea y ensanche la fila hacia abajo ---
+        wordWrap: false,
+        autoWrapRow: false,
+        autoWrapCol: false,
+        manualColumnResize: true,
+        manualRowResize: true,
        /* height: '450px',*/
         licenseKey: 'non-commercial-and-evaluation',
         afterChange: function (changes, source) {
