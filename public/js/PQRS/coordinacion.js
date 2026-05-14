@@ -228,8 +228,6 @@ document.addEventListener("DOMContentLoaded",function(){
      const CargarModal = document.getElementById('CargarModal');
      const modalCargar = new bootstrap.Modal(CargarModal);
 
-
-
      modalCargar.show();
 
      const CargarForm = document.getElementById('CargarOSfForm');
@@ -691,7 +689,7 @@ function iniciarActualizacionAutomatica() {
         // TRUCO: Si la tabla no está lista o el usuario está editando una celda (dropdown abierto o escribiendo),
         // cancelamos la actualización en este ciclo para no interrumpirlo.
         if (!hot || (hot.getActiveEditor() && hot.getActiveEditor().isOpened())) {
-            return;
+           return;
         }
 
         fetch(url)
@@ -717,32 +715,55 @@ function iniciarActualizacionAutomatica() {
                         row.CODIGO_AUTORIZACION, row.FECHA_RESPUESTA, row.FECHA_LIMITE,
                         row.DIAS_FALTANTES,
                     ]);
-
                     // 1. Obtenemos los plugins
                     const sortPlugin = hot.getPlugin('columnSorting');
                     const filtersPlugin = hot.getPlugin('filters');
 
-                    // 2. Guardamos el estado ACTUAL (Orden y Filtros)
+                    // 2. Guardamos el estado ACTUAL (Orden, Filtros, SELECCIÓN y SCROLL)
                     const currentSortConfig = sortPlugin.getSortConfig();
                     const currentFilters = filtersPlugin.conditionCollection.exportAllConditions();
 
+                    // -- NUEVO: Capturamos el cursor y el scroll --
+                    const selectedRange = hot.getSelected(); // Guarda la celda seleccionada
+                    const masterHolder = hot.rootElement.querySelector('.ht_master .wtHolder');
+                    const scrollTop = masterHolder ? masterHolder.scrollTop : 0;
+                    const scrollLeft = masterHolder ? masterHolder.scrollLeft : 0;
+
+                    // 3. Recalculamos los repetidos antes de inyectar a la tabla
+                    actualizarConteoContratos(newData);
+
+                    // 4. Cargamos los datos nuevos (Esto reinicia la tabla)
                     hot.loadData(newData);
 
-                    // 4. Restauramos los Filtros primero
+                    // 5. Restauramos los Filtros primero
                     if (currentFilters && currentFilters.length > 0) {
                         filtersPlugin.conditionCollection.importAllConditions(currentFilters);
-                        filtersPlugin.filter(); // Le decimos a la tabla que aplique el filtro
+                        filtersPlugin.filter(); // Aplica el filtro
                     }
 
-                    // 5. Restauramos el Ordenamiento después
+                    // 6. Restauramos el Ordenamiento
                     if (currentSortConfig && currentSortConfig.length > 0) {
                         sortPlugin.sort(currentSortConfig);
                     } else {
-                        // Si no había orden del usuario, forzamos tu orden por defecto
-                        const diasFaltantesCol = colHeaders.indexOf('DÍAS FALTANTES');
-                        sortPlugin.sort({ column: diasFaltantesCol, sortOrder: 'asc' });
+                        // Forzamos tu orden por defecto si no había ninguno
+                        const diasFaltantesCol = colHeaders.indexOf('DÍAS RESTANTES');
+                        if(diasFaltantesCol !== -1) sortPlugin.sort({ column: diasFaltantesCol, sortOrder: 'asc' });
                     }
 
+                    // 7. --- NUEVO: RESTAURAMOS EL CURSOR Y EL SCROLL ---
+                    if (selectedRange && selectedRange.length > 0) {
+                        // Parámetros: rowStart, colStart, rowEnd, colEnd, scrollToCell (false evita saltos), changeListener
+                        hot.selectCell(selectedRange[0][0], selectedRange[0][1], selectedRange[0][2], selectedRange[0][3], false, false);
+                    }
+
+                    if (masterHolder) {
+                        // Un micro-retraso de 10ms asegura que HOT ya dibujó las filas antes de mover la barra
+                        setTimeout(() => {
+                            masterHolder.scrollTop = scrollTop;
+                            masterHolder.scrollLeft = scrollLeft;
+                        }, 10);
+                    }
+                    
 
                 }
             })
