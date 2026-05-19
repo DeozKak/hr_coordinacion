@@ -655,27 +655,16 @@ class ProgramacionController extends Controller
             $plantilla = $plantilla->orderBy('TECNICO')->get();
             $busqueda = $busqueda->orderBy('TECNICO')->get();
 
-            // Agregar primero los registros de plantilla
-            $finalData = [];
 
-            foreach ($plantilla as $registro) {
-                $finalData[] = $registro;
-            }
+            // 1. Concatenamos ambas colecciones (Plantilla queda de primera)
+            $coleccionCombinada = $plantilla->concat($busqueda);
 
-            // Luego los restantes, descartando duplicados si algún registro de plantilla también está en $busqueda
-            $uniqueKeys = [];
+            // 2. Filtramos por 'id' único.
+            // unique() conservará el primer elemento que encuentre, dando prioridad a $plantilla.
+            // 3. values() resetea los índices (0, 1, 2, 3...) para que el JSON quede como un array limpio.
+            $finalData = $coleccionCombinada->unique('id')->values();
 
-            foreach ($plantilla as $itemPlantilla) {
-                $keyP = $itemPlantilla->ORDEN_TRABAJO . $itemPlantilla->FECHA_AGENDAMIENTO . $itemPlantilla->PORQUE_PROGRAMO;
-                $uniqueKeys[] = $keyP;
-            }
-
-            foreach ($busqueda as $item) {
-                $key = $item->ORDEN_TRABAJO . $item->FECHA_AGENDAMIENTO . $item->PORQUE_PROGRAMO;
-                if (!in_array($key, $uniqueKeys)) {
-                    $finalData[] = $item;
-                }
-            }
+            // dd($finalData); // Descomenta esto para verificar la limpieza antes de retornar
 
             return response()->json([
                 'data' => $finalData,

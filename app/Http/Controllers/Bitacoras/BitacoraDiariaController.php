@@ -115,10 +115,25 @@ class BitacoraDiariaController extends Controller
             'M' => fn($cierre) => ltrim($cierre, '.'),
             'O' => fn($final) => $final, // Hora final sin procesar
             'Q' => function ($vence) {
-                $venceDate = \DateTime::createFromFormat('d/m/Y', $vence); // convertir a fecha
-                return ($venceDate && $venceDate->format('Y') == date('Y') && $venceDate->format('m') == date('m'))
-                    ? "60 meses"
-                    : "";
+                $venceDate = \DateTime::createFromFormat('d/m/Y', $vence);
+
+                if (!$venceDate) {
+                    return "";
+                }
+
+                $hoy = new \DateTime(); // Fecha actual
+
+                // Calculamos la diferencia al revés: HOY menos VENCIMIENTO
+                $diferenciaAnios = (int)$hoy->format('Y') - (int)$venceDate->format('Y');
+                $diferenciaMeses = (int)$hoy->format('m') - (int)$venceDate->format('m');
+
+                // Esto dará negativo si es a futuro, y positivo si es en el pasado
+                $mesesDiferencia = ($diferenciaAnios * 12) + $diferenciaMeses;
+
+                // Se lo sumamos a tu base de 60
+                $totalMeses = 60 + $mesesDiferencia;
+
+                return $totalMeses . " meses";
             },
             'R' => function ($periodo) {if($periodo === 'Si'){return 'SI';}else{return 'NO';} },
 
@@ -259,9 +274,14 @@ class BitacoraDiariaController extends Controller
             ]);
         }
 
-        //Estilo columna N vence (Marca Naranja si es 60 meses)
-        if($hoja_destino->getCell('N' . $fila_informe)->getValue() === '60 meses'){
+        // Obtenemos el valor de la celda (ej: "60 meses", "61 meses", "59 meses")
+        $valorCelda = $hoja_destino->getCell('N' . $fila_informe)->getValue();
 
+        // Convertimos el texto a número. (int) convierte "61 meses" en 61.
+        $cantidadMeses = (int) $valorCelda;
+
+        // Estilo columna N vence (Marca Naranja si es 60 meses o más)
+        if($cantidadMeses >= 60){
             $hoja_destino->getStyle('N' . $fila_informe)->applyFromArray([
                 'fill' => [
                     'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
