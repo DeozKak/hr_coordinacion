@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\tbl_insp_cali;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\File;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
 
 class CoordinacionPQRSLectorHTML
 {
@@ -99,18 +102,17 @@ class CoordinacionPQRSLectorHTML
 
     public static function CrearArchivos($datosGDW)
     {
-        // 1. Preparamos los arreglos donde guardaremos las filas de ambos CSV
+        // 1. Preparamos los arreglos donde guardaremos las filas de ambos reportes
         $filasPuntoInteres = [];
         $filasTareas = [];
 
-        // --- NUEVO: FUNCIÓN PARA LIMPIAR TEXTOS (Evita celdas altas y espacios dobles) ---
+        // --- FUNCIÓN PARA LIMPIAR TEXTOS (Evita celdas altas y espacios dobles) ---
         $limpiarTexto = function($texto) {
             if (empty($texto)) return '';
-            // Convierte saltos de línea, tabulaciones y múltiples espacios en un solo espacio normal
             return trim(preg_replace('/\s+/', ' ', $texto));
         };
 
-        // OPTIMIZACIÓN: Traemos todas las cédulas de los inspectores de una vez en un arreglo [id => cedula]
+        // OPTIMIZACIÓN: Traemos todas las cédulas de los inspectores de una vez
         $inspectores = tbl_insp_cali::pluck('cedula', 'id')->toArray();
 
         // Fechas actuales fijas para el archivo de Tareas
@@ -133,6 +135,7 @@ class CoordinacionPQRSLectorHTML
                 $contratoFormateado = '::' . ($queja->CONTRATO ?? '');
                 $direccionLimpia = $limpiarTexto($queja->DIRECCION);
                 $clienteLimpio = $limpiarTexto($queja->NOMBRE);
+
                 // --- LÓGICA PARA PUNTO DE INTERÉS ---
                 $obsChunks = str_split($observacionOriginal, 99);
                 $fechaLimite = $queja->FECHA_LIMITE ? Carbon::parse($queja->FECHA_LIMITE)->format('d/m/Y') : '';
@@ -146,6 +149,7 @@ class CoordinacionPQRSLectorHTML
                     'Contacto' => $datosExtraidos['Telefono_Contacto'] !== 'No detectado' ? $datosExtraidos['Telefono_Contacto'] : '',
                     'EMAIL' => '',
                     'EMAIL CC' => '',
+                    'Telefono movil' => '',
                     'LATITUD' => '',
                     'LONGITUD' => '',
                     'idCliente' => '137776',
@@ -169,12 +173,10 @@ class CoordinacionPQRSLectorHTML
                 ];
 
                 // --- LÓGICA PARA TAREAS ---
-                // Extraemos el ID del técnico asignado (ej: "195" de "195. MARTINEZ YELA...")
                 $cedulaTecnico = '';
                 if (!empty($queja->ASIGNADO)) {
                     $partesAsignado = explode('.', $queja->ASIGNADO);
                     $idTecnico = trim($partesAsignado[0]);
-                    // Buscamos la cédula en nuestro arreglo optimizado
                     $cedulaTecnico = $inspectores[$idTecnico] ?? '';
                 }
 
@@ -193,48 +195,54 @@ class CoordinacionPQRSLectorHTML
                 ];
             }
         }
-// 2. CREACIÓN DE LOS ARCHIVOS CSV
+
+        // 2. CREACIÓN DE LOS ARCHIVOS (XLSX y CSV)
         $timestamp = Carbon::now()->format('Ymd_His');
 
-        // --- Asegurarnos de que el directorio 'uploads' exista ---
+        // Asegurarnos de que el directorio 'uploads' exista
         $directorioUploads = storage_path('app/uploads');
         if (!File::exists($directorioUploads)) {
             File::makeDirectory($directorioUploads, 0755, true);
         }
 
-        // --- Crear CSV Punto de Interés ---
-        $nombrePuntoInteres = 'PUNTO_de_interes_' . $timestamp . '.csv';
-        // GUARDAMOS EN app/uploads PARA QUE EL CONTROLADOR LO ENCUENTRE
+        // --- [NUEVO] Generar Excel (.xlsx) para PUNTO DE INTERÉS ---
+        $nombrePuntoInteres = 'PUNTO_de_interes_' . $timestamp . '.xlsx';
         $rutaPuntoInteres = $directorioUploads . DIRECTORY_SEPARATOR . $nombrePuntoInteres;
 
-        $file1 = fopen($rutaPuntoInteres, 'w');
-        fputs($file1, "\xEF\xBB\xBF");
         if (!empty($filasPuntoInteres)) {
-            fputcsv($file1, array_keys($filasPuntoInteres[0]), ';');
-            foreach ($filasPuntoInteres as $fila) fputcsv($file1, $fila, ';');
-        }
-        fclose($file1);
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
 
-        // --- Crear CSV Tareas ---
+            // Escribir cabeceras y datos
+            $sheet->fromArray(array_keys($filasPuntoInteres[0]), NULL, 'A1');
+            $sheet->fromArray($filasPuntoInteres, NULL, 'A2');
+
+            $writer = new Xlsx($spreadsheet);
+            $writer->save($rutaPuntoInteres);
+
+            // Liberar memoria inmediatamente
+            $spreadsheet->disconnectWorksheets();
+            unset($spreadsheet, $writer);
+        }
+
+        // --- [MANTENIDO] Generar CSV (.csv) para TAREAS ---
         $nombreTareas = 'Tareas_' . $timestamp . '.csv';
         $rutaTareas = $directorioUploads . DIRECTORY_SEPARATOR . $nombreTareas;
 
         $file2 = fopen($rutaTareas, 'w');
-        fputs($file2, "\xEF\xBB\xBF");
+        fputs($file2, "\xEF\xBB\xBF"); // Forzar UTF-8 con BOM
         if (!empty($filasTareas)) {
             fputcsv($file2, array_keys($filasTareas[0]), ';');
-            foreach ($filasTareas as $fila) fputcsv($file2, $fila, ';');
+            foreach ($filasTareas as $fila) {
+                fputcsv($file2, $fila, ';');
+            }
         }
         fclose($file2);
 
-        // --- Retornar las URLs Firmadas ---
-        // Generamos la URL usando tu ruta 'descargar.archivo' y pasándole la variable 'file'
-        // También usamos temporarySignedRoute por si quieres que el link expire (ej. en 30 minutos)
-        // URL::signedRoute('descargar.archivo', ['file' => $nombrePuntoInteres])
-
+        // --- Retornar las URLs Firmadas correspondientes ---
         return [
             'success' => true,
-            'mensaje' => 'Archivos CSV generados correctamente.',
+            'mensaje' => 'Archivos generados correctamente (Punto de Interés en XLSX y Tareas en CSV).',
             'url_punto_interes' => URL::signedRoute('descargar.archivo', ['file' => $nombrePuntoInteres]),
             'url_tareas' => URL::signedRoute('descargar.archivo', ['file' => $nombreTareas])
         ];
