@@ -149,7 +149,7 @@ class CoordinacionPQRSLectorHTML
                     'Contacto' => $datosExtraidos['Telefono_Contacto'] !== 'No detectado' ? $datosExtraidos['Telefono_Contacto'] : '',
                     'EMAIL' => '',
                     'EMAIL CC' => '',
-                    'Telefono movil' => '',
+                    'Nro de teléfono móvil' => $datosExtraidos['Telefono_Contacto'],
                     'LATITUD' => '',
                     'LONGITUD' => '',
                     'idCliente' => '137776',
