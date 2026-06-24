@@ -115,7 +115,7 @@ class BitacoraDiariaController extends Controller
             'M' => fn($cierre) => ltrim($cierre, '.'),
             'O' => fn($final) => $final, // Hora final sin procesar
             'Q' => function ($vence) {
-                $venceDate = \DateTime::createFromFormat('d/m/Y', $vence);
+                $venceDate = \DateTime::createFromFormat('Y-m-d', $vence);
 
                 if (!$venceDate) {
                     return "";
