@@ -2,10 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable as AuditableTrait;
 
-class asignadas_quejas extends Model
+class asignadas_quejas extends Model implements AuditableContract
 {
+    use HasFactory,AuditableTrait;
     protected $table = "asignadas_quejas";
 
     protected $fillable = [

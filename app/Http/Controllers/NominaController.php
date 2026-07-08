@@ -18,7 +18,6 @@ class NominaController extends Controller
 
     public function postReporteNomina(Request $request)
     {
-        //dd($request->all());
 
         $mesAnio = $request->input('mesAnio');
         $produccionFiltrada = [];

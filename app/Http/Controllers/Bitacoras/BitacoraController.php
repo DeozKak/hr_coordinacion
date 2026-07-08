@@ -846,90 +846,94 @@ class BitacoraController extends Controller
 
     public function exportar_tabla_devoluciones(Request $request)
     {
+        // Validación de los datos de entrada
         $validator = Validator::make($request->all(), [
             'codigoHTMLdev' => 'required',
             'codigoHTMLges' => 'required'
         ], [
             'codigoHTMLdev.required' => 'Informacion de devoluciones requerida',
-            'codigoHTMLges.requided' => 'Informacion de gestionados requerida'
+            'codigoHTMLges.required' => 'Informacion de gestionados requerida' 
         ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errores' => $validator->errors()], 400);
+        }
+
         try {
-
+            // 1. Juntar ambos HTML y decodificarlos en un solo paso
             $codigoHTML = $request->codigoHTMLdev . $request->codigoHTMLges;
+            $codigoHTMLDecodificado = html_entity_decode($codigoHTML);
 
-            // Definir el patrón para encontrar las etiquetas <table> en el código HTML
-            $patron = '/<table.*?>(.*?)<\/table>/s';
+            // 2. Cargar todo el HTML en DOMDocument de forma segura
+            $dom = new DOMDocument();
+            // Usamos el truco de UTF-8 para proteger tildes y caracteres especiales
+            @$dom->loadHTML('<?xml encoding="UTF-8">' . $codigoHTMLDecodificado);
 
-            preg_match_all($patron, $codigoHTML, $matches);
-            // dd($matches);
+            // 3. Extraer todas las tablas (encontrará la de dev y la de ges)
+            $tablas = $dom->getElementsByTagName('table');
+
+            // Inicializar el objeto de Excel
             $spreadsheet = new Spreadsheet();
-            foreach ($matches[0] as $indice => $tablaHTML) {
-                $hoja = $spreadsheet->createSheet($indice);
+
+            // 4. Recorrer cada tabla encontrada
+            foreach ($tablas as $indice => $tablaNode) {
+
+                // Configurar las hojas del Excel
                 if ($indice == 0) {
+                    // Para la primera tabla (Devoluciones), usamos la hoja por defecto
+                    $hoja = $spreadsheet->getActiveSheet();
                     $hoja->setTitle('Devoluciones');
                 } else {
+                    // Para la segunda tabla (Gestionados/Historicos), creamos una nueva hoja
+                    $hoja = $spreadsheet->createSheet($indice);
                     $hoja->setTitle('Historicos');
                 }
-                $dom = new DOMDocument();
-                $dom->loadHTML($tablaHTML);
 
-                $filas = $dom->getElementsByTagName('tr');
-
+                // Obtener las filas solo de la tabla actual
+                $filas = $tablaNode->getElementsByTagName('tr');
                 $indiceFila = 1;
 
                 foreach ($filas as $fila) {
-                    // Obtener todas las celdas de la fila
                     $celdas = $fila->getElementsByTagName('td');
-
                     $encabezados = $fila->getElementsByTagName('th');
 
-                    // Si hay celdas de encabezado, procesarlas
+                    // Si hay celdas de encabezado (<th>), procesarlas
                     if ($encabezados->length > 0) {
                         $indiceColumna = 1;
                         foreach ($encabezados as $encabezado) {
-                            // Obtener el contenido del encabezado
-                            $contenidoEncabezado = $encabezado->nodeValue;
-
-                            // Pegar el contenido del encabezado en la hoja de cálculo
+                            $contenidoEncabezado = trim($encabezado->nodeValue);
                             $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoEncabezado);
-
-                            // Incrementar el índice de columna
                             $indiceColumna++;
                         }
-                        // Incrementar el índice de fila
                         $indiceFila++;
                     }
 
-                    // Si hay celdas de datos, procesarlas
+                    // Si hay celdas de datos (<td>), procesarlas
                     if ($celdas->length > 0) {
-                        // Inicializar el índice de columna en 1
                         $indiceColumna = 1;
 
                         foreach ($celdas as $celda) {
-
                             $estiloCelda = $celda->getAttribute('style');
-
-                            $contenidoCelda = $celda->nodeValue;
+                            $contenidoCelda = trim($celda->nodeValue);
 
                             $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoCelda);
-                            $celda = $hoja->getCell([$indiceColumna, $indiceFila]);
+                            $celdaExcel = $hoja->getCell([$indiceColumna, $indiceFila]);
 
                             if (!empty($estiloCelda)) {
-                                $celda->getStyle()->applyFromArray([
+                                $celdaExcel->getStyle()->applyFromArray([
                                     'fill' => [
                                         'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
                                         'startColor' => ['rgb' => $this->getColorFromStyle($estiloCelda)],
                                     ],
                                 ]);
                             }
-
-                            // Incrementar el índice de columna
                             $indiceColumna++;
                         }
                         $indiceFila++;
                     }
                 }
-                // Aplicar bordes a la tabla
+
+                // Aplicar bordes a la tabla actual
                 $hoja->getStyle('A1:' . $hoja->getHighestColumn() . $hoja->getHighestRow())
                     ->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
 
@@ -938,34 +942,34 @@ class BitacoraController extends Controller
                     $hoja->getColumnDimension($columnID)->setAutoSize(true);
                 }
 
+                // Colorear los encabezados principales de azul
                 $hoja->getStyle('A1:M1')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('0096ff');
             }
 
-            $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');;
-
+            // Guardar el archivo Excel
+            $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
             $fecha_actual = date('Y-m-d');
-
-            $writer->save(storage_path('app/uploads/') . "Devoluciones " . $fecha_actual . ".xlsx");
-
             $nombreArchivo = "Devoluciones " . $fecha_actual . ".xlsx";
 
+            $writer->save(storage_path('app/uploads/') . $nombreArchivo);
+
+            // Generar URL firmada temporal
             $urlFirmada = url()->temporarySignedRoute(
-                'descargar.archivo', // Nombre de la ruta que procesa la descarga
-                now()->addMinutes(10), // Tiempo de expiración de la URL
-                ['file' => $nombreArchivo] // Parámetro con el nombre del archivo
+                'descargar.archivo',
+                now()->addMinutes(10),
+                ['file' => $nombreArchivo]
             );
 
             header('Content-Type: application/json');
             return response()->json([
                 'ruta' => $urlFirmada
             ]);
-        } catch (\Exception $e) {
 
-            http_response_code(500);
+        } catch (\Exception $e) {
+            // Te devuelvo el mensaje real de error por si algo falla, así sabrás qué pasó
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
-
     public function reportes()
     {
         $bitacoras = tbl_bitacora_archivo::where('finished', '=', '1')->get()->map(function ($bitacora) {
