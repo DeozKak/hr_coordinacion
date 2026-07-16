@@ -852,7 +852,7 @@ class BitacoraController extends Controller
             'codigoHTMLges' => 'required'
         ], [
             'codigoHTMLdev.required' => 'Informacion de devoluciones requerida',
-            'codigoHTMLges.required' => 'Informacion de gestionados requerida' 
+            'codigoHTMLges.required' => 'Informacion de gestionados requerida'
         ]);
 
         if ($validator->fails()) {

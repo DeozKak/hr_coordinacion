@@ -358,6 +358,10 @@ class ProduccionController extends Controller
 
         if (!$diasFestivosRango) {
             $diasFestivosRango = [];
+            $festivosExtraordinarios = [
+                '2026-07-13',
+                // '2026-XX-YY' puedes ir agregando más en el futuro
+            ];
             // Calcular y almacenar los días festivos en el rango de fechas
             for ($date = $fechaInicioRango; $date->lte($fechaFinRango); $date->addDay()) {
                 $fechas[$date->format('Y-m-d')] = "";
@@ -366,7 +370,9 @@ class ProduccionController extends Controller
                 $fechas = array_filter($fechas, function ($fecha) use ($fechaInicio, $fechaFin) {
                     return $fecha >= $fechaInicio->format('Y-m-d') && $fecha <= $fechaFin->format('Y-m-d');
                 }, ARRAY_FILTER_USE_KEY);
-                if (CalendarioColombia::date($date->format('Y-m-d'))->isHoliday()) {
+
+                // 2. VALIDAR LIBRERÍA O ARREGLO DE EXCEPCIONES
+                if (CalendarioColombia::date($date->format('Y-m-d'))->isHoliday() || in_array($date->format('Y-m-d'), $festivosExtraordinarios)) {
                     $diasFestivosRango[] = $date->format('Y-m-d');
                 }
             }
