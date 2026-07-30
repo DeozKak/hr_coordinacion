@@ -5,7 +5,8 @@ namespace App\Console\Commands;
 
 use App\Models\Programacion\tbl_programacion_contrato;
 use App\Models\Bitacoras\tbl_bitacora_contrato;
-use App\Models\tbl_insp_cali;
+use App\Models\Movilidad;
+
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -32,8 +33,24 @@ class EjecutadasProgramacion extends Command
      */
     public function handle()
     {
+
+        $inicioDia = Carbon::now()->startOfDay()->toDateTimeString();
+        $finDia = Carbon::now()->endOfDay()->toDateTimeString();
+
+        $estadosCierre = [
+            '.CERTIFICADA',
+            'CERTIFICADA CON NOVEDADES',
+            '.INSPECCIONADA CON DEFECTO CRITICO VALLE',
+            '.INSPECCIONADA CON DEFECTO NO CRITICO VALLE'
+        ];
+
         $programadas = tbl_programacion_contrato::where('EJECUTADA', 0)
             ->where('FECHA_AGENDAMIENTO', '>=', date('Y-m-d'))
+            ->get();
+
+        $movilidad = Movilidad::where('Grupo', 'INSP-VALLE')
+            ->whereBetween('FechaRealFin', [$inicioDia, $finDia])
+            ->whereIn('Cierre3', $estadosCierre)
             ->get();
 
         $cierres = [

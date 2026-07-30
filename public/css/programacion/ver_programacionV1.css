@@ -147,6 +147,28 @@ body {
     margin-top: 1.5rem;
 }
 
+.btn-export-assign
+ {
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 0.4rem 1rem;
+    border: none;
+    color: #fff;
+    transition: all 0.3s ease;
+    letter-spacing: 0.5px;
+}
+
+/* Botón de Acción: Asignar Programaciones */
+.btn-export-assign {
+    background-image: linear-gradient(45deg, #007bff 0%, #0056b3 100%); /* Degradado azul elegante */
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+}
+
+.btn-export-assign:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
+}
+
 /* --- Estilos para Checkbox Moderno --- */
 
 /* Contenedor del checkbox */

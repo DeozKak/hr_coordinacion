@@ -30,6 +30,6 @@ Route::middleware('web')->group(function () {
         Route::post('programacion/plantilla/store', [ProgramacionController::class, 'PlantillaStore'])->name('programacion.PlantillaStore')->middleware(CheckPermission::class . ':ver_programacion');
         Route::post('programacion/callCenterGDO', [ProgramacionController::class, 'callCenterGDO'])->name('programacion.callCenterGDO')->middleware(CheckPermission::class . ':ver_programacion');
         Route::post('programacion/exportarSup', [ProgramacionController::class, 'exportarSup'])->name('programacion.exportarSup')->middleware(CheckPermission::class . ':ver_programacion');
-
+        Route::get('programacion/reAsignar/{fecha}',[ProgramacionController::class,'ReAsignarProgramacion'])->name('programacion.reAsignar')->middleware(CheckPermission::class . ':ver_programacion');
     });
 });

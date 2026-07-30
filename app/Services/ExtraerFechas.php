@@ -102,7 +102,7 @@ class ExtraerFechas
                 "Regla jornada: Cualquier hora con 'AM' = mañana; Cualquier hora con 'PM' = tarde. Retorna SOLO JSON.";
 
             $response = $this->client->chat()->create([
-                'model' => 'llama-3.1-8b-instant',
+                'model' => 'openai/gpt-oss-20b',
                 'messages' => [
                     ['role' => 'system', 'content' => $promptSistema],
                     ['role' => 'user', 'content' => $textoLimpio],

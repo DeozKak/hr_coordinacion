@@ -61,6 +61,7 @@ class CoordinacionPQRS extends Controller
             ->where('estado', 1);
 
 
+
         $completeData = $query->get();
 
         CoordinacionUpdateRecepcion::Responsables($completeData);

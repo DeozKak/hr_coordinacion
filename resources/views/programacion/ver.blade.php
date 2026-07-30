@@ -10,12 +10,13 @@
 
     <div id="loader" style="display: none;"></div>
     <div id="overlay" style="display: none;"></div>
-    <link rel="stylesheet" href="{{ asset('css/programacion/ver_programacionV1.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/programacion/ver_programacionV1.css') }}?v={{ time() }}">
     <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
     <input type="hidden" name="url_update" id="url_update" value="{{ route('programacion.update',['id'=>':id']) }}">
     <input type="hidden" name="url_busqueda" id="url_busqueda" value="{{ route('programacion.agendamiento') }}">
     <input type="hidden" name="url_exportar" id="url_exportar" value="{{ route('programacion.exportar') }}">
     <input type="hidden" name="urlexportarSup" id="urlexportarSup" value="{{ route('programacion.exportarSup') }}">
+    <input type="hidden" name="urlAsignar" id="urlAsignar" value="{{ route('programacion.reAsignar',['fecha'=>':fecha']) }}">
     <div class="container-fluid">
         <div class="row justify-content-center">
 
@@ -63,6 +64,9 @@
                 <div class="card-header card-header-modern d-flex justify-content-between align-items-center">
                     <h3 class="card-title-modern mb-0"><i class="fas fa-tasks"></i>Resultados de la Búsqueda</h3>
                     <div class="card-tools">
+                        <button id="btnAsignar" class="btn btn-sm btn-export-assign">
+                            <i class="fas fa-file-export"></i> Asignar programaciones
+                        </button>
                         <button id="btnExportarSup" class="btn btn-sm btn-export-sup">
                             <i class="fas fa-file-export"></i> Plantilla Supervisores
                         </button>
@@ -106,6 +110,7 @@
     @section('js')
 
         <script src="{{ asset('js/programacion/verProgramacionV4.4.js') }}?v={{ time() }}"></script>
+        <script src="{{ asset('js/programacion/Reasignacion.js') }}?v={{ time() }}"></script>
         <script>
             const tecnicos = @json($tecnicos);
             let permiso_modTec = 0;

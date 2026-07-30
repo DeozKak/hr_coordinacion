@@ -88,7 +88,7 @@ class ProcessCallCenterGdo implements ShouldQueue
                 }
 
                 // Pausa obligatoria para la API
-                usleep(4500000);
+                usleep(5000000);
 
                 $valorNumericoExcel = $worksheet->getCell('R' . $rowIndex)->getValue();
                 $fechaComoDateTime = Date::excelToDateTimeObject($valorNumericoExcel);

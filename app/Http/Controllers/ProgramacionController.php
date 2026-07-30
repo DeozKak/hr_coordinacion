@@ -35,6 +35,7 @@ use App\Jobs\ProcessExcelFileMacros;
 use Illuminate\Support\Facades\File;
 use ZipArchive;
 use App\Jobs\ProcessCallCenterGdo;
+use App\Services\Programacion\ReAsignacion;
 
 class ProgramacionController extends Controller
 {
@@ -1535,5 +1536,28 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
             return false;
         }
     }
+
+
+    public function ReAsignarProgramacion($fecha, ReAsignacion $programacionService)
+    {
+            // 1. Validar la fecha
+            $validator = Validator::make(['fecha' => $fecha], [
+                'fecha' => 'required|date_format:Y-m-d'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['error' => 'Formato de fecha inválido. Debe ser AAAA-MM-DD'], 400);
+            }
+
+            // 2. Llamar al servicio para que haga todo el trabajo
+            $respuestaExcel = $programacionService->procesarYExportar($fecha);
+            // 3. Verificar si hubo datos
+        if (!$respuestaExcel) {
+                return response()->json(['mensaje' => 'No hay programaciones para esta fecha.'], 404);
+        }
+        // 4. Retornar el Excel directamente al usuario
+        return $respuestaExcel;
+    }
+
 
 }
