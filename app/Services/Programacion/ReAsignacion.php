@@ -101,25 +101,27 @@ class ReAsignacion
     private function prepararEstructuras($programadas)
     {
         $cargaPorTecnico = [];
-        $tecnicosPorBarrio = [];
+        $tecnicosPorUbicacion = [];
 
         foreach ($programadas as $prog) {
             $prog->JORNADA_NORMALIZADA = $this->normalizarJornada($prog->JORNADA);
             $prog->ES_RESIDENCIAL = $this->esUnidadResidencial($prog->DIRECCION);
 
-            $tecnico = $prog->TECNICO;
-            $barrio = $prog->BARRIO;
+            // 1. Limpiamos el nombre del barrio y lo guardamos en una nueva propiedad
+            $prog->BARRIO_NORMALIZADO = $this->normalizarBarrio($prog->BARRIO);
 
-            // Inicializamos los contadores INCLUYENDO 'ALL_DAY' para evitar el error
+            $tecnico = $prog->TECNICO;
+
+            // 2. Usamos el barrio normalizado para armar la llave de la ubicación
+            $ubicacion = $prog->CIUDAD . ' - ' . $prog->BARRIO_NORMALIZADO;
+
             $cargaPorTecnico[$tecnico] ??= ['AM' => 0, 'PM' => 0, 'ALL_DAY' => 0, 'TOTAL' => 0];
 
-            // Agrupar técnicos por barrio
-            $tecnicosPorBarrio[$barrio] ??= [];
-            if (!in_array($tecnico, $tecnicosPorBarrio[$barrio])) {
-                $tecnicosPorBarrio[$barrio][] = $tecnico;
+            $tecnicosPorUbicacion[$ubicacion] ??= [];
+            if (!in_array($tecnico, $tecnicosPorUbicacion[$ubicacion])) {
+                $tecnicosPorUbicacion[$ubicacion][] = $tecnico;
             }
 
-            // Sumamos las cargas asegurándonos de contemplar todas las jornadas
             if ($prog->JORNADA_NORMALIZADA == 'AM') {
                 $cargaPorTecnico[$tecnico]['AM']++;
             } elseif ($prog->JORNADA_NORMALIZADA == 'PM') {
@@ -131,36 +133,36 @@ class ReAsignacion
             $cargaPorTecnico[$tecnico]['TOTAL']++;
         }
 
-        return ['carga' => $cargaPorTecnico, 'tecnicos' => $tecnicosPorBarrio];
+        return ['carga' => $cargaPorTecnico, 'tecnicos' => $tecnicosPorUbicacion];
     }
 
-    private function ejecutarReasignacion($programadas, &$cargaPorTecnico, $tecnicosPorBarrio)
+    private function ejecutarReasignacion($programadas, &$cargaPorTecnico, $tecnicosPorUbicacion)
     {
         // =========================================================================
         // FASE 1: ATRACCIÓN DE TAREAS PARA "TECNICO MOVILIDAD"
         // =========================================================================
 
-        $inspectoresMovilidadPorBarrio = [];
+        $inspectoresMovilidadPorUbicacion = [];
 
-        // A. Identificamos en qué barrios hay técnicos de movilidad
         foreach ($programadas as $prog) {
             $motivo = strtoupper(trim($prog->PORQUE_PROGRAMO));
             if ($motivo === 'TECNICO MOVILIDAD') {
-                $barrio = $prog->BARRIO;
+                // Usamos el barrio normalizado
+                $ubicacion = $prog->CIUDAD . ' - ' . $prog->BARRIO_NORMALIZADO;
                 $tec = $prog->TECNICO;
-                $inspectoresMovilidadPorBarrio[$barrio][$tec] = true;
+                $inspectoresMovilidadPorUbicacion[$ubicacion][$tec] = true;
             }
         }
 
-        // B. Transferimos las tareas normales de ese barrio al técnico de movilidad
         foreach ($programadas as $prog) {
             $motivo = strtoupper(trim($prog->PORQUE_PROGRAMO));
-            $barrio = $prog->BARRIO;
+            // Usamos el barrio normalizado
+            $ubicacion = $prog->CIUDAD . ' - ' . $prog->BARRIO_NORMALIZADO;
             $tecnicoActual = $prog->TECNICO;
             $jornada = $prog->JORNADA_NORMALIZADA;
 
-            if ($motivo !== 'TECNICO MOVILIDAD' && isset($inspectoresMovilidadPorBarrio[$barrio])) {
-                foreach ($inspectoresMovilidadPorBarrio[$barrio] as $tecnicoMovilidad => $val) {
+            if ($motivo !== 'TECNICO MOVILIDAD' && isset($inspectoresMovilidadPorUbicacion[$ubicacion])) {
+                foreach ($inspectoresMovilidadPorUbicacion[$ubicacion] as $tecnicoMovilidad => $val) {
 
                     if ($tecnicoActual !== $tecnicoMovilidad) {
 
@@ -193,12 +195,11 @@ class ReAsignacion
         foreach ($programadas as $prog) {
             $tec = $prog->TECNICO;
             $jornada = $prog->JORNADA_NORMALIZADA;
-            $barrio = $prog->BARRIO;
+            // Usamos el barrio normalizado
+            $ubicacion = $prog->CIUDAD . ' - ' . $prog->BARRIO_NORMALIZADO;
 
-            // Limpiamos espacios al inicio y fin, y verificamos si empieza en la posición 0 con "100."
             if (strpos(trim($tec), '100.') === 0) {
-                // Buscamos un compañero disponible en el mismo barrio
-                $this->buscarReemplazo($prog, $tec, $jornada, $barrio, $tecnicosPorBarrio, $cargaPorTecnico);
+                $this->buscarReemplazo($prog, $tec, $jornada, $ubicacion, $tecnicosPorUbicacion, $cargaPorTecnico);
             }
         }
 
@@ -213,21 +214,23 @@ class ReAsignacion
         foreach ($programadasOrdenadas as $prog) {
             $tec = $prog->TECNICO;
             $jornada = $prog->JORNADA_NORMALIZADA;
-            $barrio = $prog->BARRIO;
+            // Usamos el barrio normalizado
+            $ubicacion = $prog->CIUDAD . ' - ' . $prog->BARRIO_NORMALIZADO;
 
             $superaAM = ($jornada == 'AM' && $cargaPorTecnico[$tec]['AM'] > 7);
             $superaPM = ($jornada == 'PM' && $cargaPorTecnico[$tec]['PM'] > 7);
             $superaTotal = ($cargaPorTecnico[$tec]['TOTAL'] > 14);
 
             if ($superaAM || $superaPM || $superaTotal) {
-                $this->buscarReemplazo($prog, $tec, $jornada, $barrio, $tecnicosPorBarrio, $cargaPorTecnico);
+                $this->buscarReemplazo($prog, $tec, $jornada, $ubicacion, $tecnicosPorUbicacion, $cargaPorTecnico);
             }
         }
     }
 
-    private function buscarReemplazo($prog, $tecnicoOriginal, $jornada, $barrio, $tecnicosPorBarrio, &$cargaPorTecnico)
+    private function buscarReemplazo($prog, $tecnicoOriginal, $jornada, $ubicacion, $tecnicosPorUbicacion, &$cargaPorTecnico)
     {
-        $disponibles = $tecnicosPorBarrio[$barrio] ?? [];
+        // Buscamos técnicos que coincidan exactamente con la Ciudad y el Barrio
+        $disponibles = $tecnicosPorUbicacion[$ubicacion] ?? [];
 
         foreach ($disponibles as $posibleTecnico) {
             if ($posibleTecnico == $tecnicoOriginal) continue;
@@ -240,7 +243,6 @@ class ReAsignacion
             if ($espacio && $cargaPorTecnico[$posibleTecnico]['TOTAL'] < 14) {
                 // Reasignar
                 $prog->TECNICO = $posibleTecnico;
-                // <-- CORREGIDO: OBSERVACIO a OBSERVACIONES
                 $prog->OBSERVACIONES = "Reasignado de: " . $tecnicoOriginal . " | " . $prog->OBSERVACIONES;
 
                 // Actualizar referencias
@@ -338,5 +340,27 @@ class ReAsignacion
             if (strpos($direccion, $palabra) !== false) return true;
         }
         return false;
+    }
+
+    private function normalizarBarrio($nombreBarrio)
+    {
+        if (empty($nombreBarrio)) return '';
+
+        // Convertimos a mayúsculas y quitamos espacios a los lados
+        $barrioLimpio = strtoupper(trim($nombreBarrio));
+
+        // Lista de prefijos que queremos limpiar (incluyendo URBANIZACION y el error de tipeo VERDEDA)
+        $prefijos = ['BARRIO ', 'URBANIZACION ', 'URBANIZACIÓN ', 'VEREDA ', 'VERDEDA '];
+
+        foreach ($prefijos as $prefijo) {
+            // strpos === 0 verifica si el texto empieza exactamente con esa palabra
+            if (strpos($barrioLimpio, $prefijo) === 0) {
+                // Cortamos la palabra del principio y limpiamos espacios sobrantes
+                $barrioLimpio = trim(substr($barrioLimpio, strlen($prefijo)));
+                break; // Solo quitamos un prefijo, así que podemos salir del ciclo
+            }
+        }
+
+        return $barrioLimpio;
     }
 }
