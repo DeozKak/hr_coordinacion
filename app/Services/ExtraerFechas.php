@@ -58,17 +58,17 @@ class ExtraerFechas
                 $val3 = (int)$matches[3];
                 $anioActual = (int)date('y'); // Extrae automáticamente '26' (del 2026)
 
-                // Si el primer número es exactamente el año actual (26/05/27)
+
                 if ($val1 === $anioActual && $val3 !== $anioActual) {
                     $anio = '20' . $val1;
                     $dia = str_pad($val3, 2, '0', STR_PAD_LEFT);
                 }
-                // Si el último número es exactamente el año actual (27/05/26)
+
                 elseif ($val3 === $anioActual && $val1 !== $anioActual) {
                     $anio = '20' . $val3;
                     $dia = str_pad($val1, 2, '0', STR_PAD_LEFT);
                 }
-                // Si programan para otro año o ambos coinciden (ej. 15/05/28), asumimos DD/MM/YY por defecto
+
                 else {
                     $anio = '20' . str_pad($val3, 2, '0', STR_PAD_LEFT);
                     $dia = str_pad($val1, 2, '0', STR_PAD_LEFT);
