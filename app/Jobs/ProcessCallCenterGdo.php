@@ -150,10 +150,14 @@ class ProcessCallCenterGdo implements ShouldQueue
         } catch (\Exception $e) {
             Log::error("Error fatal en ProcessCallCenterGdo: " . $e->getMessage() . " | Registro: " . $registroActual);
 
-            // PASAMOS EL $registroActual AL CORREO
-            $user = \App\Models\User::find($this->userId);
-            if ($user && !empty($user->email)) {
-                Mail::to($user->email)->send(new ErrorProcesamientoGdoMail($user->name, $e->getMessage(), $registroActual));
+            $userIds = [2, 26];
+
+            foreach ($userIds as $id) {
+                $user = \App\Models\User::find($id);
+
+                if ($user && !empty($user->email)) {
+                    Mail::to($user->email)->send(new ResultadosGdoMail($user->name, $rutaFinal));
+                }
             }
 
             $programacion = tbl_programacion_usuario::find($this->programacionId);
