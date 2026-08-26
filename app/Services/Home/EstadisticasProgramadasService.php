@@ -25,12 +25,31 @@ class EstadisticasProgramadasService
 
         $ejecutadasRaw = $this->programacionesEjecutadas($fechaReporte);
 
+
         $pendientesRaw = $this->filtrarPorLocalidad($pendientesRaw, $localidadSeleccionada);
         $ejecutadasRaw = $this->filtrarPorLocalidad($ejecutadasRaw, $localidadSeleccionada);
 
-        // Una orden de trabajo puede venir por más de una fuente: se cuenta una sola vez
-        $pendientes = $pendientesRaw->unique('ORDEN_TRABAJO')->values();
-        $ejecutadas = $ejecutadasRaw->unique('ORDEN_TRABAJO')->values();
+        $pendientes = $pendientesRaw->unique(function ($item) {
+            $orden = trim(strtoupper($item->ORDEN_TRABAJO ?? ''));
+
+            // Si la orden es N/A, usamos su ID real de base de datos.
+            // Así evitamos borrar plantillas distintas, pero eliminamos duplicados exactos.
+            if ($orden === 'N/A' || $orden === '') {
+                return 'PLANTILLA_' . $item->id;
+            }
+
+            return $item->ORDEN_TRABAJO;
+        })->values();
+
+        $ejecutadas = $ejecutadasRaw->unique(function ($item) {
+            $orden = trim(strtoupper($item->ORDEN_TRABAJO ?? ''));
+
+            if ($orden === 'N/A' || $orden === '') {
+                return 'PLANTILLA_' . $item->id;
+            }
+
+            return $item->ORDEN_TRABAJO;
+        })->values();
 
         $tiposDeTrabajo = $pendientes->pluck('TIPO_TRABAJO')
             ->merge($ejecutadas->pluck('TIPO_TRABAJO'))
@@ -86,7 +105,7 @@ class EstadisticasProgramadasService
             ->where('pc.EJECUTADA', '=', 0)
             ->where('pu.finished', 1)
             ->where('pb.ESTADO_RECEPCION', '=', 0)
-            ->select('pc.TIPO_TRABAJO', 'pc.CIUDAD', 'pc.CONTRATO', 'pc.NOMBRE_USUARIO', 'pc.TECNICO', 'pc.ORDEN_TRABAJO')
+            ->select('pc.id','pc.TIPO_TRABAJO', 'pc.CIUDAD', 'pc.CONTRATO', 'pc.NOMBRE_USUARIO', 'pc.TECNICO', 'pc.ORDEN_TRABAJO')
             ->get();
     }
 
@@ -99,7 +118,7 @@ class EstadisticasProgramadasService
             ->where('FECHA_AGENDAMIENTO', '=', $fechaReporte)
             ->where('EJECUTADA', '=', 0)
             ->where('plantilla', 1)
-            ->select('TIPO_TRABAJO', 'CIUDAD', 'CONTRATO', 'NOMBRE_USUARIO', 'TECNICO', 'ORDEN_TRABAJO')
+            ->select('id','TIPO_TRABAJO', 'CIUDAD', 'CONTRATO', 'NOMBRE_USUARIO', 'TECNICO', 'ORDEN_TRABAJO')
             ->get();
     }
 
@@ -111,7 +130,7 @@ class EstadisticasProgramadasService
         return DB::table('tbl_programacion_contratos')
             ->where('FECHA_AGENDAMIENTO', '=', $fechaReporte)
             ->where('EJECUTADA', '=', 1)
-            ->select('TIPO_TRABAJO', 'CIUDAD', 'CONTRATO', 'NOMBRE_USUARIO', 'TECNICO', 'ORDEN_TRABAJO')
+            ->select('id','TIPO_TRABAJO', 'CIUDAD', 'CONTRATO', 'NOMBRE_USUARIO', 'TECNICO', 'ORDEN_TRABAJO')
             ->get();
     }
 
@@ -137,6 +156,7 @@ class EstadisticasProgramadasService
         return $programaciones->map(function ($item) {
             return [
                 'contrato' => $item->CONTRATO,
+                'orden'    => $item->ORDEN_TRABAJO,
                 'cliente'  => $item->NOMBRE_USUARIO ?? 'Sin Registro',
                 'tecnico'  => $item->TECNICO ?? 'Sin Asignar',
                 'ciudad'   => $this->municipios->limpiar($item->CIUDAD),

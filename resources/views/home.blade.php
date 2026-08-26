@@ -456,6 +456,7 @@
                         <thead class="bg-light">
                         <tr>
                             <th>Contrato</th>
+                            <th>Orden</th>
                             <th>Cliente</th>
                             <th>Técnico Asignado</th>
                             <th>Municipio</th>
@@ -480,7 +481,7 @@
         window.datosDetalles = @json($detalles ?? []);
     </script>
 
-    <script src="{{asset('js/home.js')}}"></script>
+    <script src="{{asset('js/homeV2.1.js')}}"></script>
 
     @if (session('error'))
         <script>

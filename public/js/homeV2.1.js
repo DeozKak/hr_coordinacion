@@ -252,6 +252,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 tr.innerHTML = `
                     <td class="font-weight-bold text-primary">${fila.contrato}</td>
+                    <td>${fila.orden}</td>
                     <td>${fila.cliente}</td>
                     <td><i class="fas fa-user-circle text-secondary mr-1"></i> ${fila.tecnico}</td>
                     <td>${fila.ciudad}</td>
