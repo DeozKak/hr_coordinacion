@@ -1,66 +1,67 @@
-function editarAsignacion(localidad, idsTecnicos) {
-    document.getElementById('localidad_input').value = localidad;
+// ============================================================
+// ASIGNACIÓN DE TÉCNICOS A LOCALIDAD
+// Un técnico solo puede estar en una localidad, pero se puede
+// traer de otra sin desasignarlo antes: el traslado es automático.
+// ============================================================
 
-    // 1. SOLUCIÓN: Convertimos todos los IDs del servidor a Texto
-    const arrayIds = idsTecnicos.map(String);
+// Refresca el aviso de traslado de un técnico según cómo quede marcado
+function marcarOrigenTecnico(check, localidadActual) {
+    const asignadoEn = (check.getAttribute('data-asignado') || '').trim();
+    const caja = check.closest('.caja-tecnico');
+    const origenSpan = document.getElementById('origen_text_' + check.value);
+
+    // Viene de otra localidad distinta a la que se está editando
+    const vieneDeOtra = asignadoEn !== '' && asignadoEn !== localidadActual;
+
+    if (caja) {
+        caja.classList.toggle('caja-tecnico-traslado', vieneDeOtra && check.checked);
+        caja.classList.toggle('caja-tecnico-ocupado', vieneDeOtra && !check.checked);
+    }
+
+    if (origenSpan) {
+        origenSpan.style.display = vieneDeOtra ? 'block' : 'none';
+        origenSpan.innerHTML = check.checked
+            ? '<small><i class="fas fa-exchange-alt"></i> Se trasladará desde: ' + asignadoEn + '</small>'
+            : '<small><i class="fas fa-map-marker-alt"></i> Actualmente en: ' + asignadoEn + '</small>';
+    }
+}
+
+// Deja el modal listo para una localidad concreta (vacía si es una nueva)
+function prepararModalAsignacion(localidad, idsTecnicos) {
+    const localidadActual = (localidad || '').trim();
+    const arrayIds = (idsTecnicos || []).map(String);
+
+    document.getElementById('localidad_input').value = localidadActual;
 
     document.querySelectorAll('.check-tecnico').forEach(check => {
-        const asignadoEn = check.getAttribute('data-asignado');
-        const checkVal = check.value.toString();
-        const lockSpan = document.getElementById('lock_text_' + checkVal);
-
-        // REGLA DE ORO: Si pertenece a esta localidad que estoy editando
-        if (arrayIds.includes(checkVal)) {
-            check.removeAttribute('disabled'); // <-- CLAVE: Remueve el bloqueo HTML
-            check.disabled = false;
-            check.checked = true;
-            check.closest('.custom-checkbox').classList.remove('bg-light');
-            if(lockSpan) lockSpan.style.display = 'none'; // Ocultamos el candado
-        }
-        // Si está en OTRA localidad
-        else if (asignadoEn && asignadoEn !== "") {
-            check.setAttribute('disabled', 'disabled');
-            check.disabled = true;
-            check.checked = false;
-            check.closest('.custom-checkbox').classList.add('bg-light');
-            if(lockSpan) lockSpan.style.display = 'block'; // Mostramos el candado
-        }
-        // Si está totalmente libre
-        else {
-            check.removeAttribute('disabled');
-            check.disabled = false;
-            check.checked = false;
-            check.closest('.custom-checkbox').classList.remove('bg-light');
-            if(lockSpan) lockSpan.style.display = 'none';
-        }
+        check.checked = arrayIds.includes(check.value.toString());
+        marcarOrigenTecnico(check, localidadActual);
     });
+}
 
+function editarAsignacion(localidad, idsTecnicos) {
+    prepararModalAsignacion(localidad, idsTecnicos);
     $('#modalNuevaAsignacion').modal('show');
 }
 
-// 2. Limpiar todo correctamente al cerrar el modal
-$('#modalNuevaAsignacion').on('hidden.bs.modal', function () {
-    document.getElementById('localidad_input').value = "";
-
-    document.querySelectorAll('.check-tecnico').forEach(check => {
-        const asignadoEn = check.getAttribute('data-asignado');
-        const checkVal = check.value.toString();
-        const lockSpan = document.getElementById('lock_text_' + checkVal);
-
-        check.checked = false;
-
-        if (asignadoEn && asignadoEn !== "") {
-            check.setAttribute('disabled', 'disabled');
-            check.disabled = true;
-            check.closest('.custom-checkbox').classList.add('bg-light');
-            if(lockSpan) lockSpan.style.display = 'block';
-        } else {
-            check.removeAttribute('disabled');
-            check.disabled = false;
-            check.closest('.custom-checkbox').classList.remove('bg-light');
-            if(lockSpan) lockSpan.style.display = 'none';
-        }
+// Al marcar o desmarcar, se actualiza el aviso de traslado en vivo
+document.querySelectorAll('.check-tecnico').forEach(check => {
+    check.addEventListener('change', function () {
+        marcarOrigenTecnico(this, document.getElementById('localidad_input').value.trim());
     });
+});
+
+// Si escriben otra localidad a mano, se recalculan los avisos
+document.getElementById('localidad_input').addEventListener('input', function () {
+    const localidadActual = this.value.trim();
+    document.querySelectorAll('.check-tecnico').forEach(check => {
+        marcarOrigenTecnico(check, localidadActual);
+    });
+});
+
+// Limpiar todo correctamente al cerrar el modal
+$('#modalNuevaAsignacion').on('hidden.bs.modal', function () {
+    prepararModalAsignacion('', []);
 });
 document.getElementById('buscadorTecnicos').addEventListener('input', function() {
     let filtro = this.value.toLowerCase();
@@ -122,8 +123,9 @@ document.addEventListener('DOMContentLoaded', function () {
         order: [[1, 'desc']],  // Ordenar por la segunda columna de mayor a menor por defecto
     };
 
-    $('#tablaResumen').DataTable(dtOptions);
-    $('#tablaTecnicos').DataTable(dtOptions);
+    // Las tablas del tablero (resumen, técnicos y programaciones) son cortas y
+    // usan el diseño propio de tarjetas, así que no se envuelven en DataTables.
+    // dtOptions se conserva porque los modales de detalle sí lo reutilizan.
 
 
 
@@ -167,8 +169,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    $('#tablaProgramacionesHoy').DataTable(dtOptions);
-
     // ============================================================
     // LÓGICA DEL MODAL DE DETALLES
     // ============================================================
@@ -196,11 +196,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="font-weight-bold">${fila.contrato}</td>
+                    <td>${fila.contrato}</td>
                     <td>${fila.operario}</td>
                     <td>${fila.localidad}</td> <!-- Municipio añadido -->
                     <td>${fila.tarea}</td>
-                    <td><span class="badge badge-secondary">${fila.cierre}</span></td>
+                    <td><span class="badge badge-secondary badge-dashboard">${fila.cierre}</span></td>
+                    <td data-order="${fila.fecha_orden || ''}">${fila.fecha || '-'}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -247,16 +248,16 @@ document.addEventListener('DOMContentLoaded', function () {
             data.forEach(fila => {
                 let tr = document.createElement('tr');
                 let badge = estado === 'ejecutadas'
-                    ? '<span class="badge badge-success px-2 py-1"><i class="fas fa-check-circle mr-1"></i>Ejecutada</span>'
-                    : '<span class="badge badge-danger px-2 py-1"><i class="fas fa-clock mr-1"></i>Pendiente</span>';
+                    ? '<span class="badge badge-success badge-dashboard"><i class="fas fa-check-circle mr-1"></i>Ejecutada</span>'
+                    : '<span class="badge badge-danger badge-dashboard"><i class="fas fa-clock mr-1"></i>Pendiente</span>';
 
                 tr.innerHTML = `
-                    <td class="font-weight-bold text-primary">${fila.contrato}</td>
+                    <td>${fila.contrato}</td>
                     <td>${fila.orden}</td>
                     <td>${fila.cliente}</td>
-                    <td><i class="fas fa-user-circle text-secondary mr-1"></i> ${fila.tecnico}</td>
+                    <td><i class="fas fa-user-circle icono-fila"></i>${fila.tecnico}</td>
                     <td>${fila.ciudad}</td>
-                    <td class="text-center">${badge}</td>
+                    <td>${badge}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -299,5 +300,35 @@ document.getElementById('formSubirArchivos').addEventListener('submit', function
     let btn = document.getElementById('btnGuardarArchivos');
     btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Procesando datos, por favor espere...';
     btn.disabled = true;
-    btn.classList.replace('btn-success', 'btn-secondary');
+    btn.classList.replace('btn-dash-solid-success', 'btn-dash-neutral');
 });
+
+
+// ============================================================
+// PENDIENTES EN BASE: alterna entre Tipo de Trabajo y Meses
+// ============================================================
+const selectorVistaBase = document.getElementById('selectorVistaBase');
+
+if (selectorVistaBase) {
+    const tituloColumnaBase = document.getElementById('tituloColumnaBase');
+    const titulosBase = {
+        tipos: 'Tipo de Trabajo',
+        meses: 'Meses de Vencimiento'
+    };
+
+    const mostrarVistaBase = (vista) => {
+        document.querySelectorAll('.vista-base').forEach(bloque => {
+            bloque.classList.toggle('d-none', bloque.dataset.vista !== vista);
+        });
+
+        if (tituloColumnaBase) {
+            tituloColumnaBase.textContent = titulosBase[vista] || titulosBase.tipos;
+        }
+    };
+
+    selectorVistaBase.addEventListener('change', function () {
+        mostrarVistaBase(this.value);
+    });
+
+    mostrarVistaBase(selectorVistaBase.value);
+}

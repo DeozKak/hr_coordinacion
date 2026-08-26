@@ -6,11 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Services\Home\CargueEstadisticasAsignacionService;
 use App\Services\Home\EstadisticasProgramadasService;
 use App\Services\Home\FuerzaTrabajoService;
+use App\Services\Home\PendientesBaseService;
 use App\Services\Home\ReporteOperativoService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
-use App\Models\Zonificacion\AsignacionTecnicoLocalidad;
-use Illuminate\Support\Facades\DB;
 
 
 class HomeController extends Controller
@@ -18,7 +17,8 @@ class HomeController extends Controller
     public function __construct(
         private FuerzaTrabajoService $fuerzaTrabajo,
         private ReporteOperativoService $reporteOperativo,
-        private EstadisticasProgramadasService $estadisticasProgramadas
+        private EstadisticasProgramadasService $estadisticasProgramadas,
+        private PendientesBaseService $pendientesBase
     ) {
         $this->middleware('auth');
     }
@@ -35,6 +35,7 @@ class HomeController extends Controller
 
         $reporte     = $this->reporteOperativo->generar($fechaReporte, $localidadSeleccionada);
         $programadas = $this->estadisticasProgramadas->generar($fechaReporte, $localidadSeleccionada);
+        $base        = $this->pendientesBase->generar();
 
         return view('home', [
             'tecnicos_por_localidad'  => $this->fuerzaTrabajo->tecnicosPorLocalidad(),
@@ -43,11 +44,17 @@ class HomeController extends Controller
             'localidadSeleccionada'   => $localidadSeleccionada,
             'localidadesDisponibles'  => $reporte['localidadesDisponibles'],
             'metricas'                => $reporte['metricas'],
+            'acumuladoDesde'          => $reporte['acumuladoDesde'],
             'mesesData'               => $reporte['mesesData'],
             'detalles'                => $reporte['detalles'],
             'estadisticasProgramadas' => $programadas['estadisticas'],
             'totalesProg'             => $programadas['totales'],
             'detallesProgramaciones'  => $programadas['detalles'],
+            'baseTipos'               => $base['tipos'],
+            'baseMeses'               => $base['meses'],
+            'baseTotalTipos'          => $base['totalTipos'],
+            'baseTotalMeses'          => $base['totalMeses'],
+            'baseTotalTabla'          => $base['totalTabla'],
         ]);
     }
 
@@ -60,22 +67,21 @@ class HomeController extends Controller
 
         $localidad = strtoupper(trim($request->localidad));
 
-        DB::transaction(function () use ($localidad, $request) {
-            // 1. Borramos la asignación previa de esta localidad para "limpiar"
-            AsignacionTecnicoLocalidad::where('localidad', $localidad)->delete();
+        $resultado = $this->fuerzaTrabajo->asignar($localidad, $request->input('tecnicos', []));
 
-            // 2. Guardamos los técnicos seleccionados
-            if ($request->has('tecnicos')) {
-                foreach ($request->tecnicos as $id_tecnico) {
-                    AsignacionTecnicoLocalidad::create([
-                        'localidad'  => $localidad,
-                        'id_tecnico' => $id_tecnico
-                    ]);
-                }
-            }
-        });
+        $mensaje = "Asignación de $localidad actualizada con éxito.";
 
-        return redirect()->back()->with('success', "Asignación de $localidad actualizada con éxito.");
+        // Se avisa de dónde salieron los técnicos que se trajeron de otra localidad.
+        // Con pocos se nombran; con muchos solo se resume, porque el aviso es un toast.
+        $movidos = collect($resultado['movidos']);
+
+        if ($movidos->isNotEmpty()) {
+            $mensaje .= $movidos->count() <= 3
+                ? ' Se trasladaron: ' . $movidos->map(fn ($origen, $nombre) => "$nombre (venía de $origen)")->implode('; ') . '.'
+                : ' Se trasladaron ' . $movidos->count() . ' técnicos desde: ' . $movidos->values()->unique()->implode(', ') . '.';
+        }
+
+        return redirect()->back()->with('success', $mensaje);
     }
 
 

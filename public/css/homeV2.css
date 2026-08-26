@@ -1,0 +1,511 @@
+/* --- Estilos Modernos Extraídos de Estadísticas --- */
+.modern-card {
+    background: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-bottom: 25px;
+}
+.modern-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+.modern-card-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    padding: 1.25rem 1.5rem;
+    border-radius: 15px 15px 0 0;
+}
+.modern-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #2c3e50;
+    margin: 0;
+}
+.filter-bar {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    border-left: 5px solid #4F81BD;
+}
+.btn-modern {
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 0.4rem 1rem;
+    transition: all 0.3s ease;
+}
+.btn-gradient-primary {
+    background: linear-gradient(135deg, #4F81BD 0%, #3b608c 100%);
+    color: white;
+    border: none;
+}
+.btn-gradient-primary:hover {
+    background: linear-gradient(135deg, #3b608c 0%, #284261 100%);
+    color: white;
+    box-shadow: 0 4px 10px rgba(79, 129, 189, 0.4);
+}
+.custom-select-modern {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    padding: 0.4rem 0.75rem;
+    color: #495057;
+}
+.custom-select-modern:focus {
+    border-color: #4F81BD;
+    box-shadow: 0 0 0 0.2rem rgba(79, 129, 189, 0.25);
+    outline: none;
+}
+/* Ajustes visuales para DataTables dentro de tarjetas modernas */
+.dataTables_wrapper .dataTables_filter input {
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    padding: 4px 15px;
+    outline: none;
+}
+.dataTables_wrapper .dataTables_filter input:focus {
+    border-color: #4F81BD;
+    box-shadow: 0 0 5px rgba(79,129,189,0.3);
+}
+
+/* ============================================================ */
+/* TARJETAS Y TABLAS DEL DASHBOARD (mismo diseño en todas)      */
+/* ============================================================ */
+.dashboard-card {
+    background: #ffffff;
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.dashboard-card-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 15px 15px 0 0;
+    padding: 1.1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+.dashboard-card-body {
+    padding: 0.75rem 1.25rem 1rem;
+    flex: 1 1 auto;
+}
+.dashboard-icon {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1.1rem;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+}
+.dashboard-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #2c3e50;
+    margin: 0;
+}
+.dashboard-subtitle {
+    font-size: 0.75rem;
+    color: #8898aa;
+    margin: 0;
+}
+
+/* Tabla base: filas como tarjetas separadas */
+table.tabla-dashboard {
+    width: 100%;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+    text-align: center;
+}
+table.tabla-dashboard > thead > tr > th {
+    border: none;
+    padding: 0 0.75rem 0.5rem;
+    color: #8898aa;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+table.tabla-dashboard > tbody > tr > td {
+    background-color: #f8fafc;
+    border: none;
+    padding: 0.7rem 0.75rem;
+    vertical-align: middle;
+    font-size: 0.95rem;
+    color: #2c3e50;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+table.tabla-dashboard > tbody > tr > td:first-child {
+    border-radius: 10px 0 0 10px;
+    text-align: left;
+    color: #4F81BD;
+    font-weight: 700;
+}
+table.tabla-dashboard > tbody > tr > td:last-child {
+    border-radius: 0 10px 10px 0;
+}
+table.tabla-dashboard > tbody > tr:hover > td {
+    background-color: #eef4fb;
+}
+table.tabla-dashboard > tfoot > tr > td {
+    border: none;
+    padding: 0.9rem 0.75rem 0.25rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #2c3e50;
+    vertical-align: middle;
+}
+.tabla-dashboard .celda-vacia {
+    color: #8898aa;
+    font-weight: 500;
+    text-align: center;
+    border-radius: 10px;
+}
+.tabla-dashboard .icono-fila {
+    color: #b0bac5;
+    font-size: 0.85rem;
+    margin-right: 0.45rem;
+}
+.badge-dashboard {
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+}
+
+/* ============================================================ */
+/* MODALES EN SINTONÍA CON LAS TARJETAS DEL TABLERO             */
+/* ============================================================ */
+.dashboard-modal .modal-content {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.2);
+}
+.dashboard-modal .modal-header {
+    background: #ffffff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 15px 15px 0 0;
+    padding: 1.1rem 1.5rem;
+    align-items: center;
+}
+.dashboard-modal .modal-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #2c3e50;
+    margin: 0;
+}
+.dashboard-modal .modal-subtitle {
+    font-size: 0.75rem;
+    color: #8898aa;
+    margin: 0;
+}
+.dashboard-modal .modal-body {
+    padding: 1.25rem 1.5rem;
+}
+.dashboard-modal .modal-footer {
+    background: #f8fafc;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 0 0 15px 15px;
+    padding: 0.9rem 1.5rem;
+}
+.dashboard-modal .close {
+    color: #8898aa;
+    text-shadow: none;
+    opacity: 0.7;
+    font-size: 1.6rem;
+    font-weight: 400;
+}
+.dashboard-modal .close:hover {
+    color: #2c3e50;
+    opacity: 1;
+}
+.dashboard-modal .form-control {
+    border-radius: 8px;
+    border: 1px solid #e3e8ef;
+}
+.dashboard-modal .form-control:focus {
+    border-color: #4F81BD;
+    box-shadow: 0 0 0 0.2rem rgba(79, 129, 189, 0.15);
+}
+.dashboard-modal label {
+    color: #6c7a89;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+/* DataTables dentro de los modales */
+.dashboard-modal .dataTables_wrapper .dataTables_length select,
+.dashboard-modal .dataTables_wrapper .dataTables_filter input {
+    border-radius: 20px;
+    border: 1px solid #e3e8ef;
+    padding: 0.2rem 0.9rem;
+}
+.dashboard-modal .dataTables_wrapper .dataTables_info,
+.dashboard-modal .dataTables_wrapper .dataTables_length,
+.dashboard-modal .dataTables_wrapper .dataTables_filter {
+    color: #8898aa;
+    font-size: 0.85rem;
+}
+.dashboard-modal .dataTables_wrapper .paginate_button {
+    border-radius: 8px !important;
+}
+.dashboard-modal .dataTables_wrapper .paginate_button.current {
+    background: #4F81BD !important;
+    border-color: #4F81BD !important;
+    color: #ffffff !important;
+}
+
+/* Listado de técnicos por localidad */
+.lista-tecnicos .list-group-item {
+    border: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    padding: 0.9rem 1.5rem;
+    transition: background 0.2s ease;
+}
+.lista-tecnicos .list-group-item:hover {
+    background: #f4f8fd;
+}
+.lista-tecnicos .nombre-tecnico {
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+/* Selector de técnicos del modal de asignación */
+.caja-tecnico {
+    border: 1px solid #e3e8ef;
+    border-radius: 10px;
+    padding: 0.6rem 0.75rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.caja-tecnico:hover {
+    border-color: #4F81BD;
+    box-shadow: 0 2px 8px rgba(79, 129, 189, 0.15);
+}
+.panel-tecnicos {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #e3e8ef;
+    border-radius: 10px;
+    background: #f8fafc;
+    padding: 1rem;
+}
+
+/* ============================================================ */
+/* BOTONES DEL TABLERO (misma familia en vista y modales)       */
+/* ============================================================ */
+.btn-dash {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 0.32rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-dash:hover {
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+.btn-dash:focus,
+.btn-dash:active {
+    outline: none;
+    box-shadow: none;
+}
+.btn-dash:disabled,
+.btn-dash.disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+}
+.btn-dash-lg {
+    padding: 0.5rem 1.2rem;
+    font-size: 0.9rem;
+    border-radius: 10px;
+}
+
+/* Variantes suaves */
+.btn-dash-primary {
+    background: #eef4fb;
+    color: #4F81BD;
+    border-color: #dbe7f5;
+}
+.btn-dash-primary:hover {
+    background: #4F81BD;
+    color: #ffffff;
+    border-color: #4F81BD;
+    box-shadow: 0 4px 12px rgba(79, 129, 189, 0.3);
+}
+.btn-dash-info {
+    background: #e8f6fb;
+    color: #2b8fb8;
+    border-color: #d5ecf5;
+}
+.btn-dash-info:hover {
+    background: #2b8fb8;
+    color: #ffffff;
+    border-color: #2b8fb8;
+    box-shadow: 0 4px 12px rgba(43, 143, 184, 0.3);
+}
+.btn-dash-success {
+    background: #e8f7f0;
+    color: #1c8f5f;
+    border-color: #d3efe2;
+}
+.btn-dash-success:hover {
+    background: #1c8f5f;
+    color: #ffffff;
+    border-color: #1c8f5f;
+    box-shadow: 0 4px 12px rgba(28, 143, 95, 0.3);
+}
+.btn-dash-danger {
+    background: #fdecec;
+    color: #cf4444;
+    border-color: #f8dada;
+}
+.btn-dash-danger:hover {
+    background: #cf4444;
+    color: #ffffff;
+    border-color: #cf4444;
+    box-shadow: 0 4px 12px rgba(207, 68, 68, 0.3);
+}
+.btn-dash-neutral {
+    background: #f1f4f8;
+    color: #6c7a89;
+    border-color: #e3e8ef;
+}
+.btn-dash-neutral:hover {
+    background: #6c7a89;
+    color: #ffffff;
+    border-color: #6c7a89;
+    box-shadow: 0 4px 12px rgba(108, 122, 137, 0.25);
+}
+
+/* Variantes sólidas para las acciones principales */
+.btn-dash-solid-primary {
+    background: linear-gradient(135deg, #4F81BD 0%, #3b608c 100%);
+    color: #ffffff;
+    border-color: #3b608c;
+}
+.btn-dash-solid-primary:hover {
+    background: linear-gradient(135deg, #3b608c 0%, #284261 100%);
+    color: #ffffff;
+    box-shadow: 0 5px 15px rgba(79, 129, 189, 0.4);
+}
+.btn-dash-solid-success {
+    background: linear-gradient(135deg, #21a06b 0%, #16794f 100%);
+    color: #ffffff;
+    border-color: #16794f;
+}
+.btn-dash-solid-success:hover {
+    background: linear-gradient(135deg, #16794f 0%, #0f5c3b 100%);
+    color: #ffffff;
+    box-shadow: 0 5px 15px rgba(33, 160, 107, 0.4);
+}
+
+/* ============================================================ */
+/* CONTROLES DE DATATABLES 2.x DENTRO DE LOS MODALES            */
+/* ============================================================ */
+.dashboard-modal div.dt-container .dt-length,
+.dashboard-modal div.dt-container .dt-search,
+.dashboard-modal div.dt-container .dt-info {
+    color: #8898aa;
+    font-size: 0.82rem;
+}
+.dashboard-modal div.dt-container .dt-length select,
+.dashboard-modal div.dt-container .dt-search input {
+    border: 1px solid #e3e8ef;
+    border-radius: 20px;
+    padding: 0.25rem 0.9rem;
+    color: #2c3e50;
+    background: #ffffff;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.dashboard-modal div.dt-container .dt-length select:focus,
+.dashboard-modal div.dt-container .dt-search input:focus {
+    border-color: #4F81BD;
+    box-shadow: 0 0 0 0.2rem rgba(79, 129, 189, 0.15);
+}
+.dashboard-modal div.dt-container .dt-paging .dt-paging-button {
+    min-width: 2.1em;
+    margin: 0 2px;
+    padding: 0.3em 0.85em !important;
+    border: 1px solid #e3e8ef !important;
+    border-radius: 8px !important;
+    background: #ffffff !important;
+    color: #6c7a89 !important;
+    font-size: 0.8rem;
+    font-weight: 600;
+    box-shadow: none !important;
+    transition: all 0.2s ease;
+}
+.dashboard-modal div.dt-container .dt-paging .dt-paging-button:hover:not(.disabled):not(.current) {
+    background: #eef4fb !important;
+    border-color: #4F81BD !important;
+    color: #4F81BD !important;
+}
+.dashboard-modal div.dt-container .dt-paging .dt-paging-button.current {
+    background: linear-gradient(135deg, #4F81BD 0%, #3b608c 100%) !important;
+    border-color: #3b608c !important;
+    color: #ffffff !important;
+    box-shadow: 0 3px 10px rgba(79, 129, 189, 0.35) !important;
+}
+.dashboard-modal div.dt-container .dt-paging .dt-paging-button.disabled {
+    opacity: 0.4;
+    color: #b0bac5 !important;
+    background: #f8fafc !important;
+    cursor: not-allowed;
+}
+
+/* ============================================================ */
+/* ESTADOS DEL SELECTOR DE TÉCNICOS (traslado entre localidades)*/
+/* ============================================================ */
+.texto-origen small {
+    color: #8898aa;
+    font-size: 0.72rem;
+}
+.caja-tecnico-ocupado {
+    background: #fdf8ec;
+    border-color: #f0e0bd;
+}
+.caja-tecnico-ocupado .texto-origen small {
+    color: #b9821c;
+}
+.caja-tecnico-traslado {
+    background: #eef4fb;
+    border-color: #4F81BD;
+    box-shadow: 0 2px 8px rgba(79, 129, 189, 0.18);
+}
+.caja-tecnico-traslado .texto-origen small {
+    color: #4F81BD;
+    font-weight: 700;
+}
+
+/* Filas de acumulado histórico dentro del reporte diario */
+table.tabla-dashboard > tbody > tr.fila-acumulado > td {
+    background-color: #f1f4f8;
+}
+table.tabla-dashboard > tbody > tr.fila-acumulado:hover > td {
+    background-color: #e7edf5;
+}
+table.tabla-dashboard > tbody > tr.fila-acumulado > td:first-child {
+    border-left: 3px solid #b0bac5;
+    color: #55637a;
+}

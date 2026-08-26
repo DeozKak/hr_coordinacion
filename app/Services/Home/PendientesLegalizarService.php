@@ -13,8 +13,14 @@ class PendientesLegalizarService
      */
     private const MESES_PARA_PRIORIDAD = 60;
 
+    /**
+     * Contratos por consulta al cruzar contra asignaciones y cerradas.
+     */
+    private const CONTRATOS_POR_BLOQUE = 1000;
+
     public function __construct(
-        private LimpiezaMunicipioService $municipios
+        private LimpiezaMunicipioService $municipios,
+        private FechaEjecucionService $fechas
     ) {}
 
     /**
@@ -42,15 +48,17 @@ class PendientesLegalizarService
             return ltrim($r->NroSitio, ':');
         })->unique()->toArray();
 
-        $asignaciones = DB::table('tbl_asignaciones')
-            ->whereIn('CONTRATO', $contratosEfectivos)
-            ->get(['CONTRATO', 'ID_TIPO_TRABAJO', 'FECHA_ULTCERTI'])
-            ->groupBy('CONTRATO');
+        $asignaciones = $this->agruparPorContrato(
+            'tbl_asignaciones',
+            $contratosEfectivos,
+            ['CONTRATO', 'ID_TIPO_TRABAJO', 'FECHA_ULTCERTI']
+        );
 
-        $cerradas = DB::table('tbl_cerradas')
-            ->whereIn('CONTRATO', $contratosEfectivos)
-            ->get(['CONTRATO', 'ID_TIPO_TRABAJO'])
-            ->groupBy('CONTRATO');
+        $cerradas = $this->agruparPorContrato(
+            'tbl_cerradas',
+            $contratosEfectivos,
+            ['CONTRATO', 'ID_TIPO_TRABAJO']
+        );
 
         $fechaParseadaReporte = Carbon::parse($fechaReporte);
 
@@ -79,6 +87,25 @@ class PendientesLegalizarService
         }
 
         return ['metricas' => $metricas, 'detalles' => $detalles];
+    }
+
+    /**
+     * Trae los registros de una tabla para los contratos dados, agrupados por contrato.
+     *
+     * La consulta se parte en bloques porque el acumulado histórico puede traer
+     * miles de contratos y un IN gigantesco no lo aguanta el motor.
+     *
+     * @param array $contratos Contratos a buscar.
+     * @param array $columnas Columnas a traer.
+     */
+    private function agruparPorContrato(string $tabla, array $contratos, array $columnas): Collection
+    {
+        return collect($contratos)
+            ->chunk(self::CONTRATOS_POR_BLOQUE)
+            ->flatMap(fn (Collection $bloque) => DB::table($tabla)
+                ->whereIn('CONTRATO', $bloque->all())
+                ->get($columnas))
+            ->groupBy('CONTRATO');
     }
 
     /**
@@ -130,11 +157,13 @@ class PendientesLegalizarService
     private function infoModal(object $rep, string $contrato): array
     {
         return [
-            'contrato'  => $contrato,
-            'operario'  => $rep->NombreOperario,
-            'tarea'     => $rep->TipoTarea,
-            'cierre'    => $rep->Cierre3,
-            'localidad' => $this->municipios->limpiar($rep->Localidad),
+            'contrato'    => $contrato,
+            'operario'    => $rep->NombreOperario,
+            'tarea'       => $rep->TipoTarea,
+            'cierre'      => $rep->Cierre3,
+            'localidad'   => $this->municipios->limpiar($rep->Localidad),
+            'fecha'       => $this->fechas->mostrar($rep->FechaRealFin ?? null),
+            'fecha_orden' => $rep->FechaRealFin ?? '',
         ];
     }
 }

@@ -14,7 +14,11 @@ class ReporteOperativoService
      *
      * @param string $fechaReporte Fecha del reporte en formato Y-m-d.
      * @param string $localidadSeleccionada Municipio madre a filtrar, o 'TODAS'.
-     * @return array localidadesDisponibles, metricas, detalles y mesesData.
+     * Además del día, se calcula el acumulado histórico: el mismo cruce aplicado
+     * a todo lo ejecutado antes de la fecha seleccionada, para que se vea el
+     * rezago que se viene arrastrando.
+     *
+     * @return array localidadesDisponibles, metricas, detalles, mesesData y acumuladoDesde.
      */
     public function generar(string $fechaReporte, string $localidadSeleccionada): array
     {
@@ -22,11 +26,21 @@ class ReporteOperativoService
 
         $legalizacion = $this->pendientesLegalizar->calcular($diarias['ejecutadas'], $fechaReporte);
 
+        $ejecutadasPrevias = $this->metricasDiarias->ejecutadasAnteriores($fechaReporte, $localidadSeleccionada);
+        $acumulado = $this->pendientesLegalizar->calcular($ejecutadasPrevias, $fechaReporte);
+
         return [
             'localidadesDisponibles' => $diarias['localidadesDisponibles'],
-            'metricas'               => array_merge($diarias['metricas'], $legalizacion['metricas']),
-            'detalles'               => array_merge($diarias['detalles'], $legalizacion['detalles']),
+            'metricas'               => array_merge($diarias['metricas'], $legalizacion['metricas'], [
+                'pendientes_legalizar_acumulado' => $acumulado['metricas']['pendientes_legalizar'],
+                'prioridades_acumulado'          => $acumulado['metricas']['prioridades'],
+            ]),
+            'detalles'               => array_merge($diarias['detalles'], $legalizacion['detalles'], [
+                'pendientes_legalizar_acumulado' => $acumulado['detalles']['pendientes_legalizar'],
+                'prioridades_acumulado'          => $acumulado['detalles']['prioridades'],
+            ]),
             'mesesData'              => $diarias['mesesData'],
+            'acumuladoDesde'         => $this->metricasDiarias->fechaMasAntigua(),
         ];
     }
 }

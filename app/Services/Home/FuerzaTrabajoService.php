@@ -59,4 +59,71 @@ class FuerzaTrabajoService
                 return $t;
             });
     }
+
+    /**
+     * Deja la localidad con exactamente los técnicos indicados.
+     *
+     * Un técnico solo puede estar en una localidad a la vez, así que si venía
+     * de otra se le retira de allá automáticamente: no hace falta desasignarlo
+     * primero para poder traérselo.
+     *
+     * @param string $localidad Nombre de la localidad destino.
+     * @param array $idsTecnicos Ids de los técnicos que quedan en la localidad.
+     * @return array asignados (total) y movidos (nombre => localidad de origen).
+     */
+    public function asignar(string $localidad, array $idsTecnicos): array
+    {
+        $localidad   = strtoupper(trim($localidad));
+        $idsTecnicos = array_values(array_unique(array_filter($idsTecnicos)));
+
+        return DB::transaction(function () use ($localidad, $idsTecnicos) {
+            $movidos = $this->tecnicosDeOtraLocalidad($localidad, $idsTecnicos);
+
+            // Se limpia la localidad destino y de paso se retira a los
+            // seleccionados de donde estuvieran, para no duplicarlos
+            AsignacionTecnicoLocalidad::where('localidad', $localidad)->delete();
+
+            if (!empty($idsTecnicos)) {
+                AsignacionTecnicoLocalidad::whereIn('id_tecnico', $idsTecnicos)->delete();
+
+                foreach ($idsTecnicos as $idTecnico) {
+                    AsignacionTecnicoLocalidad::create([
+                        'localidad'  => $localidad,
+                        'id_tecnico' => $idTecnico,
+                    ]);
+                }
+            }
+
+            return [
+                'asignados' => count($idsTecnicos),
+                'movidos'   => $movidos,
+            ];
+        });
+    }
+
+    /**
+     * De los técnicos seleccionados, cuáles venían de una localidad distinta.
+     *
+     * @return array<string, string> Nombre del técnico => localidad de origen.
+     */
+    private function tecnicosDeOtraLocalidad(string $localidad, array $idsTecnicos): array
+    {
+        if (empty($idsTecnicos)) {
+            return [];
+        }
+
+        return AsignacionTecnicoLocalidad::leftJoin('tbl_insp_cali', 'tbl_asignacion_tecnicos_localidad.id_tecnico', '=', 'tbl_insp_cali.id')
+            ->whereIn('tbl_asignacion_tecnicos_localidad.id_tecnico', $idsTecnicos)
+            ->where('tbl_asignacion_tecnicos_localidad.localidad', '!=', $localidad)
+            ->select(
+                'tbl_asignacion_tecnicos_localidad.localidad',
+                'tbl_asignacion_tecnicos_localidad.id_tecnico',
+                DB::raw("CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS NOMBRE_COMPLETO")
+            )
+            ->get()
+            ->mapWithKeys(fn ($fila) => [
+                trim($fila->NOMBRE_COMPLETO) ?: ('Técnico ' . $fila->id_tecnico) => $fila->localidad,
+            ])
+            ->all();
+    }
 }
