@@ -19,17 +19,17 @@ Schedule::command('app:ejecutadas-programacion')
         \Illuminate\Console\Scheduling\Schedule::SATURDAY,
     ]);
 
-Schedule::command('app:ejecutadas-base')
-    ->everyThreeHours()
-    ->between('05:00', '18:00')
-    ->days([
-        \Illuminate\Console\Scheduling\Schedule::MONDAY,
-        \Illuminate\Console\Scheduling\Schedule::TUESDAY,
-        \Illuminate\Console\Scheduling\Schedule::WEDNESDAY,
-        \Illuminate\Console\Scheduling\Schedule::THURSDAY,
-        \Illuminate\Console\Scheduling\Schedule::FRIDAY,
-        \Illuminate\Console\Scheduling\Schedule::SATURDAY,
-    ]);
+//Schedule::command('app:ejecutadas-base')
+//    ->everyThreeHours()
+//    ->between('05:00', '18:00')
+//    ->days([
+//        \Illuminate\Console\Scheduling\Schedule::MONDAY,
+//        \Illuminate\Console\Scheduling\Schedule::TUESDAY,
+//        \Illuminate\Console\Scheduling\Schedule::WEDNESDAY,
+//        \Illuminate\Console\Scheduling\Schedule::THURSDAY,
+//        \Illuminate\Console\Scheduling\Schedule::FRIDAY,
+//        \Illuminate\Console\Scheduling\Schedule::SATURDAY,
+//    ]);
 
 Schedule::command('app:dev_clean')->daily();
 
@@ -48,6 +48,13 @@ Schedule::command('app:tiempos_quejas')
 Schedule::command('app:update_recepcion_quejas')
     ->everyThirtyMinutes()
     ->days([1, 2, 3, 4, 5, 6]);
+
+schedule::command('app:sync-tareas')
+    ->hourly()
+    ->between('06:00', '18:00')
+    ->days([1, 2, 3, 4, 5, 6]);
+
+schedule::command('app:sync-tareas')->weeklyOn(0, '06:00');
 
 
 

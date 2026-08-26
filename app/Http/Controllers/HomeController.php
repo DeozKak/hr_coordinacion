@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\Programacion\tbl_programacion_base;
-use App\Models\Programacion\tbl_programacion_contrato;
+use App\Services\Home\CargueEstadisticasAsignacionService;
+use App\Services\Home\EstadisticasProgramadasService;
+use App\Services\Home\FuerzaTrabajoService;
+use App\Services\Home\ReporteOperativoService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Models\Zonificacion\AsignacionTecnicoLocalidad;
@@ -13,15 +15,14 @@ use Illuminate\Support\Facades\DB;
 
 class HomeController extends Controller
 {
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
+    public function __construct(
+        private FuerzaTrabajoService $fuerzaTrabajo,
+        private ReporteOperativoService $reporteOperativo,
+        private EstadisticasProgramadasService $estadisticasProgramadas
+    ) {
         $this->middleware('auth');
     }
+
     /**
      * Show the application dashboard.
      *
@@ -29,130 +30,25 @@ class HomeController extends Controller
      **/
     public function index(Request $request)
     {
-        // ... (El Diccionario y la función limpiadora se mantienen igual) ...
-        $mapeo_municipios = [
-            'SANTIAGO DE CALI'      => 'CALI',
-            'CORREGIMIENTO HOLGUIN' => 'LA VICTORIA',
-            'CORREGIMIENTO PAVAS'   => 'LA CUMBRE',
-        ];
+        $fechaReporte          = (string) $request->input('fecha_reporte', Carbon::today()->format('Y-m-d'));
+        $localidadSeleccionada = (string) $request->input('localidad_reporte', 'TODAS');
 
-        $limpiarMunicipio = function($nombre_original) use ($mapeo_municipios) {
-            // 1. Limpiamos espacios y pasamos a mayúsculas
-            $nombre = strtoupper(trim($nombre_original));
+        $reporte     = $this->reporteOperativo->generar($fechaReporte, $localidadSeleccionada);
+        $programadas = $this->estadisticasProgramadas->generar($fechaReporte, $localidadSeleccionada);
 
-            // 2. PRIMERO: Si tiene paréntesis, extraemos lo de adentro
-            if (preg_match('/\(([^)]+)\)/', $nombre, $matches)) {
-                $nombre = strtoupper(trim($matches[1]));
-            }
-
-            // 3. SEGUNDO: Verificamos si el resultado exacto está en el diccionario
-            if (array_key_exists($nombre, $mapeo_municipios)) {
-                return $mapeo_municipios[$nombre];
-            }
-
-            // 4. REGLA AGRESIVA: Si aún contiene la palabra, lo forzamos (útil para errores de tipeo)
-            if (str_contains($nombre, 'SANTIAGO DE CALI') || str_contains($nombre, 'SANTIAGO DE CALÍ')) {
-                return 'CALI';
-            }
-
-            // 5. Si no cumple nada, devolvemos el nombre limpio
-            return $nombre;
-        };
-
-        $agrupacion = $request->input('agrupacion', 'tipo_trabajo');
-
-        if ($agrupacion == 'meses') {
-            $sentencia_agrupacion = "CASE WHEN MESES < 55 THEN '-55' WHEN MESES = 55 THEN '55' WHEN MESES = 56 THEN '56' WHEN MESES = 57 THEN '57' WHEN MESES = 58 THEN '58' WHEN MESES = 59 THEN '59' WHEN MESES = 60 THEN '60' WHEN MESES > 60 THEN '60+' ELSE 'Sin Mes' END";
-            $select_criterio = "$sentencia_agrupacion as criterio";
-            $group_criterio = $sentencia_agrupacion;
-            $titulo_columna = "Meses de Vencimiento";
-        } else {
-            $select_criterio = "ID_TIPO_TRABAJO as criterio";
-            $group_criterio = "ID_TIPO_TRABAJO";
-            $titulo_columna = "ID Tipo de Trabajo";
-        }
-
-        // 3. Resumen General
-        $resumen_asignaciones = tbl_programacion_base::selectRaw("$select_criterio, COUNT(*) as total_asignados, SUM(CASE WHEN ESTADO_RECEPCION = '1' THEN 1 ELSE 0 END) as total_ejecutados")
-            ->groupByRaw($group_criterio)->get();
-
-        // 4. Matriz de Pendientes
-        $datos_matriz = tbl_programacion_base::where('ESTADO_RECEPCION', '!=', '1')
-            ->selectRaw("DESC_LOCALIDAD, $select_criterio, COUNT(*) as cantidad")
-            ->groupBy('DESC_LOCALIDAD')->groupByRaw($group_criterio)->get();
-
-        foreach ($datos_matriz as $item) $item->MUNICIPIO_MADRE = $limpiarMunicipio($item->DESC_LOCALIDAD);
-
-        $resumen_localidades = $datos_matriz->groupBy('MUNICIPIO_MADRE')->map(function ($grupo) {
-            return $grupo->groupBy('criterio')->map(function ($items_criterio) {
-                return (object)['criterio' => $items_criterio->first()->criterio, 'cantidad' => $items_criterio->sum('cantidad')];
-            })->values();
-        });
-
-        $criterios_disponibles = $datos_matriz->pluck('criterio')->unique();
-        if ($agrupacion == 'meses') {
-            $criterios_disponibles = $criterios_disponibles->sortBy(function($val) {
-                if ($val === '-55') return 0; if ($val === '60+') return 100; if ($val === 'Sin Mes') return 101; return (int) $val;
-            })->values();
-        } else {
-            $criterios_disponibles = $criterios_disponibles->sort()->values();
-        }
-
-        // =========================================================================
-        // 5. NUEVO PASO 5: Lista de Técnicos DESDE LA NUEVA TABLA
-        // =========================================================================
-        $tecnicos_brutos = AsignacionTecnicoLocalidad::leftJoin('tbl_insp_cali', 'tbl_asignacion_tecnicos_localidad.id_tecnico', '=', 'tbl_insp_cali.id')
-            ->select(
-                'tbl_asignacion_tecnicos_localidad.localidad AS DESC_LOCALIDAD',
-                'tbl_asignacion_tecnicos_localidad.id_tecnico AS ID_TECNICO',
-                DB::raw("CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS NOMBRE_COMPLETO")
-            )
-            ->get();
-
-        // Aplicamos la misma limpieza para agrupar bonito en la vista
-        foreach ($tecnicos_brutos as $tec) {
-            $tec->MUNICIPIO_MADRE = $limpiarMunicipio($tec->DESC_LOCALIDAD);
-        }
-
-        $tecnicos_por_localidad = $tecnicos_brutos->groupBy('MUNICIPIO_MADRE')->map(function ($grupo) {
-            return $grupo->unique('ID_TECNICO')->values();
-        });
-
-        // OBTENER ASIGNACIONES ACTUALES (Para saber quién está ocupado y dónde)
-        $asignaciones_totales = AsignacionTecnicoLocalidad::all()->pluck('localidad', 'id_tecnico');
-
-        // OBTENER TODOS LOS TÉCNICOS ACTIVOS
-        $todos_los_tecnicos = DB::table('tbl_insp_cali')
-            ->select('id', DB::raw("CONCAT(apellidos, ' ', nombres) AS NOMBRE_COMPLETO"))
-            ->whereNotNull('id')
-            ->where('id', '!=', '100')
-            ->orderBy('apellidos')
-            ->get()
-            ->map(function($t) use ($asignaciones_totales) {
-                // Le pegamos a cada técnico la localidad donde ya está asignado (si existe)
-                $t->asignado_en = $asignaciones_totales[$t->id] ?? null;
-                return $t;
-            });
-
-        // =========================================================================
-        // 6. NUEVO: Programaciones del Día Actual
-        // =========================================================================
-        $hoy = Carbon::now()->toDateString(); // Extrae la fecha de hoy en formato 'YYYY-MM-DD'
-
-        $programaciones_hoy = tbl_programacion_contrato::whereDate('FECHA_AGENDAMIENTO', $hoy)
-            ->selectRaw("
-                TIPO_TRABAJO,
-                COUNT(*) as total_programadas,
-                SUM(CASE WHEN EJECUTADA = '1' THEN 1 ELSE 0 END) as total_ejecutadas
-            ")
-            ->groupBy('TIPO_TRABAJO')
-            ->get();
-
-        return view('home', compact(
-            'resumen_asignaciones', 'resumen_localidades', 'criterios_disponibles', 'titulo_columna',
-            'agrupacion', 'tecnicos_por_localidad', 'programaciones_hoy',
-            'todos_los_tecnicos' // <-- Pasamos los técnicos al modal
-        ));
+        return view('home', [
+            'tecnicos_por_localidad'  => $this->fuerzaTrabajo->tecnicosPorLocalidad(),
+            'todos_los_tecnicos'      => $this->fuerzaTrabajo->todosLosTecnicos(),
+            'fechaReporte'            => $fechaReporte,
+            'localidadSeleccionada'   => $localidadSeleccionada,
+            'localidadesDisponibles'  => $reporte['localidadesDisponibles'],
+            'metricas'                => $reporte['metricas'],
+            'mesesData'               => $reporte['mesesData'],
+            'detalles'                => $reporte['detalles'],
+            'estadisticasProgramadas' => $programadas['estadisticas'],
+            'totalesProg'             => $programadas['totales'],
+            'detallesProgramaciones'  => $programadas['detalles'],
+        ]);
     }
 
     public function guardarAsignacion(Request $request)
@@ -182,4 +78,24 @@ class HomeController extends Controller
         return redirect()->back()->with('success', "Asignación de $localidad actualizada con éxito.");
     }
 
+
+    public function insercion_estadisticas_asignacion(Request $request, CargueEstadisticasAsignacionService $cargue)
+    {
+        $request->validate([
+            'archivo_asignacion' => 'required|file|mimes:xls,xlsx,csv',
+            'archivo_cerradas'   => 'required|file|mimes:xls,xlsx,csv',
+        ], [
+            'archivo_asignacion.required' => 'El archivo de Asignación (OT Abiertas) es obligatorio.',
+            'archivo_asignacion.mimes'    => 'El archivo de Asignación debe ser de formato Excel o CSV.',
+            'archivo_cerradas.required'   => 'El archivo de OT Cerradas es obligatorio.',
+            'archivo_cerradas.mimes'      => 'El archivo de OT Cerradas debe ser de formato Excel o CSV.',
+        ]);
+
+        $cargue->procesar(
+            $request->file('archivo_asignacion'),
+            $request->file('archivo_cerradas')
+        );
+
+        return redirect()->back()->with('success', 'Archivos procesados y sincronizados correctamente.');
+    }
 }

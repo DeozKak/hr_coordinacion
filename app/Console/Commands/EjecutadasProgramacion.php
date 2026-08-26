@@ -48,17 +48,7 @@ class EjecutadasProgramacion extends Command
             ->where('FECHA_AGENDAMIENTO', '>=', date('Y-m-d'))
             ->get();
 
-        $movilidad = Movilidad::where('Grupo', 'INSP-VALLE')
-            ->whereBetween('FechaRealFin', [$inicioDia, $finDia])
-            ->whereIn('Cierre3', $estadosCierre)
-            ->get();
 
-        $cierres = [
-            'CERTIFICADA',
-            'CERTIFICADA CON NOVEDADES',
-            'INSPECCIONADA CON DEFECTO CRITICO VALLE',
-            'INSPECCIONADA CON DEFECTO NO CRITICO VALLE'
-        ];
         $tipos_trabajo_rp = array("10444", "12161");
         $tipos_trabajo_sa = array("12163", "12164");
         foreach ($programadas as $programada) {
@@ -72,46 +62,24 @@ class EjecutadasProgramacion extends Command
             }
 
             $contrato = ":" . $programada->CONTRATO;
-           // $dosAnosAtras = Carbon::now()->subYears(2)->toDateString();
-            $orden = $programada->ORDEN_TRABAJO;
-            $bitacora = tbl_bitacora_contrato::select('CC_OPERARIO', 'FECHA', 'RESULTADO_CIERRE', 'TIPO_TRABAJO')
-                ->where('CONTRATO', $contrato)
-                ->whereIn('TIPO_TRABAJO', $tipo_trabajo)
-                ->whereIn('RESULTADO_CIERRE', $cierres)
-                ->where(function ($query) use ($orden) {
-                    $query->where('ORDEN_TRABAJO', $orden)
-                        ->orWhere('ORDEN_EXT', $orden);
-                })
+            $dosAnosAtras = Carbon::now()->subYears(2)->toDateString();
+
+            $bitacora = DB::table('reportes_diarios')->select('NroOperario', 'FechaRealFin', 'Cierre3', 'TipoTarea')
+                ->where('NroSitio', $contrato)
+                ->whereIn('TipoTarea', $tipo_trabajo)
+                ->whereIn('Cierre3', $estadosCierre)
                 ->first();
 
             if($bitacora){
-                 if(in_array($bitacora->RESULTADO_CIERRE, ['INSPECCIONADA CON DEFECTO CRITICO VALLE','INSPECCIONADA CON DEFECTO NO CRITICO VALLE']) && $bitacora->TipoTarea === 'SA 12164'){
+                 if(in_array($bitacora->Cierre3, ['.INSPECCIONADA CON DEFECTO CRITICO VALLE','.INSPECCIONADA CON DEFECTO NO CRITICO VALLE']) && $bitacora->TipoTarea === 'SA 12164'){
 
                 }else{
-                   /* $fecha_completa = $movilidad->FechaRealInicio;
+                    $fecha_completa = $bitacora->FechaRealFin;
                     $partes = explode(' ', $fecha_completa);
                     $fecha = $partes[0];
                     if($fecha <= $dosAnosAtras){
 
-                    }else{*/
-                        $programada->EJECUTADA = 1;
-                        $programada->save();
-                    /*}*/
-                }
-            }else{
-                $consulta = DB::table('tbl_bitacora_diaria')->select('CC_OPERARIO', 'FECHA', 'RESULTADO_CIERRE', 'TIPO_TRABAJO')
-                    ->where('CONTRATO', $contrato)
-                    ->whereIn('TIPO_TRABAJO', $tipo_trabajo)
-                    ->whereIn('RESULTADO_CIERRE', $cierres)
-                    ->where(function ($query) use ($orden) {
-                        $query->where('ORDEN_TRABAJO', $orden)
-                            ->orWhere('ORDEN_EXT', $orden);
-                    })
-                    ->first();
-                if($consulta) {
-                    if (in_array($consulta->RESULTADO_CIERRE, ['INSPECCIONADA CON DEFECTO CRITICO VALLE', 'INSPECCIONADA CON DEFECTO NO CRITICO VALLE', 'INSPECCIONADA CON DEFECTO CRITICO VALLE']) && $consulta->TIPO_TRABAJO === 'SA 12164') {
-
-                    } else {
+                    }else {
                         $programada->EJECUTADA = 1;
                         $programada->save();
                     }

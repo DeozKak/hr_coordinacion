@@ -76,7 +76,19 @@ document.getElementById('buscadorTecnicos').addEventListener('input', function()
     });
 });
 document.addEventListener('DOMContentLoaded', function () {
+// Muestra el nombre del archivo seleccionado en los inputs personalizados de Bootstrap
+    let customFileInputs = document.querySelectorAll('.custom-file-input');
 
+    customFileInputs.forEach(function(input) {
+        input.addEventListener('change', function(e) {
+            // Obtenemos el nombre del archivo
+            let fileName = e.target.files[0].name;
+            // Seleccionamos el label asociado a este input
+            let nextSibling = e.target.nextElementSibling;
+            // Reemplazamos el texto por el nombre del archivo
+            nextSibling.innerText = fileName;
+        });
+    });
     // --- 1. INICIALIZACIÓN DE DATATABLES ---
     // Configuración común para ambas tablas
     const dtOptions = {
@@ -114,60 +126,177 @@ document.addEventListener('DOMContentLoaded', function () {
     $('#tablaTecnicos').DataTable(dtOptions);
 
 
-    // --- 2. CONFIGURACIÓN DE LA GRÁFICA (Estilo Moderno) ---
-    Chart.defaults.font.family = "'Nunito', 'Segoe UI', 'Arial', sans-serif";
-    Chart.defaults.color = '#6c757d';
 
-    const rawData = rowDaraV;
-    const labelsX = labelsXV;
+    // ============================================================
+    // GRÁFICA DE BARRAS: Meses Ejecutados
+    // ============================================================
+    const rawMesesData = window.datosMeses || {};
+    const ctxMeses = document.getElementById('chartMeses');
 
-    function calcularDatosGrafica(localidadSeleccionada) {
-        let datosCalculados = new Array(labelsX.length).fill(0);
-        if (localidadSeleccionada === 'todas') {
-            Object.keys(rawData).forEach(loc => {
-                rawData[loc].forEach(item => {
-                    let indice = labelsX.indexOf(item.criterio.toString());
-                    if (indice !== -1) datosCalculados[indice] += item.cantidad;
-                });
-            });
-        } else {
-            if (rawData[localidadSeleccionada]) {
-                rawData[localidadSeleccionada].forEach(item => {
-                    let indice = labelsX.indexOf(item.criterio.toString());
-                    if (indice !== -1) datosCalculados[indice] += item.cantidad;
-                });
+    if (ctxMeses && Object.keys(rawMesesData).length > 0) {
+        // Ordenar las etiquetas numéricamente para la gráfica de barras
+        let etiquetasMeses = Object.keys(rawMesesData);
+        etiquetasMeses.sort((a, b) => {
+            if (a === 'Sin mes') return 1;
+            if (b === 'Sin mes') return -1;
+            return parseInt(a) - parseInt(b);
+        });
+
+        let cantidadesMeses = etiquetasMeses.map(etiqueta => rawMesesData[etiqueta]);
+
+        new Chart(ctxMeses.getContext('2d'), {
+            type: 'bar', // Cambiado a Barra
+            data: {
+                labels: etiquetasMeses,
+                datasets: [{
+                    label: 'Cantidad Ejecutada',
+                    data: cantidadesMeses,
+                    backgroundColor: '#20c997', // Un verde agua moderno y único
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }, // Ocultamos la leyenda
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } },
+                    x: { grid: { display: false } }
+                }
             }
-        }
-        return datosCalculados;
+        });
     }
 
-    const ctx = document.getElementById('pendientesChart').getContext('2d');
-    let chartPendientes = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labelsX,
-            datasets: [{
-                label: 'Trabajos Pendientes',
-                data: calcularDatosGrafica('todas'),
-                backgroundColor: 'rgba(23, 162, 184, 0.8)', // Color moderno similar al de estadísticas
-                borderRadius: 6 // Barras redondeadas
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } }, // Ocultamos leyenda por estética
-            scales: {
-                y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
-                x: { grid: { display: false } }
-            }
-        }
-    });
-
-    document.getElementById('localidad-chart-select').addEventListener('change', function() {
-        chartPendientes.data.datasets[0].data = calcularDatosGrafica(this.value);
-        chartPendientes.update();
-    });
-
     $('#tablaProgramacionesHoy').DataTable(dtOptions);
+
+    // ============================================================
+    // LÓGICA DEL MODAL DE DETALLES
+    // ============================================================
+    let tablaDetalleDT = null;
+
+    document.querySelectorAll('.btn-ver-detalle').forEach(btn => {
+        btn.addEventListener('click', function() {
+            let tipo = this.getAttribute('data-tipo');
+            let titulo = this.getAttribute('data-titulo');
+            let data = window.datosDetalles[tipo] || [];
+
+            // 1. Cambiar el título del Modal
+            document.querySelector('#tituloModalDetalle span').innerText = titulo + ' (' + data.length + ' registros)';
+
+            // 2. Destruir el DataTable anterior si existe
+            if (tablaDetalleDT !== null) {
+                $('#tablaDetalleRegistros').DataTable().clear().destroy();
+            }
+
+            // 3. Llenar el cuerpo de la tabla
+            let tbody = document.getElementById('cuerpoTablaDetalles');
+            tbody.innerHTML = '';
+
+            data.forEach(fila => {
+
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="font-weight-bold">${fila.contrato}</td>
+                    <td>${fila.operario}</td>
+                    <td>${fila.localidad}</td> <!-- Municipio añadido -->
+                    <td>${fila.tarea}</td>
+                    <td><span class="badge badge-secondary">${fila.cierre}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // 4. Iniciar DataTable para tener buscador y paginación
+            tablaDetalleDT = $('#tablaDetalleRegistros').DataTable({
+                language: dtOptions.language, // Reutilizamos tu variable de traducción
+                pageLength: 15,
+                lengthMenu: [10, 15, 25, 50, 100],
+                order: [[1, 'asc']] // Ordenar por operario por defecto
+            });
+
+            // 5. Mostrar el Modal
+            $('#modalVerDetalles').modal('show');
+        });
+    });
+
+    // ============================================================
+// LÓGICA DEL MODAL DE PROGRAMACIONES (Nuevo Diseño)
+// ============================================================
+    let tablaProgDT = null;
+
+    document.querySelectorAll('.btn-ver-prog').forEach(btn => {
+        btn.addEventListener('click', function() {
+            let tipo = this.getAttribute('data-tipo');
+            let estado = this.getAttribute('data-estado'); // 'ejecutadas' o 'pendientes'
+
+            // Extraer datos usando la variable global
+            let data = window.datosProgramaciones[tipo] ? window.datosProgramaciones[tipo][estado] : [];
+
+            let estadoTexto = estado === 'ejecutadas' ? 'Ejecutadas' : 'Pendientes';
+            let colorClase = estado === 'ejecutadas' ? 'text-success' : 'text-danger';
+
+            // Actualizar título del modal
+            document.querySelector('#tituloModalProg span').innerHTML = `Detalle de Tareas <span class="${colorClase}">${estadoTexto}</span> (ID: ${tipo}) - ${data.length} registros`;
+
+            if (tablaProgDT !== null) {
+                $('#tablaDetalleProg').DataTable().clear().destroy();
+            }
+
+            let tbody = document.getElementById('cuerpoTablaProg');
+            tbody.innerHTML = '';
+
+            data.forEach(fila => {
+                let tr = document.createElement('tr');
+                let badge = estado === 'ejecutadas'
+                    ? '<span class="badge badge-success px-2 py-1"><i class="fas fa-check-circle mr-1"></i>Ejecutada</span>'
+                    : '<span class="badge badge-danger px-2 py-1"><i class="fas fa-clock mr-1"></i>Pendiente</span>';
+
+                tr.innerHTML = `
+                    <td class="font-weight-bold text-primary">${fila.contrato}</td>
+                    <td>${fila.cliente}</td>
+                    <td><i class="fas fa-user-circle text-secondary mr-1"></i> ${fila.tecnico}</td>
+                    <td>${fila.ciudad}</td>
+                    <td class="text-center">${badge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Iniciar DataTable para la tabla de detalles de programaciones
+            tablaProgDT = $('#tablaDetalleProg').DataTable({
+                language: dtOptions.language,
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100],
+                order: [[2, 'asc']] // Ordenar por nombre de técnico por defecto
+            });
+
+            $('#modalVerDetallesProg').modal('show');
+        });
+    });
+});
+
+
+
+// Prevenir doble clic y mostrar indicador de carga
+document.getElementById('formSubirArchivos').addEventListener('submit', function(e) {
+    let inputAsignacion = document.getElementById('archivo_asignacion');
+    let inputCerradas = document.getElementById('archivo_cerradas');
+
+    // Validación: Comprobar si alguno de los dos está vacío
+    if (inputAsignacion.files.length === 0 || inputCerradas.files.length === 0) {
+        e.preventDefault(); // Detiene el envío del formulario
+
+        Swal.fire({
+            title: 'Archivos incompletos',
+            text: 'Debes seleccionar tanto el archivo de Asignación como el de Cerradas para poder continuar.',
+            icon: 'warning',
+            confirmButtonText: 'Entendido'
+        });
+
+        return; // Salimos de la función sin deshabilitar el botón
+    }
+
+    // Si ambos archivos están presentes, procedemos a mostrar el loader
+    let btn = document.getElementById('btnGuardarArchivos');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Procesando datos, por favor espere...';
+    btn.disabled = true;
+    btn.classList.replace('btn-success', 'btn-secondary');
 });
