@@ -1,0 +1,203 @@
+@import "tailwindcss";
+@import "@fortawesome/fontawesome-free/css/all.min.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ============================================================
+   SISTEMA DE DISEÑO — E&C Ingeniería
+   Paleta corporativa (azul del logo) + tintes suaves por
+   categoría, superficies claras y esquinas amplias.
+   ============================================================ */
+@theme {
+    --font-sans: "Plus Jakarta Sans", "Figtree", ui-sans-serif, system-ui, sans-serif;
+
+    /* Azul corporativo — acciones primarias, enlaces, foco. */
+    --color-brand-50:  #eef4ff;
+    --color-brand-100: #d9e6ff;
+    --color-brand-200: #bcd3ff;
+    --color-brand-300: #8eb6ff;
+    --color-brand-400: #598eff;
+    --color-brand-500: #3366f5;
+    --color-brand-600: #1f47e0;
+    --color-brand-700: #1a37b5;
+    --color-brand-800: #1b3190;
+    --color-brand-900: #1c2e72;
+    --color-brand-950: #151d45;
+
+    /* Tinta — encabezados, pill activo del menú, superficies oscuras. */
+    --color-ink-50:  #f6f6f8;
+    --color-ink-100: #ececf1;
+    --color-ink-400: #7a7590;
+    --color-ink-600: #443f57;
+    --color-ink-700: #332e44;
+    --color-ink-800: #262133;
+    --color-ink-900: #1a1622;
+    --color-ink-950: #110e17;
+
+    /* Lienzo de la aplicación. */
+    --color-canvas: #f6f7fb;
+    --color-canvas-dark: #0f1117;
+
+    --radius-card: 1rem;
+    --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
+    --shadow-lift: 0 4px 12px rgb(16 24 40 / 0.06), 0 12px 28px rgb(16 24 40 / 0.08);
+}
+
+[x-cloak] { display: none !important; }
+
+html { -webkit-text-size-adjust: 100%; }
+body { text-rendering: optimizeLegibility; }
+
+/* Scrollbars discretas (WebKit) */
+@layer base {
+    /* Los controles nativos (popup del <select>, calendario de <input type=date>,
+       scrollbars) se pintan según color-scheme, no según nuestras clases. */
+    :root { color-scheme: light; }
+    :root.dark { color-scheme: dark; }
+
+    /* Refuerzo explícito para el popup del select en oscuro. */
+    .dark select option,
+    .dark optgroup {
+        background-color: #1e293b;
+        color: #e2e8f0;
+    }
+
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+        background: color-mix(in oklab, currentColor 18%, transparent);
+        border: 3px solid transparent;
+        border-radius: 9999px;
+        background-clip: content-box;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: color-mix(in oklab, currentColor 30%, transparent); background-clip: content-box; }
+
+    h1, h2, h3 { text-wrap: balance; letter-spacing: -0.02em; }
+}
+
+@layer components {
+
+    /* ---------- Superficies ---------- */
+    .tw-card {
+        @apply rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgb(16_24_40/0.04),0_1px_3px_rgb(16_24_40/0.06)]
+               dark:border-slate-700/60 dark:bg-slate-800;
+    }
+    .tw-card-header {
+        @apply flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 px-5 py-4
+               dark:border-slate-700/60;
+    }
+    .tw-card-body { @apply p-5; }
+
+    .tw-card-title { @apply text-base font-semibold text-slate-900 dark:text-white; }
+    .tw-card-subtitle { @apply mt-0.5 text-sm text-slate-500 dark:text-slate-400; }
+
+    /* Etiqueta pequeña en versalitas de las tarjetas KPI. */
+    .tw-eyebrow {
+        @apply text-[11px] font-semibold uppercase leading-tight tracking-[0.08em] text-slate-500
+               dark:text-slate-400;
+    }
+    .tw-metric { @apply text-4xl font-bold leading-none tracking-tight text-slate-900 dark:text-white; }
+
+    /* Chip cuadrado con icono tintado (esquina superior derecha de los KPI). */
+    .tw-chip {
+        @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-base;
+    }
+
+    /* ---------- Botones ---------- */
+    .tw-btn, .tw-btn-primary, .tw-btn-secondary, .tw-btn-danger, .tw-btn-ghost, .tw-btn-dark {
+        @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-sm
+               font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500
+               focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50
+               dark:focus-visible:ring-offset-slate-900;
+    }
+    .tw-btn-primary  { @apply bg-brand-600 text-white shadow-sm hover:bg-brand-700 active:bg-brand-800; }
+    .tw-btn-dark     { @apply bg-ink-900 text-white shadow-sm hover:bg-ink-800; }
+    .tw-btn-danger   { @apply bg-red-600 text-white shadow-sm hover:bg-red-700; }
+    .tw-btn-secondary {
+        @apply border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50
+               dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700;
+    }
+    .tw-btn-ghost {
+        @apply text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700;
+    }
+    .tw-btn-sm { @apply gap-1.5 rounded-lg px-2.5 py-1.5 text-xs; }
+
+    /* ---------- Formularios ---------- */
+    .tw-input, .tw-select {
+        @apply block w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900
+               shadow-sm transition placeholder:text-slate-400
+               focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10
+               disabled:bg-slate-50 disabled:text-slate-500
+               dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:disabled:bg-slate-800;
+    }
+
+    /* Select con flecha propia: la nativa no se puede tematizar. */
+    .tw-select {
+        @apply appearance-none bg-[length:1.15em] bg-[right_0.7rem_center] bg-no-repeat pr-10;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2.2' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+    }
+    .dark .tw-select {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2.2' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+    }
+
+    /* El icono del calendario en <input type=date> es del navegador:
+       en oscuro se invierte para que se vea. */
+    .dark input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.75); }
+    .tw-label { @apply mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300; }
+    .tw-hint  { @apply mt-1.5 text-xs text-slate-500 dark:text-slate-400; }
+
+    /* ---------- Píldoras / insignias ---------- */
+    .tw-pill, .pill-blue, .pill-rose, .pill-amber, .pill-emerald, .pill-sky, .pill-slate {
+        @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium;
+    }
+
+    /* ---------- Tablas ---------- */
+    .tw-table { @apply w-full text-left text-sm; }
+    .tw-table thead th {
+        @apply whitespace-nowrap border-b border-slate-200/80 bg-slate-50/60 px-4 py-3 text-[11px]
+               font-semibold uppercase tracking-[0.06em] text-slate-500
+               dark:border-slate-700/60 dark:bg-slate-900/40 dark:text-slate-400;
+    }
+    .tw-table tbody td { @apply border-b border-slate-100 px-4 py-3 dark:border-slate-700/50; }
+    .tw-table tbody tr:last-child td { @apply border-b-0; }
+    .tw-table tbody tr { @apply transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-700/30; }
+    .tw-table tfoot td {
+        @apply border-t border-slate-200 bg-slate-50/60 px-4 py-3 font-semibold
+               dark:border-slate-700 dark:bg-slate-900/40;
+    }
+
+    /* ---------- Barra de progreso ---------- */
+    .tw-progress { @apply h-1.5 w-full overflow-hidden rounded-full bg-black/[0.07] dark:bg-white/10; }
+    .tw-progress > span { @apply block h-full rounded-full transition-[width] duration-500; }
+}
+
+/* ============================================================
+   TINTES POR CATEGORÍA
+   Una clase por color para que Tailwind los detecte sin
+   interpolación en Blade. Cada una define superficie, borde,
+   texto del título y fondo del chip.
+   ============================================================ */
+@layer components {
+    .tint-blue    { @apply border-brand-100 bg-brand-50/70 dark:border-brand-900/50 dark:bg-brand-950/40; }
+    .tint-rose    { @apply border-rose-100 bg-rose-50/70 dark:border-rose-900/50 dark:bg-rose-950/30; }
+    .tint-amber   { @apply border-amber-100 bg-amber-50/70 dark:border-amber-900/50 dark:bg-amber-950/30; }
+    .tint-emerald { @apply border-emerald-100 bg-emerald-50/70 dark:border-emerald-900/50 dark:bg-emerald-950/30; }
+    .tint-sky     { @apply border-sky-100 bg-sky-50/70 dark:border-sky-900/50 dark:bg-sky-950/30; }
+    .tint-violet  { @apply border-violet-100 bg-violet-50/70 dark:border-violet-900/50 dark:bg-violet-950/30; }
+    .tint-slate   { @apply border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40; }
+
+    .chip-blue    { @apply bg-brand-100 text-brand-700 dark:bg-brand-900/60 dark:text-brand-200; }
+    .chip-rose    { @apply bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-200; }
+    .chip-amber   { @apply bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-200; }
+    .chip-emerald { @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-200; }
+    .chip-sky     { @apply bg-sky-100 text-sky-700 dark:bg-sky-900/60 dark:text-sky-200; }
+    .chip-violet  { @apply bg-violet-100 text-violet-700 dark:bg-violet-900/60 dark:text-violet-200; }
+    .chip-slate   { @apply bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-200; }
+
+    .pill-blue    { @apply bg-brand-100 text-brand-800 dark:bg-brand-900/60 dark:text-brand-100; }
+    .pill-rose    { @apply bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-100; }
+    .pill-amber   { @apply bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-100; }
+    .pill-emerald { @apply bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-100; }
+    .pill-sky     { @apply bg-sky-100 text-sky-800 dark:bg-sky-900/60 dark:text-sky-100; }
+    .pill-slate   { @apply bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200; }
+}

@@ -12,7 +12,7 @@ class UserController extends Controller
 {
     public function index(User $user)
     {
-        $users = User::all();
+        $users = User::with('roles', 'permissions')->get();
         $userlogin = auth()->user();
         $roles = Role::all();
         $currentRole = $userlogin->roles->first();

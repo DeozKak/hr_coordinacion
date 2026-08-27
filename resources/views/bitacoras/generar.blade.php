@@ -1,4 +1,4 @@
-@extends('adminlte::page')
+@extends('layouts.tw.app')
 
 @section('title', 'Bitácoras')
 

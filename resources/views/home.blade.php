@@ -1,681 +1,392 @@
-@extends('adminlte::page')
+@extends('layouts.tw.app')
 
+@section('title', 'Panel de Control')
 @section('content_header')
-    <h1>Dashboard</h1>
+    <h1>Panel de Control</h1>
+@endsection
+@section('subtitle', 'Resumen operativo de revisiones periódicas.')
+
+@php
+    use Illuminate\Support\Carbon;
+
+    $fecha = Carbon::parse($fechaReporte);
+    $rotuloAcumulado = $acumuladoDesde
+        ? 'desde ' . Carbon::parse($acumuladoDesde)->format('d/m/Y')
+        : 'sin histórico previo';
+
+    /* Fila superior: los cuatro indicadores del día. */
+    $kpis = [
+        ['tipo' => 'inspectores', 'label' => 'Inspectores operaron', 'valor' => $metricas['inspectores'],
+         'icon' => 'fa-user-tie', 'tint' => 'blue',    'titulo' => 'Inspectores que operaron'],
+        ['tipo' => 'ejecutadas',  'label' => 'Ejecutado (cierres efectivos)', 'valor' => $metricas['ejecutadas'],
+         'icon' => 'fa-circle-check', 'tint' => 'emerald', 'titulo' => 'Tareas Efectivas'],
+        ['tipo' => 'pendientes_legalizar', 'label' => 'Pendiente x legalizar', 'valor' => $metricas['pendientes_legalizar'],
+         'icon' => 'fa-file-signature', 'tint' => 'amber', 'titulo' => 'Pendientes por Legalizar'],
+        ['tipo' => 'prioridades', 'label' => 'Prioridades pendientes', 'valor' => $metricas['prioridades'],
+         'icon' => 'fa-triangle-exclamation', 'tint' => 'rose', 'titulo' => 'Prioridades Pendientes por Legalizar (>= 60 Meses)'],
+    ];
+
+    /* Fila secundaria: contexto y acumulados. */
+    $kpisSec = [
+        ['tipo' => 'programadas', 'label' => 'Programadas por el inspector', 'valor' => $metricas['programadas'],
+         'icon' => 'fa-calendar-day', 'tint' => 'sky', 'nota' => $fecha->translatedFormat('d M Y'),
+         'titulo' => 'Programadas para hoy'],
+        ['tipo' => 'fallidas', 'label' => 'Tareas fallidas', 'valor' => $metricas['fallidas'],
+         'icon' => 'fa-circle-xmark', 'tint' => 'slate', 'nota' => 'en la fecha seleccionada',
+         'titulo' => 'Tareas Fallidas'],
+        ['tipo' => 'pendientes_legalizar_acumulado', 'label' => 'Pendiente x legalizar acumulado',
+         'valor' => $metricas['pendientes_legalizar_acumulado'], 'icon' => 'fa-clock-rotate-left', 'tint' => 'amber',
+         'nota' => $rotuloAcumulado, 'titulo' => "Pendientes por Legalizar acumulados ($rotuloAcumulado)"],
+        ['tipo' => 'prioridades_acumulado', 'label' => 'Prioridades acumuladas',
+         'valor' => $metricas['prioridades_acumulado'], 'icon' => 'fa-clock-rotate-left', 'tint' => 'rose',
+         'nota' => $rotuloAcumulado, 'titulo' => "Prioridades Pendientes acumuladas ($rotuloAcumulado)"],
+    ];
+@endphp
+
+@section('actions')
+    {{-- Filtro de fecha y localidad --}}
+    <form action="{{ route('home') }}" method="GET"
+          class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200/80 bg-white p-2 shadow-sm
+                 dark:border-slate-700/60 dark:bg-slate-800">
+
+        <label class="relative">
+            <span class="sr-only">Fecha de operación</span>
+            <i class="fas fa-calendar-day pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400"></i>
+            <input type="date" name="fecha_reporte" value="{{ $fechaReporte }}"
+                   class="tw-input w-[10.5rem] border-transparent bg-slate-50 py-2 pl-9 pr-3 font-medium shadow-none
+                          dark:bg-slate-900/60">
+        </label>
+
+        <label class="relative">
+            <span class="sr-only">Municipio</span>
+            <i class="fas fa-location-dot pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400"></i>
+            <select name="localidad_reporte"
+                    class="tw-select w-[14rem] border-transparent bg-slate-50 py-2 pl-9 font-medium shadow-none
+                           dark:bg-slate-900/60">
+                <option value="TODAS" @selected($localidadSeleccionada === 'TODAS')>Todas las localidades</option>
+                @foreach ($localidadesDisponibles as $loc)
+                    <option value="{{ $loc }}" @selected($localidadSeleccionada === $loc)>{{ $loc }}</option>
+                @endforeach
+            </select>
+        </label>
+
+        <button type="submit" class="tw-btn-dark">
+            <i class="fas fa-magnifying-glass"></i> Filtrar
+        </button>
+    </form>
+
+    @haspermission('ver_residente')
+        <button type="button" @click="$dispatch('abrir-cargue')" class="tw-btn-primary">
+            <i class="fas fa-cloud-arrow-up"></i> Cargar Datos OSF
+        </button>
+    @endhaspermission
 @endsection
 
 @section('content')
-    <link rel="stylesheet" href="{{ asset('css/homeV2.css')}}">
-    <div class="mb-4">
-        @haspermission('ver_residente')
-        <button type="button" class="btn-dash btn-dash-lg btn-dash-solid-primary" data-toggle="modal" data-target="#modalCargarDatos">
-            <i class="fas fa-upload mr-2"></i>Cargar Datos OSF
-        </button>
-        @endhaspermission
-    </div>
+<div x-data="dashboard({
+        detalles: @js($detalles),
+        programaciones: @js($detallesProgramaciones ?? []),
+        meses: @js($mesesData ?? []),
+        tecnicos: @js($todos_los_tecnicos->map(fn ($t) => [
+            'id' => $t->id,
+            'nombre' => $t->NOMBRE_COMPLETO,
+            'asignado_en' => $t->asignado_en,
+        ])->values()),
+     })"
+     class="space-y-6">
 
-    {{-- ======================================================= --}}
-    {{-- FILA 1: SELECTOR DE FECHA Y REPORTE OPERATIVO DIARIO    --}}
-    {{-- ======================================================= --}}
-    <div class="row">
-        <div class="col-12 mb-4">
-            <div class="dashboard-card">
-                <div class="dashboard-card-header">
-                    <div class="d-flex align-items-center">
-                        <div class="dashboard-icon bg-dark mr-3">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div>
-                            <h3 class="dashboard-title">Reporte Operativo Diario</h3>
-                            <p class="dashboard-subtitle">{{ \Carbon\Carbon::parse($fechaReporte)->format('d/m/Y') }} · {{ $localidadSeleccionada === 'TODAS' ? 'Todas las localidades' : $localidadSeleccionada }}</p>
-                        </div>
+    {{-- ============ INDICADORES DEL DÍA ============ --}}
+    <section aria-label="Indicadores del día">
+        <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            @foreach ($kpis as $kpi)
+                <button type="button"
+                        @click="verDetalle('{{ $kpi['tipo'] }}', @js($kpi['titulo']))"
+                        class="tw-card group p-5 text-left transition hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgb(16_24_40/0.06),0_12px_28px_rgb(16_24_40/0.08)]">
+                    <div class="flex items-start justify-between gap-3">
+                        <span class="tw-eyebrow max-w-[9rem]">{{ $kpi['label'] }}</span>
+                        <span class="tw-chip chip-{{ $kpi['tint'] }}"><i class="fas {{ $kpi['icon'] }}"></i></span>
                     </div>
+                    <p class="tw-metric mt-4">{{ number_format($kpi['valor'], 0, ',', '.') }}</p>
+                    <p class="mt-3 text-xs font-medium text-brand-600 opacity-0 transition group-hover:opacity-100">
+                        Ver detalle <i class="fas fa-arrow-right text-[10px]"></i>
+                    </p>
+                </button>
+            @endforeach
+        </div>
+    </section>
 
-                    {{-- Formulario para Filtros --}}
-                    <form action="{{ route('home') }}" method="GET" class="form-inline">
-                        <div class="form-group mr-3">
-                            <label for="fecha_reporte" class="mr-2 text-secondary">Operación:</label>
-                            <input type="date" class="form-control form-control-sm custom-select-modern" id="fecha_reporte" name="fecha_reporte" value="{{ $fechaReporte }}">
-                        </div>
+    {{-- ============ CONTEXTO Y ACUMULADOS ============ --}}
+    <section aria-label="Acumulados">
+        <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            @foreach ($kpisSec as $kpi)
+                <button type="button"
+                        @click="verDetalle('{{ $kpi['tipo'] }}', @js($kpi['titulo']))"
+                        class="rounded-2xl border p-5 text-left transition hover:-translate-y-0.5 tint-{{ $kpi['tint'] }}">
+                    <div class="flex items-start justify-between gap-3">
+                        <span class="tw-eyebrow max-w-[9rem]">{{ $kpi['label'] }}</span>
+                        <span class="tw-chip chip-{{ $kpi['tint'] }}"><i class="fas {{ $kpi['icon'] }}"></i></span>
+                    </div>
+                    <p class="mt-4 text-3xl font-bold leading-none tracking-tight text-slate-900 dark:text-white">
+                        {{ number_format($kpi['valor'], 0, ',', '.') }}
+                    </p>
+                    <p class="mt-2.5 truncate text-xs text-slate-500 dark:text-slate-400">{{ $kpi['nota'] }}</p>
+                </button>
+            @endforeach
+        </div>
+    </section>
 
-                        <div class="form-group mr-3">
-                            <label for="localidad_reporte" class="mr-2 text-secondary">Municipio:</label>
-                            <select class="form-control form-control-sm custom-select-modern" id="localidad_reporte" name="localidad_reporte">
-                                <option value="TODAS" {{ $localidadSeleccionada === 'TODAS' ? 'selected' : '' }}>TODAS LAS LOCALIDADES</option>
-                                @foreach($localidadesDisponibles as $loc)
-                                    <option value="{{ $loc }}" {{ $localidadSeleccionada === $loc ? 'selected' : '' }}>
-                                        {{ $loc }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+    {{-- ============ GRÁFICA + PROGRAMACIONES ============ --}}
+    <div class="grid gap-6 xl:grid-cols-5">
 
-                        <button type="submit" class="btn-dash btn-dash-solid-primary"><i class="fas fa-search"></i> Filtrar</button>
-                    </form>
-                </div>
-
-                <div class="dashboard-card-body">
-                    <div class="row">
-                        {{-- MITAD IZQUIERDA: Métricas del día --}}
-                        <div class="col-md-6">
-                            <div class="table-responsive">
-                                <table class="tabla-dashboard">
-                                    <thead>
-                                    <tr>
-                                        <th>Operación {{ \Carbon\Carbon::parse($fechaReporte)->format('d/m/Y') }}</th>
-                                        <th>Total (#)</th>
-                                        <th>Detalle</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <tr>
-                                        <td><i class="fas fa-user-tie icono-fila"></i> Inspectores operaron</td>
-                                        <td>{{ number_format($metricas['inspectores'], 0, ',', '.') }}</td>
-                                        <td>
-                                            <button class="btn-dash btn-dash-info btn-ver-detalle" data-tipo="inspectores" data-titulo="Inspectores que operaron"><i class="fas fa-eye"></i></button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><i class="fas fa-check-circle icono-fila"></i> Ejecutado (Cierres Efectivos)</td>
-                                        <td><span class="badge badge-success badge-dashboard">{{ number_format($metricas['ejecutadas'], 0, ',', '.') }}</span></td>
-                                        <td>
-                                            <button class="btn-dash btn-dash-info btn-ver-detalle" data-tipo="ejecutadas" data-titulo="Tareas Efectivas"><i class="fas fa-eye"></i></button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><i class="fas fa-file-signature icono-fila"></i> Pendiente X legalizar</td>
-                                        <td><span class="badge badge-warning badge-dashboard">{{ number_format($metricas['pendientes_legalizar'], 0, ',', '.') }}</span></td>
-                                        <td>
-                                            <button class="btn-dash btn-dash-info btn-ver-detalle" data-tipo="pendientes_legalizar" data-titulo="Pendientes por Legalizar"><i class="fas fa-eye"></i></button>
-                                        </td>
-                                    </tr>
-                                    @php
-                                        $rotuloAcumulado = $acumuladoDesde
-                                            ? 'desde ' . \Carbon\Carbon::parse($acumuladoDesde)->format('d/m/Y')
-                                            : 'sin histórico previo';
-                                    @endphp
-                                    <tr class="fila-acumulado">
-                                        <td>
-                                            <i class="fas fa-history icono-fila"></i> Pendiente X legalizar acumulado
-                                            <small class="d-block text-muted font-weight-normal ml-4">{{ $rotuloAcumulado }}</small>
-                                        </td>
-                                        <td><span class="badge badge-warning badge-dashboard">{{ number_format($metricas['pendientes_legalizar_acumulado'], 0, ',', '.') }}</span></td>
-                                        <td>
-                                            <button class="btn-dash btn-dash-info btn-ver-detalle" data-tipo="pendientes_legalizar_acumulado" data-titulo="Pendientes por Legalizar acumulados ({{ $rotuloAcumulado }})"><i class="fas fa-eye"></i></button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><i class="fas fa-exclamation-triangle icono-fila"></i> Pendientes Prioridades Ejecutadas</td>
-                                        <td><span class="badge badge-danger badge-dashboard">{{ number_format($metricas['prioridades'], 0, ',', '.') }}</span></td>
-                                        <td>
-                                            <button class="btn-dash btn-dash-info btn-ver-detalle" data-tipo="prioridades" data-titulo="Prioridades Pendientes por Legalizar (>= 60 Meses)"><i class="fas fa-eye"></i></button>
-                                        </td>
-                                    </tr>
-                                    <tr class="fila-acumulado">
-                                        <td>
-                                            <i class="fas fa-history icono-fila"></i> Prioridades acumuladas
-                                            <small class="d-block text-muted font-weight-normal ml-4">{{ $rotuloAcumulado }}</small>
-                                        </td>
-                                        <td><span class="badge badge-danger badge-dashboard">{{ number_format($metricas['prioridades_acumulado'], 0, ',', '.') }}</span></td>
-                                        <td>
-                                            <button class="btn-dash btn-dash-info btn-ver-detalle" data-tipo="prioridades_acumulado" data-titulo="Prioridades Pendientes acumuladas ({{ $rotuloAcumulado }})"><i class="fas fa-eye"></i></button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><i class="fas fa-times-circle icono-fila"></i> Tareas Fallidas</td>
-                                        <td>{{ number_format($metricas['fallidas'], 0, ',', '.') }}</td>
-                                        <td>
-                                            <button class="btn-dash btn-dash-info btn-ver-detalle" data-tipo="fallidas" data-titulo="Tareas Fallidas"><i class="fas fa-eye"></i></button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><i class="fas fa-calendar-day icono-fila"></i> Programadas por el inspector</td>
-                                        <td>{{ number_format($metricas['programadas'], 0, ',', '.') }}</td>
-                                        <td>
-                                            <button class="btn-dash btn-dash-info btn-ver-detalle" data-tipo="programadas" data-titulo="Programadas para hoy"><i class="fas fa-eye"></i></button>
-                                        </td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        {{-- MITAD DERECHA: Gráfica de Meses Ejecutados --}}
-                        <div class="col-md-6 border-left">
-                            <h6 class="text-center font-weight-bold text-secondary mb-3 mt-2">Meses Ejecutados (Tareas Efectivas)</h6>
-                            <div style="height: 260px;">
-                                <canvas id="chartMeses"></canvas>
-                            </div>
-                        </div>
+        {{-- Meses ejecutados --}}
+        <section class="tw-card xl:col-span-2">
+            <div class="tw-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-emerald"><i class="fas fa-chart-column"></i></span>
+                    <div>
+                        <h2 class="tw-card-title">Meses Ejecutados</h2>
+                        <p class="tw-card-subtitle">Tareas efectivas por mes de vencimiento</p>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+            <div class="tw-card-body">
+                <div class="h-[300px]" x-show="tieneMeses">
+                    <canvas x-ref="chartMeses" role="img" aria-label="Gráfica de meses ejecutados"></canvas>
+                </div>
+                <p x-show="!tieneMeses" x-cloak class="py-20 text-center text-sm text-slate-400">
+                    Sin datos para la fecha seleccionada.
+                </p>
+            </div>
+        </section>
 
-    {{-- ======================================================= --}}
-    {{-- FILA 2: PROGRAMACIONES DEL DÍA                          --}}
-    {{-- ======================================================= --}}
-    <div class="row">
-        <div class="col-12 mb-4">
-            <div class="dashboard-card">
-                <div class="dashboard-card-header">
-                    <div class="d-flex align-items-center">
-                        <div class="dashboard-icon bg-warning mr-3">
-                            <i class="fas fa-calendar-check"></i>
-                        </div>
-                        <div>
-                            <h3 class="dashboard-title">Programaciones para el Día</h3>
-                            <p class="dashboard-subtitle">
-                                {{ \Carbon\Carbon::parse($fechaReporte)->format('d/m/Y') }}
-                                {{ $localidadSeleccionada !== 'TODAS' ? '· ' . $localidadSeleccionada : '' }}
-                            </p>
-                        </div>
+        {{-- Programaciones del día --}}
+        <section class="tw-card xl:col-span-3">
+            <div class="tw-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-amber"><i class="fas fa-calendar-check"></i></span>
+                    <div>
+                        <h2 class="tw-card-title">Programaciones para el Día</h2>
+                        <p class="tw-card-subtitle">
+                            {{ $fecha->format('d/m/Y') }}{{ $localidadSeleccionada !== 'TODAS' ? ' · '.$localidadSeleccionada : '' }}
+                        </p>
                     </div>
                 </div>
-
-                <div class="dashboard-card-body">
-                    <div class="table-responsive">
-                        <table id="tablaProgramacionesHoy" class="tabla-dashboard">
-                            <thead>
-                            <tr>
-                                <th>Tipo de Trabajo</th>
-                                <th>Total Programadas</th>
-                                <th>Ejecutadas</th>
-                                <th>Pendientes</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            @forelse($estadisticasProgramadas as $est)
-                                <tr>
-                                    <td><i class="fas fa-briefcase icono-fila"></i> {{ $est['tipo'] }}</td>
-                                    <td>{{ number_format($est['total'], 0, ',', '.') }}</td>
-                                    <td>
-                                        <button class="btn-dash btn-dash-success btn-ver-prog"
-                                                data-tipo="{{ $est['tipo'] }}" data-estado="ejecutadas">
-                                            {{ number_format($est['ejecutadas'], 0, ',', '.') }} <i class="fas fa-search ml-1"></i>
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button class="btn-dash btn-dash-danger btn-ver-prog"
-                                                data-tipo="{{ $est['tipo'] }}" data-estado="pendientes">
-                                            {{ number_format($est['pendientes'], 0, ',', '.') }} <i class="fas fa-search ml-1"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="celda-vacia">No hay programaciones para la fecha seleccionada.</td>
-                                </tr>
-                            @endforelse
-                            </tbody>
-                            <tfoot>
-                            <tr>
-                                <td class="text-right">TOTAL:</td>
-                                <td>{{ number_format($totalesProg['programadas'], 0, ',', '.') }}</td>
-                                <td><span class="badge badge-success badge-dashboard">{{ number_format($totalesProg['ejecutadas'], 0, ',', '.') }}</span></td>
-                                <td><span class="badge badge-danger badge-dashboard">{{ number_format($totalesProg['pendientes'], 0, ',', '.') }}</span></td>
-                            </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+                <div class="flex gap-2">
+                    <span class="pill-emerald">{{ number_format($totalesProg['ejecutadas'], 0, ',', '.') }} ejecutadas</span>
+                    <span class="pill-rose">{{ number_format($totalesProg['pendientes'], 0, ',', '.') }} pendientes</span>
                 </div>
             </div>
-        </div>
-    </div>
 
-    {{-- ======================================================= --}}
-    {{-- FILA 3: PENDIENTES EN BASE + FUERZA DE TRABAJO          --}}
-    {{-- ======================================================= --}}
-    <div class="row">
-        {{-- Columna Izquierda: Pendientes en Base --}}
-        <div class="col-lg-6 col-md-12 mb-4">
-            <div class="dashboard-card">
-                <div class="dashboard-card-header">
-                    <div class="d-flex align-items-center">
-                        <div class="dashboard-icon bg-info mr-3">
-                            <i class="fas fa-layer-group"></i>
-                        </div>
-                        <div>
-                            <h3 class="dashboard-title">Pendientes en Base</h3>
-                            <p class="dashboard-subtitle">
-                                Sin recepcionar · {{ number_format($baseTotalTipos, 0, ',', '.') }} de {{ number_format($baseTotalTabla, 0, ',', '.') }} registros
-                            </p>
-                        </div>
-                    </div>
-
-                    <select class="form-control form-control-sm custom-select-modern w-auto" id="selectorVistaBase">
-                        <option value="tipos" selected>Tipo de Trabajo</option>
-                        <option value="meses">Meses de Vencimiento</option>
-                    </select>
-                </div>
-
-                <div class="dashboard-card-body">
-                    <div class="table-responsive">
-                        <table class="tabla-dashboard">
-                            <thead>
+            <div class="max-h-[320px] overflow-auto">
+                <table class="tw-table">
+                    <thead class="sticky top-0 z-10">
+                        <tr>
+                            <th>Tipo de trabajo</th>
+                            <th class="text-right">Programadas</th>
+                            <th class="text-right">Ejecutadas</th>
+                            <th class="text-right">Pendientes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($estadisticasProgramadas as $est)
                             <tr>
-                                <th id="tituloColumnaBase">Tipo de Trabajo</th>
-                                <th>Cantidad</th>
+                                <td class="font-medium text-slate-800 dark:text-slate-200">
+                                    <i class="fas fa-briefcase mr-2 text-slate-300"></i>{{ $est['tipo'] }}
+                                </td>
+                                <td class="text-right tabular-nums">{{ number_format($est['total'], 0, ',', '.') }}</td>
+                                <td class="text-right">
+                                    <button type="button" class="pill-emerald tabular-nums hover:ring-2 hover:ring-emerald-300"
+                                            @click="verProgramacion(@js($est['tipo']), 'ejecutadas')">
+                                        {{ number_format($est['ejecutadas'], 0, ',', '.') }} <i class="fas fa-magnifying-glass text-[10px]"></i>
+                                    </button>
+                                </td>
+                                <td class="text-right">
+                                    <button type="button" class="pill-rose tabular-nums hover:ring-2 hover:ring-rose-300"
+                                            @click="verProgramacion(@js($est['tipo']), 'pendientes')">
+                                        {{ number_format($est['pendientes'], 0, ',', '.') }} <i class="fas fa-magnifying-glass text-[10px]"></i>
+                                    </button>
+                                </td>
                             </tr>
-                            </thead>
-
-                            {{-- VISTA 1: POR TIPO DE TRABAJO --}}
-                            <tbody class="vista-base" data-vista="tipos">
-                            @forelse($baseTipos as $fila)
-                                <tr>
-                                    <td><i class="fas fa-briefcase icono-fila"></i> {{ $fila['etiqueta'] }}</td>
-                                    <td>{{ number_format($fila['cantidad'], 0, ',', '.') }}</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="2" class="celda-vacia">Sin pendientes registrados.</td>
-                                </tr>
-                            @endforelse
-                            </tbody>
-
-                            {{-- VISTA 2: POR MESES DE VENCIMIENTO --}}
-                            <tbody class="vista-base d-none" data-vista="meses">
-                            @foreach($baseMeses as $fila)
-                                <tr>
-                                    <td><i class="fas fa-hourglass-half icono-fila"></i> {{ $fila['rango'] }}</td>
-                                    <td class="{{ in_array($fila['rango'], ['60', '60 +']) && $fila['cantidad'] > 0 ? 'text-danger' : '' }}">
-                                        {{ number_format($fila['cantidad'], 0, ',', '.') }}
-                                    </td>
-                                </tr>
-                            @endforeach
-                            </tbody>
-
-                            <tfoot>
-                            <tr class="vista-base" data-vista="tipos">
-                                <td class="text-right">TOTAL:</td>
-                                <td><span class="badge badge-info badge-dashboard">{{ number_format($baseTotalTipos, 0, ',', '.') }}</span></td>
+                        @empty
+                            <tr><td colspan="4" class="py-12 text-center text-slate-400">
+                                No hay programaciones para la fecha seleccionada.
+                            </td></tr>
+                        @endforelse
+                    </tbody>
+                    @if (count($estadisticasProgramadas))
+                        <tfoot class="sticky bottom-0">
+                            <tr>
+                                <td class="text-right uppercase tracking-wide text-slate-500">Total</td>
+                                <td class="text-right tabular-nums">{{ number_format($totalesProg['programadas'], 0, ',', '.') }}</td>
+                                <td class="text-right tabular-nums text-emerald-700">{{ number_format($totalesProg['ejecutadas'], 0, ',', '.') }}</td>
+                                <td class="text-right tabular-nums text-rose-700">{{ number_format($totalesProg['pendientes'], 0, ',', '.') }}</td>
                             </tr>
-                            <tr class="vista-base d-none" data-vista="meses">
-                                <td class="text-right">TOTAL:</td>
-                                <td><span class="badge badge-info badge-dashboard">{{ number_format($baseTotalMeses, 0, ',', '.') }}</span></td>
-                            </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Columna Derecha: Fuerza de Trabajo --}}
-        <div class="col-lg-6 col-md-12 mb-4">
-            <div class="dashboard-card">
-                <div class="dashboard-card-header">
-                    <div class="d-flex align-items-center">
-                        <div class="dashboard-icon bg-success mr-3">
-                            <i class="fas fa-users-cog"></i>
-                        </div>
-                        <div>
-                            <h3 class="dashboard-title">Fuerza de Trabajo por Localidad</h3>
-                            <p class="dashboard-subtitle">Técnicos asignados actualmente</p>
-                        </div>
-                    </div>
-
-                    @can('ver_coordinacion_RP')
-                        <button class="btn-dash btn-dash-solid-primary" data-toggle="modal" data-target="#modalNuevaAsignacion">
-                            <i class="fas fa-plus mr-1"></i> Asignar Técnicos
-                        </button>
-                    @endcan
-                </div>
-
-                <div class="dashboard-card-body">
-                    {{-- Alerta de éxito si se guardó correctamente --}}
-                    @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
+                        </tfoot>
                     @endif
+                </table>
+            </div>
+        </section>
+    </div>
 
-                    <div class="table-responsive">
-                        <table id="tablaTecnicos" class="tabla-dashboard">
-                            <thead>
+    {{-- ============ PENDIENTES EN BASE + FUERZA DE TRABAJO ============ --}}
+    <div class="grid gap-6 lg:grid-cols-2">
+
+        {{-- Pendientes en base --}}
+        <section class="tw-card" x-data="{ vista: 'tipos' }">
+            <div class="tw-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-sky"><i class="fas fa-layer-group"></i></span>
+                    <div>
+                        <h2 class="tw-card-title">Pendientes en Base</h2>
+                        <p class="tw-card-subtitle">
+                            Sin recepcionar · {{ number_format($baseTotalTipos, 0, ',', '.') }}
+                            de {{ number_format($baseTotalTabla, 0, ',', '.') }} registros
+                        </p>
+                    </div>
+                </div>
+
+                {{-- Conmutador de vista --}}
+                <div class="flex rounded-xl bg-slate-100 p-1 dark:bg-slate-900/50" role="tablist">
+                    @foreach (['tipos' => 'Tipo de trabajo', 'meses' => 'Meses'] as $k => $etiqueta)
+                        <button type="button" role="tab" @click="vista = '{{ $k }}'"
+                                :aria-selected="vista === '{{ $k }}'"
+                                class="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+                                :class="vista === '{{ $k }}'
+                                    ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
+                                    : 'text-slate-500 hover:text-slate-700'">{{ $etiqueta }}</button>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="max-h-[340px] overflow-auto">
+                <table class="tw-table">
+                    <thead class="sticky top-0 z-10">
+                        <tr>
+                            <th x-text="vista === 'tipos' ? 'Tipo de trabajo' : 'Meses de vencimiento'"></th>
+                            <th class="text-right">Cantidad</th>
+                        </tr>
+                    </thead>
+
+                    <tbody x-show="vista === 'tipos'">
+                        @forelse ($baseTipos as $fila)
                             <tr>
-                                <th>Localidad</th>
-                                <th>Técnicos</th>
-                                <th>Acción</th>
+                                <td class="font-medium text-slate-800 dark:text-slate-200">
+                                    <i class="fas fa-briefcase mr-2 text-slate-300"></i>{{ $fila['etiqueta'] }}
+                                </td>
+                                <td class="text-right tabular-nums">{{ number_format($fila['cantidad'], 0, ',', '.') }}</td>
                             </tr>
-                            </thead>
-                            <tbody>
-                            @forelse($tecnicos_por_localidad as $nombre_localidad => $tecnicos)
-                                <tr>
-                                    <td><i class="fas fa-map-marker-alt icono-fila"></i> {{ $nombre_localidad }}</td>
-                                    <td><span class="badge badge-success badge-dashboard">{{ $tecnicos->count() }}</span></td>
-                                    <td>
-                                        <button type="button" class="btn-dash btn-dash-success" data-toggle="modal" data-target="#modal-tecnicos-{{ \Illuminate\Support\Str::slug($nombre_localidad) }}">
-                                            <i class="fas fa-search"></i> Ver
+                        @empty
+                            <tr><td colspan="2" class="py-12 text-center text-slate-400">Sin pendientes registrados.</td></tr>
+                        @endforelse
+                    </tbody>
+
+                    <tbody x-show="vista === 'meses'" x-cloak>
+                        @foreach ($baseMeses as $fila)
+                            @php $critico = in_array($fila['rango'], ['60', '60 +']) && $fila['cantidad'] > 0; @endphp
+                            <tr>
+                                <td class="font-medium text-slate-800 dark:text-slate-200">
+                                    <i class="fas fa-hourglass-half mr-2 text-slate-300"></i>{{ $fila['rango'] }}
+                                </td>
+                                <td @class([
+                                    'text-right tabular-nums',
+                                    'font-bold text-rose-600' => $critico,
+                                ])>{{ number_format($fila['cantidad'], 0, ',', '.') }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+
+                    <tfoot class="sticky bottom-0">
+                        <tr>
+                            <td class="text-right uppercase tracking-wide text-slate-500">Total</td>
+                            <td class="text-right tabular-nums">
+                                <span x-show="vista === 'tipos'">{{ number_format($baseTotalTipos, 0, ',', '.') }}</span>
+                                <span x-show="vista === 'meses'" x-cloak>{{ number_format($baseTotalMeses, 0, ',', '.') }}</span>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </section>
+
+        {{-- Fuerza de trabajo --}}
+        @php
+            $granTotalTecnicos = collect($tecnicos_por_localidad)->sum(fn ($t) => $t->count());
+        @endphp
+        <section class="tw-card">
+            <div class="tw-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-violet"><i class="fas fa-users-gear"></i></span>
+                    <div>
+                        <h2 class="tw-card-title">Fuerza de Trabajo por Localidad</h2>
+                        <p class="tw-card-subtitle">{{ $granTotalTecnicos }} técnicos asignados actualmente</p>
+                    </div>
+                </div>
+
+                @can('ver_coordinacion_RP')
+                    <button type="button" @click="abrirAsignacion()" class="tw-btn-secondary tw-btn-sm">
+                        <i class="fas fa-plus"></i> Asignar
+                    </button>
+                @endcan
+            </div>
+
+            <div class="max-h-[340px] overflow-auto">
+                <table class="tw-table">
+                    <thead class="sticky top-0 z-10">
+                        <tr>
+                            <th>Localidad</th>
+                            <th class="text-right">Técnicos</th>
+                            <th class="text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($tecnicos_por_localidad as $nombreLocalidad => $tecnicos)
+                            <tr>
+                                <td class="font-medium text-slate-800 dark:text-slate-200">
+                                    <i class="fas fa-location-dot mr-2 text-slate-300"></i>{{ $nombreLocalidad }}
+                                </td>
+                                <td class="text-right"><span class="pill-violet tabular-nums">{{ $tecnicos->count() }}</span></td>
+                                <td>
+                                    <div class="flex justify-end gap-1.5">
+                                        <button type="button" class="tw-btn-secondary tw-btn-sm"
+                                                @click="verTecnicos(@js($nombreLocalidad), @js($tecnicos->map(fn ($t) => [
+                                                    'nombre' => $t->NOMBRE_COMPLETO ?? 'Nombre no registrado',
+                                                    'supervisor' => $t->supervisor->name ?? '—',
+                                                    'id' => $t->ID_TECNICO,
+                                                ])->values()))">
+                                            <i class="fas fa-eye"></i> Ver
                                         </button>
                                         @can('ver_coordinacion_RP')
-                                            <button type="button" class="btn-dash btn-dash-primary"
-                                                    onclick="editarAsignacion('{{ $nombre_localidad }}', @json($tecnicos->pluck('ID_TECNICO')))">
-                                                <i class="fas fa-edit"></i> Editar
+                                            <button type="button" class="tw-btn-secondary tw-btn-sm"
+                                                    @click="abrirAsignacion(@js($nombreLocalidad), @js($tecnicos->pluck('ID_TECNICO')->values()))">
+                                                <i class="fas fa-pen"></i>
                                             </button>
                                         @endcan
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="3" class="celda-vacia">Aún no hay técnicos asignados.</td>
-                                </tr>
-                            @endforelse
-                            </tbody>
-                            <tfoot>
-                            @php
-                                $granTotalTecnicos = 0;
-                                foreach($tecnicos_por_localidad as $tecs) {
-                                    $granTotalTecnicos += $tecs->count();
-                                }
-                            @endphp
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="3" class="py-12 text-center text-slate-400">Aún no hay técnicos asignados.</td></tr>
+                        @endforelse
+                    </tbody>
+                    @if (count($tecnicos_por_localidad))
+                        <tfoot class="sticky bottom-0">
                             <tr>
-                                <td class="text-right">TOTAL TÉCNICOS ASIGNADOS:</td>
-                                <td><span class="badge badge-success badge-dashboard">{{ $granTotalTecnicos }}</span></td>
+                                <td class="text-right uppercase tracking-wide text-slate-500">Total</td>
+                                <td class="text-right"><span class="pill-violet tabular-nums">{{ $granTotalTecnicos }}</span></td>
                                 <td></td>
                             </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
+                        </tfoot>
+                    @endif
+                </table>
             </div>
-        </div>
+        </section>
     </div>
 
-
-    {{-- ======================================================= --}}
-    {{-- SECCIÓN DE MODALES (Siempre deben ir al final)          --}}
-    {{-- ======================================================= --}}
-
-    {{-- MODAL DINÁMICO PARA VER DETALLES DEL REPORTE DIARIO --}}
-    <div class="modal fade dashboard-modal" id="modalVerDetalles" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="d-flex align-items-center">
-                        <div class="dashboard-icon bg-info mr-3">
-                            <i class="fas fa-list"></i>
-                        </div>
-                        <div id="tituloModalDetalle">
-                            <h5 class="modal-title"><span></span></h5>
-                            <p class="modal-subtitle">Detalle de la operación del día</p>
-                        </div>
-                    </div>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <table id="tablaDetalleRegistros" class="tabla-dashboard">
-                        <thead>
-                        <tr>
-                            <th>Contrato / Sitio</th>
-                            <th>Nombre Operario</th>
-                            <th>Municipio</th>
-                            <th>Tipo Tarea</th>
-                            <th>Cierre</th>
-                            <th>Fecha ejecución</th>
-                        </tr>
-                        </thead>
-                        <tbody id="cuerpoTablaDetalles">
-                        {{-- Se llena por JavaScript --}}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- MODALES DE TÉCNICOS (Uno por localidad) --}}
-    @foreach($tecnicos_por_localidad as $nombre_localidad => $tecnicos)
-        <div class="modal fade dashboard-modal" id="modal-tecnicos-{{ \Illuminate\Support\Str::slug($nombre_localidad) }}" tabindex="-1" role="dialog" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <div class="d-flex align-items-center">
-                            <div class="dashboard-icon bg-success mr-3">
-                                <i class="fas fa-map-marker-alt"></i>
-                            </div>
-                            <div>
-                                <h5 class="modal-title">Técnicos en {{ $nombre_localidad }}</h5>
-                                <p class="modal-subtitle">{{ $tecnicos->count() }} {{ $tecnicos->count() === 1 ? 'técnico asignado' : 'técnicos asignados' }}</p>
-                            </div>
-                        </div>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body p-0">
-                        <ul class="list-group list-group-flush lista-tecnicos">
-                            @foreach($tecnicos as $tec)
-                                <li class="list-group-item d-flex flex-column">
-                                    <div>
-                                        <i class="fas fa-user-circle text-success mr-2" style="font-size: 1.2rem;"></i>
-                                        <span class="nombre-tecnico">{{ $tec->NOMBRE_COMPLETO ?? 'Nombre no registrado' }}</span>
-                                    </div>
-                                    <small class="text-muted ml-4 pl-1">Supervisor: {{ $tec->supervisor->name }}</small>
-                                    <small class="text-muted ml-4 pl-1">Código ID: {{ $tec->ID_TECNICO }}</small>
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    @endforeach
-
-    {{-- MODAL NUEVA ASIGNACIÓN DE TÉCNICOS --}}
-    <div class="modal fade dashboard-modal" id="modalNuevaAsignacion" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
-            <div class="modal-content">
-                <form action="{{ route('asignacion.guardar_tecnicos') }}" method="POST">
-                    @csrf
-                    <div class="modal-header">
-                        <div class="d-flex align-items-center">
-                            <div class="dashboard-icon bg-primary mr-3">
-                                <i class="fas fa-user-plus"></i>
-                            </div>
-                            <div>
-                                <h5 class="modal-title">Asignar Técnicos a Localidad</h5>
-                                <p class="modal-subtitle">Puede seleccionar varios técnicos a la vez</p>
-                            </div>
-                        </div>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="localidad_input">Escriba el nombre de la Localidad / Municipio:</label>
-                            <input type="text" name="localidad" id="localidad_input" class="form-control" placeholder="Ej: CALI, PALMIRA, CANDELARIA..." required>
-                            <small class="text-muted">Si escribe una localidad existente, se sumarán a ella. Si no existe, se creará una nueva fila en la tabla.</small>
-                        </div>
-                        <hr>
-                        <label>Seleccione los técnicos:</label>
-                        <small class="d-block text-muted mb-2">
-                            <i class="fas fa-info-circle mr-1"></i>
-                            Puede marcar técnicos que estén en otra localidad: al guardar se trasladan aquí automáticamente.
-                        </small>
-                        <input type="text" id="buscadorTecnicos" class="form-control mb-2" placeholder="🔍 Buscar técnico por nombre o ID...">
-                        <div class="panel-tecnicos">
-                            <div class="row" id="listaTecnicosCheckboxes">
-                                @foreach($todos_los_tecnicos as $t)
-                                    <div class="col-md-6 mb-2 item-tecnico">
-                                        <div class="custom-control custom-checkbox caja-tecnico">
-                                            <input type="checkbox"
-                                                   class="custom-control-input check-tecnico"
-                                                   id="tec_{{ $t->id }}"
-                                                   name="tecnicos[]"
-                                                   value="{{ $t->id }}"
-                                                   data-asignado="{{ $t->asignado_en }}">
-                                            <label class="custom-control-label w-100" style="cursor: pointer;" for="tec_{{ $t->id }}">
-                                                <span class="nombre-tecnico">{{ $t->NOMBRE_COMPLETO }}</span><br>
-                                                <small class="text-primary">(ID: {{ $t->id }})</small>
-                                                @if($t->asignado_en)
-                                                    <span id="origen_text_{{ $t->id }}" class="d-block mt-1 texto-origen">
-                                                        <small><i class="fas fa-map-marker-alt"></i> Actualmente en: {{ $t->asignado_en }}</small>
-                                                    </span>
-                                                @endif
-                                            </label>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn-dash btn-dash-neutral" data-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn-dash btn-dash-solid-primary"><i class="fas fa-save"></i> Guardar Asignación</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    {{-- MODAL CARGA DE ARCHIVOS OT --}}
-    <div class="modal fade dashboard-modal" id="modalCargarDatos" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <form id="formSubirArchivos" action="{{ route('insercion_estadisticas_asignacion') }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <div class="modal-header">
-                        <div class="d-flex align-items-center">
-                            <div class="dashboard-icon bg-success mr-3">
-                                <i class="fas fa-file-excel"></i>
-                            </div>
-                            <div>
-                                <h5 class="modal-title">Cargar Archivos OT</h5>
-                                <p class="modal-subtitle">Formatos Excel (.xlsx, .xls) o CSV</p>
-                            </div>
-                        </div>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <p class="text-muted mb-4">Seleccione los archivos correspondientes para actualizar la base de datos.</p>
-                        <div class="form-group">
-                            <label for="archivo_asignacion">Archivo OT ABIERTAS (Asignación):</label>
-                            <div class="custom-file">
-                                <input type="file" class="custom-file-input" id="archivo_asignacion" name="archivo_asignacion" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
-                                <label class="custom-file-label" for="archivo_asignacion" data-browse="Explorar">Seleccionar archivo...</label>
-                            </div>
-                        </div>
-                        <div class="form-group mt-4">
-                            <label for="archivo_cerradas">Archivo OT CERRADAS:</label>
-                            <div class="custom-file">
-                                <input type="file" class="custom-file-input" id="archivo_cerradas" name="archivo_cerradas" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
-                                <label class="custom-file-label" for="archivo_cerradas" data-browse="Explorar">Seleccionar archivo...</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn-dash btn-dash-neutral" data-dismiss="modal">Cancelar</button>
-                        <button type="submit" id="btnGuardarArchivos" class="btn-dash btn-dash-solid-success">
-                            <i class="fas fa-cloud-upload-alt mr-1"></i> Subir e Importar
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    {{-- MODAL DINÁMICO PARA VER DETALLES DE PROGRAMACIONES --}}
-    <div class="modal fade dashboard-modal" id="modalVerDetallesProg" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="d-flex align-items-center">
-                        <div class="dashboard-icon bg-warning mr-3">
-                            <i class="fas fa-clipboard-list"></i>
-                        </div>
-                        <div id="tituloModalProg">
-                            <h5 class="modal-title"><span></span></h5>
-                            <p class="modal-subtitle">Programaciones del día por tipo de trabajo</p>
-                        </div>
-                    </div>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <table id="tablaDetalleProg" class="tabla-dashboard">
-                        <thead>
-                        <tr>
-                            <th>Contrato</th>
-                            <th>Ordenlist</th>
-                            <th>Cliente</th>
-                            <th>Técnico Asignado</th>
-                            <th>Municipio</th>
-                            <th>Estado</th>
-                        </tr>
-                        </thead>
-                        <tbody id="cuerpoTablaProg">
-                        {{-- Se llena por JavaScript --}}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+    @include('home.partials.modales')
+</div>
 @endsection
 
 @section('js')
-    {{-- Inyección de datos para JavaScript --}}
-    <script>
-        window.datosProgramaciones = @json($detallesProgramaciones ?? []);
-        window.datosMeses = @json($mesesData ?? []);
-        window.datosDetalles = @json($detalles ?? []);
-    </script>
-
-    <script src="{{asset('js/homeV2.2.js')}}"></script>
-
-    @if (session('error'))
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                Swal.fire({
-                    title: "Error",
-                    text: "{{session('error')}}",
-                    icon: "error"
-                });
-            });
-        </script>
-    @endif
-
-    @if ($errors->any())
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                let errores = "";
-                @foreach ($errors->all() as $error)
-                    errores += "{{ $error }}\n";
-                @endforeach
-
-                Swal.fire({
-                    title: "Faltan datos",
-                    text: errores,
-                    icon: "warning"
-                });
-            });
-        </script>
-    @endif
-
-    @if (session('success'))
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                Swal.fire({
-                    position: "top-end",
-                    type: "success", // Cambiado de 'type' a 'icon' si usas SweetAlert2
-                    icon: "success",
-                    title: "{{ session('success') }}",
-                    showConfirmButton: false,
-                    toast: true,
-                    timer: 4000
-                });
-            });
-        </script>
-    @endif
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    @include('home.partials.script')
 @endsection

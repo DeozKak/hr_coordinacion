@@ -25,7 +25,7 @@ services:
         volumes:
             - db_data:/var/lib/mysql
 
-    phpmyadmin:
+    phpmyadmin:c
         image: phpmyadmin
         container_name: hr_coordinacion-phpmyadmin
         restart: always
