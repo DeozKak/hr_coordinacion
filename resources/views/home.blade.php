@@ -5,7 +5,7 @@
 @endsection
 
 @section('content')
-    <link rel="stylesheet" href="{{ asset('css/homeV2.css')}}">
+    <link rel="stylesheet" href="{{ asset('css/homeV2.css') }}?v={{ filemtime(public_path('css/homeV2.css')) }}">
     <div class="mb-4">
         @haspermission('ver_residente')
         <button type="button" class="btn-dash btn-dash-lg btn-dash-solid-primary" data-toggle="modal" data-target="#modalCargarDatos">
@@ -417,6 +417,7 @@
                             <th>Nombre Operario</th>
                             <th>Municipio</th>
                             <th>Tipo Tarea</th>
+                            <th>Meses</th>
                             <th>Cierre</th>
                             <th>Fecha ejecución</th>
                         </tr>
@@ -632,7 +633,8 @@
         window.datosDetalles = @json($detalles ?? []);
     </script>
 
-    <script src="{{asset('js/homeV2.2.js')}}"></script>
+    {{-- La versión sale de la fecha del archivo: al editarlo el navegador deja de servir el cacheado --}}
+    <script src="{{ asset('js/homeV2.2.js') }}?v={{ filemtime(public_path('js/homeV2.2.js')) }}"></script>
 
     @if (session('error'))
         <script>

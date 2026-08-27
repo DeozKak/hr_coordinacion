@@ -24,10 +24,10 @@ class ReporteOperativoService
     {
         $diarias = $this->metricasDiarias->generar($fechaReporte, $localidadSeleccionada);
 
-        $legalizacion = $this->pendientesLegalizar->calcular($diarias['ejecutadas'], $fechaReporte);
+        $legalizacion = $this->pendientesLegalizar->calcular($diarias['ejecutadas']);
 
         $ejecutadasPrevias = $this->metricasDiarias->ejecutadasAnteriores($fechaReporte, $localidadSeleccionada);
-        $acumulado = $this->pendientesLegalizar->calcular($ejecutadasPrevias, $fechaReporte);
+        $acumulado = $this->pendientesLegalizar->calcular($ejecutadasPrevias);
 
         return [
             'localidadesDisponibles' => $diarias['localidadesDisponibles'],

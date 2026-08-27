@@ -150,9 +150,12 @@ class SyncReporteTareas extends Command
 
                         if ($mesesCalculados === null && isset($asignacionesRespaldo[$contratoLimpio])) {
                             $tareaLimpia = trim(substr($array['TipoTarea'], 2));
-                            $match = $asignacionesRespaldo[$contratoLimpio]->first(function ($item) use ($tareaLimpia) {
+                            // 10444 y 12161 son equivalentes en ambos sentidos
+                            $equivalentes = ['10444', '12161'];
+                            $match = $asignacionesRespaldo[$contratoLimpio]->first(function ($item) use ($tareaLimpia, $equivalentes) {
                                 return $item->ID_TIPO_TRABAJO == $tareaLimpia ||
-                                    ($tareaLimpia == '10444' && $item->ID_TIPO_TRABAJO == '12161');
+                                    (in_array($tareaLimpia, $equivalentes, true)
+                                        && in_array((string) $item->ID_TIPO_TRABAJO, $equivalentes, true));
                             });
 
                             if ($match && !empty($match->FECHA_ULTCERTI)) {

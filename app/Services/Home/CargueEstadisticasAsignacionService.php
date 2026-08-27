@@ -7,6 +7,7 @@ use Box\Spout\Reader\ReaderAbstract;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Shared\Date as FechaExcel;
 
 class CargueEstadisticasAsignacionService
 {
@@ -156,8 +157,9 @@ class CargueEstadisticasAsignacionService
      */
     private function filasEnStreaming(ReaderAbstract $reader, string $ruta): \Generator
     {
-        // Devolvemos las fechas ya formateadas como texto, igual que hacía PhpSpreadsheet
-        $reader->setShouldFormatDates(true);
+        // Pedimos las fechas como objetos, no como texto: el formato de la celda varía
+        // entre archivos y aquí las normalizamos todas a un mismo patrón.
+        $reader->setShouldFormatDates(false);
         $reader->open($ruta);
 
         try {
@@ -243,14 +245,36 @@ class CargueEstadisticasAsignacionService
         $registro = [];
         foreach ($headers as $i => $header) {
             if ($header !== '') {
-                $valor = $valores[$i] ?? null;
-                $registro[$header] = $valor instanceof \DateTimeInterface
-                    ? $valor->format('Y-m-d H:i:s')
-                    : $valor;
+                $registro[$header] = str_starts_with($header, 'fecha')
+                    ? $this->normalizarFecha($valores[$i] ?? null)
+                    : ($valores[$i] ?? null);
             }
         }
 
         return $registro;
+    }
+
+    /**
+     * Deja cualquier fecha en 'Y-m-d H:i:s', venga como objeto, como serial de Excel
+     * o como texto.
+     *
+     * Excel guarda las fechas como un número de días desde 1900. Si la celda no trae
+     * un formato de fecha reconocible, el lector entrega ese número crudo y sin esta
+     * conversión terminaba guardado tal cual en la base.
+     */
+    private function normalizarFecha(mixed $valor): ?string
+    {
+        if ($valor instanceof \DateTimeInterface) {
+            return $valor->format('Y-m-d H:i:s');
+        }
+
+        if (is_numeric($valor) && (float) $valor > 0) {
+            return FechaExcel::excelToDateTimeObject((float) $valor)->format('Y-m-d H:i:s');
+        }
+
+        $valor = is_string($valor) ? trim($valor) : $valor;
+
+        return ($valor === '' || $valor === null) ? null : (string) $valor;
     }
 
     /**
