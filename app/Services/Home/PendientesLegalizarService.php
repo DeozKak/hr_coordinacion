@@ -17,6 +17,14 @@ class PendientesLegalizarService
      */
     private const CONTRATOS_POR_BLOQUE = 1000;
 
+    /**
+     * Tipos de trabajo que no se legalizan, así que nunca cuentan como pendientes.
+     */
+    private const TIPOS_SIN_LEGALIZACION = [
+        'FI-29 revisión periódica línea matriz',
+        'FI-31 REVISIÓN NUEVA LINEA MATRIZ',
+    ];
+
     public function __construct(
         private LimpiezaMunicipioService $municipios,
         private FechaEjecucionService $fechas
@@ -55,9 +63,18 @@ class PendientesLegalizarService
             ['CONTRATO', 'ID_TIPO_TRABAJO']
         );
 
+        $tiposSinLegalizacion = array_map(
+            fn (string $tipo) => $this->normalizarTipo($tipo),
+            self::TIPOS_SIN_LEGALIZACION
+        );
+
         foreach ($ejecutadasList as $rep) {
             $contrato = ltrim($rep->NroSitio, ':');
             $tarea = trim(substr($rep->TipoTarea, 2));
+
+            if (in_array($this->normalizarTipo($rep->TipoTarea), $tiposSinLegalizacion, true)) {
+                continue;
+            }
 
             // Legalizada es la que ya aparece en cerradas; el resto queda pendiente.
             // No se exige estar en tbl_asignaciones: esa tabla es la foto de las OT
@@ -127,6 +144,20 @@ class PendientesLegalizarService
         }
 
         return null;
+    }
+
+    /**
+     * Deja el tipo de trabajo comparable: sin tildes, en mayúsculas y con un solo espacio
+     * entre palabras, porque el mismo tipo llega escrito distinto según la fuente.
+     */
+    private function normalizarTipo(?string $texto): string
+    {
+        $texto = mb_strtoupper(trim((string) $texto), 'UTF-8');
+        $texto = strtr($texto, [
+            'Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U', 'Ü' => 'U', 'Ñ' => 'N',
+        ]);
+
+        return preg_replace('/\s+/u', ' ', $texto);
     }
 
     /**
