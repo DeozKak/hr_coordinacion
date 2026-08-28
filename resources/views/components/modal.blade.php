@@ -8,16 +8,39 @@
     'size' => 'max-w-3xl',
 ])
 
+{{-- Las alertas se pintan fuera de este árbol, así que pulsar "Cancelar" en una
+     de ellas cuenta como clic fuera y cerraba también el modal.
+     El clic se juzga por su DESTINO y no por `$store.alertas.visible`: el botón
+     de la alerta ya apagó ese flag cuando este listener llega a ejecutarse.
+     Para Escape sí sirve el flag, porque este handler corre antes que el de la
+     alerta (Alpine registra en orden de aparición en el DOM). --}}
+{{-- La transición va también en la raíz: sin ella `x-show` la ocultaba de
+     inmediato al cerrar y las transiciones de dentro no llegaban a verse.
+     Salida algo más corta que la entrada, que es lo que se siente natural. --}}
 <div x-show="{{ $show }}" x-cloak
-     @keydown.escape.window="{{ $close }}"
-     class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+     x-transition:enter="transition duration-200 ease-out"
+     x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+     x-transition:leave="transition duration-150 ease-in"
+     x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+     @keydown.escape.window="if (!$store.alertas?.visible) { {{ $close }} }"
+     {{-- z por encima de 9999, el máximo que usa Handsontable. --}}
+     class="fixed inset-0 z-[10000] overflow-y-auto" role="dialog" aria-modal="true"
+     x-data="{ bloqueado: false }"
+     x-effect="if ({{ $show }} && !bloqueado) { bloqueado = true; Alpine.store('scroll').bloquear(); }
+               else if (!({{ $show }}) && bloqueado) { bloqueado = false; Alpine.store('scroll').liberar(); }">
 
-    <div x-show="{{ $show }}" x-transition.opacity class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
 
     <div class="flex min-h-full items-center justify-center p-4">
-        <div x-show="{{ $show }}" x-transition.scale.95
-             @click.outside="{{ $close }}"
-             x-trap.noscroll="{{ $show }}"
+        <div x-show="{{ $show }}"
+             x-transition:enter="transition duration-200 ease-out"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition duration-150 ease-in"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 translate-y-2"
+             @click.outside="if (!$store.alertas?.visible && !$event.target.closest('[data-capa-alertas]')) { {{ $close }} }"
+             x-trap="{{ $show }}"
              class="relative flex w-full {{ $size }} max-h-[88vh] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-800">
 
             <div class="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200/80 px-5 py-4 dark:border-slate-700/60">

@@ -1,145 +1,117 @@
-@extends('adminlte::page')
+@extends('layouts.tw.app')
 
-@section('title', 'Producción')
+@section('title', 'Detalles de producción')
 
 @section('content_header')
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <h1 class="fw-bold text-primary mb-0">
-            <i class="fas fa-industry me-2"></i>
-            Producción Corte:
-            <span class="text-dark">{{$corte?->nombre}}</span>
-        </h1>
-    </div>
+    <h1>Detalles de producción</h1>
+@endsection
 
-@stop
+@section('subtitle', $corte?->nombre ? 'Corte: '.$corte->nombre : 'Sin corte activo')
+
+@section('actions')
+    <button type="button" class="tw-btn-secondary" onclick="history.back()">
+        <i class="fas fa-arrow-left"></i> Ir atrás
+    </button>
+@endsection
+
+@include('layouts.tw.partials.handsontable')
 
 @section('content')
-    <!-- Loader y overlay modernos -->
-    <div id="overlay"></div>
-    <div id="loader">
-        <div class="spinner"></div>
-        <div class="loader-text">Cargando información...</div>
-    </div>
+    <div x-data="detallesProduccion({
+            permiso: {{ auth()->user()?->can('ver_residente') ? 1 : 0 }},
+            fechaInicioCorte: '{{ session('fecha_inicio') }}',
+            urls: {
+                datos:            '{{ route('produccion.datosDetalles') }}',
+                obtenerDetalles:  '{{ route('obtener-url-detalles') }}',
+                obtenerBitacoras: '{{ route('obtener-url-bitacoras') }}',
+                actualizarFila:   '{{ route('produccion.ActualizarDetallesDiario', ['id' => ':id']) }}',
+                disenoEspecial:   '{{ route('produccion.diseñoEspecial', ['id' => ':id']) }}',
+                alternarEstado:   '{{ route('produccion.eliminarDetallesDiario', ['id' => ':id']) }}',
+                detallesDia:      '{{ route('produccion.detallesDiario', ['fecha' => ':fecha', 'inspector' => ':inspector']) }}',
+                insertar:         '{{ route('produccion.insertarContrato') }}',
+                municipios:       '{{ route('municipios.json') }}',
+                contarDobles:          '{{ route('produccion.contarDobles') }}',
+                noContarDobles:        '{{ route('produccion.guardarNoDobles') }}',
+                noContarDoblesFestivo: '{{ route('produccion.storeNotDoublesHolidays') }}',
+                contarDoblesFestivo:   '{{ route('produccion.countDoublesHolidays') }}',
+                noContarDoblesSabado:  '{{ route('produccion.noContarDoblesSaturday') }}',
+            },
+         })"
+         class="space-y-6">
 
+        {{-- ============================== LEYENDA ============================= --}}
+        <section class="tw-card">
+            <div class="tw-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-blue"><i class="fas fa-industry"></i></span>
+                    <div>
+                        <h2 class="tw-card-title">Producción por inspector</h2>
+                        <p class="tw-card-subtitle">
+                            Doble clic en la esquina de una celda de día para ver sus inspecciones
+                        </p>
+                    </div>
+                </div>
 
-    <!-- Inputs ocultos -->
-    <input type="hidden" id="fecha_inicio" value="{{session('fecha_inicio')}}">
-    <input type="hidden" id="id_corte_detalles" value="">
-    <input type="hidden" id="id_produccion" value="{{route('produccion.datosDetalles')}}">
-    <input type="hidden" name="_token" id="token" value="{{csrf_token()}}">
-    <link rel="stylesheet" href="{{ asset('css/produccion/detallesV2.2.css')}}">
-    <!-- Contenido principal -->
-    <div class="container-xxl my-4">
-        <div class="row mb-4">
-            <div class="col-12 d-flex flex-wrap align-items-center justify-content-between">
-                <div>
-                    <a class="btn btn-outline-primary btn-lg shadow-sm me-2" href="javascript:history.go(-1)">
-                        <i class="fas fa-arrow-left"></i> Ir Atrás
-                    </a>
-                    <button type="button" class="btn btn-gradient-success btn-lg shadow-sm" id="exportar">
-                        <i class="fas fa-download"></i> Exportar
-                    </button>
-                </div>
-                <div class="d-none d-md-block">
-                </div>
+                <button type="button" class="tw-btn-secondary" @click="exportar()">
+                    <i class="fas fa-download"></i> Exportar
+                </button>
+            </div>
+
+            {{-- Los mismos colores del diseño anterior, ahora documentados. --}}
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-200/80 px-5 py-3
+                        dark:border-slate-700/60">
+                <span class="tw-eyebrow">Código de color</span>
+                @foreach ([
+                    ['dia',     'Día del corte'],
+                    ['resumen', 'Columnas de resumen'],
+                    ['total',   'Totales'],
+                    ['bueno',   'Festivo / promedio ≥ 8'],
+                    ['malo',    'Bajo lo esperado'],
+                    ['sabado',  'Sábado doble'],
+                ] as [$clave, $texto])
+                    <span class="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+                        <span class="h-3.5 w-3.5 shrink-0 rounded border border-black/10 leyenda-{{ $clave }}"></span>
+                        {{ $texto }}
+                    </span>
+                @endforeach
+            </div>
+
+            <div class="border-t border-slate-200/80 dark:border-slate-700/60">
+                <div id="detalles" class="ht-theme-main ht-compacta"></div>
+            </div>
+        </section>
+
+        @include('produccion.partials.detalles-modales')
+
+        {{-- Velo de carga --}}
+        <div x-show="cargando" x-cloak
+             class="fixed inset-0 z-[10050] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+            <div class="rounded-2xl bg-white px-8 py-6 text-center shadow-2xl dark:bg-slate-800">
+                <i class="fas fa-spinner fa-spin mb-3 block text-3xl text-brand-600 dark:text-brand-300"></i>
+                <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Cargando información…</p>
             </div>
         </div>
-
-        <div class="row justify-content-center">
-            <div class="col-12">
-                <div class="card shadow-lg border-0 rounded-4 bg-light h-100 custom-card-altura">
-                    <div class="card-header bg-primary text-white rounded-top-4">
-                        <h3 class="mb-0 fw-bold">
-                            <i class="fas fa-industry"></i> Detalles de Producción
-                        </h3>
-                    </div>
-
-                    <div class="overflow-auto"  id="detalles">
-                        <!-- Aquí se cargan los detalles dinámicamente -->
-                    </div>
-
-                </div>
-            </div>
-        </div>
     </div>
+@endsection
 
-
-   @include('produccion.modales.modales')
-@stop
-
-@section('css')
-    <link rel="stylesheet" href="{{asset('css/produccion/produccionV3.css')}}">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
-
-@stop
+@push('styles')
+    <style>
+        /* Muestras de la leyenda: mismos tonos que pinta el renderizador. */
+        .leyenda-dia     { background: rgb(215, 232, 255); }
+        .leyenda-resumen { background: rgb(253, 234, 185); }
+        .leyenda-total   { background: rgb(185, 196, 255); }
+        .leyenda-bueno   { background: rgb(147, 255, 134); }
+        .leyenda-malo    { background: rgb(255, 185, 185); }
+        .leyenda-sabado  { background: rgb(255, 240, 142); }
+        .dark .leyenda-dia     { background: #1e3a5f; }
+        .dark .leyenda-resumen { background: #4a3a1a; }
+        .dark .leyenda-total   { background: #2a3170; }
+        .dark .leyenda-bueno   { background: #1e4620; }
+        .dark .leyenda-malo    { background: #5c2020; }
+        .dark .leyenda-sabado  { background: #57431a; }
+    </style>
+@endpush
 
 @section('js')
-    <script src="{{asset('js/produccion/producciondetallesV10.2.js')}}?v={{ time()}}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/es.js"></script>
-    <script>
-        let permission = 0;
-    </script>
-    @haspermission('ver_residente')
-    <script>
-        permission = 1;
-    </script>
-    @endhaspermission
-    <script>
-        const urlMunicipios = "{{ route('municipios.json') }}";
-        const urlObtenerDetalles = "{{ route('obtener-url-detalles') }}";
-        const urlObtenerBitacoras = "{{ route('obtener-url-bitacoras') }}";
-        const urlActualizarDetallesDiario = "{{ route('produccion.ActualizarDetallesDiario', ['id' => ':id']) }}";
-        const urlDiseñoEspecial = "{{ route('produccion.diseñoEspecial', ['id' => ':id']) }}";
-        const urlDesasociar = "{{ route('produccion.eliminarDetallesDiario', ['id' => ':id']) }}";
-        const urlCrearSession = "{{ route('produccion.crearSession') }}";
-        const urlActualizarDetallesDia = "{{ route('produccion.detallesDiario',['fecha' => ':fecha', 'inspector' => ':inspector']) }}";
-        const urlInsertar = "{{ route('produccion.insertarContrato') }}"
-        const urlContarDobles = "{{ route('produccion.contarDobles') }}"
-        const urlNoContarDobles = "{{ route('produccion.guardarNoDobles') }}"
-        const urlGuardarNoDoblesFestivos = "{{ route('produccion.storeNotDoublesHolidays') }}"
-        const urlCountDoublesHolidays = "{{ route('produccion.countDoublesHolidays') }}"
-        const urlNoContarDoblesSabados = "{{ route('produccion.noContarDoblesSaturday') }}"
-
-        $(document).ready(function() {
-            function initializeSelect2() {
-                $('#municipio-select').select2({
-                    language: "es",
-                    ajax: {
-                        url: urlMunicipios,
-                        dataType: 'json',
-                        delay: 250,
-                        data: function(params) {
-                            return {
-                                term: params.term
-                            };
-                        },
-                        processResults: function(data) {
-                            return {
-                                results: $.map(data, function(item, key) {
-                                    return {
-                                        id: key,
-                                        text: item
-                                    };
-                                })
-                            };
-                        },
-                        cache: true
-                    },
-                    minimumInputLength: 2
-                });
-            }
-
-            $('#ventanaEmergente').on('shown.bs.modal', function() {
-                initializeSelect2();
-            });
-
-            $(window).on('resize', function() {
-                if ($('#municipio-select').hasClass("select2-hidden-accessible")) {
-                    $('#municipio-select').select2('destroy');
-                    initializeSelect2();
-                }
-            });
-        });
-    </script>
-@stop
+    @include('produccion.partials.detalles-script')
+@endsection

@@ -1,75 +1,77 @@
-@extends('adminlte::page')
+@extends('layouts.tw.app')
 
-@section('title', 'Contratos sin categoria')
-
+@section('title', 'Contratos sin categoría')
 @section('content_header')
-    <h1>Contratos sin categoria</h1>
-@stop
+    <h1>Contratos sin categoría</h1>
+@endsection
+@section('subtitle', 'Asigna la categoría a los contratos que no la tienen.')
+
+@include('layouts.tw.partials.handsontable')
 
 @section('content')
-    <style>
-        #message {
-            font-size: 1.15rem;
-            display: none;
-            transition: opacity .5s;
-            opacity: 0;
-        }
-
-        #message.show {
-            display: block !important;
-            opacity: 1;
-        }
-    </style>
+    {{-- categoria.js lee estos hooks: no cambiar ids ni el global `nuevoArray`. --}}
     <input type="hidden" id="url" value="{{ route('bitacoras.contratos_sin_categoria.StoreCategoria') }}">
     <input type="hidden" id="token" value="{{ csrf_token() }}">
-    <div class="container-fluid py-3">
-        <div class="row justify-content-center">
-            <div class="col-12 col-lg-10 col-xl-9 px-2">
-                <div class="card shadow rounded-4 border-0" style="min-width: 900px;">
-                    <div class="card-body p-4">
-                        <div class="alert alert-info text-center mb-3" id="message">
-                            <div class="d-flex flex-column align-items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" fill="#0dcaf0" class="mb-2" viewBox="0 0 16 16">
-                                    <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm0-1A7 7 0 1 1 8 1a7 7 0 0 1 0 14z"/>
-                                    <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 .877-.252 1.002-.797l.088-.416c.066-.3.126-.424.416-.471l.451-.083.082-.38-2.29-.287-.082-.38.45-.083a.513.513 0 0 0 .288-.469l.738-3.468c.194-.897-.105-1.319-.808-1.319-.545 0-.877.252-1.002.797l-.088.416c-.066.3-.126.424-.416.471z"/>
-                                    <circle cx="8" cy="4.5" r="1"/>
-                                </svg>
-                                <span>Nada que mostrar, todos los contratos tienen categoría.</span>
-                            </div>
-                        </div>
-                        <div id="table"></div>
-                    </div>
+
+    <section class="tw-card">
+        <div class="tw-card-header">
+            <div class="flex items-center gap-3">
+                <span class="tw-chip chip-amber"><i class="fas fa-tags"></i></span>
+                <div>
+                    <h2 class="tw-card-title">Contratos pendientes</h2>
+                    <p class="tw-card-subtitle">
+                        {{ $contratos_sin_categoria->count() }}
+                        {{ $contratos_sin_categoria->count() === 1 ? 'contrato' : 'contratos' }} sin categoría
+                    </p>
                 </div>
             </div>
         </div>
-    </div>
 
+        <div class="tw-card-body">
+            {{-- categoria.js sólo hace classList.add('show'); se conserva ese
+                 contrato con CSS por id en vez de la clase `hidden` de Tailwind. --}}
+            <style>
+                #message { display: none; opacity: 0; transition: opacity .5s; }
+                #message.show { display: block; opacity: 1; }
+            </style>
+            <div id="message" class="mb-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-6 text-center
+                                     dark:border-sky-800 dark:bg-sky-950/40">
+                <i class="fas fa-circle-info mb-2 block text-2xl text-sky-500"></i>
+                <span class="text-sm text-sky-800 dark:text-sky-200">
+                    Nada que mostrar, todos los contratos tienen categoría.
+                </span>
+            </div>
 
-    <script src="{{ asset('js/bitacora/categoria.js') }}"></script>
-        <script>
+            <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div id="table" class="ht-theme-main"></div>
+            </div>
 
-            let registros = {!! $contratos_sin_categoria->toJson() !!};
-            console.log(registros);
-
-            let nuevoArray = registros.map(registro => ({
-                id: registro.id,
-                CC_OPERARIO: registro.CC_OPERARIO,
-                MUNICIPIO: registro.MUNICIPIO,
-                FECHA: registro.FECHA,
-                No_ACTA: registro.No_ACTA,
-                TIPO_TRABAJO: registro.TIPO_TRABAJO,
-                CONTRATO: registro.CONTRATO,
-                ORDEN_TRABAJO: registro.ORDEN_TRABAJO,
-                ORDEN_EXT: registro.ORDEN_EXT,
-                CATEGORIA: registro.CATEGORIA,
-                RESULTADO_CIERRE: registro.RESULTADO_CIERRE,
-                /* HORA_INICIO: registro.HORA_INICIO,
-                 HORA_FINAL: registro.HORA_FINAL,*/
-            }));
-
-        </script>
+            <p class="tw-hint">
+                <i class="fas fa-circle-info"></i>
+                Edita la columna <strong>CATEGORÍA</strong>; los cambios se guardan automáticamente.
+            </p>
+        </div>
+    </section>
 @endsection
 
+@section('js')
+    <script>
+        /* categoria.js espera este global antes de arrancar. */
+        let registros = @json($contratos_sin_categoria);
 
-
-
+        let nuevoArray = registros.map(registro => ({
+            id: registro.id,
+            CC_OPERARIO: registro.CC_OPERARIO,
+            MUNICIPIO: registro.MUNICIPIO,
+            FECHA: registro.FECHA,
+            No_ACTA: registro.No_ACTA,
+            TIPO_TRABAJO: registro.TIPO_TRABAJO,
+            CONTRATO: registro.CONTRATO,
+            ORDEN_TRABAJO: registro.ORDEN_TRABAJO,
+            ORDEN_EXT: registro.ORDEN_EXT,
+            CATEGORIA: registro.CATEGORIA,
+            RESULTADO_CIERRE: registro.RESULTADO_CIERRE,
+        }));
+    </script>
+    <script src="{{ asset('js/bitacora/categoria.js') }}?v={{ filemtime(public_path('js/bitacora/categoria.js')) }}"></script>
+@endsection

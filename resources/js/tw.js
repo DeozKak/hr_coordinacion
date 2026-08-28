@@ -2,7 +2,7 @@ import Alpine from 'alpinejs';
 import persist from '@alpinejs/persist';
 import collapse from '@alpinejs/collapse';
 import focus from '@alpinejs/focus';
-import Swal from 'sweetalert2';
+import registrarAlertas from './alerts';
 
 Alpine.plugin(persist);
 Alpine.plugin(collapse);
@@ -33,8 +33,26 @@ window.api = async function (url, { method = 'GET', body = null, headers = {} } 
     return data;
 };
 
-/* Sweetalert2 ya se usa en 14 vistas: lo dejamos global para no reescribirlas. */
-window.Swal = Swal;
+/* Bloqueo de scroll compartido entre ventanas superpuestas.
+   `x-trap.noscroll` guarda y restaura el overflow del body por su cuenta: con
+   dos ventanas encima (un modal y una alerta), la segunda guardaba el 'hidden'
+   que había dejado la primera y al cerrarse lo restauraba, dejando la página
+   sin scroll para siempre. Con un contador solo se libera al cerrar la última. */
+Alpine.store('scroll', {
+    abiertos: 0,
+    previo: '',
+    bloquear() {
+        if (this.abiertos === 0) {
+            this.previo = document.body.style.overflow;
+            document.body.style.overflow = 'hidden';
+        }
+        this.abiertos++;
+    },
+    liberar() {
+        this.abiertos = Math.max(0, this.abiertos - 1);
+        if (this.abiertos === 0) document.body.style.overflow = this.previo;
+    },
+});
 
 /* Store global de UI (sidebar + tema), persistido en localStorage. */
 Alpine.store('ui', {
@@ -46,8 +64,12 @@ Alpine.store('ui', {
        esté contraído: de ahí que las etiquetas miren `expanded`. */
     get expanded() { return this.sidebarOpen || this.mobileOpen; },
 
-    toggleSidebar() { this.sidebarOpen = !this.sidebarOpen; },
-    toggleMobile() { this.mobileOpen = !this.mobileOpen; },
+    /* Handsontable observa el tamaño de su contenedor y se redibuja en cada
+       fotograma mientras el menú anima su ancho, lo que hace tartamudear la
+       animación. Se avisa para poder congelar el redibujado durante ese rato. */
+    animando() { window.dispatchEvent(new CustomEvent('ui-animando')); },
+    toggleSidebar() { this.animando(); this.sidebarOpen = !this.sidebarOpen; },
+    toggleMobile() { this.animando(); this.mobileOpen = !this.mobileOpen; },
     toggleDark() {
         this.dark = !this.dark;
         document.documentElement.classList.toggle('dark', this.dark);
@@ -63,6 +85,9 @@ Alpine.data('flash', (message = '', type = 'success') => ({
         if (this.show) setTimeout(() => (this.show = false), 5000);
     },
 }));
+
+/* Define window.Swal con la API de SweetAlert sobre nuestro sistema. */
+registrarAlertas(Alpine);
 
 window.Alpine = Alpine;
 Alpine.start();

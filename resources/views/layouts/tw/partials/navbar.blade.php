@@ -19,6 +19,10 @@
         @yield('toolbar')
     @endif
 
+    @auth
+        @include('layouts.tw.partials.notifications')
+    @endauth
+
     <button type="button" @click="$store.ui.toggleDark()"
             class="tw-btn-ghost h-10 w-10 p-0" aria-label="Cambiar tema">
         <i class="fas" :class="$store.ui.dark ? 'fa-sun' : 'fa-moon'"></i>
@@ -67,6 +71,10 @@
                        class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700">
                         <i class="fas fa-key w-4 text-slate-400"></i> Cambiar contraseña
                     </a>
+                    <button type="button" @click="open = false; $dispatch('abrir-config')"
+                            class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700">
+                        <i class="fas fa-gear w-4 text-slate-400"></i> Configuración
+                    </button>
                 </div>
 
                 <form method="POST" action="{{ route('logout') }}" class="border-t border-slate-100 py-1 dark:border-slate-700">

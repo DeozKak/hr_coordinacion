@@ -784,23 +784,31 @@ return [
             ],
         ]
     ],
+    // Handsontable 18: desde la v15 el CSS vive en styles/ y se divide en
+    // base + tema. Mantener esta versión igual que la de
+    // resources/views/layouts/tw/partials/handsontable.blade.php
     'Handsontable' => [
         'active' => true,
         'files' => [
             [
                 'type' => 'js',
                 'asset' => true,
-                'location' => '//cdn.jsdelivr.net/npm/handsontable@16.0/dist/handsontable.full.min.js',
+                'location' => '//cdn.jsdelivr.net/npm/handsontable@18.0.0/dist/handsontable.full.min.js',
             ],
             [
                 'type' => 'js',
                 'asset' => true,
-                'location' => '//cdn.jsdelivr.net/npm/handsontable/dist/languages/es-MX.js',
+                'location' => '//cdn.jsdelivr.net/npm/handsontable@18.0.0/dist/languages/es-MX.min.js',
             ],
             [
                 'type' => 'css',
                 'asset' => true,
-                'location' => '//cdn.jsdelivr.net/npm/handsontable@16.0/dist/handsontable.full.min.css',
+                'location' => '//cdn.jsdelivr.net/npm/handsontable@18.0.0/styles/handsontable.min.css',
+            ],
+            [
+                'type' => 'css',
+                'asset' => true,
+                'location' => '//cdn.jsdelivr.net/npm/handsontable@18.0.0/styles/ht-theme-main.min.css',
             ],
         ],
     ],

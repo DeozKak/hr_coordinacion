@@ -74,6 +74,17 @@
     </div>
 </div>
 
+{{-- Fuera del <header> sticky: ese crea contexto de apilamiento y recortaría el modal. --}}
+@auth
+    @include('layouts.tw.partials.config-modal')
+@endauth
+
+@include('layouts.tw.partials.alerts')
+
+{{-- Librerías de terceros: se apilan aquí para que estén disponibles
+     antes del @yield('js') de cada vista. --}}
+@stack('libs')
+
 @yield('js')
 @stack('scripts')
 </body>

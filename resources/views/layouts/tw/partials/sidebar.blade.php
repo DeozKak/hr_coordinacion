@@ -2,7 +2,10 @@
        {{-- lg:sticky + h-screen: en escritorio acompaña el scroll de la página.
             Con lg:static se iba hacia arriba al desplazarse. --}}
        class="fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col border-r border-slate-200/80 bg-white
-              transition-[width,transform] duration-200
+              {{-- 300ms con la curva estándar de Material: arranca rápido y
+                   frena al final. Con 200ms lineales el plegado se sentía seco. --}}
+              transition-[width,transform] duration-300 ease-[cubic-bezier(.4,0,.2,1)]
+              motion-reduce:transition-none
               lg:sticky lg:inset-y-auto lg:top-0 lg:h-screen lg:translate-x-0
               dark:border-slate-700/60 dark:bg-slate-800"
        :class="[
@@ -14,12 +17,16 @@
     {{-- Marca --}}
     <a href="{{ url(config('adminlte.dashboard_url', 'home')) }}"
        class="flex h-16 shrink-0 items-center gap-3 px-4"
-       :class="!$store.ui.expanded && 'lg:justify-center lg:px-0'">
+       :class="!$store.ui.expanded && 'lg:justify-center lg:gap-0 lg:px-0'">
         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-700">
             <img src="{{ asset(config('adminlte.logo_img')) }}"
                  alt="{{ config('adminlte.logo_img_alt', '') }}" class="h-6 w-6 object-contain">
         </span>
-        <span class="min-w-0 leading-tight" x-show="$store.ui.expanded" x-transition.opacity>
+        {{-- Se anima opacidad + ancho en vez de usar x-show: `display:none`
+             desaparece de golpe y hace saltar la fila. --}}
+        <span class="min-w-0 overflow-hidden leading-tight transition-[opacity,max-width]
+                     duration-300 ease-[cubic-bezier(.4,0,.2,1)] motion-reduce:transition-none"
+              :class="$store.ui.expanded ? 'max-w-[12rem] opacity-100' : 'max-w-0 opacity-0'">
             <span class="block truncate text-[16px] font-bold tracking-tight text-slate-900 dark:text-white">
                 E&amp;C Ingeniería
             </span>

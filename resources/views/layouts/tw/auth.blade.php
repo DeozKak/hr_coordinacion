@@ -131,6 +131,8 @@
     </div>
 </div>
 
+@include('layouts.tw.partials.alerts')
+
 @yield('js')
 @stack('scripts')
 </body>
