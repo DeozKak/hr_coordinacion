@@ -12,7 +12,7 @@ class UserController extends Controller
 {
     public function index(User $user)
     {
-        $users = User::all();
+        $users = User::with('roles', 'permissions')->get();
         $userlogin = auth()->user();
         $roles = Role::all();
         $currentRole = $userlogin->roles->first();
@@ -189,17 +189,6 @@ class UserController extends Controller
         $currentRole = $user->roles->first();
 
         return view('users.show', compact('userlogin','user', 'currentRole'));
-    }
-
-    public function editProfile(){
-        $userlogin = auth()->user();
-        $user = auth()->user();
-        $roles = Role::all();
-        $currentRole = $user->roles->first();
-        $permissions = Permission::all();
-        $userPermissions = $user->permissions;
-        $availablePermissions = $permissions->diff($userPermissions);
-        return view('users.edit', compact('userlogin','user', 'roles', 'permissions', 'userPermissions', 'availablePermissions', 'currentRole'));
     }
 
     public function updateProfile(Request $request, User $user)

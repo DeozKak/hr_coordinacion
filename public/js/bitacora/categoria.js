@@ -54,6 +54,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     })
+
+    // Entra en el congelado global durante las animaciones del menú lateral.
+    window.registrarHot?.(hot);
 });
 
 function EnviarCambios(id, categoria, row){

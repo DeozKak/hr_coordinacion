@@ -12,7 +12,6 @@ Route::middleware('web')->group(function () {
 
     Route::middleware('auth')->group(function () {
         Route::get('/profile', [UserController::class, 'showProfile'])->name('profile.show');
-        Route::get('/profile/edit', [UserController::class, 'editProfile'])->name('profile.edit');
         Route::put('/profile/{user}', [UserController::class, 'updateProfile'])->name('update');
         Route::get('changePassword/{user}', [UserController::class, 'changePassword'])->name('changePassword');
         Route::put('uptadePassword/{user}', [UserController::class, 'updatePassword'])->name('updatePassword');

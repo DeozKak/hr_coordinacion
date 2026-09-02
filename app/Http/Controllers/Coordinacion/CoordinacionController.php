@@ -2243,7 +2243,7 @@ class CoordinacionController extends Controller
             $drawing1 = new Drawing();
             $drawing1->setName('Logo');
             $drawing1->setDescription('Logo de la asignación');
-            $drawing1->setPath('vendor/adminlte/dist/img/logo_EYC.png'); // Ruta de la primera imagen
+            $drawing1->setPath('img/logo-ec-isotipo.png'); // Ruta de la primera imagen
             $drawing1->setCoordinates('A1'); // Posiciona la imagen en A1
             $drawing1->setOffsetX(10); // Ajusta el desplazamiento horizontal
             $drawing1->setOffsetY(10); // Ajusta el desplazamiento vertical
@@ -2255,7 +2255,7 @@ class CoordinacionController extends Controller
             $drawing2 = new Drawing();
             $drawing2->setName('Logo adicional');
             $drawing2->setDescription('Logo adicional logo gdo');
-            $drawing2->setPath('vendor/adminlte/dist/img/gdo.png'); // Ruta de la segunda imagen
+            $drawing2->setPath('img/gdo.png'); // Ruta de la segunda imagen
             $drawing2->setCoordinates('O1'); // Mismo A1
             $drawing2->setOffsetX(10); // Desplazamiento horizontal mayor para colocarla al final
             $drawing2->setOffsetY(10); // Mantén el desplazamiento vertical similar al primero
@@ -2960,7 +2960,7 @@ class CoordinacionController extends Controller
             $drawing1 = new Drawing();
             $drawing1->setName('Logo');
             $drawing1->setDescription('Logo de la asignación');
-            $drawing1->setPath('vendor/adminlte/dist/img/logo_EYC.png'); // Ruta de la primera imagen
+            $drawing1->setPath('img/logo-ec-isotipo.png'); // Ruta de la primera imagen
             $drawing1->setCoordinates('A1'); // Posiciona la imagen en A1
             $drawing1->setOffsetX(10); // Ajusta el desplazamiento horizontal
             $drawing1->setOffsetY(10); // Ajusta el desplazamiento vertical
@@ -2972,7 +2972,7 @@ class CoordinacionController extends Controller
             $drawing2 = new Drawing();
             $drawing2->setName('Logo adicional');
             $drawing2->setDescription('Logo adicional logo gdo');
-            $drawing2->setPath('vendor/adminlte/dist/img/gdo.png'); // Ruta de la segunda imagen
+            $drawing2->setPath('img/gdo.png'); // Ruta de la segunda imagen
             $drawing2->setCoordinates('O1'); // Mismo A1
             $drawing2->setOffsetX(10); // Desplazamiento horizontal mayor para colocarla al final
             $drawing2->setOffsetY(10); // Mantén el desplazamiento vertical similar al primero
@@ -3255,7 +3255,7 @@ class CoordinacionController extends Controller
                             $drawing1 = new Drawing();
                             $drawing1->setName('Logo');
                             $drawing1->setDescription('Logo de la asignación');
-                            $drawing1->setPath('vendor/adminlte/dist/img/logo_EYC.png'); // Ruta de la primera imagen
+                            $drawing1->setPath('img/logo-ec-isotipo.png'); // Ruta de la primera imagen
                             $drawing1->setCoordinates('A1'); // Posiciona la imagen en A1
                             $drawing1->setOffsetX(10); // Ajusta el desplazamiento horizontal
                             $drawing1->setOffsetY(10); // Ajusta el desplazamiento vertical
@@ -3267,7 +3267,7 @@ class CoordinacionController extends Controller
                             $drawing2 = new Drawing();
                             $drawing2->setName('Logo adicional');
                             $drawing2->setDescription('Logo adicional logo gdo');
-                            $drawing2->setPath('vendor/adminlte/dist/img/gdo.png'); // Ruta de la segunda imagen
+                            $drawing2->setPath('img/gdo.png'); // Ruta de la segunda imagen
                             $drawing2->setCoordinates('O1'); // Mismo A1
                             $drawing2->setOffsetX(10); // Desplazamiento horizontal mayor para colocarla al final
                             $drawing2->setOffsetY(10); // Mantén el desplazamiento vertical similar al primero
@@ -3629,7 +3629,7 @@ class CoordinacionController extends Controller
                         $drawing1 = new Drawing();
                         $drawing1->setName('Logo');
                         $drawing1->setDescription('Logo de la asignación');
-                        $drawing1->setPath('vendor/adminlte/dist/img/logo_EYC.png'); // Ruta de la primera imagen
+                        $drawing1->setPath('img/logo-ec-isotipo.png'); // Ruta de la primera imagen
                         $drawing1->setCoordinates('A1'); // Posiciona la imagen en A1
                         $drawing1->setOffsetX(10); // Ajusta el desplazamiento horizontal
                         $drawing1->setOffsetY(10); // Ajusta el desplazamiento vertical
@@ -3641,7 +3641,7 @@ class CoordinacionController extends Controller
                         $drawing2 = new Drawing();
                         $drawing2->setName('Logo adicional');
                         $drawing2->setDescription('Logo adicional logo gdo');
-                        $drawing2->setPath('vendor/adminlte/dist/img/gdo.png'); // Ruta de la segunda imagen
+                        $drawing2->setPath('img/gdo.png'); // Ruta de la segunda imagen
                         $drawing2->setCoordinates('O1'); // Mismo A1
                         $drawing2->setOffsetX(10); // Desplazamiento horizontal mayor para colocarla al final
                         $drawing2->setOffsetY(10); // Mantén el desplazamiento vertical similar al primero

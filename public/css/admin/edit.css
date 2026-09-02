@@ -1,9 +1,0 @@
-.button-container {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-}
-
-.button-container button {
-    margin: 0 10px;
-}

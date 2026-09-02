@@ -21,15 +21,7 @@ class NotificationsController extends Controller
 
     public function getNotificationsData()
     {
-        // Obtener todas las notificaciones no leídas de tipo Mod_Devolucion para el usuario autenticado
-        $notifications = auth()->user()->unreadNotifications()
-            ->where(function ($query) {
-                $query->where('type', Mod_Devolucion::class)
-                ->orWhere('type', Bitacora::class)
-                ->orWhere('type', Programada::class)
-                ->orWhere('type', Produccion::class);
-            })
-            ->get();
+        $notifications = $this->consultaNoLeidas()->get();
 
         // Crear contenido para el dropdown
         $dropdownHtml = '<div style="max-height: 400px; overflow-y: auto;">';
@@ -57,6 +49,49 @@ class NotificationsController extends Controller
             'icon_color' => 'dark',
             'dropdown' => $dropdownHtml,
         ];
+    }
+
+    /**
+     * Notificaciones no leídas de los tipos que se muestran en la campana.
+     * Compartida por el endpoint HTML (AdminLTE) y el JSON (layout Tailwind).
+     */
+    private function consultaNoLeidas()
+    {
+        return auth()->user()->unreadNotifications()
+            ->where(function ($query) {
+                $query->where('type', Mod_Devolucion::class)
+                    ->orWhere('type', Bitacora::class)
+                    ->orWhere('type', Programada::class)
+                    ->orWhere('type', Produccion::class);
+            });
+    }
+
+    /**
+     * Misma información que getNotificationsData(), pero como datos en vez de
+     * HTML, para que la vista decida cómo pintarla.
+     */
+    public function getNotificationsJson()
+    {
+        $total = $this->consultaNoLeidas()->count();
+
+        // El desplegable sólo muestra las más recientes; el total va en la insignia.
+        $items = $this->consultaNoLeidas()
+            ->latest()
+            ->limit(20)
+            ->get()
+            ->map(fn ($n) => [
+                'id'    => $n->id,
+                'icon'  => $n->data['icon'] ?? 'fas fa-bell',
+                'text'  => $n->data['text'] ?? '',
+                'user'  => $n->data['user'] ?? '',
+                'link'  => $n->data['link'] ?? null,
+                'time'  => $n->created_at->diffForHumans(),
+            ]);
+
+        return response()->json([
+            'total' => $total,
+            'items' => $items,
+        ]);
     }
 
     public function markAsRead(Request $request)

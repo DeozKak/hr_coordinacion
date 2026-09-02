@@ -83,70 +83,46 @@ class UserActivityController extends Controller
             $query->where('user_id', $request->user_id_audit);
         }
 
-        $audits = $query->orderBy('created_at', 'desc')->get();
+        /* Tope de seguridad: la tabla de auditoría tiene cientos de miles de
+           filas y un filtro amplio (solo el evento, por ejemplo) agotaba la
+           memoria de PHP antes de responder. Se devuelven las más recientes y
+           se avisa a la vista de que hay más. */
+        $limite = 500;
+        $total = (clone $query)->count();
+        $audits = $query->orderBy('created_at', 'desc')->limit($limite)->get();
 
         // Transformar los datos para que DataTables los pueda consumir fácilmente
         // y para pre-procesar los snippets y JSON para el modal
+        /* Se devuelven los valores en crudo y la vista los pinta.
+           Antes se mandaba HTML ya montado (el badge del evento y las celdas
+           con su enlace de "ver más"), lo que ataba el controlador al diseño y
+           obligaba a inyectar ese HTML en la página. */
         $dataForTable = $audits->map(function ($audit) {
-            $oldValuesData = $this->prepareValuesForModal($audit->old_values);
-            $newValuesData = $this->prepareValuesForModal($audit->new_values);
-
             return [
                 'id' => $audit->id,
                 'user_name' => $audit->user->name ?? ($audit->user_id ?? 'Sistema/Desconocido'),
-                'event_display' => '<span class="badge bg-info text-dark">' . ucfirst($audit->event) . '</span>', // HTML para el badge
-                'event_raw' => $audit->event, // Para filtrado/orden si es necesario
+                'event' => $audit->event,
                 'auditable_model' => $audit->auditable_type ? Str::afterLast($audit->auditable_type, '\\') : 'N/A',
                 'auditable_id' => $audit->auditable_id ?? 'N/A',
-                'old_values_html' => $this->renderValuesCell($oldValuesData, "Valores Antiguos (Audit ID: {$audit->id})"),
-                'new_values_html' => $this->renderValuesCell($newValuesData, "Valores Nuevos (Audit ID: {$audit->id})"),
+                'old_values' => $audit->old_values ?: null,
+                'new_values' => $audit->new_values ?: null,
                 'url' => $audit->url ?? 'N/A',
                 'ip_address' => $audit->ip_address ?? 'N/A',
                 'created_at_formatted' => $audit->created_at->format('d/m/Y H:i:s'),
-                // Pasamos el JSON completo por si el render no es suficiente y el JS del modal lo necesita de otra forma
-                // Sin embargo, la idea es que data-json-content ya esté en el HTML generado por renderValuesCell
             ];
         });
 
-        return response()->json(['data' => $dataForTable]);
+        return response()->json([
+            'data' => $dataForTable,
+            'total' => $total,
+            'truncado' => $total > $limite,
+            'limite' => $limite,
+        ]);
     }
 
     // Método helper para preparar old/new values (puedes ajustarlo)
-    private function prepareValuesForModal($values)
-    {
-        if (empty($values)) {
-            return ['snippet' => 'N/A', 'full' => null, 'original_text' => '', 'is_json_like' => false];
-        }
-        $collection = collect($values); // $values ya es un array/objeto desde el JSON de la BD
-        $fullValue = $collection->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        $textForSnippet = preg_replace('/\s+/', ' ', $collection->toJson());
-        $snippet = Str::limit($textForSnippet, 70);
-        return [
-            'snippet' => $snippet,
-            'full' => $fullValue,
-            'original_text' => $textForSnippet,
-            'is_json_like' => true // Asumimos que si no está vacío, es una estructura para el modal
-        ];
-    }
 
     // Método helper para renderizar el contenido de la celda de valores
-    private function renderValuesCell($data, $jsonKey)
-    {
-        if ($data['snippet'] === 'N/A') {
-            return 'N/A';
-        }
-        $html = '<div class="snippet-text-container">';
-        $html .= '<span class="snippet-text" title="' . htmlspecialchars($data['original_text']) . '">' . htmlspecialchars($data['snippet']) . '</span>';
-        $html .= '</div>';
-        if ($data['full'] && (strlen($data['original_text']) > strlen(str_replace('...', '', $data['snippet'])) || $data['is_json_like'])) {
-            $html .= '<a href="#" class="view-full-json small"
-                         data-json-key="' . htmlspecialchars($jsonKey) . '"
-                         data-json-content="' . htmlspecialchars($data['full']) . '">
-                         (ver más)
-                      </a>';
-        }
-        return $html;
-    }
 
 
     /**

@@ -1,88 +1,51 @@
-@extends('adminlte::auth.login')
+@extends('layouts.tw.auth')
 
-
+@section('auth_header', 'Inicia sesión')
+@section('auth_intro', 'Ingresa tus credenciales para acceder al panel.')
 
 @section('auth_body')
-<link rel="stylesheet" href="{{asset('css/adminlte/adminlte.css')}}">
+    <form action="{{ route('login') }}" method="post" autocomplete="off">
+        @csrf
 
+        <x-auth-input name="email" type="email" label="Correo electrónico"
+                      placeholder="nombre@eyc.com.co" icon="fas fa-envelope" autofocus />
 
+        <x-auth-input name="password" label="Contraseña"
+                      placeholder="••••••••" icon="fas fa-lock" toggle />
 
-<form action="{{route('login')}}" method="post" autocomplete="off">
-    @csrf
+        <div class="mb-6 flex items-center justify-between gap-3">
+            <label class="flex cursor-pointer items-center gap-2 text-sm text-slate-600"
+                   title="Mantenerme autenticado hasta cerrar la sesión manualmente">
+                <input type="checkbox" name="remember" id="remember"
+                       class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+                Recordarme
+            </label>
 
-    <div class="input-group mb-3">
-        <input type="email" name="email" class="form-control " value="" placeholder="Email" autofocus="">
-
-        <div class="input-group-append">
-            <div class="input-group-text">
-                <span class="fas fa-envelope "></span>
-            </div>
+            <a href="{{ route('password.request') }}" class="text-sm font-medium text-brand-600 hover:text-brand-700 hover:underline">
+                ¿Olvidaste tu contraseña?
+            </a>
         </div>
 
-    </div>
+        <button type="submit" class="tw-btn-primary w-full py-3 text-[15px]">
+            Acceder <i class="fas fa-arrow-right text-xs"></i>
+        </button>
+    </form>
+@endsection
 
-
-    <div class="input-group mb-3">
-        <input type="password" name="password" class="form-control " placeholder="Contraseña">
-
-        <div class="input-group-append">
-            <div class="input-group-text">
-                <span class="fas fa-lock "></span>
-            </div>
-        </div>
-
-    </div>
-
-
-    <div class="row">
-        <div class="col-7">
-            <div class="icheck-primary" title="Mantenerme autenticado indefinidamente o hasta cerrar la sesión manualmente">
-                <input type="checkbox" name="remember" id="remember">
-
-                <label for="remember">
-                    Recordarme
-                </label>
-            </div>
-        </div>
-
-        <div class="col-5">
-            <button type="submit" class="btn btn-block btn-flat btn-primary">
-                <span class="fas fa-sign-in-alt"></span>
-                Acceder
-            </button>
-        </div>
-    </div>
-
-</form>
-
-
-
-
-
+@section('auth_footer')
+    ¿Problemas para ingresar? Contacta al administrador del sistema.
+@endsection
 
 @section('js')
-@if (session('error'))
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        Swal.fire({
-            title: "",
-            text: "{{session('error')}}",
-            icon: "warning"
-        });
-    });
-</script>
-@endif
-
-@if (session('success'))
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        Swal.fire({
-            title: "¡Listo!",
-            text: "{{session('success')}}",
-            type: "success"
-        });
-    });
-</script>
-@endif
-@endsection
+    @if (session('error') || session('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                Swal.fire(@js([
+                    'title' => session('error') ? '' : '¡Listo!',
+                    'text'  => session('error') ?: session('success'),
+                    'icon'  => session('error') ? 'warning' : 'success',
+                ]));
+            });
+        </script>
+    @endif
 @endsection

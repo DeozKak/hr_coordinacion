@@ -47,7 +47,7 @@
         <th>Observacion</th>
         <th>Quien programo</th>
         <th>Tecnico</th>
-        <th>Jornada</th>
+        <!--  <th>Jornada</th>-->
         <!-- ... -->
     </tr>
     </thead>
@@ -70,7 +70,7 @@
             <td>{{ $registro[14] }}</td>
             <td>{{ $registro[15] }}</td>
             <td>{{ $registro[16] }}</td>
-            <td>{{ $registro[17] }}</td>
+             <td>{{ $registro[17] }}</td>
 
             <!-- ... -->
         </tr>

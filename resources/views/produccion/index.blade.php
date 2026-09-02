@@ -1,210 +1,194 @@
-@extends('adminlte::page')
+@extends('layouts.tw.app')
 
 @section('title', 'Producción')
 
 @section('content_header')
-    <h1>Producción Corte: {{$corte?->nombre}}</h1>
+    <h1>Producción</h1>
 @endsection
 
+@section('subtitle', $corte?->nombre ? 'Corte: '.$corte->nombre : 'Sin corte activo')
+
+@section('actions')
+    <button type="button" class="tw-btn-secondary" onclick="history.back()">
+        <i class="fas fa-arrow-left"></i> Ir atrás
+    </button>
+@endsection
+
+@php
+    /* Opciones de corte: las mismas que armaba el Blade anterior (todos menos el actual,
+       con los años de inicio y fin). */
+    $opcionesCortes = collect($cortes)
+        ->filter(fn ($c) => $corte !== null && $c->id !== $corte->id)
+        ->map(fn ($c) => [
+            'value' => (string) $c->id,
+            'label' => 'Corte: '.$c->nombre.' - '.explode('-', $c->fecha_inicio)[0]
+                       .' - '.explode('-', $c->fecha_fin)[0],
+        ])->values();
+
+    $opcionesInspectores = collect($inspectores ?? [])
+        ->filter(fn ($i) => $i->state == 1)
+        ->map(fn ($i) => [
+            'value' => (string) $i->cedula,
+            'label' => trim($i->apellidos.' '.$i->nombres),
+        ])->values();
+@endphp
+
 @section('content')
-    <link rel="stylesheet" href="{{ asset('css/produccion/indexV1.1.css')}}">
-    {{-- <script src="{{asset('js/produccionIndex.js')}}"></script> --}}
-    <div class="shadow-container">
-        <a class="btn-back" href="javascript:history.go(-1)">
-            <i class="fas fa-arrow-left"></i> Ir Atrás
-        </a>
+    <div x-data="verProduccion({
+            corteId: {{ $corte?->id ?? 'null' }},
+            meta: {{ Js::from($corte->meta ?? 0) }},
+            inspectores: {{ Js::from($produccionInspector ?? []) }},
+            urls: {
+                corteData:  '{{ route('produccion.getCorteData') }}',
+                totalData:  '{{ route('produccion.getCorteTotalData') }}',
+            },
+         })"
+         class="space-y-6">
 
-        <ul class="nav nav-tabs" id="comparisonTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <a class="nav-link active" id="graficoPrincipal-tab" data-toggle="tab" href="#graficoPrincipal"
-                   role="tab">Gráfico Principal</a>
-            </li>
-            <li class="nav-item" role="presentation">
-                <a class="nav-link" id="comparacion-tab" data-toggle="tab" href="#comparacion" role="tab">Comparación
-                    de Cortes</a>
-            </li>
-        </ul>
+        {{-- ============================== PESTAÑAS ============================= --}}
+        <nav class="flex gap-1 border-b border-slate-200 dark:border-slate-700" role="tablist">
+            @foreach ([
+                'principal'   => ['Gráfico principal', 'fa-chart-column'],
+                'comparacion' => ['Comparación de cortes', 'fa-chart-pie'],
+            ] as $clave => [$texto, $icono])
+                <button type="button" role="tab" @click="cambiarTab('{{ $clave }}')"
+                        class="-mb-px inline-flex items-center gap-2 border-b-[3px] px-4 py-2.5 text-sm font-semibold transition"
+                        :class="tab === '{{ $clave }}'
+                            ? 'border-brand-600 text-brand-700 dark:border-brand-400 dark:text-brand-300'
+                            : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700
+                               dark:text-slate-400 dark:hover:text-slate-200'">
+                    <i class="fas {{ $icono }}"></i> {{ $texto }}
+                </button>
+            @endforeach
+        </nav>
 
-        <!-- Contenido de las Tabs -->
-        <div class="tab-content mt-4">
-            <!-- Tab: Gráfico Principal -->
-            <div class="tab-pane fade show active" id="graficoPrincipal" role="tabpanel"
-                 aria-labelledby="graficoPrincipal-tab">
-                <x-adminlte-card title="Total Inspecciones por Operario" theme="light" icon="fas fa-chart-bar"
-                                 header-class="text-uppercase" class="dashboard-card">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="filter-group">
-                                <!-- Selector de comparación de cortes -->
-                                <select id="cortesComparisonSelectStackedbar" class="form-select" multiple
-                                        style="display:none;">
-                                    <option value="">Seleccione un corte a comparar</option>
-                                    @foreach ($cortes as $opcionCorte)
-                                        @if($corte === null)
-                                            @continue
-                                        @endif
-                                        @if ($opcionCorte->id !== $corte->id)
-                                                <?php
-                                                $añoInicio = explode('-', $opcionCorte->fecha_inicio)[0];
-                                                $añoFin = explode('-', $opcionCorte->fecha_fin)[0];
-                                                ?>
-                                            <option value="{{ $opcionCorte->id }}">Corte: {{ $opcionCorte->nombre }}
-                                                - {{$añoInicio}} - {{$añoFin}}</option>
-                                        @endif
-                                    @endforeach
-                                </select>
-                                <div class="button-actions-row">
-
-                                    <button class="btn-base btn-animated-gradient btn-primary-animated" id="btnComparar">
-                                        <i class="fas fa-chart-pie"></i>
-                                        <span>Comparar</span>
-                                    </button>
-
-
-                                    <button class="btn-base btn-animated-gradient btn-secondary-animated" id="btnRestaurar">
-                                        <i class="fas fa-sync-alt"></i>
-                                        <span>Restaurar Gráfica Principal</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        @isset($inspectores)
-                        <div class="col-md-6">
-                            <!-- Selector de inspectores -->
-                            <select class="form-select" id="inspectorSelectStackedbar">
-                                <option value="">Todos los inspectores</option>
-
-                                @foreach ($inspectores as $inspector)
-                                    @if ($inspector->state == 1)
-                                        <option
-                                            value="{{ $inspector->cedula }}">{{ $inspector->apellidos.' '.$inspector->nombres }}</option>
-                                    @endif
-                                @endforeach
-
-                            </select>
-                        </div>
-                        @endisset
+        {{-- ========================= TAB: GRÁFICO PRINCIPAL ==================== --}}
+        <section class="tw-card" x-show="tab === 'principal'">
+            <div class="tw-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-blue"><i class="fas fa-chart-column"></i></span>
+                    <div>
+                        <h2 class="tw-card-title" x-text="titulo"></h2>
+                        <p class="tw-card-subtitle">
+                            <span x-text="inspectoresVisibles"></span> inspectores ·
+                            <span x-text="totalVisible.toLocaleString('es-CO')"></span> inspecciones
+                            <template x-if="meta > 0">
+                                <span> · meta <span x-text="Number(meta).toLocaleString('es-CO')"></span></span>
+                            </template>
+                        </p>
                     </div>
-                    <canvas id="inspeccionesDiarias"></canvas>
-                </x-adminlte-card>
+                </div>
             </div>
 
-            <!-- Tab: Comparación de Cortes -->
-            <div class="tab-pane fade" id="comparacion" role="tabpanel" aria-labelledby="comparacion-tab">
-                <x-adminlte-card title="Comparación Total de Inspecciones entre Cortes" theme="light"
-                                 icon="fas fa-chart-bar" header-class="text-uppercase" class="dashboard-card">
-                    <div class="filter-group">
-                        <label>Seleccione cortes a comparar:</label>
-                        <!-- Nuevo selector para la gráfica de comparación -->
-                        <select class="form-select" id="cortesComparisonSelect" multiple>
-                            <option value="">Seleccione un corte a comparar</option>
-                            @foreach ($cortes as $opcionCorte)
-                                @if($corte === null)
-                                    @continue
-                                @endif
-
-                                @if ($opcionCorte->id !== $corte->id)
-                                        <?php
-                                        $añoInicio = explode('-', $opcionCorte->fecha_inicio)[0];
-                                        $añoFin = explode('-', $opcionCorte->fecha_fin)[0];
-                                        ?>
-                                    <option value="{{ $opcionCorte->id }}">Corte: {{ $opcionCorte->nombre }}
-                                        - {{$añoInicio}} - {{$añoFin}}</option>
-                                @endif
-                            @endforeach
-                        </select>
-                        <button class="btn-base btn-animated-gradient btn-primary-animated" id="btnCompararCortes">
-                            <i class="fas fa-chart-pie"></i>
-                            <span>Comparar</span>
-                        </button>
+            <div class="tw-card-body space-y-5">
+                <div class="grid gap-4 lg:grid-cols-2">
+                    {{-- El tope cambia con la selección de inspectores, igual que antes:
+                         1 corte cuando se miran todos, hasta 6 al filtrar por inspector. --}}
+                    <div>
+                        <x-multi-select label="Cortes a comparar"
+                                        :options="$opcionesCortes"
+                                        model="cortesSel"
+                                        max-expr="topeCortes"
+                                        placeholder="Seleccione un corte a comparar" />
+                        <p class="tw-hint">
+                            <i class="fas fa-circle-info"></i>
+                            <span x-show="inspectoresSel.length === 0">
+                                Un corte a la vez mientras se muestran todos los inspectores.
+                            </span>
+                            <span x-show="inspectoresSel.length > 0" x-cloak>
+                                Hasta 7 cortes al filtrar por inspector.
+                            </span>
+                        </p>
                     </div>
-                    <canvas id="comparacionInspecciones"></canvas>
-                </x-adminlte-card>
+
+                    @if($opcionesInspectores->isNotEmpty())
+                        <x-multi-select label="Inspectores"
+                                        :options="$opcionesInspectores"
+                                        model="inspectoresSel"
+                                        :max="7"
+                                        placeholder="Todos los inspectores" />
+                    @endif
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" class="tw-btn-primary" id="btnComparar"
+                            @click="comparar()" :disabled="cargando">
+                        <i class="fas" :class="cargando ? 'fa-spinner fa-spin' : 'fa-chart-pie'"></i>
+                        Comparar
+                    </button>
+                    <button type="button" class="tw-btn-secondary" id="btnRestaurar" @click="restaurar()">
+                        <i class="fas fa-rotate"></i> Restaurar gráfica principal
+                    </button>
+                </div>
+
+                <div class="h-[520px]">
+                    <canvas id="inspeccionesDiarias" role="img"
+                            aria-label="Total de inspecciones por operario"></canvas>
+                </div>
             </div>
-        </div>
+        </section>
 
+        {{-- ======================= TAB: COMPARACIÓN DE CORTES ================== --}}
+        <section class="tw-card" x-show="tab === 'comparacion'" x-cloak>
+            <div class="tw-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-violet"><i class="fas fa-chart-pie"></i></span>
+                    <div>
+                        <h2 class="tw-card-title">Comparación total de inspecciones entre cortes</h2>
+                        <p class="tw-card-subtitle">Corte actual frente a los que selecciones</p>
+                    </div>
+                </div>
+            </div>
 
-        {{--  <!-- Sección adicional con categorías de inspección -->
-          <div class="row mt-4">
-              <div class="col-lg-6 mb-4">
-                  <div class="card-body">
-                      <x-adminlte-card title="Categorías Inspecciones" theme="light" icon="fas fa-code-branch"
-                                       header-class="text-uppercase" class="dashboard-card">
-                          <select class="form-select-modern" id="inspectorSelect">
-                              <option value="">Mostrar todos los contratos</option>
-                              @foreach ($inpectores as $inspector)
-                                  @if ($inspector->state == 1)
-                                      <option value="{{ $inspector->cedula }}">{{ $inspector->apellidos }}</option>
-                                  @endif
-                              @endforeach
-                          </select>
-                          <canvas id="categoriaInsp"></canvas>
-                      </x-adminlte-card>
-                  </div>
-              </div>
-              <div class="col-lg-6 mb-4">
-                  <div class="card">
-                      <div class="card-body">
-                          <x-adminlte-card title="Inspecciones hechas por zonas" theme="light"
-                                           icon="fas fa-map-marker-alt" header-class="text-uppercase"
-                                           class="dashboard-card">
-                              <canvas id="zonasInsp"></canvas>
-                          </x-adminlte-card>
-                      </div>
-                  </div>
-              </div>
-          </div>
-      </div>--}}
-        @stop
-        @if($warning)
-            <script>
+            <div class="tw-card-body space-y-5">
+                <div class="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-start">
+                    <x-multi-select label="Cortes a comparar"
+                                    :options="$opcionesCortes"
+                                    model="cortesComp"
+                                    :max="7"
+                                    placeholder="Seleccione un corte a comparar" />
+                    <button type="button" class="tw-btn-primary lg:mt-[26px]" id="btnCompararCortes"
+                            @click="compararCortes()" :disabled="cargandoComp">
+                        <i class="fas" :class="cargandoComp ? 'fa-spinner fa-spin' : 'fa-chart-pie'"></i>
+                        Comparar
+                    </button>
+                </div>
 
-                document.addEventListener('DOMContentLoaded', function () {
-                    Swal.fire({
-                        title: "{{$warning}}",
-                        text: "",
-                        icon: "warning"
-                    });
+                <div class="h-[480px]">
+                    <canvas id="comparacionInspecciones" role="img"
+                            aria-label="Comparación de inspecciones entre cortes"></canvas>
+                </div>
+            </div>
+        </section>
+    </div>
+@endsection
+
+@push('libs')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+@endpush
+
+@section('js')
+    @include('produccion.partials.index-script')
+
+    @if($warning)
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                Swal.fire({ title: @js($warning), text: '', icon: 'warning' });
+            });
+        </script>
+    @endif
+
+    @if(isset($municipiosNoEncontrados) && $municipiosNoEncontrados->isNotEmpty())
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                Swal.fire({
+                    title: 'Por favor, ingrese los siguientes municipios en la base de datos:',
+                    html: @js('<li>'.$municipiosNoEncontrados->implode('</li><li>').'</li>'),
+                    icon: 'warning'
                 });
-            </script>
-            {{$warning = null;}}
-        @endif
-
-
-        @if(isset($municipiosNoEncontrados) && $municipiosNoEncontrados->isNotEmpty())
-            <script>
-
-                document.addEventListener('DOMContentLoaded', function () {
-                    Swal.fire({
-                        title: "Por favor, ingrese los siguientes municipios en la base de datos:",
-                        html: `
-
-                    @foreach ($municipiosNoEncontrados as $municipio)
-                        <li>{{ $municipio }}</li>
-                    @endforeach
-
-                        `,
-                        icon: "warning"
-                    });
-                });
-            </script>
-        @endif
-
-        @section('js')
-            <script
-                src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
-            <script
-                src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
-            <script>
-                const corte_id = {{$corte?->id}}
-                    window.appData = {
-                    meta: @json($corte->meta ?? []),
-                    contratosCategoria: {!! json_encode($contratosCategoria ?? []) !!},
-                    contratosZonas: {!! json_encode($conteoContratosPorZona ?? []) !!},
-                    labels: {!! json_encode($produccionInspector ?? []) !!}
-                };
-            </script>
-
-            <script src="{{ asset('js/seguimientoProduccionUpdate/verProduccionV1.6.js') }}?v={{ time() }}"></script>
-
-@stop
+            });
+        </script>
+    @endif
+@endsection

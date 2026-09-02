@@ -1,267 +1,179 @@
-@extends('adminlte::page')
+@extends('layouts.tw.app')
 
-@section('title', 'Actividad HTTP Usuario')
+@section('title', 'Actividad HTTP')
 
 @section('content_header')
-   <h1></h1>
+    <h1>Actividad HTTP</h1>
 @endsection
 
-@section('styles') {{-- Mover los links CSS aquí para mejor organización si tu layout usa @stack('styles') --}}
+@section('subtitle', $user->name . ' · ' . $user->email)
 
-<style>
-    .dataTables_wrapper {
-        width: 100%;
-    }
-    #spatieActivityLogTable th,
-    #spatieActivityLogTable td {
-        white-space: nowrap;
-        vertical-align: top;
-    }
-    #spatieActivityLogTable td.properties-cell ul {
-        margin: 0;
-        padding-left: 15px;
-        list-style-position: outside;
-        white-space: normal;
-    }
-    #spatieActivityLogTable td.properties-cell ul li {
-        margin-bottom: 3px;
-        display: flex;
-        align-items: baseline;
-    }
-    #spatieActivityLogTable td.properties-cell .snippet-text-container {
-        display: inline;
-    }
-    #spatieActivityLogTable td.properties-cell .snippet-text {
-        max-width: 350px; /* Ajusta según necesites */
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        display: inline-block;
-        vertical-align: baseline;
-    }
-    #spatieActivityLogTable td.properties-cell .view-full-json {
-        margin-left: 8px;
-        white-space: nowrap;
-        flex-shrink: 0;
-    }
-    #jsonModalContent { /* Estilo para el contenido del modal */
-        white-space: pre-wrap;
-        word-break: break-all;
-        background-color: #f8f9fa;
-        padding: 15px;
-        border-radius: 4px;
-        max-height: 70vh;
-        overflow-y: auto;
-    }
-</style>
+@section('actions')
+    <a href="{{ route('admin.user.activity.show', $user) }}" class="tw-btn-secondary">
+        <i class="fas fa-database"></i> Ver actividad en base de datos
+    </a>
+    <a href="{{ route('admin.users.activity.list') }}" class="tw-btn-secondary">
+        <i class="fas fa-arrow-left"></i> Todos los usuarios
+    </a>
 @endsection
 
 @section('content')
-    <div class="container-fluid">
-        <h2 style="margin-bottom: 10px">Solicitudes Registradas para: {{ $user->name }} ({{ $user->email }})</h2>
+    <div x-data="actividadHttp({
+            registros: {{ Js::from($activities->map(fn ($a) => [
+                'id' => $a->id,
+                'log' => $a->log_name,
+                'descripcion' => $a->description,
+                'propiedades' => ($a->properties && $a->properties->isNotEmpty()) ? $a->properties : null,
+                'fecha' => $a->created_at->format('d/m/Y H:i:s'),
+            ])->values()) }},
+         })"
+         class="space-y-6">
 
-        <form method="GET" action="{{ route('admin.user.http_activity.show', $user) }}" class="mb-3">
-            <div class="row">
-                <div class="col-md-3">
-                    <label for="log_name_filter">Tipo de Log:</label>
-                    <select name="log_name_filter" id="log_name_filter" class="form-control form-select">
+        {{-- Filtros por GET, igual que la vista de base de datos. --}}
+        <section class="tw-card p-5">
+            <form method="GET" action="{{ route('admin.user.http_activity.show', $user) }}"
+                  class="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-end">
+                <div>
+                    <label class="tw-label" for="log_name_filter">Tipo de registro</label>
+                    <select name="log_name_filter" id="log_name_filter" class="tw-select">
                         <option value="">Todos</option>
-                        @foreach($available_log_names as $log_name_option)
-                            <option
-                                value="{{ $log_name_option }}" {{ request('log_name_filter') == $log_name_option ? 'selected' : '' }}>
-                                {{ ucfirst($log_name_option) }}
+                        @foreach ($available_log_names as $log)
+                            <option value="{{ $log }}" @selected(request('log_name_filter') == $log)>
+                                {{ $log }}
                             </option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <label for="date_from">Desde:</label>
-                    <input type="date" name="date_from" id="date_from" class="form-control"
-                           value="{{ request('date_from') }}">
+                <div>
+                    <label class="tw-label" for="date_from">Desde</label>
+                    <input type="date" name="date_from" id="date_from" class="tw-input"
+                           value="{{ request('date_from') }}" max="{{ request('date_to') }}">
                 </div>
-                <div class="col-md-3">
-                    <label for="date_to">Hasta:</label>
-                    <input type="date" name="date_to" id="date_to" class="form-control"
-                           value="{{ request('date_to') }}">
+                <div>
+                    <label class="tw-label" for="date_to">Hasta</label>
+                    <input type="date" name="date_to" id="date_to" class="tw-input"
+                           value="{{ request('date_to') }}" min="{{ request('date_from') }}">
                 </div>
-                <div class="col-md-3 align-self-end">
-                    <button type="submit" class="btn btn-primary mt-4">Filtrar</button>
-                    <a href="{{ route('admin.user.http_activity.show', $user) }}" class="btn btn-secondary mt-4">Limpiar</a>
+                <div class="flex gap-2">
+                    <button type="submit" class="tw-btn-primary">
+                        <i class="fas fa-filter"></i> Filtrar
+                    </button>
+                    <a href="{{ route('admin.user.http_activity.show', $user) }}" class="tw-btn-secondary">
+                        Limpiar
+                    </a>
+                </div>
+            </form>
+        </section>
+
+        <section class="tw-card">
+            <div class="tw-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-sky"><i class="fas fa-globe"></i></span>
+                    <div>
+                        <h2 class="tw-card-title">Peticiones</h2>
+                        <p class="tw-card-subtitle">
+                            <span x-text="filtrados.length"></span> de
+                            <span x-text="registros.length"></span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="relative w-full sm:w-72">
+                    <i class="fas fa-magnifying-glass pointer-events-none absolute left-3 top-1/2
+                              -translate-y-1/2 text-sm text-slate-400"></i>
+                    <input type="search" class="tw-input pl-9" placeholder="Buscar en la tabla…"
+                           x-model="busqueda" @input="pagina = 1">
                 </div>
             </div>
-        </form>
 
-        @if($activities->isEmpty() && (request()->has('log_name_filter') || request()->has('date_from') || request()->has('date_to')))
-            <p>No hay actividad registrada para este usuario con los filtros actuales.</p>
-        @elseif($activities->isEmpty())
-            <p>No hay actividad registrada para este usuario.</p>
-        @else
-            <table class="table table-striped table-hover display" id="spatieActivityLogTable" style="width:100%">
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Tipo Log</th>
-                    <th>Descripción</th>
-                    <th>Propiedades</th>
-                    <th>Fecha y Hora</th>
-                </tr>
-                </thead>
-                <tbody>
-                @foreach ($activities as $activity)
-                    @php
-                        $propertiesSnippet = 'N/A';
-                        $propertiesFullJson = null;
-                        $originalTextForComparison = '';
-
-                        if ($activity->properties && $activity->properties->isNotEmpty()) {
-                            $propertiesCollection = $activity->properties; // Es una colección
-                            $fullValue = $propertiesCollection->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                            // Para el snippet, usamos un JSON compacto y luego lo limitamos
-                            $textForSnippet = $propertiesCollection->toJson();
-                            $textForSnippet = preg_replace('/\s+/', ' ', $textForSnippet); // Colapsar múltiples espacios
-                            $propertiesSnippet = Str::limit($textForSnippet, 150); // Ajusta el límite según necesites
-
-                            $propertiesFullJson = $fullValue;
-                            $originalTextForComparison = $textForSnippet;
-                        }
-                    @endphp
+            <div class="overflow-x-auto" x-show="filtrados.length > 0" x-cloak>
+                <table class="tw-table">
+                    <thead>
                     <tr>
-                        <td>{{ $activity->id }}</td>
-                        <td><span class="badge bg-secondary">{{ $activity->log_name }}</span></td>
-                        <td>{{ $activity->description }}</td>
-
-                        <td class="properties-cell">
-                            <div class="snippet-text-container">
-                                <span class="snippet-text" title="{{ $originalTextForComparison }}">{{ $propertiesSnippet }}</span>
-                            </div>
-                            @if ($propertiesFullJson && (strlen($originalTextForComparison) > strlen(str_replace('...', '', $propertiesSnippet))))
-                                <a href="#" class="view-full-json small"
-                                   data-json-key="Propiedades (Log ID: {{ $activity->id }})"
-                                   data-json-content="{{ htmlspecialchars($propertiesFullJson) }}">
-                                    (ver más)
-                                </a>
-                            @elseif ($propertiesSnippet !== 'N/A' && !$propertiesFullJson)
-                                {{-- No se necesita "ver más" si no es un JSON complejo o largo --}}
-                            @elseif ($propertiesSnippet === 'N/A')
-                                N/A
-                            @endif
-                        </td>
-                        <td>{{ $activity->created_at->format('d/m/Y H:i:s') }}</td>
+                        <th>ID</th>
+                        <th>Tipo</th>
+                        <th>Descripción</th>
+                        <th>Propiedades</th>
+                        <th>Fecha</th>
                     </tr>
-                @endforeach
-                </tbody>
-            </table>
-        @endif
-         <div class="mt-3">
-            <a href="{{ route('admin.users.activity.list') }}" class="btn btn-secondary">Volver a la lista de
-                usuarios</a>
-        </div>
-    </div>
-
-    {{-- Modal para ver JSON completo (estructura HTML sin cambios) --}}
-    <div class="modal fade" id="jsonDetailModal" tabindex="-1" aria-labelledby="jsonDetailModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="jsonDetailModalLabel">Detalle Completo</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <h6 id="jsonModalFieldKey" class="mb-2"></h6>
-                    <div id="jsonModalContent" class="json-formatter-container"
-                         style="max-height: 70vh; overflow-y: auto; background-color: #f8f9fa; border-radius: 4px; padding: 10px;"></div>
-                </div>
+                    </thead>
+                    <tbody>
+                    <template x-for="r in paginados" :key="r.id">
+                        <tr class="align-top">
+                            <td class="font-mono text-xs text-slate-500 dark:text-slate-400" x-text="r.id"></td>
+                            <td><span class="tw-badge chip-slate" x-text="r.log"></span></td>
+                            {{-- El ancho va en un div: en una tabla de layout
+                                 automático el navegador ignora max-width sobre la
+                                 propia celda y la deja crecer con el contenido. --}}
+                            <td>
+                                <div class="max-w-sm truncate" :title="r.descripcion"
+                                     x-text="r.descripcion"></div>
+                            </td>
+                            <td>
+                                <template x-if="!r.propiedades">
+                                    <span class="text-slate-400">N/A</span>
+                                </template>
+                                <template x-if="r.propiedades">
+                                    <div class="flex min-w-0 items-baseline gap-1.5 whitespace-nowrap">
+                                        <span class="max-w-sm truncate text-slate-500 dark:text-slate-400"
+                                              :title="aTexto(r.propiedades)"
+                                              x-text="fragmento(r.propiedades, 150)"></span>
+                                        <button type="button"
+                                                class="shrink-0 text-xs font-medium text-brand-600
+                                                       hover:underline dark:text-brand-300"
+                                                @click="abrirJson('Propiedades', r.propiedades)">ver más</button>
+                                    </div>
+                                </template>
+                            </td>
+                            <td class="whitespace-nowrap" x-text="r.fecha"></td>
+                        </tr>
+                    </template>
+                    </tbody>
+                </table>
             </div>
-        </div>
+
+            @include('users.activity.partials.paginacion')
+
+            <div x-show="filtrados.length === 0" x-cloak
+                 class="border-t border-slate-200/80 px-5 py-16 text-center dark:border-slate-700/60">
+                <i class="fas fa-globe mb-3 block text-3xl text-slate-300 dark:text-slate-600"></i>
+                <p class="text-sm text-slate-500 dark:text-slate-400"
+                   x-text="registros.length === 0
+                        ? 'No hay actividad HTTP registrada para este usuario con los filtros actuales.'
+                        : 'Ningún registro coincide con la búsqueda.'"></p>
+            </div>
+        </section>
+
+        @include('users.activity.partials.json-modal')
     </div>
 @endsection
 
 @section('js')
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/json-formatter-js@2.3.4/dist/json-formatter.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/json-formatter-js@2.5.23/dist/json-formatter.umd.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/json-formatter-js@2.5.23/dist/json-formatter.min.css" rel="stylesheet">
+    @include('users.activity.partials.visor-json')
 
     <script>
-        // Función para decodificar entidades HTML
-        function decodeHtmlEntities(text) {
-            if (text === null || typeof text === 'undefined') { return ""; }
-            var textArea = document.createElement('textarea');
-            textArea.innerHTML = text;
-            return textArea.value;
-        }
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('actividadHttp', ({ registros }) => ({
+                ...window.visorJson(),
+                ...window.paginador(25),
+                registros,
+                busqueda: '',
 
-        // Función para ordenar claves de objetos JSON recursivamente
-        function sortObjectKeysRecursively(obj) {
-            if (typeof obj !== 'object' || obj === null) { return obj; }
-            if (Array.isArray(obj)) { return obj.map(item => sortObjectKeysRecursively(item)); }
-            const sortedKeys = Object.keys(obj).sort((a, b) => a.localeCompare(b));
-            const result = {};
-            for (const key of sortedKeys) { result[key] = sortObjectKeysRecursively(obj[key]); }
-            return result;
-        }
+                get totalPaginas() { return this.totalPaginasDe(this.filtrados); },
+                get paginaActual() { return this.paginaValidaDe(this.filtrados); },
+                get paginados() { return this.recortar(this.filtrados); },
 
-        $(document).ready(function () {
-            if ($('#spatieActivityLogTable').length && !$.fn.dataTable.isDataTable('#spatieActivityLogTable')) {
-                $('#spatieActivityLogTable').DataTable({
-                    "language": {"url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"},
-                    "scrollX": true,
-                    "order": [[6, "desc"]] // Ordenar por la columna de Fecha (índice 6)
-                });
-            }
-
-            var jsonDetailModalEl = document.getElementById('jsonDetailModal');
-            var modalInstance = null;
-            if (jsonDetailModalEl) {
-                modalInstance = new bootstrap.Modal(jsonDetailModalEl);
-            }
-
-            var modalJsonContainer = document.getElementById('jsonModalContent');
-
-            // Usar el ID de la nueva tabla para delegar el evento
-            $('#spatieActivityLogTable').on('click', '.view-full-json', function (event) {
-                event.preventDefault();
-
-                if (!modalInstance || !modalJsonContainer) {
-                    console.error('Instancia del modal o contenedor JSON no inicializados.');
-                    return;
-                }
-
-                var button = $(this);
-                var encodedJsonContent = button.data('json-content');
-                var jsonKey = button.data('json-key'); // Este será "Propiedades (Log ID: X)"
-                var decodedJsonContent = decodeHtmlEntities(encodedJsonContent);
-
-                var modalTitle = jsonDetailModalEl.querySelector('.modal-title');
-                var modalFieldKey = jsonDetailModalEl.querySelector('#jsonModalFieldKey');
-
-                modalTitle.textContent = 'Detalle Completo'; // Título genérico
-                modalFieldKey.textContent = jsonKey; // Muestra "Propiedades (Log ID: X)"
-
-                modalJsonContainer.innerHTML = ''; // Limpiar contenido anterior
-
-                try {
-                    const jsonObject = JSON.parse(decodedJsonContent);
-                    if (typeof jsonObject === 'object' && jsonObject !== null) {
-                        const potentiallySortedJsonObject = sortObjectKeysRecursively(jsonObject);
-                        const formatter = new JSONFormatter(potentiallySortedJsonObject, 1, {
-                            hoverPreviewEnabled: false,
-                            theme: ''
-                        });
-                        modalJsonContainer.appendChild(formatter.render());
-                    } else {
-                        const textNode = document.createElement('pre');
-                        textNode.textContent = decodedJsonContent;
-                        modalJsonContainer.appendChild(textNode);
-                    }
-                } catch (e) {
-                    console.warn("El contenido no es JSON válido o hubo un error al formatearlo:", e);
-                    const textNode = document.createElement('pre');
-                    textNode.textContent = decodedJsonContent;
-                    modalJsonContainer.appendChild(textNode);
-                }
-                modalInstance.show();
-            });
+                get filtrados() {
+                    const q = this.busqueda.trim().toLowerCase();
+                    if (q === '') return this.registros;
+                    return this.registros.filter(r =>
+                        String(r.id).includes(q) ||
+                        String(r.log).toLowerCase().includes(q) ||
+                        String(r.descripcion).toLowerCase().includes(q) ||
+                        String(r.fecha).includes(q) ||
+                        this.aTexto(r.propiedades).toLowerCase().includes(q));
+                },
+            }));
         });
     </script>
 @endsection

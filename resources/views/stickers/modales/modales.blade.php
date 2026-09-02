@@ -1,273 +1,269 @@
-{{-- ================================================================= --}}
-{{-- MODAL AGREGAR STICKERS A INVENTARIO --}}
-{{-- ================================================================= --}}
-<div class="modal fade" id="agregarStickerModal" tabindex="-1" role="dialog" aria-labelledby="modalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalLabel"><i class="fa fa-plus-circle"></i> Agregar Stickers a Inventario</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="formAgregarSticker">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="tipoSticker">Tipo de Sticker</label>
-                        <select class="form-control" id="tipoSticker">
-                            <option value="">-- Seleccione un tipo --</option>
-                            {{-- Asumo que la variable $stickers está disponible aquí, si no, hay que pasarla --}}
-                            @foreach($Stickers as $sticker)
-                                <option value="{{ $sticker->id }}" data-nombre="{{ strtolower($sticker->nombre) }}">
-                                    {{ $sticker->nombre }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+{{-- =====================================================================
+     Modales de Control de Stickers.
+     Se renderizan dentro del x-data="controlStickers(...)" de index.blade.php,
+     por eso acceden directamente a su estado (modal, agregar, asignar, …).
+     ===================================================================== --}}
 
-                    {{-- CAMPO PARA CANTIDAD (stickers normales) --}}
-                    <div class="form-group" id="campo_cantidad">
-                        <label for="cantidad">Cantidad a Agregar</label>
-                        <input type="number" class="form-control" id="cantidad" placeholder="Ej: 50" min="1" max="10000">
-                    </div>
+{{-- ============================ AGREGAR A INVENTARIO ==================== --}}
+@can('control_stickers')
+    <x-modal show="modal === 'agregar'" close="cerrar()" size="max-w-lg"
+             title="Agregar stickers a inventario" icon="fa-plus" tint="blue">
+        <x-slot:subtitle>Suma unidades o registra un rango de seriales</x-slot:subtitle>
 
-                    {{-- CAMPOS PARA SERIALES (Solo Actas) --}}
-                    <div id="campo_seriales" class="d-none">
-                        <div class="form-group">
-                            <label for="serial_inicio">Serial Inicial</label>
-                            <input type="number" class="form-control" id="serial_inicio" placeholder="Ej: 1001">
-                        </div>
-                        <div class="form-group">
-                            <label for="serial_fin">Serial Final</label>
-                            <input type="number" class="form-control" id="serial_fin" placeholder="Ej: 1100">
-                        </div>
-                    </div>
-
-                    <div id="errorAgregar" class="alert alert-danger d-none"></div>
+        <form @submit.prevent="enviarAgregar()" id="formAgregarSticker">
+            <div class="space-y-4 px-5 py-5">
+                <div>
+                    <label class="tw-label" for="tipoSticker">Tipo de sticker</label>
+                    <select class="tw-select" id="tipoSticker" x-model="agregar.tipo">
+                        <option value="">-- Seleccione un tipo --</option>
+                        @foreach($tipos as $t)
+                            <option value="{{ $t['id'] }}">{{ $t['nombre'] }}</option>
+                        @endforeach
+                    </select>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="btnCancelarSticker" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i> Agregar</button>
+
+                {{-- Cantidad: stickers cuantitativos --}}
+                <div x-show="!agregarEsActa" x-cloak>
+                    <label class="tw-label" for="cantidad">Cantidad a agregar</label>
+                    <input type="text" inputmode="numeric" class="tw-input" id="cantidad"
+                           placeholder="Ej: 50" x-model="agregar.cantidad"
+                           @input="agregar.cantidad = soloDigitos(agregar.cantidad, 10000)">
+                    <p class="tw-hint"><i class="fas fa-circle-info"></i> Se suma al saldo actual del tipo seleccionado.</p>
                 </div>
-            </form>
-        </div>
-    </div>
-</div>
 
-{{-- ================================================================= --}}
-{{-- MODAL ASIGNAR STICKERS --}}
-{{-- ================================================================= --}}
-<div class="modal fade" id="modalAsignarSticker" tabindex="-1" role="dialog" aria-labelledby="modalLabelAsignar"
-     aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalLabelAsignar"><i class="fa fa-user-plus"></i> Asignar Stickers</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                {{-- Seriales: sólo ACTAS --}}
+                <div class="grid gap-4 sm:grid-cols-2" x-show="agregarEsActa" x-cloak>
+                    <div>
+                        <label class="tw-label" for="serial_inicio">Serial inicial</label>
+                        <input type="text" inputmode="numeric" class="tw-input" id="serial_inicio"
+                               placeholder="Ej: 1001" x-model="agregar.serialInicio"
+                               @input="agregar.serialInicio = soloDigitos(agregar.serialInicio)">
+                    </div>
+                    <div>
+                        <label class="tw-label" for="serial_fin">Serial final</label>
+                        <input type="text" inputmode="numeric" class="tw-input" id="serial_fin"
+                               placeholder="Ej: 1100" x-model="agregar.serialFin"
+                               @input="agregar.serialFin = soloDigitos(agregar.serialFin)">
+                    </div>
+                    <p class="tw-hint sm:col-span-2" x-show="agregar.serialInicio && agregar.serialFin">
+                        <i class="fas fa-hashtag"></i>
+                        Se registrarán <strong x-text="totalSerialesAgregar"></strong> seriales.
+                    </p>
+                </div>
+
+                <x-stickers.error message="agregar.error" />
             </div>
-            <form id="formAsignarSticker">
-                <div class="modal-body">
-                    <input type="hidden" id="idInspector">
-                    <p>Asignando a: <strong id="nombreInspector"></strong></p>
 
-                    <div id="stickerTypeRows">
-                        <table class="table table-sm table-bordered">
-                            <thead>
+            <div class="flex flex-wrap justify-end gap-2 border-t border-slate-200/80 px-5 py-4
+                        dark:border-slate-700/60">
+                <button type="button" class="tw-btn-secondary" @click="cerrar()">Cancelar</button>
+                <button type="submit" class="tw-btn-primary" :disabled="agregar.enviando">
+                    <i class="fas" :class="agregar.enviando ? 'fa-spinner fa-spin' : 'fa-plus'"></i>
+                    <span x-text="agregar.enviando ? 'Procesando…' : 'Agregar'"></span>
+                </button>
+            </div>
+        </form>
+    </x-modal>
+
+    {{-- ============================== ASIGNAR =========================== --}}
+    <x-modal show="modal === 'asignar'" close="cerrar()" size="max-w-3xl"
+             title="Asignar stickers" icon="fa-user-plus" tint="emerald">
+        <x-slot:subtitle>
+            <span x-text="asignar.nombre"></span>
+        </x-slot:subtitle>
+
+        <form @submit.prevent="enviarAsignar()" id="formAsignarSticker">
+            <div class="px-5 py-5">
+                <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                    <table class="tw-table">
+                        <thead>
+                        <tr>
+                            <th>Tipo de sticker</th>
+                            <th>Entrada (cantidad o rango)</th>
+                            <th class="text-center">Disponible</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <template x-for="t in tipos" :key="t.id">
                             <tr>
-                                <th>Tipo de Sticker</th>
-                                <th>Entrada (Cantidad o Rango)</th>
-                                <th>Inventario Disponible</th>
+                                <td>
+                                    <span class="inline-flex items-center gap-2 text-sm font-semibold
+                                                 text-slate-700 dark:text-slate-200">
+                                        <span class="h-2.5 w-2.5 shrink-0 rounded-full"
+                                              :style="`background-color: ${t.color}`"></span>
+                                        <span x-text="t.nombre"></span>
+                                    </span>
+                                </td>
+                                <td>
+                                    {{-- ACTAS: rango de seriales --}}
+                                    <template x-if="t.esActa">
+                                        <div class="flex items-center gap-2">
+                                            <input type="text" inputmode="numeric" class="tw-input py-1.5 text-sm"
+                                                   placeholder="Serial inicial" x-model="asignar.serialInicio"
+                                                   @input="asignar.serialInicio = soloDigitos(asignar.serialInicio)">
+                                            <span class="text-slate-400">–</span>
+                                            <input type="text" inputmode="numeric" class="tw-input py-1.5 text-sm"
+                                                   placeholder="Serial final" x-model="asignar.serialFin"
+                                                   @input="asignar.serialFin = soloDigitos(asignar.serialFin)">
+                                        </div>
+                                    </template>
+                                    {{-- Resto: cantidad, topada al inventario disponible --}}
+                                    <template x-if="!t.esActa">
+                                        <input type="text" inputmode="numeric" class="tw-input py-1.5 text-sm"
+                                               placeholder="Cantidad"
+                                               :disabled="(asignar.disponible[t.id] ?? 0) === 0"
+                                               :value="asignar.cantidades[t.id] ?? ''"
+                                               @input="asignar.cantidades[t.id] =
+                                                    soloDigitos($event.target.value, asignar.disponible[t.id] ?? 0);
+                                                    $event.target.value = asignar.cantidades[t.id]">
+                                    </template>
+                                </td>
+                                <td class="text-center">
+                                    <span class="tw-pill"
+                                          :class="saldoAsignar(t) > 0 ? 'pill-sky' : 'pill-slate'"
+                                          x-text="saldoAsignar(t)"></span>
+                                </td>
                             </tr>
-                            </thead>
-                            <tbody>
-                            @foreach($Stickers as $sticker)
-                                <tr>
-                                    <td>
-                                            <span class="badge" style="background-color: {{ $sticker->color_hex ?? '#6c757d' }}; color: #fff;">
-                                                {{ $sticker->nombre }}
-                                            </span>
-                                    </td>
-
-                                    {{-- LÓGICA CONDICIONAL: Si es ACTA muestra seriales, si no, cantidad --}}
-                                    @if(strtolower($sticker->nombre) == 'actas')
-                                        <td>
-                                            <div class="input-group input-group-sm">
-                                                <input type="number" class="form-control" id="acta_serial_inicio" placeholder="Serial Inicial">
-                                                <span class="input-group-text">-</span>
-                                                <input type="number" class="form-control" id="acta_serial_fin" placeholder="Serial Final">
-                                            </div>
-                                        </td>
-                                    @else
-                                        <td>
-                                            <input type="number"
-                                                   class="form-control form-control-sm cantidad-sticker"
-                                                   name="stickers[{{ $sticker->id }}]"
-                                                   data-id="{{ $sticker->id }}"
-                                                   data-inventario="{{ optional($sticker->Inventario)->cantidad_disponible ?? 0 }}"
-                                                   placeholder="Cantidad"
-                                                   min="0">
-                                        </td>
-                                    @endif
-
-                                    {{-- Columna de Saldo/Inventario --}}
-                                    <td class="text-center">
-                                        @if(strtolower($sticker->nombre) == 'actas')
-                                            <span class="badge bg-info" id="saldo-{{ $sticker->id }}">
-                                                    {{ optional($sticker->Inventario)->cantidad_disponible ?? 0 }}
-                                                </span>
-                                        @else
-                                            <span class="badge bg-info" id="saldo-{{ $sticker->id }}">
-                                                    {{ optional($sticker->Inventario)->cantidad_disponible ?? 0 }}
-                                                </span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div id="errorAsignar" class="alert alert-danger d-none mt-3"></div>
+                        </template>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="btn_cerrarAsignar" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="submit" class="btn btn-success"><i class="fa fa-check"></i> Asignar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
-
-{{-- ================================================================= --}}
-{{-- MODAL DESASIGNAR STICKERS --}}
-{{-- ================================================================= --}}
-<div class="modal fade" id="modalDesasignarSticker" tabindex="-1" role="dialog" aria-labelledby="modalLabelDesasignar"
-     aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalLabelDesasignar"><i class="fa fa-user-minus"></i> Desasignar Stickers</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <x-stickers.error message="asignar.error" class="mt-4" />
             </div>
-            <form id="formDesasignarSticker">
-                <div class="modal-body">
-                    <input type="hidden" id="idInspectorDesasignar">
-                    <p>Desasignando de: <strong id="nombreInspectorDesasignar"></strong></p>
 
-                    <div id="stickerTypeRowsDesasignar">
-                        <table class="table table-sm table-bordered">
-                            <thead>
+            <div class="flex flex-wrap justify-end gap-2 border-t border-slate-200/80 px-5 py-4
+                        dark:border-slate-700/60">
+                <button type="button" class="tw-btn-secondary" @click="cerrar()">Cerrar</button>
+                <button type="submit" class="tw-btn-primary" :disabled="asignar.enviando">
+                    <i class="fas" :class="asignar.enviando ? 'fa-spinner fa-spin' : 'fa-check'"></i>
+                    <span x-text="asignar.enviando ? 'Asignando…' : 'Asignar'"></span>
+                </button>
+            </div>
+        </form>
+    </x-modal>
+
+    {{-- ============================= DESASIGNAR ========================= --}}
+    <x-modal show="modal === 'desasignar'" close="cerrar()" size="max-w-3xl"
+             title="Desasignar stickers" icon="fa-user-minus" tint="rose">
+        <x-slot:subtitle>
+            <span x-text="desasignar.nombre"></span>
+        </x-slot:subtitle>
+
+        <form @submit.prevent="enviarDesasignar()" id="formDesasignarSticker">
+            <div class="px-5 py-5">
+                <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                    <table class="tw-table">
+                        <thead>
+                        <tr>
+                            <th>Tipo de sticker</th>
+                            <th>Entrada (cantidad o rango)</th>
+                            <th class="text-center">Asignado</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <template x-for="t in tipos" :key="t.id">
                             <tr>
-                                <th>Tipo de Sticker</th>
-                                <th>Entrada (Cantidad o Rango)</th>
-                                <th>Asignado Actualmente</th>
+                                <td>
+                                    <span class="inline-flex items-center gap-2 text-sm font-semibold
+                                                 text-slate-700 dark:text-slate-200">
+                                        <span class="h-2.5 w-2.5 shrink-0 rounded-full"
+                                              :style="`background-color: ${t.color}`"></span>
+                                        <span x-text="t.nombre"></span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <template x-if="t.esActa">
+                                        <div class="flex items-center gap-2">
+                                            <input type="text" inputmode="numeric" class="tw-input py-1.5 text-sm"
+                                                   placeholder="Serial inicial" x-model="desasignar.serialInicio"
+                                                   @input="desasignar.serialInicio = soloDigitos(desasignar.serialInicio)">
+                                            <span class="text-slate-400">–</span>
+                                            <input type="text" inputmode="numeric" class="tw-input py-1.5 text-sm"
+                                                   placeholder="Serial final" x-model="desasignar.serialFin"
+                                                   @input="desasignar.serialFin = soloDigitos(desasignar.serialFin)">
+                                        </div>
+                                    </template>
+                                    <template x-if="!t.esActa">
+                                        <input type="text" inputmode="numeric" class="tw-input py-1.5 text-sm"
+                                               placeholder="Cantidad a devolver"
+                                               :disabled="desasignar.cargando || (desasignar.asignado[t.id] ?? 0) === 0"
+                                               :value="desasignar.cantidades[t.id] ?? ''"
+                                               @input="desasignar.cantidades[t.id] =
+                                                    soloDigitos($event.target.value, desasignar.asignado[t.id] ?? 0);
+                                                    $event.target.value = desasignar.cantidades[t.id]">
+                                    </template>
+                                </td>
+                                <td class="text-center">
+                                    <template x-if="desasignar.cargando">
+                                        <i class="fas fa-spinner fa-spin text-slate-400"></i>
+                                    </template>
+                                    <template x-if="!desasignar.cargando">
+                                        <span class="tw-pill"
+                                              :class="(desasignar.asignado[t.id] ?? 0) > 0 ? 'pill-emerald' : 'pill-slate'"
+                                              x-text="desasignar.asignado[t.id] ?? 0"></span>
+                                    </template>
+                                </td>
                             </tr>
-                            </thead>
-                            <tbody>
-                            @foreach($Stickers as $sticker)
-                                <tr>
-                                    <td>
-                                            <span class="badge" style="background-color: {{ $sticker->color_hex ?? '#6c757d' }}; color: #fff;">
-                                                {{ $sticker->nombre }}
-                                            </span>
-                                    </td>
-
-                                    {{-- LÓGICA CONDICIONAL: Si es ACTA muestra seriales, si no, cantidad --}}
-                                    @if(strtolower($sticker->nombre) == 'actas')
-                                        <td>
-                                            <div class="input-group input-group-sm">
-                                                <input type="number" class="form-control cantidad-sticker-desasignar acta"  data-id="{{ $sticker->id }}" id="desasignar_acta_serial_inicio" placeholder="Serial Inicial">
-                                                <span class="input-group-text">-</span>
-                                                <input type="number" class="form-control" id="desasignar_acta_serial_fin" placeholder="Serial Final">
-                                            </div>
-                                        </td>
-                                    @else
-                                        <td>
-                                            <input type="number"
-                                                   class="form-control form-control-sm cantidad-sticker-desasignar"
-                                                   name="stickers[{{ $sticker->id }}]"
-                                                   data-id="{{ $sticker->id }}"
-                                                   data-asignado="0" {{-- Se llenará con JS --}}
-                                                   placeholder="Cantidad a devolver"
-                                                   min="0">
-                                        </td>
-                                    @endif
-
-                                    {{-- Columna de Asignado --}}
-                                    <td class="text-center">
-                                            <span class="badge bg-success" id="asignado-{{ $sticker->id }}">
-                                                0
-                                            </span>
-                                    </td>
-                                </tr>
-                            @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div id="errorDesasignar" class="alert alert-danger d-none mt-3"></div>
+                        </template>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="btn_cerrarDesasignar" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="submit" class="btn btn-danger"><i class="fa fa-minus"></i> Desasignar</button>
-                </div>
-            </form>
+
+                <x-stickers.error message="desasignar.error" class="mt-4" />
+            </div>
+
+            <div class="flex flex-wrap justify-end gap-2 border-t border-slate-200/80 px-5 py-4
+                        dark:border-slate-700/60">
+                <button type="button" class="tw-btn-secondary" @click="cerrar()">Cerrar</button>
+                <button type="submit" class="tw-btn-danger" :disabled="desasignar.enviando || desasignar.cargando">
+                    <i class="fas" :class="desasignar.enviando ? 'fa-spinner fa-spin' : 'fa-minus'"></i>
+                    <span x-text="desasignar.enviando ? 'Desasignando…' : 'Desasignar'"></span>
+                </button>
+            </div>
+        </form>
+    </x-modal>
+@endcan
+
+{{-- ===================== SERIALES DE ACTAS (consulta) =================== --}}
+<x-modal show="modal === 'seriales'" close="cerrar()" size="max-w-lg"
+         icon="fa-list-ol" tint="violet">
+    <x-slot:titleSlot><span x-text="seriales.titulo"></span></x-slot:titleSlot>
+    <x-slot:subtitle><span x-text="seriales.subtitulo"></span></x-slot:subtitle>
+
+    <div class="px-5 py-5">
+        <div x-show="seriales.cargando" class="py-8 text-center text-slate-500 dark:text-slate-400">
+            <i class="fas fa-spinner fa-spin mb-2 block text-2xl"></i>
+            <span class="text-sm">Cargando…</span>
         </div>
-    </div>
-</div>
 
-{{-- ================================================================= --}}
-{{-- MODAL VER SERIALES DE ACTAS EN INVENTARIO --}}
-{{-- ================================================================= --}}
-<div class="modal fade" id="modalVerSerialesActa" tabindex="-1" role="dialog" aria-labelledby="modalLabelSeriales"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalLabelSeriales"><i class="fa fa-list-ol"></i> Seriales de Actas en Inventario</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Mostrando rangos de seriales disponibles:</p>
+        <x-stickers.error message="seriales.error" />
 
-                {{-- Aquí se cargarán los seriales vía JS --}}
-                <div id="listaSerialesBody" style="max-height: 400px; overflow-y: auto;">
-                    <div class="text-center">
-                        <i class="fa fa-spinner fa-spin"></i> Cargando...
+        <template x-if="!seriales.cargando && !seriales.error">
+            <div>
+                <template x-if="seriales.rangos.length === 0">
+                    <div class="rounded-xl border border-sky-200 bg-sky-50 px-4 py-6 text-center
+                                dark:border-sky-800 dark:bg-sky-950/40">
+                        <i class="fas fa-circle-info mb-2 block text-2xl text-sky-500"></i>
+                        <span class="text-sm text-sky-800 dark:text-sky-200" x-text="seriales.vacio"></span>
                     </div>
+                </template>
+
+                <div x-show="seriales.rangos.length > 0" class="max-h-[400px] space-y-2 overflow-y-auto pr-1">
+                    <template x-for="(rango, i) in seriales.rangos" :key="i">
+                        <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5
+                                    dark:border-slate-700 dark:bg-slate-800/60">
+                            <span class="tw-chip chip-violet h-8 w-8 text-xs" x-text="i + 1"></span>
+                            <span class="font-mono text-sm font-semibold text-slate-700 dark:text-slate-200"
+                                  x-text="rango"></span>
+                        </div>
+                    </template>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="cerrarModal_actasInventario" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
+        </template>
     </div>
-</div>
 
-{{-- ================================================================= --}}
-{{-- MODAL VER SERIALES DE ACTAS ASIGNADOS A INSPECTOR --}}
-{{-- ================================================================= --}}
-<div class="modal fade" id="modalVerSerialesAsignados" tabindex="-1" role="dialog" aria-labelledby="modalLabelSerialesAsignados"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalLabelSerialesAsignados"><i class="fa fa-user-check"></i> Seriales Asignados</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Seriales de Actas asignados a: <strong id="nombreInspectorSeriales"></strong></p>
-
-                {{-- Aquí se cargarán los seriales vía JS --}}
-                <div id="listaSerialesAsignadosBody" style="max-height: 400px; overflow-y: auto;">
-                    <div class="text-center" id="loaderSerialesAsignados">
-                        <i class="fa fa-spinner fa-spin"></i> Cargando...
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  id="cerrarModal_actasInspector" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
-    </div>
-</div>
+    <x-slot:footer>
+        <button type="button" class="tw-btn-secondary" @click="cerrar()">Cerrar</button>
+    </x-slot:footer>
+</x-modal>

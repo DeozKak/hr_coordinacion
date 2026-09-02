@@ -1,233 +1,106 @@
-@extends('adminlte::page')
+@extends('layouts.tw.app')
 
 @section('title', 'Programación')
 
 @section('content_header')
-<h1>{{$programacion->nombre}} {{$user->name}}</h1>
-@stop
+    <h1>{{ $programacion->nombre }}</h1>
+@endsection
+
+@section('subtitle', $user->name)
+
+@php
+    /* $view solo llega en modo consulta; en edición la variable no existe.
+       El JS original comparaba `view === ""` porque Blade imprime false como
+       cadena vacía: aquí se resuelve a un booleano de una vez. */
+    $soloLectura = (bool) ($view ?? false);
+    $puedeGuardar = $programacion->finished == 0 && ! $soloLectura;
+    $tabla = $tabla ?? [];
+    $puedeAsignarTecnico = auth()->user()->can('ver_programacion');
+@endphp
+
+{{-- Solo el enlace de vuelta: los botones con lógica viven dentro del x-data,
+     porque esta sección la pinta el layout fuera del componente. --}}
+@section('actions')
+    <a href="{{ route('programacion.index') }}" class="tw-btn-secondary">
+        <i class="fas fa-arrow-left"></i> Regresar
+    </a>
+@endsection
+
+@include('layouts.tw.partials.handsontable')
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/programacion/createV1.1.css') }}">
-<div id="loader" style="display: none;"></div>
-<div id="overlay" style="display: none;"></div>
-<input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
+    <div x-data="programacionCreate({
+            soloLectura: {{ $soloLectura ? 'true' : 'false' }},
+            puedeAsignarTecnico: {{ $puedeAsignarTecnico ? 'true' : 'false' }},
+            tablaId: {{ (int) $programacion->id }},
+            usuario: @js($user->name),
+            tecnicos: {{ Js::from($tecnicos->map(fn ($t) => $t->id . '. ' . $t->apellidos . ' ' . $t->nombres)->values()) }},
+            filas: {{ Js::from($tabla) }},
+            urls: {
+                busqueda:  '{{ route('programacion.busqueda', ['contrato' => '__id__']) }}',
+                store:     '{{ route('programacion.store') }}',
+                update:    '{{ route('programacion.update', ['id' => '__id__']) }}',
+                destroy:   '{{ route('programacion.destroy') }}',
+                finish:    '{{ route('programacion.finish', ['id' => $programacion->id]) }}',
+                plantilla: '{{ route('programacion.PlantillaStore') }}',
+                index:     '{{ route('programacion.index') }}',
+                municipios:'{{ route('municipios.json') }}',
+            },
+         })"
+         class="space-y-6">
 
-<input type="hidden" name="url_paltilla" id="url_plantilla" value="{{ route('programacion.PlantillaStore') }}">
-<input type="hidden" name="url_index" id="url_index" value="{{ route('programacion.index') }}">
-<input type="hidden" name="url_store" id="url_store" value="{{ route('programacion.store') }}">
-<input type="hidden" name="busqueda" id="busqueda" value="{{ route('programacion.busqueda',['contrato' => ':id']) }}">
-<input type="hidden" name="url_destroy" id="url_destroy" value="{{ route('programacion.destroy') }}">
-<input type="hidden" name="url_update" id="url_update" value="{{ route('programacion.update',['id' => ':id']) }}">
-<input type="hidden" name="url_finish" id="url_finish" value="{{ route('programacion.finish',['id' => ':id']) }}">
-<div class="shadow-container">
-    <div class="programacion-toolbar">
-        <a class="btn-back" href="{{ route('programacion.index') }}" title="Regresar">
-            <i class="fa fa-arrow-left"></i> Regresar
-        </a>
-        <div class="actions-group">
-            @if($programacion->finished == 0)
-                <button id="btnPlantilla" class="btn-gradient btn-gradient-primary">Añadir en Plantilla</button>
-                <button id="btnGuardar" class="btn-gradient btn-gradient-success">Guardar</button>
-            @endif
-        </div>
-    </div>
-
-    <div class="table-container">
-        <div id="tabla_programacion"></div>
-    </div>
-</div>
-
-<!-- Modal base -->
-<div class="modal fade modal-modern" id="addPlantilla" tabindex="-1" aria-labelledby="addPlantillaModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addPlantillaModalLabel">
-                    <i class="fas fa-file-alt text-primary"></i> Programación en Plantilla
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-
-                <div class="form-field-group">
-                    <label for="CONTRATO"><i class="fas fa-file-signature"></i> Contrato</label>
-                    <input type="text" class="form-control" name="contrato" id="CONTRATO">
-                </div>
-                <div class="form-field-group">
-                    <label for="TIPO_TRABAJO"><i class="fas fa-tools"></i> Tipo de Trabajo</label>
-                    <select class="form-control" name="tipo_trabajo" id="TIPO_TRABAJO">
-                        <option value="">Seleccione Tipo de Trabajo</option>
-                        <option value="FI-29 revisión periódica línea matriz">FI-29 revisión periódica línea matriz</option>
-                        <option value="10444">RP 10444</option>
-                        <option value="12161">RP 12161</option>
-                        <option value="12162">RN 12162</option>
-                        <option value="12163">SA 12163</option>
-                        <option value="12164">SA 12164</option>
-                    </select>
-                </div>
-
-                <div class="form-field-group">
-                    <label for="FECHA"><i class="fas fa-calendar-alt"></i> Fecha:</label>
-                    <input type="date" class="form-control" name="fecha" id="FECHA" readonly>
-                </div>
-                <div class="form-field-group">
-                    <label for="CELULAR"><i class="fas fa-mobile-alt"></i> Celular</label>
-                    <input type="text" class="form-control" name="celular" id="CELULAR">
-                </div>
-
-                <div class="form-field-group">
-                    <label for="NOMBRE_USUARIO"><i class="fas fa-user"></i> Nombre Usuario</label>
-                    <input type="text" class="form-control" name="nombre_usuario" id="NOMBRE_USUARIO">
-                </div>
-                <div class="form-field-group">
-                    <label for="ORDEN_TRABAJO"><i class="fas fa-hashtag"></i> Orden de Trabajo</label>
-                    <input type="text" class="form-control" id="ORDEN_TRABAJO" style="text-align: center;" disabled>
-                </div>
-
-                <div class="form-field-group">
-                    <label for="DIRECCION"><i class="fas fa-map-marked-alt"></i> Dirección</label>
-                    <input type="text" class="form-control" id="DIRECCION">
-                </div>
-                <div class="form-field-group">
-                    <label for="BARRIO"><i class="fas fa-map-pin"></i> Barrio</label>
-                    <input type="text" class="form-control" id="BARRIO">
-                </div>
-
-                <div class="form-field-group">
-                    <label for="CIUDAD"><i class="fas fa-city"></i> Municipio:</label>
-                    <select class="form-control select2 w-100" name="municipio" id="CIUDAD"></select>
-                </div>
-                <div class="form-field-group">
-                    <label><i class="fas fa-toggle-on"></i> Estado:</label>
-                    <div class="estado-options">
-                        <input type="radio" id="activo" name="estado" value="activo" checked>
-                        <label for="activo">Activo</label>
-                        <input type="radio" id="suspendido" name="estado" value="suspendido">
-                        <label for="suspendido">Suspendido</label>
+        <section class="tw-card">
+            <div class="tw-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-blue"><i class="fas fa-calendar-days"></i></span>
+                    <div>
+                        <h2 class="tw-card-title">Contratos programados</h2>
+                        <p class="tw-card-subtitle">
+                            @if ($soloLectura)
+                                Tabla en modo consulta.
+                            @else
+                                Escribe un contrato para traer sus datos; el resto de campos se
+                                habilitan al encontrarlo.
+                            @endif
+                        </p>
                     </div>
                 </div>
 
-                <div class="form-field-group">
-                    <label for="CATEGORIA"><i class="fas fa-tag"></i> Categoría</label>
-                    <select class="form-control" name="categoria" id="CATEGORIA">
-                        <option value="">Seleccione categoría</option>
-                        <option value="RESIDENCIAL">RESIDENCIAL</option>
-                        <option value="COMERCIAL">COMERCIAL</option>
-                    </select>
-                </div>
-                <div class="form-field-group">
-                    <label for="FECHA_AGENDAMIENTO"><i class="fas fa-calendar-check"></i> Fecha Agendamiento</label>
-                    <input type="date" class="form-control" name="fecha_agendamiento" id="FECHA_AGENDAMIENTO">
-                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="tw-badge" :class="soloLectura ? 'chip-slate' : 'chip-emerald'"
+                          x-text="soloLectura ? 'Solo lectura' : 'Edición'"></span>
 
-                <div class="form-field-group full-width">
-                    <label for="OBSERVACIONES"><i class="fas fa-eye"></i> Observaciones</label>
-                    <input type="text" class="form-control" id="OBSERVACIONES" maxlength="200">
+                    @if ($puedeGuardar)
+                        <button type="button" class="tw-btn-secondary" @click="abrirPlantilla()">
+                            <i class="fas fa-file-circle-plus"></i> Añadir en plantilla
+                        </button>
+                        <button type="button" class="tw-btn-primary" @click="finalizar()"
+                                :disabled="guardando">
+                            <i class="fas" :class="guardando ? 'fa-spinner fa-spin' : 'fa-floppy-disk'"></i>
+                            Guardar
+                        </button>
+                    @endif
                 </div>
-
-                <div class="form-field-group full-width">
-                    <label for="PORQUE_PROGRAMO"><i class="fas fa-question-circle"></i> Por qué se programó</label>
-                    <input type="text" class="form-control" id="PORQUE_PROGRAMO" maxlength="200" readonly>
-                </div>
-
-                <div class="form-field-group">
-                    <label for="TECNICO"><i class="fas fa-user-cog"></i> Inspector:</label>
-                    <select class="form-control" name="nombre" id="TECNICO">
-                        <option value="">Seleccione Inspector</option>
-                        @foreach ($tecnicos as $inspector)
-                            <option value="{{$inspector->id}}. {{$inspector->apellidos}} {{$inspector->nombres}}">{{$inspector->apellidos}} {{$inspector->nombres}}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="form-field-group">
-                    <label><i class="fas fa-clock"></i> Jornada:</label>
-                    <div style="display: flex; gap: 1rem;">
-                        <select class="form-control" name="hora_inicio" id="JORNADA">
-                            <option value="">Seleccione Jornada</option>
-                            <option value="mañana">mañana</option>
-                            <option value="tarde">tarde</option>
-                            <option value="todo el dia">todo el dia</option>
-                        </select>
-                    </div>
-                </div>
-
             </div>
-            <div class="modal-footer">
-                <button type="button" id="btn_close" class="btn-secondary-modern">Cerrar</button>
-                <button class="btn-gradient btn-gradient-success" id="agregar">Agregar</button>
+
+            <div class="border-t border-slate-200/80 dark:border-slate-700/60">
+                <div id="tabla_programacion" class="ht-theme-main ht-compacta"></div>
+            </div>
+        </section>
+
+        @include('programacion.partials.create-modales')
+
+        {{-- Velo de guardado --}}
+        <div x-show="guardando" x-cloak
+             class="fixed inset-0 z-[10050] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+            <div class="rounded-2xl bg-white px-8 py-6 text-center shadow-2xl dark:bg-slate-800">
+                <i class="fas fa-spinner fa-spin mb-3 block text-3xl text-brand-600 dark:text-brand-300"></i>
+                <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Finalizando programación…</p>
             </div>
         </div>
     </div>
-</div>
+@endsection
 
-<div class="modal fade modal-modern" id="verMasModal" tabindex="-1" aria-labelledby="verMasModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="verMasModalLabel">
-                    <i class="fas fa-info-circle text-primary"></i> Información Completa
-                </h5>
-                <button type="button" class="btn-close" id="btnCerrarVerMasTop" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" style="width: 100%; display: block;">
-                {{-- Forzamos el ancho al 100% con !important para anular cualquier otro CSS --}}
-                <div class="bg-white p-3 rounded border shadow-sm" style="width: 100% !important; min-width: 100% !important; box-sizing: border-box; display: block;">
-                    <p id="verMasContent" class="mb-0" style="white-space: pre-wrap; word-break: break-word; color: #4a5568; line-height: 1.6; width: 100%; display: block;"></p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary px-4" id="btnCerrarVerMasFooter">Cerrar</button>
-            </div>
-        </div>
-    </div>
-</div>
-@php
-$tabla = isset($tabla) ? $tabla : []; // Si $tabla no está definida, se asigna un array vacío
-@endphp
 @section('js')
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/es.js"></script>
-<script>
-  const view = "{{ $view ?? false }}";
-</script>
-
-<script>
-  const urlMunicipios = "{{ route('municipios.json') }}";
-  const tecnicos = @json($tecnicos -> toArray());
-  const nombresTecnicos = tecnicos.map(tecnico => tecnico.id + '. ' + tecnico.apellidos + ' ' + tecnico.nombres);
-  const user = @json($user -> toArray());
-  const tabla_id = "{{ $programacion->id }}"
-  const ver_programacion = "{{ Auth::user()->can('ver_programacion') ? 'true' : 'false' }}";
-
-  const tabla_data = @json($tabla);
-  $('#CIUDAD').select2({
-    language: "es",
-    ajax: {
-      url: urlMunicipios, // Ruta a la función del controlador
-      dataType: 'json',
-      delay: 250, // Retraso antes de realizar la búsqueda
-      data: function(params) {
-        return {
-          term: params.term // Término de búsqueda
-        };
-      },
-      processResults: function(data) {
-        return {
-          results: $.map(data, function(item, key) { // Mapear resultados
-            return {
-              id: key,
-              text: item
-            };
-          })
-        };
-      },
-      cache: true
-    },
-    minimumInputLength: 2 // Mínimo de caracteres para iniciar la búsqueda
-  });
-</script>
-<script src="{{ asset('js/programacion/programacionV4-7.js') }}?v={{ time() }}" type="text/javascript"></script>
-<script src="{{ asset('js/formPlantilla.js') }}?v={{ time() }}" type="text/javascript"></script>
-@stop
-@stop
+    @include('programacion.partials.create-script')
+@endsection

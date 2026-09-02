@@ -12,7 +12,6 @@ use App\Http\Controllers\NotificationsController;
 
 Route::middleware(CheckRole::class)->group(function () {
     Route::get('/users', [UserController::class, 'index'])->name('index');
-    Route::get('/users/{user}', [UserController::class, 'edit'])->name('edit');
     Route::post('/users', [UserController::class, 'update'])->name('update');
     Route::post('/users/changeStatus/{user}', [UserController::class, 'changeStatus'])->name('changeStatus');
     Route::get('notifications/manage', [NotificationsController::class, 'manage'])->name('notifications.manage');

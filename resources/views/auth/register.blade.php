@@ -1,114 +1,56 @@
-@extends('adminlte::auth.register')
+@extends('layouts.tw.auth')
+
+@section('auth_header', 'Crear cuenta')
+@section('auth_intro', 'Registra un nuevo usuario en el sistema.')
+
 @section('auth_body')
+    <form action="{{ route('register') }}" method="post" autocomplete="off"
+          x-data="{ identification: '{{ old('identification') }}' }">
+        @csrf
 
-<form action="{{ route('register') }}" method="post" autocomplete="off">
-    @csrf
-    <link rel="stylesheet" href="{{asset('css/auth/register.css')}}">
-    <div class="input-group mb-3">
-        <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}" placeholder="Nombre completo" autofocus>
+        <x-auth-input name="name" label="Nombre completo"
+                      placeholder="Nombre y apellidos" icon="fas fa-user" autofocus />
 
-        <div class="input-group-append">
-            <div class="input-group-text">
-                <span class="fas fa-user"></span>
+        <x-auth-input name="email" type="email" label="Correo electrónico"
+                      placeholder="nombre@eyc.com.co" icon="fas fa-envelope" />
+
+        <div class="mb-5 grid grid-cols-[7.5rem_1fr] gap-3">
+            <div>
+                <label for="type_id" class="tw-label">Tipo</label>
+                <select id="type_id" name="type_id"
+                        @class(['tw-select', 'border-red-400' => $errors->has('type_id')])>
+                    <option value="" @selected(! old('type_id'))>—</option>
+                    <option value="CC" @selected(old('type_id') === 'CC')>CC</option>
+                    <option value="CE" @selected(old('type_id') === 'CE')>CE</option>
+                </select>
+            </div>
+            <div>
+                <label for="identification" class="tw-label">Identificación</label>
+                {{-- Sólo dígitos, máx. 13: la restricción vive en el x-model. --}}
+                <input id="identification" name="identification" inputmode="numeric"
+                       placeholder="No. de documento"
+                       x-model="identification"
+                       x-effect="identification = identification.replace(/\D/g, '').slice(0, 13)"
+                       @class(['tw-input', 'border-red-400' => $errors->has('identification')])>
             </div>
         </div>
-        @error('name')
-            <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
-    </div>
 
-    <div class="input-group mb-3">
-        <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email') }}" placeholder="Email">
+        @error('type_id') <p class="-mt-3 mb-4 text-sm text-red-600">{{ $message }}</p> @enderror
+        @error('identification') <p class="-mt-3 mb-4 text-sm text-red-600">{{ $message }}</p> @enderror
 
-        <div class="input-group-append">
-            <div class="input-group-text">
-                <span class="fas fa-envelope"></span>
-            </div>
-        </div>
-        @error('email')
-            <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
-    </div>
+        <x-auth-input name="password" label="Contraseña"
+                      placeholder="Mínimo 8 caracteres" icon="fas fa-lock" toggle />
 
-    <div class="input-group mb-3">
-        <select name="type_id" class="form-control @error('type_id') is-invalid @enderror">
-            <option value="" selected>Tipo de identificación</option>
-            <option value="CC">CC</option>
-            <option value="CE">CE</option>
-        </select>
+        <x-auth-input name="password_confirmation" label="Confirmar contraseña"
+                      placeholder="Repite la contraseña" icon="fas fa-lock" toggle />
 
-        <div class="input-group-append">
-            <div class="input-group-text">
-                <span class="fas fa-id-card"></span>
-            </div>
-        </div>
-        @error('type_id')
-            <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
-    </div>
-
-    <div class="input-group mb-3">
-        <input type="number" id="identification" name="identification" class="form-control @error('identification') is-invalid @enderror" placeholder="No de identificación">
-
-        <div class="input-group-append">
-            <div class="input-group-text">
-                <span class="fas fa-id-card"></span>
-            </div>
-        </div>
-        @error('identification')
-            <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
-    </div>
-
-    <div class="input-group mb-3">
-        <input type="password" name="password" class="form-control @error('password') is-invalid @enderror" placeholder="Contraseña">
-
-        <div class="input-group-append">
-            <div class="input-group-text">
-                <span class="fas fa-lock"></span>
-            </div>
-        </div>
-        @error('password')
-            <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
-    </div>
-
-    <div class="input-group mb-3">
-        <input type="password" name="password_confirmation" class="form-control @error('password_confirmation') is-invalid @enderror" placeholder="Confirmar la contraseña">
-
-        <div class="input-group-append">
-            <div class="input-group-text">
-                <span class="fas fa-lock"></span>
-            </div>
-        </div>
-        @error('password_confirmation')
-            <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
-    </div>
-
-    <button type="submit" class="btn btn-block btn-flat btn-primary">
-        <span class="fas fa-user-plus"></span>
-        Registrarse
-    </button>
-
-</form>
-
-@section('js')
-<script>
-    document.getElementById('identification').addEventListener('input', function() {
-        if (this.value.length > 13) {
-            this.value = this.value.slice(0, 13);
-        }
-    });
-    document.getElementById('identification').addEventListener('input', function() {
-        this.value = this.value.replace(/[^0-9]/g, '');
-    });
-
-    document.getElementById('identification').addEventListener('keydown', function(e) {
-        if (!/^[0-9]*$/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete') {
-            e.preventDefault();
-        }
-    });
-</script>
+        <button type="submit" class="tw-btn-primary w-full py-3 text-[15px]">
+            <i class="fas fa-user-plus text-xs"></i> Registrarse
+        </button>
+    </form>
 @endsection
+
+@section('auth_footer')
+    ¿Ya tienes cuenta?
+    <a href="{{ route('login') }}" class="font-semibold text-brand-600 hover:underline">Inicia sesión</a>
 @endsection

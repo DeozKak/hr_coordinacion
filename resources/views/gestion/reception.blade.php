@@ -1,106 +1,150 @@
-@extends('adminlte::page')
+@extends('layouts.tw.app')
 
 @section('title', 'Recepción')
 
 @section('content_header')
-<div></div>
-<!-- <h1>Recepción</h1le=> -->
+    <h1>Recepción</h1>
 @endsection
 
+@section('subtitle', 'Consulta de las órdenes recibidas.')
+
+@include('layouts.tw.partials.handsontable')
+
+@php
+    $opcInspectores = $inspectors->map(fn ($i) => [
+        'value' => $i->id, 'label' => "{$i->id}. {$i->apellidos} {$i->nombres}",
+    ])->values();
+@endphp
+
 @section('content')
-<link rel="stylesheet" href="{{asset('css/gestion/reception.css')}}?v={{ time() }}">
-<div id="loaderPageReception" style="display: none"></div>
-<div class="card cardReception" style="display: none">
-    <div class="card-body">
-        <x-adminlte-card class="tituloFormSalAux" title="Filtros" theme="info" icon="fas fa-tags" collapsible maximizable>
-            <form id="formSearchReception" autocomplete="off" class="py-2">
-                <div class="row">
-                    <div class="col-md-3">
-                        <label for="ordenTrabajo">Orden principal</label>
-                        <input class="form-control numericalInput" type="text" id="ordenTrabajo">
-                    </div>
-                    <div class="col-md-3">
-                        <label for="ordenExterna">Orden segundaria</label>
-                        <input class="form-control numericalInput" type="text" id="ordenExterna">
-                    </div>
-                    <div class="col-md-3">
-                        <label for="numeroSolicitud">Número de solicitud</label>
-                        <input class="form-control numericalInput" type="text" id="numeroSolicitud">
-                    </div>
-                    <div class="col-md-3">
-                        <label for="contrato">Contrato</label>
-                        <input class="form-control numericalInput" type="text" id="contrato">
+    <div x-data="recepcion({
+            urls: {
+                todo:    '{{ route('management.reception') }}',
+                filtrar: '{{ route('management.filterDataReception') }}',
+            },
+         })"
+         class="space-y-6">
+
+        {{-- =============================== FILTROS =========================== --}}
+        <section class="tw-card">
+            <button type="button" class="tw-card-header w-full text-left" @click="filtrosAbiertos = !filtrosAbiertos">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-blue"><i class="fas fa-filter"></i></span>
+                    <div>
+                        <h2 class="tw-card-title">Filtros</h2>
+                        <p class="tw-card-subtitle">
+                            Los campos de número admiten varios valores; pega una lista y se reparte sola.
+                        </p>
                     </div>
                 </div>
-                <div class="row mt-4">
-                    <div class="col-md-4">
-                        <label for="direccion">Dirección</label>
-                        <input class="form-control" type="text" id="direccion">
+                <i class="fas fa-chevron-down text-sm text-slate-400 transition"
+                   :class="filtrosAbiertos && 'rotate-180'"></i>
+            </button>
+
+            {{-- Sin x-collapse: aquí no hay ventana de por medio, pero se mantiene
+                 la misma forma que en el resto de la aplicación. --}}
+            <div x-show="filtrosAbiertos" x-cloak>
+                <div class="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4">
+                    <x-lista-numeros label="Orden principal" model="filtros.ordenTrabajo" />
+                    <x-lista-numeros label="Orden secundaria" model="filtros.ordenExterna" />
+                    <x-lista-numeros label="Número de solicitud" model="filtros.numeroSolicitud" />
+                    <x-lista-numeros label="Contrato" model="filtros.contrato" />
+
+                    <div class="sm:col-span-2">
+                        <label class="tw-label" for="direccion">Dirección</label>
+                        <input type="text" id="direccion" class="tw-input" x-model="filtros.direccion">
                     </div>
-                    <div class="col-md-4">
-                        <label for="ccOperario">Codigo del tecnico</label>
-                        <select class="form-control" id="ccOperario">
-                            <option value="">Seleccione...</option>
-                            @foreach($inspectors as $inspector)
-                                <option value="{{$inspector->id}}">{{$inspector->id}}</option>     
-                            @endforeach
-                        </select>
+
+                    <div class="sm:col-span-2">
+                        <x-multi-select label="Código del técnico"
+                                        :options="$opcInspectores"
+                                        model="filtros.ccOperario"
+                                        placeholder="Todos los técnicos" />
                     </div>
-                    <div class="col-md-4 ">
-                        <label for="tipo">Tipo</label>
-                        <select class="form-control" id="tipo">
-                            <option value="">Seleccione...</option>
+
+                    <div>
+                        <label class="tw-label" for="tipo">Tipo</label>
+                        <select id="tipo" class="tw-select" x-model="filtros.tipo">
+                            <option value="">Todos</option>
                             <option value="Existe efe">Existe efe</option>
                             <option value="No existe efe">No existe efe</option>
                         </select>
                     </div>
-                </div>
-                <div class="row mt-4">
-                    <div class="col-md-4">
-                        <label for="estadoRecepcion">Estado recepción</label>
-                        <select class="form-control" id="estadoRecepcion">
-                            <option value="">Seleccione...</option>
+
+                    <div>
+                        <label class="tw-label" for="estadoRecepcion">Estado de recepción</label>
+                        <select id="estadoRecepcion" class="tw-select" x-model="filtros.estadoRecepcion">
+                            <option value="">Todos</option>
                             <option value="1">1</option>
                             <option value="2">2</option>
                         </select>
                     </div>
-                    <div class="col-md-4">
-                        <label for="created_at">Fecha recepción</label>
-                        <input class="form-control" type="date" id="created_at">
+
+                    <div>
+                        <label class="tw-label" for="created_at">Fecha de recepción</label>
+                        <input type="date" id="created_at" class="tw-input" x-model="filtros.created_at">
                     </div>
-                    <div class="col-md-4">
-                        <label for="numActa">Acta</label>
-                        <input class="form-control numericalInput" type="text" id="numActa">
-                    </div>
+
+                    <x-lista-numeros label="Acta" model="filtros.numActa" />
                 </div>
-                <div class="row mt-4">
-                    <div class="col-md-4">
-                        <button class="btn btn-primary btnSearchReception" type="button">Buscar</button>
-                        <button type="button" class="btn btn-danger btnClearReception">Limpiar</button>
-                    </div>
+
+                <div class="flex flex-wrap items-center gap-2 border-t border-slate-200/80 px-5 py-4
+                            dark:border-slate-700/60">
+                    <button type="button" class="tw-btn-primary" @click="buscar()" :disabled="cargando">
+                        <i class="fas" :class="cargando ? 'fa-spinner fa-spin' : 'fa-magnifying-glass'"></i>
+                        Buscar
+                    </button>
+                    <button type="button" class="tw-btn-secondary" @click="limpiar()" x-show="hayFiltro" x-cloak>
+                        <i class="fas fa-eraser"></i> Limpiar
+                    </button>
                 </div>
-            </form>
-        </x-adminlte-card>
-        <h2 style="text-align: center;">Recepción</h2>
-        <p class="mt-3 totalResults"></p>
-        <div id="tableReception" style="position: relative;">
-            <!-- table reception -->
-        </div>
-        <!-- Overlay for loading -->
-        <div id="overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); z-index: 1000;">
-            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-                <span class="loaderReception"></span>
             </div>
-        </div>
+        </section>
+
+        {{-- ============================== RESULTADOS ========================= --}}
+        <section class="tw-card">
+            <div class="tw-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-violet"><i class="fas fa-inbox"></i></span>
+                    <div>
+                        <h2 class="tw-card-title">Recepción</h2>
+                        <p class="tw-card-subtitle" x-text="`${total} registros`"></p>
+                    </div>
+                </div>
+
+                {{-- Paginación explícita. La versión anterior cargaba páginas al
+                     llegar al borde de la rejilla leyendo el interior de
+                     Handsontable (view._wt), con un contador de sentido de
+                     desplazamiento que se descuadraba y repetía o saltaba
+                     páginas. El servidor ya pagina de cien en cien. --}}
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="text-slate-500" x-text="`Página ${pagina} de ${totalPaginas}`"></span>
+                    <button type="button" class="tw-btn-secondary tw-btn-sm"
+                            @click="irA(pagina - 1)" :disabled="pagina === 1 || cargando">Anterior</button>
+                    <button type="button" class="tw-btn-secondary tw-btn-sm"
+                            @click="irA(pagina + 1)" :disabled="pagina >= totalPaginas || cargando">Siguiente</button>
+                </div>
+            </div>
+
+            <div class="relative border-t border-slate-200/80 dark:border-slate-700/60">
+                <div id="tablaRecepcion" class="ht-theme-main ht-compacta"></div>
+
+                <div x-show="cargando" x-cloak
+                     class="absolute inset-0 z-[900] flex items-center justify-center bg-white/70
+                            backdrop-blur-[1px] dark:bg-slate-800/70">
+                    <i class="fas fa-spinner fa-spin text-2xl text-brand-600 dark:text-brand-300"></i>
+                </div>
+            </div>
+
+            <p x-show="!total && !cargando" x-cloak
+               class="border-t border-slate-200/80 px-5 py-10 text-center text-sm text-slate-500
+                      dark:border-slate-700/60">
+                No se encontraron datos con los filtros seleccionados.
+            </p>
+        </section>
     </div>
-</div>
+@endsection
 
 @section('js')
-<script src="{{ asset('js/management/reception.js') }}?v={{ time() }}"></script>
-<script>
-    const urlReception = "{{ route('management.reception') }}"
-    const token = "{{ csrf_token() }}"
-    const urlFilter = "{{ route('management.filterDataReception') }}";
-</script>
-@stop
+    @include('gestion.partials.reception-script')
 @endsection

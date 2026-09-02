@@ -22,6 +22,26 @@ Route::middleware('web')->group(function () {
 
         Route::post('/insercion_estadisticas_asignacion',[HomeController::class,'insercion_estadisticas_asignacion'])->name('insercion_estadisticas_asignacion');
 
+        Route::get('/prueba-ia', function () {
+            // 1. Instanciamos tu servicio
+            $extractor = new ExtraerFechas();
+
+            // 2. Colocamos uno de tus textos de prueba reales
+            $texto = "CALL CENTER - LUIS ANGULO - CEL: 3225829831  - AUTORIZA NOTIFICACIÓN ELECTRÓNICA: SI  - CORREO: PSERVICOSPUBLICOSOCC@OLIMPICA.COM.CO  SOLICITA RP COSTO $ 238.200  IVA INCLUIDO + RECONEXIÓN $ 44.142  FECHA SUGERIDA: 2026 -MAYO -MARTES 05  JORNADA PM SC  -)  - TIEMPO DE PRESTACIÓN 1 A 4 DH// DIANAMQ";
+
+            $fechaReferencia = date('Y-m-d');
+           // dd($texto);
+            // 4. Ejecutamos el servicio
+            $resultado = $extractor->findDates($texto, $fechaReferencia, 999);
+
+            // 5. Mostramos el resultado en pantalla
+            return response()->json([
+                'texto_evaluado' => $texto,
+                'fecha_referencia' => $fechaReferencia,
+                'resultado_ia' => $resultado
+            ]);
+        });
+
         Route::post('/estado-asignacion/guardar-tecnicos', [HomeController::class, 'guardarAsignacion'])->name('asignacion.guardar_tecnicos');
         Route::get('/home', [HomeController::class, 'index'])->name('home');
         Route::get('/jobs-pnd', function () {
