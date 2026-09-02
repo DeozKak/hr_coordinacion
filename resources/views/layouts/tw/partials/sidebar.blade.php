@@ -15,20 +15,30 @@
        x-cloak>
 
     {{-- Marca --}}
-    <a href="{{ url(config('adminlte.dashboard_url', 'home')) }}"
+    <a href="{{ url(config('navegacion.inicio', 'home')) }}"
        class="flex h-16 shrink-0 items-center gap-3 px-4"
        :class="!$store.ui.expanded && 'lg:justify-center lg:gap-0 lg:px-0'">
         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-700">
-            <img src="{{ asset(config('adminlte.logo_img')) }}"
-                 alt="{{ config('adminlte.logo_img_alt', '') }}" class="h-6 w-6 object-contain">
+            <img src="{{ asset(config('navegacion.logo')) }}"
+                 alt="{{ config('navegacion.logo_alt', '') }}" class="h-6 w-6 object-contain">
         </span>
         {{-- Se anima opacidad + ancho en vez de usar x-show: `display:none`
              desaparece de golpe y hace saltar la fila. --}}
         <span class="min-w-0 overflow-hidden leading-tight transition-[opacity,max-width]
                      duration-300 ease-[cubic-bezier(.4,0,.2,1)] motion-reduce:transition-none"
               :class="$store.ui.expanded ? 'max-w-[12rem] opacity-100' : 'max-w-0 opacity-0'">
+            {{-- En minúscula a propósito, no por descuido. La "e" y la "c" van
+                 a la altura de las mayúsculas, como en el logotipo: 745/546 es
+                 la razón entre la altura de mayúsculas y la de la x que declara
+                 Plus Jakarta Sans.
+
+                 Y bajan a peso 500 porque agrandar la letra engorda su trazo:
+                 aquí la base es peso 700, cuya asta mide 131 milésimas de em, y
+                 agrandada se iría a 179. El asta del peso 500 mide 93, que
+                 agrandada da 127: a un 3% de las 131 de al lado. --}}
+            @php $grande = 'text-[1.3645em] font-medium leading-[0]'; @endphp
             <span class="block truncate text-[16px] font-bold tracking-tight text-slate-900 dark:text-white">
-                E&amp;C Ingeniería
+                <span class="{{ $grande }}">e</span>&amp;<span class="{{ $grande }}">c</span> ingeniería
             </span>
             <span class="block truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                 Seguimiento Operación
@@ -36,9 +46,9 @@
         </span>
     </a>
 
-    {{-- Menú (alimentado por config/adminlte.php) --}}
+    {{-- Menú (alimentado por config/navegacion.php) --}}
     <nav class="flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden px-3 pb-4 pt-2" aria-label="Menú principal">
-        @foreach (config('adminlte.menu', []) as $item)
+        @foreach (config('navegacion.menu', []) as $item)
             @include('layouts.tw.partials.menu-item', ['item' => $item, 'depth' => 0])
         @endforeach
     </nav>

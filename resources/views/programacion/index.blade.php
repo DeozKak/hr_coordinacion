@@ -1,338 +1,281 @@
-@extends('adminlte::page')
+@extends('layouts.tw.app')
 
 @section('title', 'Programación')
 
 @section('content_header')
     <h1>Programación</h1>
-@stop
+@endsection
 
+@section('subtitle', 'Tablas de programación generadas y cargues de base.')
 
-@section( 'content')
+@section('actions')
+    <a href="{{ route('programacion.create') }}" class="tw-btn-primary">
+        <i class="fas fa-plus"></i> Generar nueva tabla
+    </a>
+@endsection
 
-    <body>
-    <link rel="stylesheet" href="{{asset('css/programacion/index.css')}}">
-    <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
-    <input type="hidden" name="url_base" id="url_base" value="{{ route('programacion.base') }}">
-    <input type="hidden" name="url_masivo" id="url_masivo" value="{{ route('programacion.masivos') }}">
-    <input type="hidden" name="url_buscar" id="url_buscar" value="{{ route('programacion.buscar_por_contrato') }}">
-    <input type="hidden" name="url_ver" id="url_ver"
-           value="{{ route('programacion.show', ['id' => ':id'])}}'?action=view">
+@section('content')
+    @php
+        /* El aviso de "tabla en curso" se resuelve con un diálogo de tres
+           opciones al final de la vista, así que se retira del flash para que el
+           layout no lo pinte además como banner. Esto corre mientras se captura
+           la sección, es decir antes de que el layout imprima los flashes. */
+        $tablaEnCurso = session('warning') ? ($temp ?? null) : null;
+        if ($tablaEnCurso) {
+            session()->forget('warning');
+        }
 
-    <input type="hidden" name="url_callcenterGDO" id="url_callcenterGDO"
-           value="{{ route('programacion.callCenterGDO')}}">
-    <input type="hidden" id="url_update_asignado" value="{{ route('pqrs.coordinacion.updateAsignado') }}">
+        /* El nombre guarda el origen del cargue: "Programación tecnicos …",
+           "Programación GDO …", o solo la fecha cuando se generó a mano. */
+        $filas = $datos->map(function ($dato) {
+            $partes = explode(' ', $dato->nombre);
+            $tipo = in_array($partes[1] ?? '', ['tecnicos', 'GDO'], true)
+                ? $partes[0] . ' ' . $partes[1]
+                : '';
 
+            return [
+                'id' => $dato->id,
+                'usuario' => $dato->usuario->name ?? '—',
+                'tipo' => $tipo,
+                'creado' => explode(' ', (string) $dato->created_at)[0],
+                'urlVer' => route('programacion.show', $dato->id) . '?action=view',
+                'urlEditar' => route('programacion.show', $dato->id) . '?action=edit',
+            ];
+        })->values();
+    @endphp
 
-    <div class="shadow-container">
-        <div class="controls-header">
-            <div class="actions-group">
-                @haspermission('ver_programacion')
-                <button id="openModalBtn" class="btn-gradient btn-gradient-primary btn-sm">Añadir a Base</button>
-                <button id="openMasivoBtn" class="btn-gradient btn-gradient-primary btn-sm">Programadas Tecnicos
-                </button>
-                <button id="opencalcenterGDOBtn" class="btn-gradient btn-secondary-modern btn-sm">Programadas GDO
-                </button>
-                @endhaspermission
-            </div>
-            <div class="actions-group">
-                <div class="search-group">
-                    <input type="text" class="form-control form-control-sm" id="buscadorContrato"
-                           placeholder="Buscar contrato...">
+    <div x-data="programacionIndex({
+            filas: {{ Js::from($filas) }},
+            urls: {
+                base:     '{{ route('programacion.base') }}',
+                masivos:  '{{ route('programacion.masivos') }}',
+                gdo:      '{{ route('programacion.callCenterGDO') }}',
+                buscar:   '{{ route('programacion.buscar_por_contrato') }}',
+                verBase:  '{{ route('programacion.show', ['id' => '__id__']) }}',
+            },
+         })"
+         class="space-y-6">
+
+        {{-- ============================== CARGUES ============================= --}}
+        @haspermission('ver_programacion')
+            <section class="tw-card p-5">
+                <div class="flex flex-wrap items-end justify-between gap-4">
+                    <div class="min-w-0">
+                        <span class="tw-eyebrow">Cargues</span>
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                            Sube un archivo de Excel para alimentar la base o registrar programadas.
+                        </p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" class="tw-btn-secondary" @click="modal = 'base'">
+                            <i class="fas fa-database"></i> Añadir a base
+                        </button>
+                        <button type="button" class="tw-btn-secondary" @click="modal = 'tecnicos'">
+                            <i class="fas fa-helmet-safety"></i> Programadas técnicos
+                        </button>
+                        <button type="button" class="tw-btn-secondary" @click="modal = 'gdo'">
+                            <i class="fas fa-headset"></i> Programadas GDO
+                        </button>
+                    </div>
                 </div>
-                <a href="{{ route('programacion.create') }}" class="btn-gradient btn-gradient-success btn-sm">
-                    <i class="fa fa-plus"></i> Generar nueva Tabla
-                </a>
+            </section>
+        @endhaspermission
+
+        {{-- =========================== BUSCAR CONTRATO ======================== --}}
+        <section class="tw-card p-5">
+            <label class="tw-label" for="buscadorContrato">Buscar por contrato</label>
+            <div class="relative sm:max-w-md">
+                <i class="fas fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2
+                          text-sm text-slate-400"></i>
+                <input type="search" id="buscadorContrato" class="tw-input pl-9"
+                       placeholder="Número de contrato…" x-model="contrato" @input="buscarConRetraso()">
+                <i class="fas fa-spinner fa-spin absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400"
+                   x-show="buscando" x-cloak></i>
             </div>
-        </div>
 
-        <div id="resultadosBusqueda" class="search-results-modern"></div>
+            <p class="tw-hint" x-show="contrato.trim() !== '' && !buscando && resultados.length === 0" x-cloak>
+                Ninguna programación contiene ese contrato.
+            </p>
 
-        <div class="table-responsive">
-            <table id="programacion" class="table">
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Usuario</th>
-                    <th>Tipo de programación</th>
-                    <th>Creado</th>
-                    <th>Acciones</th>
-                </tr>
-                </thead>
-                <tbody>
-                @foreach ($datos as $dato)
-                        <?php
-                        $fecha = explode(" ", $dato->created_at)[0];
-                        $nombre = explode(" ", $dato->nombre);
+            <ul class="mt-3 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200
+                       dark:divide-slate-700/50 dark:border-slate-700"
+                x-show="resultados.length > 0" x-cloak>
+                <template x-for="r in resultados" :key="r.id">
+                    <li>
+                        <a :href="urlVer(r.id)"
+                           class="flex items-center justify-between gap-4 px-4 py-3 text-sm transition
+                                  hover:bg-slate-50 dark:hover:bg-slate-700/40">
+                            <span class="min-w-0 truncate font-medium text-slate-700 dark:text-slate-200">
+                                <span x-text="r.nombre"></span>
+                                <span class="text-slate-400" x-text="'· ' + r.usuario"></span>
+                            </span>
+                            <span class="tw-badge chip-slate" x-text="'ID ' + r.id"></span>
+                        </a>
+                    </li>
+                </template>
+            </ul>
+        </section>
 
-                        if ($nombre[1] == "tecnicos") {
-                            $tipo_cargue = $nombre[0] . " " . $nombre[1];
+        {{-- ============================== LISTADO ============================= --}}
+        <section class="tw-card">
+            <div class="tw-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-blue"><i class="fas fa-table-list"></i></span>
+                    <div>
+                        <h2 class="tw-card-title">Tablas de programación</h2>
+                        <p class="tw-card-subtitle">
+                            <span x-text="filtrados.length"></span> de {{ $filas->count() }} tablas
+                        </p>
+                    </div>
+                </div>
 
-                        } elseif ($nombre[1] == "GDO") {
-                            $tipo_cargue = $nombre[0] . " " . $nombre[1];
-                        } else {
-                            $tipo_cargue = "";
-                        }
+                <div class="relative w-full sm:w-72">
+                    <i class="fas fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2
+                              text-sm text-slate-400"></i>
+                    <input type="search" class="tw-input pl-9" placeholder="Filtrar por usuario, tipo o ID…"
+                           x-model="busqueda" @input="pagina = 1">
+                </div>
+            </div>
 
-
-                        ?>
+            <div class="overflow-x-auto">
+                <table class="tw-table">
+                    <thead>
                     <tr>
-                        <td>{{$dato->id}}</td>
-                        <td>{{$dato->usuario->name}}</td>
-                        <td>{{$tipo_cargue}}</td>
-                        <td>{{$fecha}}</td>
-                        <td>
-                            @haspermission('ver_programacion')
-                            <a href="{{ route('programacion.show', $dato->id)}}'?action=edit"
-                               title="show">
-                                <button type="button" class="btn-gradient btn-gradient-warning btn-sm">Editar</button>
-                            </a>
-                            @endhaspermission
-                            <a href="{{ route('programacion.show', $dato->id)}}'?action=view"
-                               title="show">
-                                <button type="button" class="btn-gradient btn-gradient-success btn-sm">Ver</button>
-                            </a>
+                        @foreach ([['id', 'ID', 'fa-hashtag'], ['usuario', 'Usuario', 'fa-user'],
+                                   ['tipo', 'Tipo de programación', 'fa-tags'], ['creado', 'Creado', 'fa-calendar']] as [$campo, $texto, $icono])
+                            <th>
+                                <button type="button" class="inline-flex items-center gap-1.5 uppercase tracking-[0.06em]"
+                                        @click="ordenarPor('{{ $campo }}')">
+                                    <i class="fas {{ $icono }}"></i> {{ $texto }}
+                                    <i class="fas text-[10px]"
+                                       :class="orden === '{{ $campo }}'
+                                            ? (direccion === 'asc' ? 'fa-arrow-up-short-wide' : 'fa-arrow-down-wide-short')
+                                            : 'fa-sort opacity-40'"></i>
+                                </button>
+                            </th>
+                        @endforeach
+                        <th class="text-right"><i class="fas fa-gears"></i> Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <template x-for="fila in paginados" :key="fila.id">
+                        <tr>
+                            <td class="font-mono text-xs text-slate-500 dark:text-slate-400" x-text="fila.id"></td>
+                            <td class="font-medium text-slate-800 dark:text-slate-100" x-text="fila.usuario"></td>
+                            <td>
+                                <span class="tw-badge"
+                                      :class="fila.tipo ? 'chip-sky' : 'chip-slate'"
+                                      x-text="fila.tipo || 'Manual'"></span>
+                            </td>
+                            <td class="whitespace-nowrap text-slate-600 dark:text-slate-300" x-text="fila.creado"></td>
+                            <td class="text-right">
+                                <div class="flex justify-end gap-2">
+                                    @haspermission('ver_programacion')
+                                        <a :href="fila.urlEditar" class="tw-btn-secondary tw-btn-sm">
+                                            <i class="fas fa-pen"></i> Editar
+                                        </a>
+                                    @endhaspermission
+                                    <a :href="fila.urlVer" class="tw-btn-primary tw-btn-sm">
+                                        <i class="fas fa-eye"></i> Ver
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+
+                    <tr x-show="filtrados.length === 0" x-cloak>
+                        <td colspan="5" class="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                            <i class="fas fa-inbox mb-2 block text-2xl opacity-40"></i>
+                            No hay tablas que coincidan.
                         </td>
                     </tr>
-                @endforeach
-                </tbody>
-            </table>
-        </div>
-    </div>
+                    </tbody>
+                </table>
+            </div>
 
-
-    <!-- Modal base -->
-    <div class="modal fade modal-modern" id="addProgramacionModal" tabindex="-1"
-         aria-labelledby="addProgramacionModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-
-                    <h5 class="modal-title" id="addProgramacionModalLabel">
-                        <i class="fas fa-file-upload text-primary"></i>
-                        <span>Añadir a Base</span>
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="programacionForm" enctype="multipart/form-data" method="POST"
-                          action="{{ route('programacion.base') }}">
-                        @csrf
-                        <div class="mb-3">
-                            <input type="hidden" name="type" id="type" value="base">
-                            <label for="archivo" class="form-label">Archivo:</label>
-                            <input type="file" class="form-control" id="archivo" name="archivo">
-                            <br>
-                             Cargue estado 5: <input type="checkbox" style="margin-left: 5px" id="check" name="check_estado5" value="1">
-                            <br>
-                            <div id="loader" style="display: none;">
-                                <div class="spinner-border text-primary" role="status"></div>
-                                <span class="visually-hidden">Cargando...</span>
-                            </div>
-                        </div>
-                        <div class="modal-footer" style="border-top: none; padding: 1rem 0 0 0;">
-                            <button id="submit-programacion" type="submit" class="btn-gradient btn-gradient-primary">
-                                Subir
-                            </button>
-                        </div>
-                    </form>
+            <div class="flex items-center justify-between gap-4 border-t border-slate-200/80 px-5 py-3
+                        dark:border-slate-700/60"
+                 x-show="filtrados.length > porPagina" x-cloak>
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                    Página <span class="font-semibold" x-text="paginaActual"></span>
+                    de <span class="font-semibold" x-text="totalPaginas"></span>
+                </p>
+                <div class="flex gap-2">
+                    <button type="button" class="tw-btn-secondary tw-btn-sm"
+                            :disabled="paginaActual <= 1" @click="pagina = paginaActual - 1">
+                        <i class="fas fa-chevron-left"></i> Anterior
+                    </button>
+                    <button type="button" class="tw-btn-secondary tw-btn-sm"
+                            :disabled="paginaActual >= totalPaginas" @click="pagina = paginaActual + 1">
+                        Siguiente <i class="fas fa-chevron-right"></i>
+                    </button>
                 </div>
             </div>
-        </div>
+        </section>
+
+        @haspermission('ver_programacion')
+            @include('programacion.partials.index-modales')
+        @endhaspermission
     </div>
+@endsection
 
-    <!-- Modal programación prioridades -->
+@section('js')
+    @include('programacion.partials.index-script')
 
-    <div class="modal fade modal-modern" id="addMasivoModal" tabindex="-1" aria-labelledby="addMasivoModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addMasivoModalLabel">
-                        <i class="fas fa-file-upload text-primary"></i>
-                        <span>Programadas tecnicos</span>
-                    </h5>
-                    <button type="button" class="btn-close masivoModal" data-bs-dismiss="modal"
-                            aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form action="#" id="masivoForm" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="form-group">
-                            <input type="hidden" name="type" id="type" value="programacion_tec">
-                            <label for="archivo">Selecciona un archivo:</label>
+    @if ($tablaEnCurso)
+        <script>
+            /* Aviso de tabla en curso: continuar, empezar de cero (borrándola) o
+               cancelar. Antes vivía suelto en la vista con jQuery. */
+            (function () {
+                const seguir = @js(route('programacion.show', ['id' => $tablaEnCurso->id]) . '?action=edit');
+                const borrar = @js(route('programacion.erase', ['id' => $tablaEnCurso->id]));
 
-                            <input class="form-control mb-3" type="file" name="archivo" id="archivo">
-
-                            <div id="loaderMasivo" style="display: none;">
-                                <div class="spinner-border text-primary" role="status"></div>
-                                <span class="visually-hidden">Cargando...</span>
-                            </div>
-
-                        </div>
-                        <div class="modal-footer" style="border-top: none; padding: 1rem 0 0 0;">
-                            <button id="submit-masivo" class="btn-gradient btn-gradient-primary" type="submit">Cargar
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{--<!-- Programadas GDO -->
-    <div class="modal fade modal-modern" id="addGDO" tabindex="-1" aria-labelledby="addGDOLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addGDOLabel">Programadas GDO</h5>
-                    <button type="button" class="GDO" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form action="#" id="GDOForm" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="form-group">
-                            <label for="archivo">Selecciona un archivo:</label>
-
-                            <input class="form-control mb-3" type="file" name="archivo" id="archivo">
-
-                            <div id="loaderGDO" style="display: none;">
-                                <div class="spinner-border text-primary" role="status"></div>
-                                <span class="visually-hidden">Cargando...</span>
-                            </div>
-
-                        </div>
-                        <button id="submit-GDO" class="btn btn-primary" type="submit">Cargar</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    </div>
---}}
-    <!-- Call center GDO -->
-    <div class="modal fade modal-modern" id="callcenterGDO" tabindex="-1" aria-labelledby="callcenterGDOLabel"
-         aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="callcenterGDOLabel">
-                        {{-- Título actualizado con ícono --}}
-                        <i class="fas fa-file-upload text-primary"></i>
-                        <span>Programadas GDO</span>
-                    </h5>
-                    <button type="button" class="callcenterGDO btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form action="#" id="callcenterGDOForm" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="form-group">
-                            <input type="hidden" name="type" id="type" value="gdo">
-                            <label for="archivo">Selecciona un archivo:</label>
-
-                            <input class="form-control mb-3" type="file" name="archivo" id="archivo">
-
-                            <div id="loaderCallcenterGDO" style="display: none;">
-                                <div class="spinner-border text-primary" role="status"></div>
-                                <span class="visually-hidden">Cargando...</span>
-                            </div>
-
-                        </div>
-                        <div class="modal-footer" style="border-top: none; padding: 1rem 0 0 0;">
-                            {{-- Botón de Cargar actualizado con el estilo de gradiente --}}
-                            <button id="submit-callcenterGDO" class="btn-gradient btn-gradient-primary" type="submit">
-                                Cargar
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    </body>
-    @section('js')
-        <script src="{{ asset('js/programacion/indexProgramacionV3-8.js') }}?v={{ time() }}" type="text/javascript"></script>
-
-
-        @if (session('success'))
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    Swal.fire({
-                        position: "top-end",
-                        icon: "success",
-                        title: "{{ session('success') }}",
-                        showConfirmButton: false,
-                        toast: true,
-                        timer: 4000
-                    });
-                });
-            </script>
-        @endif
-        @if (session('error'))
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    Swal.fire({
-                        icon: "error",
-                        title: "Error",
-                        text: "{{session('error')}}",
-                    });
-                });
-            </script>
-        @endif
-        @if (session('warning'))
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    Swal.fire({
-                        title: "{{session('warning')}}",
+                const preguntar = async () => {
+                    const r = await window.Swal.fire({
+                        icon: 'question',
+                        title: 'Ya tienes una tabla de programación en curso',
+                        text: '¿Deseas continuar con ella?',
+                        allowOutsideClick: false,
                         showDenyButton: true,
                         showCancelButton: true,
-                        allowOutsideClick: false,
-                        confirmButtonText: "Si",
-                        denyButtonText: "No",
-                        cancelButtonText: "Cancelar",
-                    }).then((result) => {
-
-                        if (result.value) {
-                            window.location.href = "{{ route('programacion.show',['id' => $temp->id]) }}?action=edit";
-                        }
-                        if (result.isDenied) {
-                            swal.fire({
-                                icon: "warning",
-                                title: "Se perderán los cambios!",
-                                allowOutsideClick: false,
-                                showDenyButton: true,
-                                confirmButtonText: "Quiero generar una tabla nueva",
-                                denyButtonText: "Mantener cambios",
-                            }).then((result) => {
-
-                                if (result.isConfirmed) {
-                                    $.ajax({
-                                        type: "DELETE",
-                                        dataType: "json",
-                                        data: {
-                                            _token: "{{ csrf_token() }}"
-                                        },
-                                        url: "{{ route('programacion.erase', ['id' => $temp->id]) }}?action=edit",
-                                        success: function (response) {
-                                            console.log(response);
-                                        },
-                                        error: function (xhr, error, status) {
-
-                                            console.log(xhr.responseText);
-
-                                        }
-
-                                    });
-                                }
-                                if (result.isDenied) {
-                                    window.location.href = "{{ route('programacion.show',['id' => $temp->id]) }}?action=edit";
-                                }
-                            });
-                        }
-
+                        confirmButtonText: 'Sí, continuar',
+                        denyButtonText: 'No',
+                        cancelButtonText: 'Cancelar',
                     });
-                });
-            </script>
-        @endif
-    @stop
+
+                    if (r.isConfirmed) { window.location.href = seguir; return; }
+                    if (!r.isDenied) return;
+
+                    const s = await window.Swal.fire({
+                        icon: 'warning',
+                        title: '¡Se perderán los cambios!',
+                        allowOutsideClick: false,
+                        showDenyButton: true,
+                        confirmButtonText: 'Quiero generar una tabla nueva',
+                        denyButtonText: 'Mantener cambios',
+                    });
+
+                    if (s.isConfirmed) {
+                        try {
+                            await window.api(borrar, { method: 'DELETE' });
+                        } catch (e) {
+                            window.Swal.fire({ icon: 'error', title: 'Error',
+                                               text: 'No se pudo descartar la tabla en curso.' });
+                        }
+                    } else if (s.isDenied) {
+                        window.location.href = seguir;
+                    }
+                };
+
+                /* window.Swal lo define el bundle justo antes de arrancar Alpine.
+                   Si este script corre antes (lo normal, es inline y el bundle va
+                   diferido) se espera al evento; si corriera después, el evento ya
+                   no volvería a dispararse y hay que lanzarlo a mano. */
+                if (window.Swal) queueMicrotask(preguntar);
+                else document.addEventListener('alpine:init',
+                                               () => queueMicrotask(preguntar), { once: true });
+            })();
+        </script>
+    @endif
 @endsection

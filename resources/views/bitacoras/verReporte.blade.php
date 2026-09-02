@@ -52,7 +52,7 @@
                      `color-scheme` desde app.css, sin reinicializar la grilla. --}}
                 <div id="tabla" class="ht-theme-main"></div>
             </div>
-        </section>
+        </section>cl
     </div>
 @endsection
 

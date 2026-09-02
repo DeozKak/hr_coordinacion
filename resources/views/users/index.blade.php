@@ -169,7 +169,13 @@
                 page: 1,
                 perPage: 10,
 
-                // --- Estado del modal de edición ---
+                /* --- Estado del modal de edición ---
+                   `modal` es la bandera que ve el componente de ventana y
+                   `editing` el registro que se está editando. Iban en una sola
+                   variable, con el objeto haciendo de booleano: x-trap compara
+                   su valor anterior por identidad y está escrito para banderas,
+                   no para objetos. El resto de la aplicación usa este mismo par. */
+                modal: null,
                 editing: null,
                 form: { name: '', email: '', type_id: '', identification: '', role: '' },
                 assigned: [],
@@ -179,6 +185,8 @@
                 loadingPerms: false,
                 saving: false,
                 changingPassword: false,
+                error: '',
+                invalidos: [],
                 password: { nueva: '', confirmar: '', showNueva: false, showConfirmar: false },
 
                 get filtered() {
@@ -210,6 +218,7 @@
 
                 async openEdit(user) {
                     this.editing = user;
+                    this.modal = 'editar';
                     this.form = {
                         name: user.name,
                         email: user.email,
@@ -218,6 +227,8 @@
                         role: user.roles[0] ?? '',
                     };
                     this.resetPassword();
+                    this.error = '';
+                    this.invalidos = [];
                     this.assigned = [];
                     this.available = [];
                     this.assignedSel = [];
@@ -232,15 +243,63 @@
                         this.assigned = data.asignadas.map(p => p.name);
                         this.available = data.disponibles.map(p => p.name);
                     } catch (e) {
-                        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudieron cargar los permisos' });
+                        this.error = 'No se pudieron cargar los permisos.';
                     } finally {
                         this.loadingPerms = false;
                     }
                 },
 
                 closeEdit() {
+                    // La bandera primero: lo demás son campos que el modal ya
+                    // no muestra y no deben cambiar mientras se está cerrando.
+                    this.modal = null;
                     this.editing = null;
                     this.resetPassword();
+                    this.error = '';
+                    this.invalidos = [];
+                },
+
+                togglePassword() {
+                    if (this.changingPassword) this.resetPassword();
+                    else this.changingPassword = true;
+                    this.error = '';
+                    this.invalidos = [];
+                },
+
+                claseCampo(campo) {
+                    return this.invalidos.includes(campo)
+                        ? 'border-red-400 focus:border-red-500 focus:ring-red-500 dark:border-red-500'
+                        : '';
+                },
+
+                /* Las mismas reglas que aplica el servidor. Comprobarlas aquí
+                   evita el viaje y, sobre todo, el aviso flotante encima del
+                   modal: el mensaje sale dentro y el campo se marca. */
+                revisar() {
+                    this.invalidos = [];
+                    if (!this.form.name.trim()) this.invalidos.push('name');
+                    if (!this.form.email.trim()) this.invalidos.push('email');
+                    if (this.invalidos.length) return 'El nombre y el email son obligatorios.';
+
+                    if (!this.changingPassword) return '';
+
+                    const nueva = this.password.nueva;
+                    const confirmar = this.password.confirmar;
+
+                    if (!nueva.trim() || !confirmar.trim()) {
+                        this.invalidos = [!nueva.trim() ? 'nueva' : null,
+                                          !confirmar.trim() ? 'confirmar' : null].filter(Boolean);
+                        return 'Escribe la contraseña nueva y su confirmación.';
+                    }
+                    if (nueva.length < 8) {
+                        this.invalidos = ['nueva'];
+                        return 'La contraseña debe ser de mínimo 8 caracteres.';
+                    }
+                    if (nueva !== confirmar) {
+                        this.invalidos = ['nueva', 'confirmar'];
+                        return 'Las contraseñas no coinciden.';
+                    }
+                    return '';
                 },
 
                 resetPassword() {
@@ -255,12 +314,8 @@
                 },
 
                 async save() {
-                    if (!this.form.name.trim() || !this.form.email.trim()) {
-                        return Swal.fire({ icon: 'warning', title: 'Advertencia', text: 'El campo de nombre y email son obligatorios' });
-                    }
-                    if (this.changingPassword && (!this.password.nueva.trim() || !this.password.confirmar.trim())) {
-                        return Swal.fire({ icon: 'warning', title: 'Advertencia', text: 'El campo de contraseña es obligatorio' });
-                    }
+                    this.error = this.revisar();
+                    if (this.error) return;
 
                     this.saving = true;
                     try {
@@ -287,23 +342,22 @@
                                 permissions: [...this.assigned],
                             });
                             this.closeEdit();
-                            Swal.fire({ icon: 'success', title: 'Actualización exitosa', text: res.message });
+                            window.Swal.fire({ toast: true, position: 'top-end', icon: 'success',
+                                               title: res.message ?? 'Usuario actualizado',
+                                               timer: 3000, showConfirmButton: false });
                         } else {
-                            Swal.fire({
-                                icon: res.status === 'error' ? 'error' : 'warning',
-                                title: res.status === 'error' ? 'Error' : 'Advertencia',
-                                text: res.message,
-                            });
+                            // El modal se queda abierto con el motivo a la vista.
+                            this.error = res.message ?? 'No se pudo actualizar el usuario.';
                         }
                     } catch (e) {
-                        Swal.fire({ icon: 'error', title: 'Error', text: 'Hubo un problema al actualizar el Usuario' });
+                        this.error = 'Hubo un problema al actualizar el usuario.';
                     } finally {
                         this.saving = false;
                     }
                 },
 
                 async toggleState(user) {
-                    const { isConfirmed } = await Swal.fire({
+                    const { isConfirmed } = await window.Swal.fire({
                         title: '¿Estás seguro?',
                         text: '¿Quieres cambiar el estado del usuario?',
                         icon: 'warning',
@@ -320,7 +374,8 @@
                         // Ojo: Boolean("0") es true; el JSON puede traer el tinyint como string.
                         user.state = Number(res.user.state) === 1;
                     } catch (e) {
-                        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cambiar el estado del usuario' });
+                        window.Swal.fire({ icon: 'error', title: 'Error',
+                                           text: 'No se pudo cambiar el estado del usuario' });
                     }
                 },
             }));

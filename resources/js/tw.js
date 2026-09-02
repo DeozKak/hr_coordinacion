@@ -3,6 +3,7 @@ import persist from '@alpinejs/persist';
 import collapse from '@alpinejs/collapse';
 import focus from '@alpinejs/focus';
 import registrarAlertas from './alerts';
+import registrarCalendario from './datepicker';
 
 Alpine.plugin(persist);
 Alpine.plugin(collapse);
@@ -70,9 +71,49 @@ Alpine.store('ui', {
     animando() { window.dispatchEvent(new CustomEvent('ui-animando')); },
     toggleSidebar() { this.animando(); this.sidebarOpen = !this.sidebarOpen; },
     toggleMobile() { this.animando(); this.mobileOpen = !this.mobileOpen; },
-    toggleDark() {
-        this.dark = !this.dark;
-        document.documentElement.classList.toggle('dark', this.dark);
+    /* El cambio de tema se revela con un círculo que crece desde el botón.
+
+       Lo hace la API de transiciones de vista: el navegador congela la página,
+       aplica el cambio y nos deja animar la instantánea nueva. Por eso basta
+       con tocar esta función; ninguna vista se entera.
+
+       El `classList.toggle` va dentro de la devolución de llamada y de forma
+       síncrona a propósito: el navegador toma la instantánea nueva en cuanto
+       esta termina, y el efecto reactivo de Alpine sobre <html> llegaría un
+       microtarea más tarde, con el retrato ya hecho. */
+    toggleDark(evento = null) {
+        const aplicar = () => {
+            this.dark = !this.dark;
+            document.documentElement.classList.toggle('dark', this.dark);
+        };
+
+        const menosMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (typeof document.startViewTransition !== 'function' || menosMovimiento) {
+            aplicar();
+            return;
+        }
+
+        /* Centro del círculo: el botón que se pulsó. Se mide ahora, no dentro
+           de la promesa: `currentTarget` sólo existe mientras el evento se está
+           despachando. Sin evento, cae en la esquina superior derecha, que es
+           donde vive el interruptor. */
+        const caja = evento?.currentTarget?.getBoundingClientRect?.();
+        const x = caja ? caja.left + caja.width / 2 : window.innerWidth - 48;
+        const y = caja ? caja.top + caja.height / 2 : 48;
+
+        // Radio hasta la esquina más lejana, para que el círculo cubra todo.
+        const radio = Math.hypot(Math.max(x, window.innerWidth - x),
+                                 Math.max(y, window.innerHeight - y));
+
+        const transicion = document.startViewTransition(aplicar);
+
+        transicion.ready.then(() => {
+            document.documentElement.animate(
+                { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radio}px at ${x}px ${y}px)`] },
+                { duration: 480, easing: 'cubic-bezier(.4, 0, .2, 1)',
+                  pseudoElement: '::view-transition-new(root)' },
+            );
+        }).catch(() => {});
     },
 });
 
@@ -88,6 +129,9 @@ Alpine.data('flash', (message = '', type = 'success') => ({
 
 /* Define window.Swal con la API de SweetAlert sobre nuestro sistema. */
 registrarAlertas(Alpine);
+
+/* Sustituye el calendario nativo de los <input type="date"> por el nuestro. */
+registrarCalendario();
 
 window.Alpine = Alpine;
 Alpine.start();

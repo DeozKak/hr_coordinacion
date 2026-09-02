@@ -178,7 +178,7 @@
             </div>
 
             <div class="max-h-[320px] overflow-auto">
-                <table class="tw-table">
+                <table class="tw-table tw-table-fija">
                     <thead class="sticky top-0 z-10">
                         <tr>
                             <th>Tipo de trabajo</th>
@@ -214,7 +214,7 @@
                         @endforelse
                     </tbody>
                     @if (count($estadisticasProgramadas))
-                        <tfoot class="sticky bottom-0">
+                        <tfoot>
                             <tr>
                                 <td class="text-right uppercase tracking-wide text-slate-500">Total</td>
                                 <td class="text-right tabular-nums">{{ number_format($totalesProg['programadas'], 0, ',', '.') }}</td>
@@ -259,7 +259,7 @@
             </div>
 
             <div class="max-h-[340px] overflow-auto">
-                <table class="tw-table">
+                <table class="tw-table tw-table-fija">
                     <thead class="sticky top-0 z-10">
                         <tr>
                             <th x-text="vista === 'tipos' ? 'Tipo de trabajo' : 'Meses de vencimiento'"></th>
@@ -295,7 +295,7 @@
                         @endforeach
                     </tbody>
 
-                    <tfoot class="sticky bottom-0">
+                    <tfoot>
                         <tr>
                             <td class="text-right uppercase tracking-wide text-slate-500">Total</td>
                             <td class="text-right tabular-nums">
@@ -330,7 +330,7 @@
             </div>
 
             <div class="max-h-[340px] overflow-auto">
-                <table class="tw-table">
+                <table class="tw-table tw-table-fija">
                     <thead class="sticky top-0 z-10">
                         <tr>
                             <th>Localidad</th>
@@ -369,7 +369,7 @@
                         @endforelse
                     </tbody>
                     @if (count($tecnicos_por_localidad))
-                        <tfoot class="sticky bottom-0">
+                        <tfoot>
                             <tr>
                                 <td class="text-right uppercase tracking-wide text-slate-500">Total</td>
                                 <td class="text-right"><span class="pill-violet tabular-nums">{{ $granTotalTecnicos }}</span></td>

@@ -130,14 +130,21 @@
                         <td class="tabular-nums" x-text="d.orden"></td>
                         <td class="tabular-nums" x-text="d.orden_ext"></td>
                         <td x-text="d.resultado"></td>
-                        <td class="max-w-[16rem] truncate" :title="d.causal" x-text="d.causal"></td>
+                        {{-- El ancho va en un div: en una tabla de layout automático
+                             el navegador ignora max-width sobre la propia celda. --}}
+                        <td>
+                            <div class="max-w-[16rem] truncate" :title="d.causal" x-text="d.causal"></div>
+                        </td>
                         <td class="tabular-nums" x-text="d.fecha_dv"></td>
                         <td>
                             <span :class="d.gestionado ? 'pill-emerald' : 'pill-slate'"
                                   x-text="d.gestionado ? 'SÍ' : 'NO'"></span>
                         </td>
                         <td class="tabular-nums" x-text="d.fecha_gest"></td>
-                        <td class="max-w-[18rem] truncate" :title="d.observacion" x-text="d.observacion"></td>
+                        <td>
+                            <div class="max-w-[18rem] truncate" :title="d.observacion"
+                                 x-text="d.observacion"></div>
+                        </td>
                         <td>
                             <span :class="d.dias >= 2 ? 'pill-amber' : ''" class="tabular-nums" x-text="d.dias"></span>
                         </td>

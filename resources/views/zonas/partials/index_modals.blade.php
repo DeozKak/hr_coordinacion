@@ -1,379 +1,237 @@
-{{-- Modal para crear Municipio --}}
+{{-- ============================== MUNICIPIO ============================== --}}
+<x-modal show="modal === 'municipio'" close="cerrar()" size="max-w-lg"
+         icon="fa-city" tint="blue">
+    <x-slot:titleSlot><span x-text="municipio.id ? 'Editar municipio' : 'Crear municipio'"></span></x-slot:titleSlot>
 
-<div class="modal fade" id="municipioModal" tabindex="-1" role="dialog" aria-labelledby="crearMunicipioModalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="crearMunicipioModalLabel">Ingresar Municipio</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="nombre">Nombre</label>
-                    <input type="text" class="form-control" id="nombreMunicipio" name="nombre">
-                    <input type="hidden" id="idGuardarMunicipio">
-                </div>
-                <div class="form-group">
-                    <label for="sede">Sede</label>
-                    <select class="form-control" name="sede" id="sedeMunicipio">
-                        <option value="">Seleccione una sede</option>
-                        @foreach ($sedes as $sede)
-                            <option value="{{ $sede->id }}">{{ $sede->nombre }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="zona">Zona</label>
-                    <select class="form-control" name="zona" id="zonaMunicipio">
-                        <option value="">Seleccione una zona</option>
-                        @foreach ($zonas as $zona)
-                            <option value="{{ $zona->id }}">{{ $zona->nombre }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                <button type="submit" id="crearMunicipio" class="btn btn-primary">Crear Municipio</button>
-            </div>
+    <div class="space-y-4 px-5 py-5">
+        <div>
+            <label class="tw-label" for="nombreMunicipio">Nombre</label>
+            {{-- En mayúsculas al escribir, como en la versión anterior. --}}
+            <input type="text" id="nombreMunicipio" class="tw-input" :class="claseCampo('nombre')"
+                   maxlength="100" x-model="municipio.nombre"
+                   @input="municipio.nombre = $event.target.value.toUpperCase()">
         </div>
+
+        <div>
+            <label class="tw-label" for="sedeMunicipio">Sede</label>
+            <select id="sedeMunicipio" class="tw-select" :class="claseCampo('sede')" x-model="municipio.id_sede">
+                <option value="">Seleccione una sede</option>
+                <template x-for="s in sedes" :key="s.id">
+                    <option :value="s.id" x-text="s.nombre"></option>
+                </template>
+            </select>
+        </div>
+
+        <div>
+            <label class="tw-label" for="zonaMunicipio">Zona</label>
+            <select id="zonaMunicipio" class="tw-select" :class="claseCampo('zona')" x-model="municipio.id_zona">
+                <option value="">Seleccione una zona</option>
+                <template x-for="z in zonas" :key="z.id">
+                    <option :value="z.id" x-text="z.nombre"></option>
+                </template>
+            </select>
+        </div>
+
+        <p x-show="error" x-cloak
+           class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800
+                  dark:border-red-800/60 dark:bg-red-950/40 dark:text-red-200"
+           x-text="error"></p>
     </div>
-</div>
 
-{{-- Modal para crear Barrios --}}
+    <x-slot:footer>
+        <button type="button" class="tw-btn-secondary" @click="cerrar()">Cerrar</button>
+        <button type="button" class="tw-btn-primary" @click="guardarMunicipio()" :disabled="guardando">
+            <i class="fas" :class="guardando ? 'fa-spinner fa-spin' : 'fa-floppy-disk'"></i>
+            <span x-text="municipio.id ? 'Guardar cambios' : 'Crear municipio'"></span>
+        </button>
+    </x-slot:footer>
+</x-modal>
 
-<div class="modal fade" id="barrioModal" tabindex="-1" role="dialog" aria-labelledby="crearBarrioModalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="crearBarrioModalLabel">Ingresar Barrio</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="nombre">Nombre</label>
-                    <input type="text" class="form-control" id="barrio" name="nombre">
-                    <input type="hidden" id="idGuardarBarrio">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                <button type="submit" id="crearBarrio" class="btn btn-primary">Crear Municipio</button>
-            </div>
+{{-- ================================ BARRIO =============================== --}}
+<x-modal show="modal === 'barrio'" close="cerrar()" size="max-w-md"
+         icon="fa-map-location-dot" tint="violet">
+    <x-slot:titleSlot><span x-text="barrio.id ? 'Editar barrio' : 'Crear barrio'"></span></x-slot:titleSlot>
+
+    <div class="space-y-4 px-5 py-5">
+        <div>
+            <label class="tw-label" for="nombreBarrio">Nombre</label>
+            <input type="text" id="nombreBarrio" class="tw-input" :class="claseCampo('barrio')"
+                   maxlength="255" x-model="barrio.barrio"
+                   @input="barrio.barrio = $event.target.value.toUpperCase()">
+            <p class="tw-hint">El municipio se asigna al relacionar el barrio con un grupo.</p>
         </div>
+
+        <p x-show="error" x-cloak
+           class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800
+                  dark:border-red-800/60 dark:bg-red-950/40 dark:text-red-200"
+           x-text="error"></p>
     </div>
-</div>
 
-{{-- Modal para crear Grupos --}}
+    <x-slot:footer>
+        <button type="button" class="tw-btn-secondary" @click="cerrar()">Cerrar</button>
+        <button type="button" class="tw-btn-primary" @click="guardarBarrio()" :disabled="guardando">
+            <i class="fas" :class="guardando ? 'fa-spinner fa-spin' : 'fa-floppy-disk'"></i>
+            <span x-text="barrio.id ? 'Guardar cambios' : 'Crear barrio'"></span>
+        </button>
+    </x-slot:footer>
+</x-modal>
 
-<div class="modal fade" id="grupoModal" tabindex="-1" role="dialog" aria-labelledby="crearGrupoModalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="crearGrupoModalLabel">Ingresar Grupo</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="grupo">Nombre</label>
-                    <input type="text" class="form-control" id="grupo" name="grupo">
-                    <input type="hidden" id="idGuardarGrupo">
-                </div>
-                <div class="form-group">
-                    <label for="sede">Sede</label>
-                    <select class="form-control" name="sede" id="sedeGrupo">
-                        <option value="">Seleccione una sede</option>
-                        @foreach ($sedes as $sede)
-                            <option value="{{ $sede->id }}">{{ $sede->nombre }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                <button type="submit" id="crearGrupo" class="btn btn-primary">Crear Grupo</button>
-            </div>
-        </div>
-    </div>
-</div>
+{{-- ============================ SEDES Y ZONAS ============================ --}}
+{{-- Los formularios de sede y de zona no se apilan sobre esta ventana: la
+     sustituyen y al cerrarse vuelven aquí. Dos modales a la vez pelean por el
+     foco, porque cada uno monta su propio x-trap. --}}
+<x-modal show="modal === 'sedes'" close="cerrar()" size="max-w-4xl"
+         icon="fa-building" tint="slate"
+         title="Gestionar sedes y zonas">
 
-{{-- Modal para crear Sub Grupos --}}
+    <div class="grid gap-5 px-5 py-5 md:grid-cols-2">
 
-<div class="modal fade" id="subGrupoModal" tabindex="-1" role="dialog" aria-labelledby="crearSubGrupoModalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="crearSubGrupoModalLabel">Ingresar Sub Grupo</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="subgrupo">Nombre</label>
-                    <input type="text" class="form-control" id="subgrupo" name="subgrupo">
-                    <input type="hidden" id="idGuardarSubGrupo">
-                </div>
-                <div class="form-group">
-                    <label for="sede">Sede</label>
-                    <select class="form-control" name="sede" id="sedeSubGrupo">
-                        <option value="">Seleccione una sede</option>
-                        @foreach ($sedes as $sede)
-                            <option value="{{ $sede->id }}">{{ $sede->nombre }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                <button type="submit" id="crearSubGrupo" class="btn btn-primary">Crear Sub Grupo</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- Modal de asignacion de grupos --}}
-
-<div class="modal fade" id="AsignadorModal" aria-labelledby="asignadorModalLabel" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="asignadorModalLabel">Asignador</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="row mb-3">
-                    <div class="col-md-3 font-weight-bold">Municipio</div>
-                    <div class="col-md-3 font-weight-bold">Grupo</div>
-                    <div class="col-md-3 font-weight-bold">Sub Grupo</div>
-                    <div class="col-md-3 font-weight-bold">Barrios Disponibles</div>
-                </div>
-                <div id="selectores-container">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                <button type="submit" id="asignarGrupo" class="btn btn-primary">Guardar</button>
-
-            </div>
-        </div>
-        <div class="modal-footer">
-        </div>
-    </div>
-</div>
-
-<!-- Modal para Sedes y zonas -->
-
-<div class="modal fade" id="extraCardsModal" tabindex="-1" role="dialog" aria-labelledby="extraCardsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="extraCardsModalLabel">Gestionar Sedes y Zonas</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-
-                    <!-- Tarjeta Sedes -->
-
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">Sedes</h3>
-                            </div>
-                            <div class="card-body">
-                                <a class="btn btn-primary mb-2" id="btnCrearSede" data-toggle="modal" data-target="#sedeModal">Crear Sede</a>
-                                <table class="table table-striped" id="sedes">
-                                    <thead>
-                                        <tr>
-                                            <th>Nombre</th>
-                                            <th class="text-center">Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($sedes as $sede)
-                                        <tr data-id="{{$sede->id}}">
-                                            <td>{{ $sede->nombre }}</td>
-                                            <td>
-                                                <div style="display: flex; gap: 5px; justify-content: center;">
-                                                    <button class="btn btn-info btn-sm abrirSedeModal" data-sede-id="{{ $sede->id }}">Editar</button>
-                                                    @if ($sede->status == 1)
-                                                        <button class="btn btn-danger btn-sm" id="btnChangeStatusSede" data-sede-id="{{ $sede->id }}">Desactivar</button>
-                                                    @else
-                                                        <button class="btn btn-success btn-sm" id="btnChangeStatusSede" data-sede-id="{{ $sede->id }}">Activar</button>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                                <input type="hidden" id="cambiarEstadoSede" value="{{route('cortes_produccion.changeStatusSede')}}">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tarjeta zonas -->
-
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">Zonas</h3>
-                            </div>
-                            <div class="card-body">
-                                <a class="btn btn-primary mb-2" id="btnCrearZona" data-toggle="modal" data-target="#zonaModal">Crear Zona</a>
-                                <table class="table table-striped" id="zonas">
-                                    <thead>
-                                        <tr>
-                                            <th>Nombre</th>
-                                            <th class="text-center">Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($zonas as $zona)
-                                        <tr data-id="{{$zona->id}}">
-                                            <td>{{ $zona->nombre }}</td>
-                                            <td>
-                                                <div style="display: flex; gap: 5px; justify-content: center;">
-                                                    <button class="btn btn-info btn-sm abrirZonaModal" data-zona-id="{{ $zona->id }}">Editar</button>
-                                                    @if ($zona->status == 1)
-                                                        <button class="btn btn-danger btn-sm" id="btnChangeStatusZona" data-zona-id="{{ $zona->id }}">Desactivar</button>
-                                                    @else
-                                                        <button class="btn btn-success btn-sm" id="btnChangeStatusZona" data-zona-id="{{ $zona->id }}">Activar</button>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                                <input type="hidden" id="cambiarEstadoZona" value="{{route('cortes_produccion.changeStatusZona')}}">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modales de Crear Sede y Crear Zona -->
-<div>
-
-    {{-- Modal para crear Sede --}}
-
-    <div class="modal fade" id="sedeModal" tabindex="-1" role="dialog" aria-labelledby="crearSedeModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="crearSedeModalLabel">Ingresar Sede</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
+        @foreach ([
+            ['clave' => 'sedes', 'titulo' => 'Sedes', 'singular' => 'sede', 'icono' => 'fa-building'],
+            ['clave' => 'zonas', 'titulo' => 'Zonas', 'singular' => 'zona', 'icono' => 'fa-earth-americas'],
+        ] as $bloque)
+            <div class="rounded-2xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3
+                            dark:border-slate-700">
+                    <h3 class="text-sm font-semibold text-slate-900 dark:text-white">
+                        <i class="fas {{ $bloque['icono'] }} mr-1.5 text-slate-400"></i>{{ $bloque['titulo'] }}
+                    </h3>
+                    <button type="button" class="tw-btn-primary tw-btn-sm"
+                            @click="abrir{{ ucfirst($bloque['singular']) }}()">
+                        <i class="fas fa-plus"></i> Crear
                     </button>
                 </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="nombreSede">Nombre</label>
-                        <input type="text" class="form-control" id="nombreSede">
-                        <input type="hidden" id="idGuardarSede">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                    <button type="submit" id="crearSede" class="btn btn-primary">Crear Sede</button>
+
+                <div class="max-h-72 overflow-auto">
+                    <table class="tw-table tw-table-fija">
+                        <thead>
+                            <tr>
+                                <th scope="col">Nombre</th>
+                                <th scope="col" class="text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="r in {{ $bloque['clave'] }}" :key="r.id">
+                                <tr>
+                                    <td>
+                                        <span class="font-medium text-slate-900 dark:text-white" x-text="r.nombre"></span>
+                                        <span class="tw-badge ml-2" :class="r.activo ? 'chip-emerald' : 'chip-rose'"
+                                              x-text="r.activo ? 'Activo' : 'Inactivo'"></span>
+                                    </td>
+                                    <td class="text-right">
+                                        <div class="flex justify-end gap-2">
+                                            <button type="button" class="tw-btn-secondary tw-btn-sm"
+                                                    @click="abrir{{ ucfirst($bloque['singular']) }}(r)">
+                                                <i class="fas fa-pen"></i>
+                                            </button>
+                                            <button type="button" class="tw-btn-sm"
+                                                    :class="r.activo ? 'tw-btn-danger' : 'tw-btn-primary'"
+                                                    @click="cambiarEstado{{ ucfirst($bloque['singular']) }}(r)"
+                                                    x-text="r.activo ? 'Desactivar' : 'Activar'"></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+
+                            <tr x-show="!{{ $bloque['clave'] }}.length">
+                                <td colspan="2" class="px-4 py-8 text-center text-slate-500">
+                                    Sin registros.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
+        @endforeach
     </div>
 
-    {{-- Modal para crear Zona --}}
+    <x-slot:footer>
+        <button type="button" class="tw-btn-secondary" @click="cerrar()">Cerrar</button>
+    </x-slot:footer>
+</x-modal>
 
-    <div class="modal fade" id="zonaModal" tabindex="-1" role="dialog" aria-labelledby="crearZonaModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="crearZonaModalLabel">Ingresar Zona</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="nombreZona">Nombre</label>
-                        <input type="text" class="form-control" id="nombreZona">
-                        <input type="hidden" id="idGuardarZona">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                    <button type="submit" id="crearZona" class="btn btn-primary">Crear Zona</button>
-                </div>
-            </div>
+{{-- ========================== FORMULARIO DE SEDE ========================= --}}
+<x-modal show="modal === 'sede'" close="modal = 'sedes'" size="max-w-md"
+         icon="fa-building" tint="slate">
+    <x-slot:titleSlot><span x-text="sede.id ? 'Editar sede' : 'Crear sede'"></span></x-slot:titleSlot>
+
+    <div class="space-y-4 px-5 py-5">
+        <div>
+            <label class="tw-label" for="nombreSede">Nombre</label>
+            <input type="text" id="nombreSede" class="tw-input" :class="claseCampo('nombre')"
+                   maxlength="255" x-model="sede.nombre">
         </div>
+
+        <p x-show="error" x-cloak
+           class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800
+                  dark:border-red-800/60 dark:bg-red-950/40 dark:text-red-200"
+           x-text="error"></p>
     </div>
-</div>
 
-{{-- Modal de Asignacion de responsables subgrupos --}}
-<div class="modal fade" id="ResponsablesModal" tabindex="-1" role="dialog" aria-labelledby="ResponsablesModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="ResponsableModalLabel">Gestión de asignación</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body" id="responsables-modal-body">
-                <div class="text-center">
-                    <span class="spinner-border spinner-border-sm"></span> Cargando...
-                </div>
-            </div>
+    <x-slot:footer>
+        <button type="button" class="tw-btn-secondary" @click="modal = 'sedes'">Cerrar</button>
+        <button type="button" class="tw-btn-primary" @click="guardarSede()" :disabled="guardando">
+            <i class="fas" :class="guardando ? 'fa-spinner fa-spin' : 'fa-floppy-disk'"></i>
+            <span x-text="sede.id ? 'Guardar cambios' : 'Crear sede'"></span>
+        </button>
+    </x-slot:footer>
+</x-modal>
 
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+{{-- ========================== FORMULARIO DE ZONA ========================= --}}
+<x-modal show="modal === 'zona'" close="modal = 'sedes'" size="max-w-md"
+         icon="fa-earth-americas" tint="emerald">
+    <x-slot:titleSlot><span x-text="zona.id ? 'Editar zona' : 'Crear zona'"></span></x-slot:titleSlot>
 
-            </div>
+    <div class="space-y-4 px-5 py-5">
+        <div>
+            <label class="tw-label" for="nombreZona">Nombre</label>
+            <input type="text" id="nombreZona" class="tw-input" :class="claseCampo('nombre')"
+                   maxlength="255" x-model="zona.nombre">
         </div>
+
+        <p x-show="error" x-cloak
+           class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800
+                  dark:border-red-800/60 dark:bg-red-950/40 dark:text-red-200"
+           x-text="error"></p>
     </div>
-</div>
 
-<div class="modal fade" id="MasivaModal" tabindex="-1" role="dialog" aria-labelledby="MasivaModalLabel" aria-hidden="true">
-    <div class="modal-dialog " role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="MasivaModalLabel">Inserción Masiva</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body" id="masiva-modal-body">
-              <input type="file" id="archivo_masivo" class="form-control">
-                <br>
-                <div  style="display: none" id="cargando_masiva">
-                    <span class="spinner-border spinner-border-sm"></span> Cargando...
-                </div>
-                <div class="row" id="messageMasivas"></div>
-            </div>
+    <x-slot:footer>
+        <button type="button" class="tw-btn-secondary" @click="modal = 'sedes'">Cerrar</button>
+        <button type="button" class="tw-btn-primary" @click="guardarZona()" :disabled="guardando">
+            <i class="fas" :class="guardando ? 'fa-spinner fa-spin' : 'fa-floppy-disk'"></i>
+            <span x-text="zona.id ? 'Guardar cambios' : 'Crear zona'"></span>
+        </button>
+    </x-slot:footer>
+</x-modal>
 
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="btn-procesar">Procesar</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-            </div>
+{{-- ====================== INSPECTORES DE LA RELACIÓN ===================== --}}
+<x-modal show="modal === 'inspectores'" close="cerrar()" size="max-w-lg"
+         icon="fa-users" tint="blue" title="Inspectores asignados">
+    <x-slot:subtitle>
+        <span x-text="detalle.grupo ? `Grupo ${detalle.grupo} · sub grupo ${detalle.subgrupo}` : ''"></span>
+    </x-slot:subtitle>
+
+    <div class="px-5 py-5">
+        <div x-show="cargandoInspectores" x-cloak class="py-6 text-center">
+            <i class="fas fa-spinner fa-spin text-2xl text-brand-600 dark:text-brand-300"></i>
         </div>
-    </div>
-</div>
 
+        <ul x-show="!cargandoInspectores" x-cloak class="divide-y divide-slate-100 dark:divide-slate-700">
+            <template x-for="i in detalle.inspectores" :key="i.id">
+                <li class="flex items-center gap-3 py-2.5">
+                    <span class="tw-chip chip-blue h-8 w-8 text-xs" x-text="i.id"></span>
+                    <span class="text-sm" x-text="`${i.apellidos} ${i.nombres}`"></span>
+                </li>
+            </template>
+        </ul>
+
+        <p x-show="!cargandoInspectores && !detalle.inspectores.length" x-cloak
+           class="py-6 text-center text-sm text-slate-500">
+            No hay inspectores asignados.
+        </p>
+    </div>
+
+    <x-slot:footer>
+        <button type="button" class="tw-btn-secondary" @click="cerrar()">Cerrar</button>
+    </x-slot:footer>
+</x-modal>

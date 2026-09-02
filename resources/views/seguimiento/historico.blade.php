@@ -1,112 +1,66 @@
-@extends('adminlte::page')
+@extends('layouts.tw.app')
 
-@section('title', 'Historico')
+@section('title', 'Histórico')
 
 @section('content_header')
-<h1></h1>
+    <h1>Histórico</h1>
 @endsection
 
-@section('content')
-<link rel="stylesheet" href="{{asset('css/gestion/historico.css')}}?v={{ time()}}">
+@section('subtitle', 'Órdenes cerradas de revisiones periódicas, con su recorrido completo.')
 
-<div id="loaderPageHistorico" style="display: none;"></div>
-<div class="card cardHistorico" style="display: none">
-    <div class="card-body">
-        <x-adminlte-card title="Filtros" theme="info" icon="fas fa-tags" collapsible maximizable>
-            <form id="formSearchHistorico" autocomplete="off">
-                <div class="row">
-                    <div class="col-md-4">
-                        <label for="orden">Orden</label>
-                        <input class="form-control numericalInput" type="text" id="orden">
-                    </div>
-                    <div class="col-md-4">
-                        <label for="orden_solicitud_externa">Orden externa</label>
-                        <input class="form-control numericalInput" type="text" id="orden_solicitud_externa">
-                    </div>
-                    <div class="col-md-4">
-                        <label for="contrato">Contrato</label>
-                        <input class="form-control numericalInput" type="text" id="contrato">
+@include('layouts.tw.partials.handsontable')
+
+@section('content')
+    <div x-data="historico({ url: '{{ route('getDataHistorico') }}' })" class="space-y-6">
+
+        <section class="tw-card">
+            <div class="tw-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-blue"><i class="fas fa-clock-rotate-left"></i></span>
+                    <div>
+                        <h2 class="tw-card-title">Histórico</h2>
+                        <p class="tw-card-subtitle" x-text="`${total} registros`"></p>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-md-4">
-                        <label for="codigo_tecnico">Inspector</label>
-                        <select class="form-control" id="codigo_tecnico">
-                            <option value="">Seleccione...</option>
-                            @foreach ($inspectors as $inspector)
-                            <option value="{{$inspector->id}}">{{$inspector->id}} - {{$inspector->nombres}} {{$inspector->apellidos}}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="localidad">Localidad</label>
-                        <input class="form-control" type="text" id="localidad">
-                    </div>
-                    <div class="col-md-4">
-                        <label for="sector_operativo">Barrio</label>
-                        <input class="form-control" type="text" id="sector_operativo">
-                    </div>
+
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="text-slate-500" x-text="`Página ${pagina} de ${totalPaginas}`"></span>
+                    <button type="button" class="tw-btn-secondary tw-btn-sm"
+                            @click="irA(pagina - 1)" :disabled="pagina === 1 || cargando">Anterior</button>
+                    <button type="button" class="tw-btn-secondary tw-btn-sm"
+                            @click="irA(pagina + 1)" :disabled="pagina >= totalPaginas || cargando">Siguiente</button>
                 </div>
-                <div class="row">
-                    <div class="col-md-4">
-                        <label for="id_sede">Sede</label>
-                        <select class="form-control" id="id_sede">
-                            <option value="">Seleccione...</option>
-                            <option value="1">Capital</option>
-                            <option value="2">Norte</option>
-                            <option value="3">Sur</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="id_grupo">Grupo</label>
-                        <select class="form-control" id="id_grupo">
-                            <option value="">Seleccione...</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="id_subGrupo">Sub grupo</label>
-                        <select class="form-control" id="id_subGrupo">
-                            <option value="">Seleccione...</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="row mt-4">
-                    <div class="col-md-4">
-                        <button class="btn btn-primary btnSearchHistorico" type="button">Buscar</button>
-                        <button type="button" class="btn btn-danger btnClearHistorico">Limpiar</button>
-                        <input type="hidden" id="tokenCoordinacionRP" value="{{ csrf_token() }}">
-                    </div>
-                </div>
-            </form>
-        </x-adminlte-card>
-        <h2 style="text-align: center;">Histórico</h2>
-        <!-- <button id="descargarExcelHistorico" class="btn btn-success btn-sm">
-            <i class="fas fa-file-excel"></i> Descargar Excel
-        </button> -->
-        <p class="mt-1 totalResults"></p>
-        <div id="historico" class="mt-3" style="position: relative;">
-            <!-- tabla coordinacion -->
-        </div>
-        <!-- Overlay for loading -->
-        <div id="overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); z-index: 1000;">
-            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-                <span class="loaderHistorico"></span>
             </div>
-        </div>
+
+            <x-color-legend :items="[
+                ['g1', 'Asignación base OSF'],
+                ['g2', 'Información complementaria'],
+                ['g3', 'Programación'],
+                ['g4', 'Asignación inspector'],
+                ['g5', 'Recepción en campo'],
+                ['g6', 'Gestión en oficina'],
+                ['g7', 'Formulación y cálculo'],
+            ]" />
+
+            <div class="relative border-t border-slate-200/80 dark:border-slate-700/60">
+                <div id="tablaHistorico" class="ht-theme-main ht-compacta"></div>
+
+                <div x-show="cargando" x-cloak
+                     class="absolute inset-0 z-[900] flex items-center justify-center bg-white/70
+                            backdrop-blur-[1px] dark:bg-slate-800/70">
+                    <i class="fas fa-spinner fa-spin text-2xl text-brand-600 dark:text-brand-300"></i>
+                </div>
+            </div>
+
+            <p x-show="!total && !cargando" x-cloak
+               class="border-t border-slate-200/80 px-5 py-10 text-center text-sm text-slate-500
+                      dark:border-slate-700/60">
+                No hay registros en el histórico.
+            </p>
+        </section>
     </div>
-</div>
+@endsection
 
 @section('js')
-<script src="{{asset('js/management/historico.js')}}?v={{ time()}}"></script>
-<script>
-    const url1 = "{{route('getDataHistorico')}}"
-    // const url2 = "{{route('filterData')}}"
-    // const url3 = "{{route('guardarProgramacionTecnico')}}"
-    const url4 = "{{route('getGroupsForSede')}}"
-    const url5 = "{{route('getDataSubGroups')}}"
-    // const url6 = "{{route('descargarExcelCoordination')}}"
-    // const url7 = "{{route('guardarCausaCierre')}}"
-    // const url8 = "{{route('guardarFechaSolicitudCierre')}}"
-</script>
-@stop
+    @include('seguimiento.partials.historico-script')
 @endsection

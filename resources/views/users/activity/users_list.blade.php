@@ -1,309 +1,334 @@
-@extends('adminlte::page')
+@extends('layouts.tw.app')
 
-@section('title', 'Usuarios y Auditoría')
+@section('title', 'Actividad de usuarios')
 
 @section('content_header')
-    <h1>Gestión de Usuarios y Búsqueda de Auditoría</h1>
+    <h1>Actividad de usuarios</h1>
 @endsection
 
-@section('styles')
-
-    <style>
-        /* ... (tus estilos CSS existentes para las tablas y el modal) ... */
-        .dataTables_wrapper { width: 100%; }
-        #usersTable th, #usersTable td,
-        #auditLogTable th, #auditLogTable td {
-            white-space: nowrap;
-            vertical-align: top;
-        }
-        #auditLogTable td.values-cell { /* Ajustado para que el render HTML del controller funcione */
-            white-space: normal; /* Permitir que el contenido interno con flex se maneje bien */
-        }
-        #auditLogTable td.values-cell ul li, /* Si sigues usando UL/LI, sino ajustar */
-        #auditLogTable td.values-cell div.snippet-text-container + a.view-full-json { /* Para el render sin UL/LI */
-            display: flex;
-            align-items: baseline;
-        }
-        #auditLogTable td.values-cell .snippet-text-container { display: inline; }
-        #auditLogTable td.values-cell .snippet-text { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: baseline; }
-        #auditLogTable td.values-cell .view-full-json { margin-left: 8px; white-space: nowrap; flex-shrink: 0; }
-
-        #jsonModalContent { white-space: pre-wrap; word-break: break-all; background-color: #f8f9fa; padding: 15px; border-radius: 4px; max-height: 70vh; overflow-y: auto; }
-        .card { margin-top: 20px; }
-    </style>
-@endsection
+@section('subtitle', 'Listado de usuarios y buscador global de auditoría.')
 
 @section('content')
-    <div class="container-fluid">
-        {{-- Card para Lista de Usuarios (sin cambios significativos en su HTML) --}}
-        <div class="card">
-            <div class="card-header"><h3 class="card-title">Lista de Usuarios</h3></div>
-            <div class="card-body">
-                <table class="table table-bordered table-striped" id="usersTable" style="width:100%;">
+    <div x-data="actividadUsuarios({
+            usuarios: {{ Js::from($users->map(fn ($u) => [
+                'id' => $u->id, 'nombre' => $u->name, 'email' => $u->email,
+                'urlBd' => route('admin.user.activity.show', $u),
+                'urlHttp' => route('admin.user.http_activity.show', $u),
+            ])->values()) }},
+            eventos: {{ Js::from($available_events->values()) }},
+            modelos: {{ Js::from($available_models->map(fn ($m) => [
+                'valor' => $m, 'nombre' => \Illuminate\Support\Str::afterLast($m, '\\'),
+            ])->values()) }},
+            causantes: {{ Js::from($users_for_filter->map(fn ($n, $id) => ['id' => $id, 'nombre' => $n])->values()) }},
+            url: '{{ route('admin.global_audit.fetch') }}',
+         })"
+         class="space-y-6">
+
+        {{-- ============================== USUARIOS ============================ --}}
+        <section class="tw-card">
+            <div class="tw-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-blue"><i class="fas fa-users"></i></span>
+                    <div>
+                        <h2 class="tw-card-title">Usuarios</h2>
+                        <p class="tw-card-subtitle">
+                            <span x-text="usuariosFiltrados.length"></span> de
+                            <span x-text="usuarios.length"></span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="relative w-full sm:w-72">
+                    <i class="fas fa-magnifying-glass pointer-events-none absolute left-3 top-1/2
+                              -translate-y-1/2 text-sm text-slate-400"></i>
+                    <input type="search" class="tw-input pl-9" placeholder="Buscar por nombre o email…"
+                           x-model="buscarUsuario">
+                </div>
+            </div>
+
+            <div class="max-h-96 overflow-auto">
+                <table class="tw-table tw-table-fija">
                     <thead>
-                    <tr><th>ID</th><th>Nombre</th><th>Email</th><th>Acciones</th></tr>
+                    <tr>
+                        <th><i class="fas fa-hashtag"></i> ID</th>
+                        <th><i class="fas fa-user"></i> Nombre</th>
+                        <th><i class="fas fa-envelope"></i> Email</th>
+                        <th class="text-right"><i class="fas fa-clock-rotate-left"></i> Actividad</th>
+                    </tr>
                     </thead>
                     <tbody>
-                    @forelse ($users as $user_item)
+                    <template x-for="u in usuariosFiltrados" :key="u.id">
                         <tr>
-                            <td>{{ $user_item->id }}</td>
-                            <td>{{ $user_item->name }}</td>
-                            <td>{{ $user_item->email }}</td>
-                            <td>
-                                <a href="{{ route('admin.user.activity.show', $user_item) }}" class="btn btn-xs btn-info">Actividad BD</a>
-                                <a href="{{ route('admin.user.http_activity.show', $user_item) }}" class="btn btn-xs btn-warning">Actividad HTTP</a>
+                            <td class="font-mono text-xs text-slate-500 dark:text-slate-400" x-text="u.id"></td>
+                            <td class="font-medium text-slate-800 dark:text-slate-100" x-text="u.nombre"></td>
+                            <td class="text-slate-500 dark:text-slate-400" x-text="u.email"></td>
+                            <td class="text-right">
+                                <div class="flex justify-end gap-2">
+                                    <a :href="u.urlBd" class="tw-btn-secondary tw-btn-sm">
+                                        <i class="fas fa-database"></i> Base de datos
+                                    </a>
+                                    <a :href="u.urlHttp" class="tw-btn-secondary tw-btn-sm">
+                                        <i class="fas fa-globe"></i> HTTP
+                                    </a>
+                                </div>
                             </td>
                         </tr>
-                    @empty
-                        <tr><td colspan="4" class="text-center">No se encontraron usuarios.</td></tr>
-                    @endforelse
+                    </template>
+
+                    <tr x-show="usuariosFiltrados.length === 0" x-cloak>
+                        <td colspan="4" class="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                            No se encontraron usuarios.
+                        </td>
+                    </tr>
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
-        {{-- Card para Buscador Global de Auditoría --}}
-        <div class="card">
-            <div class="card-header"><h3 class="card-title">Buscador Global de Auditoría de Base de Datos</h3></div>
-            <div class="card-body">
-                {{-- El action ya no es necesario, o puede ser # --}}
-                <form method="GET" action="#" id="auditSearchForm" class="mb-4">
-                    {{-- Campos del formulario como antes (date_from_audit, event_type_audit, etc.) --}}
-                    {{-- Asegúrate que los name de los input coincidan con lo que espera el controlador fetchGlobalAudits --}}
-                    <div class="row">
-                        <div class="col-md-3">
-                            <label for="date_from_audit">Desde Fecha:</label>
-                            <input type="date" name="date_from_audit" id="date_from_audit" class="form-control">
-                        </div>
-                        <div class="col-md-3">
-                            <label for="date_to_audit">Hasta Fecha:</label>
-                            <input type="date" name="date_to_audit" id="date_to_audit" class="form-control">
-                        </div>
-                        <div class="col-md-3">
-                            <label for="event_type_audit">Tipo de Evento:</label>
-                            <select name="event_type_audit" id="event_type_audit" class="form-control form-select">
-                                <option value="">Todos</option>
-                                @foreach($available_events as $event)
-                                    <option value="{{ $event }}">{{ ucfirst($event) }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="user_id_audit">Usuario (Causante):</label>
-                            <select name="user_id_audit" id="user_id_audit" class="form-control form-select">
-                                <option value="">Todos</option>
-                                @foreach($users_for_filter as $id => $name)
-                                    <option value="{{ $id }}">{{ $name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+        {{-- ========================== BUSCADOR AUDITORÍA ====================== --}}
+        <section class="tw-card">
+            <div class="tw-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-violet"><i class="fas fa-magnifying-glass-chart"></i></span>
+                    <div>
+                        <h2 class="tw-card-title">Auditoría de base de datos</h2>
+                        <p class="tw-card-subtitle">Elige al menos un filtro para buscar.</p>
                     </div>
-                    <div class="row mt-3">
-                        <div class="col-md-4">
-                            <label for="model_type_audit">Tipo de Modelo:</label>
-                            <select name="model_type_audit" id="model_type_audit" class="form-control form-select">
-                                <option value="">Todos</option>
-                                @foreach($available_models as $model_name)
-                                    <option value="{{ $model_name }}">{{ Str::afterLast($model_name, '\\') }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="model_id_audit">ID del Modelo:</label>
-                            <input type="number" name="model_id_audit" id="model_id_audit" class="form-control" placeholder="ID del registro afectado">
-                        </div>
-                        <div class="col-md-3 align-self-end">
-                            {{-- Cambiado a type="button" para manejo con JS --}}
-                            <button type="button" id="submitAuditSearchBtn" class="btn btn-primary mt-4">Buscar Auditoría</button>
-                            <button type="button" id="clearAuditSearchBtn" class="btn btn-secondary mt-4">Limpiar Filtros</button>
-                        </div>
-                    </div>
-                </form>
+                </div>
+            </div>
 
-                <hr>
-                <h4 class="mt-3">Resultados de la Auditoría:</h4>
-                <table class="table table-bordered table-striped table-hover display" id="auditLogTable" style="width:100%">
+            <div class="grid gap-4 border-t border-slate-200/80 px-5 py-5 dark:border-slate-700/60
+                        sm:grid-cols-2 lg:grid-cols-3">
+                <div>
+                    <label class="tw-label" for="date_from_audit">Desde</label>
+                    <input type="date" id="date_from_audit" class="tw-input"
+                           x-model="filtros.date_from_audit" :max="filtros.date_to_audit || null">
+                </div>
+                <div>
+                    <label class="tw-label" for="date_to_audit">Hasta</label>
+                    <input type="date" id="date_to_audit" class="tw-input"
+                           x-model="filtros.date_to_audit" :min="filtros.date_from_audit || null">
+                </div>
+                <div>
+                    <label class="tw-label" for="event_type_audit">Tipo de evento</label>
+                    <select id="event_type_audit" class="tw-select" x-model="filtros.event_type_audit">
+                        <option value="">Todos</option>
+                        <template x-for="e in eventos" :key="e">
+                            <option :value="e" x-text="e.charAt(0).toUpperCase() + e.slice(1)"></option>
+                        </template>
+                    </select>
+                </div>
+                <div>
+                    <label class="tw-label" for="user_id_audit">Usuario causante</label>
+                    <select id="user_id_audit" class="tw-select" x-model="filtros.user_id_audit">
+                        <option value="">Todos</option>
+                        <template x-for="c in causantes" :key="c.id">
+                            <option :value="c.id" x-text="c.nombre"></option>
+                        </template>
+                    </select>
+                </div>
+                <div>
+                    <label class="tw-label" for="model_type_audit">Tipo de modelo</label>
+                    <select id="model_type_audit" class="tw-select" x-model="filtros.model_type_audit">
+                        <option value="">Todos</option>
+                        <template x-for="m in modelos" :key="m.valor">
+                            <option :value="m.valor" x-text="m.nombre"></option>
+                        </template>
+                    </select>
+                </div>
+                <div>
+                    <label class="tw-label" for="model_id_audit">ID del registro</label>
+                    <input type="text" id="model_id_audit" class="tw-input" inputmode="numeric"
+                           placeholder="Solo con un tipo de modelo"
+                           :disabled="!filtros.model_type_audit"
+                           x-model="filtros.model_id_audit"
+                           @input="filtros.model_id_audit = $event.target.value.replace(/[^0-9]/g, '')">
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80
+                        px-5 py-4 dark:border-slate-700/60">
+                <p class="text-sm text-slate-500 dark:text-slate-400" x-text="resumen"></p>
+                <div class="flex gap-2">
+                    <button type="button" class="tw-btn-secondary" @click="limpiar()">
+                        <i class="fas fa-eraser"></i> Limpiar filtros
+                    </button>
+                    <button type="button" class="tw-btn-primary" @click="buscar()" :disabled="buscando">
+                        <i class="fas" :class="buscando ? 'fa-spinner fa-spin' : 'fa-magnifying-glass'"></i>
+                        Buscar
+                    </button>
+                </div>
+            </div>
+
+            <div x-show="truncado" x-cloak
+                 class="flex items-start gap-2 border-t border-amber-200 bg-amber-50 px-5 py-3 text-sm
+                        text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-200">
+                <i class="fas fa-triangle-exclamation mt-0.5"></i>
+                <span>
+                    La búsqueda devolvió <span class="font-semibold" x-text="total"></span> registros.
+                    Se muestran los <span class="font-semibold" x-text="limite"></span> más recientes;
+                    acota las fechas para ver el resto.
+                </span>
+            </div>
+
+            <div class="overflow-x-auto border-t border-slate-200/80 dark:border-slate-700/60"
+                 x-show="registros.length > 0" x-cloak>
+                <table class="tw-table">
                     <thead>
                     <tr>
                         <th>ID</th>
                         <th>Usuario</th>
                         <th>Evento</th>
                         <th>Modelo</th>
-                        <th>ID Modelo</th>
-                        <th>Valores Antiguos</th>
-                        <th>Valores Nuevos</th>
-                        <th>URL (Relativa)</th>
+                        <th>ID modelo</th>
+                        <th>Valores antiguos</th>
+                        <th>Valores nuevos</th>
+                        <th>URL</th>
                         <th>IP</th>
-                        <th>Fecha y Hora</th>
+                        <th>Fecha</th>
                     </tr>
                     </thead>
                     <tbody>
-                    {{-- El contenido se cargará vía AJAX por DataTables --}}
+                    <template x-for="r in paginados" :key="r.id">
+                        <tr class="align-top">
+                            <td class="font-mono text-xs text-slate-500 dark:text-slate-400" x-text="r.id"></td>
+                            <td class="whitespace-nowrap" x-text="r.user_name"></td>
+                            <td>
+                                <span class="tw-badge" :class="tinteEvento(r.event)"
+                                      x-text="r.event.charAt(0).toUpperCase() + r.event.slice(1)"></span>
+                            </td>
+                            <td class="whitespace-nowrap" x-text="r.auditable_model"></td>
+                            <td class="font-mono text-xs" x-text="r.auditable_id"></td>
+                            <td>@include('users.activity.partials.celda-valores',
+                                    ['expr' => 'r.old_values', 'titulo' => 'Valores antiguos'])</td>
+                            <td>@include('users.activity.partials.celda-valores',
+                                    ['expr' => 'r.new_values', 'titulo' => 'Valores nuevos'])</td>
+                            {{-- El ancho va en un div: max-width sobre un <td> lo
+                                 ignora el navegador en tablas de layout automático. --}}
+                            <td>
+                                <div class="max-w-xs truncate text-slate-500 dark:text-slate-400"
+                                     :title="r.url" x-text="r.url"></div>
+                            </td>
+                            <td class="whitespace-nowrap font-mono text-xs" x-text="r.ip_address"></td>
+                            <td class="whitespace-nowrap" x-text="r.created_at_formatted"></td>
+                        </tr>
+                    </template>
                     </tbody>
                 </table>
             </div>
-        </div>
 
-        {{-- Modal para ver JSON completo (sin cambios en su estructura HTML) --}}
-        <div class="modal fade" id="jsonDetailModal" tabindex="-1" aria-labelledby="jsonDetailModalLabel" aria-hidden="true">
-            {{-- ... estructura del modal ... --}}
-            <div class="modal-dialog modal-xl modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="jsonDetailModalLabel">Detalle Completo</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <h6 id="jsonModalFieldKey" class="mb-2"></h6>
-                        <div id="jsonModalContent" class="json-formatter-container"></div>
-                    </div>
-                </div>
+            @include('users.activity.partials.paginacion')
+
+            <div x-show="registros.length === 0" x-cloak
+                 class="border-t border-slate-200/80 px-5 py-16 text-center dark:border-slate-700/60">
+                <i class="fas fa-clipboard-list mb-3 block text-3xl text-slate-300 dark:text-slate-600"></i>
+                <p class="text-sm text-slate-500 dark:text-slate-400" x-text="mensajeVacio"></p>
             </div>
-        </div>
+        </section>
+
+        @include('users.activity.partials.json-modal')
     </div>
 @endsection
 
 @section('js')
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/json-formatter-js@2.3.4/dist/json-formatter.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/json-formatter-js@2.5.23/dist/json-formatter.umd.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/json-formatter-js@2.5.23/dist/json-formatter.min.css" rel="stylesheet">
+    @include('users.activity.partials.visor-json')
 
     <script>
-        function decodeHtmlEntities(text) { if (text === null || typeof text === 'undefined') { return ""; } var textArea = document.createElement('textarea'); textArea.innerHTML = text; return textArea.value; }
-        function sortObjectKeysRecursively(obj) { if (typeof obj !== 'object' || obj === null) { return obj; } if (Array.isArray(obj)) { return obj.map(item => sortObjectKeysRecursively(item)); } const sortedKeys = Object.keys(obj).sort((a, b) => a.localeCompare(b)); const result = {}; for (const key of sortedKeys) { result[key] = sortObjectKeysRecursively(obj[key]); } return result; }
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('actividadUsuarios', ({ usuarios, eventos, modelos, causantes, url }) => ({
+                ...window.visorJson(),
+                ...window.paginador(25),
+                usuarios, eventos, modelos, causantes, url,
 
-        $(document).ready(function () {
-            // DataTable para la lista de usuarios
-            if ($('#usersTable').length && !$.fn.dataTable.isDataTable('#usersTable') ) {
-                $('#usersTable').DataTable({
+                buscarUsuario: '',
+                buscando: false,
+                buscado: false,
+                registros: [],
+                total: 0,
+                truncado: false,
+                limite: 0,
 
-                    responsive: true
-                });
-            }
+                filtros: {
+                    date_from_audit: '', date_to_audit: '', event_type_audit: '',
+                    user_id_audit: '', model_type_audit: '', model_id_audit: '',
+                },
 
-            // DataTable para los resultados de la auditoría
-            var auditLogTable = null;
-            if ($('#auditLogTable').length) { // Inicializar siempre, pero se cargará vacío al inicio
-                auditLogTable = $('#auditLogTable').DataTable({
-                    "processing": true, // Muestra indicador de "Procesando..."
-                    // "serverSide": true, // Para paginación y filtros del lado del servidor (más avanzado)
-                    "ajax": {
-                        "url": "{{ route('admin.global_audit.fetch') }}", // Ruta al endpoint AJAX
-                        "type": "GET",
-                        "data": function (d) { // 'd' son los parámetros que DataTables envía (para paginación, búsqueda interna etc.)
-                            // Añadimos los datos de nuestro formulario de filtro
-                            var formData = $('#auditSearchForm').serializeArray();
-                            $.each(formData, function(key, val){
-                                d[val.name] = val.value;
-                            });
-                            // console.log('Enviando a DataTables:', d); // Para depurar
-                            return d; // O return $('#auditSearchForm').serialize(); si tu backend solo necesita eso
-                        },
-                        "dataSrc": "data" // Asumiendo que el JSON de respuesta es { "data": [...] }
-                    },
-                    "deferLoading": 0,
-                    "columns": [
-                        { "data": "id" },
-                        { "data": "user_name" },
-                        { "data": "event_display" }, // Usar el HTML pre-renderizado para el badge
-                        { "data": "auditable_model" },
-                        { "data": "auditable_id" },
-                        { "data": "old_values_html", "className": "values-cell" }, // Usar el HTML pre-renderizado
-                        { "data": "new_values_html", "className": "values-cell" }, // Usar el HTML pre-renderizado
-                        { "data": "url" },
-                        { "data": "ip_address" },
-                        { "data": "created_at_formatted" }
-                    ],
-                    "order": [[9, "desc"]], // Ordenar por Fecha (índice 9)
-                    "scrollX": true,
-                    responsive: true
-                });
-            }
+                /* La barra de paginación trabaja sobre `filtrados`; aquí los
+                   resultados ya vienen filtrados por el servidor. */
+                get filtrados() { return this.registros; },
+                get totalPaginas() { return this.totalPaginasDe(this.filtrados); },
+                get paginaActual() { return this.paginaValidaDe(this.filtrados); },
+                get paginados() { return this.recortar(this.filtrados); },
 
-            // Manejar envío del formulario de búsqueda de auditoría
-            $('#submitAuditSearchBtn').on('click', function() {
-                if (auditLogTable) {
-                    auditLogTable.ajax.reload(); // Recarga los datos de la tabla usando los filtros actuales del formulario
-                }
-            });
+                get usuariosFiltrados() {
+                    const q = this.buscarUsuario.trim().toLowerCase();
+                    if (q === '') return this.usuarios;
+                    return this.usuarios.filter(u =>
+                        u.nombre.toLowerCase().includes(q) ||
+                        u.email.toLowerCase().includes(q) ||
+                        String(u.id).includes(q));
+                },
 
-            // Manejar limpieza de filtros
-            $('#clearAuditSearchBtn').on('click', function() {
-                $('#auditSearchForm')[0].reset(); // Limpia los campos del formulario
-                if (auditLogTable) {
-                    auditLogTable.ajax.reload(); // Recarga la tabla, ahora con filtros vacíos
-                }
-            });
+                /* El servidor devuelve una lista vacía si no llega ningún filtro;
+                   se avisa antes de gastar el viaje. */
+                get hayFiltros() {
+                    return Object.values(this.filtros).some(v => String(v).trim() !== '');
+                },
 
-            // Modal para ver JSON completo (delegado al cuerpo de la tabla de auditoría)
-            var jsonDetailModalEl = document.getElementById('jsonDetailModal');
-            var modalInstance = null;
-            if (jsonDetailModalEl) {  modalInstance = new bootstrap.Modal(jsonDetailModalEl); }
-            var modalJsonContainer = document.getElementById('jsonModalContent');
+                get resumen() {
+                    if (!this.buscado) return 'Sin búsquedas todavía.';
+                    if (this.truncado) {
+                        return `${this.total} registros encontrados; se muestran los `
+                             + `${this.limite} más recientes.`;
+                    }
+                    return `${this.registros.length} ${this.registros.length === 1 ? 'registro' : 'registros'}`;
+                },
 
-            $('#auditLogTable tbody').on('click', '.view-full-json', function (event) {
-                event.preventDefault();
-                if (!modalInstance || !modalJsonContainer) {
-                    console.error('Modal o contenedor JSON no inicializados.');
-                    return;
-                }
+                get mensajeVacio() {
+                    if (!this.buscado) return 'Elige al menos un filtro y pulsa Buscar.';
+                    return 'La búsqueda no devolvió registros.';
+                },
 
-                var button = $(this);
-                var dataFromAttribute = button.data('json-content'); // jQuery puede devolver esto ya como objeto
-                var jsonKey = button.data('json-key');
+                tinteEvento(evento) {
+                    return { created: 'chip-emerald', updated: 'chip-sky',
+                             deleted: 'chip-rose', restored: 'chip-amber' }[evento] ?? 'chip-slate';
+                },
 
-                var modalTitle = jsonDetailModalEl.querySelector('.modal-title');
-                var modalFieldKey = jsonDetailModalEl.querySelector('#jsonModalFieldKey');
-                modalTitle.textContent = 'Detalle Completo';
-                modalFieldKey.textContent = jsonKey;
-                modalJsonContainer.innerHTML = ''; // Limpiar contenido anterior
+                limpiar() {
+                    for (const clave of Object.keys(this.filtros)) this.filtros[clave] = '';
+                    this.registros = [];
+                    this.buscado = false;
+                    this.truncado = false;
+                    this.total = 0;
+                },
 
-                // console.log("Contenido del data-attribute:", dataFromAttribute); // Para depurar qué tipo es
-
-                try {
-                    let jsonObjectToFormat;
-
-                    if (typeof dataFromAttribute === 'string') {
-                        // Si es un string, entonces sí necesitamos decodificar entidades (si no lo hizo .data()) y parsear
-                        // La función decodeHtmlEntities es importante aquí si el string aún tiene &quot; etc.
-                        // pero jQuery .data() suele manejar bien la decodificación de atributos puestos con htmlspecialchars
-                        // y luego parsea si es un JSON string válido.
-                        // Por si acaso, si es string, asumimos que es un JSON string que necesita parseo.
-                        jsonObjectToFormat = JSON.parse(dataFromAttribute);
-                    } else if (typeof dataFromAttribute === 'object' && dataFromAttribute !== null) {
-                        // Si ya es un objeto (como tu console.log indicó), úsalo directamente
-                        jsonObjectToFormat = dataFromAttribute;
-                    } else {
-                        // Si es null, undefined, o un tipo primitivo que no es string (número, boolean)
-                        // lo mostramos tal cual, no es un objeto para JSONFormatter.
-                        const textNode = document.createElement('pre');
-                        textNode.textContent = String(dataFromAttribute); // Convertir a string para mostrar
-                        modalJsonContainer.appendChild(textNode);
-                        modalInstance.show();
-                        return; // Salir temprano
+                async buscar() {
+                    if (!this.hayFiltros) {
+                        window.Swal.fire({ icon: 'warning', title: 'Sin filtros',
+                                           text: 'Elige al menos un filtro antes de buscar.' });
+                        return;
                     }
 
-                    // Ahora jsonObjectToFormat debería ser un objeto JavaScript válido
-                    const potentiallySortedJsonObject = sortObjectKeysRecursively(jsonObjectToFormat);
-                    const formatter = new JSONFormatter(potentiallySortedJsonObject, 1, {
-                        hoverPreviewEnabled: false,
-                        theme: ''
-                    });
-                    modalJsonContainer.appendChild(formatter.render());
-
-                } catch (e) {
-                    // Este catch es para errores en JSON.parse (si era un string pero JSON inválido)
-                    // o errores en sortObjectKeysRecursively o JSONFormatter.
-                    console.warn("Contenido no es JSON válido o error al formatear:", e, "Contenido original del atributo:", dataFromAttribute);
-                    const textNode = document.createElement('pre');
-                    // Mostrar el contenido original (o su representación string si era un objeto que falló después)
-                    textNode.textContent = (typeof dataFromAttribute === 'string') ? dataFromAttribute : JSON.stringify(dataFromAttribute, null, 2);
-                    modalJsonContainer.appendChild(textNode);
-                }
-
-                modalInstance.show();
-            });
+                    this.buscando = true;
+                    try {
+                        const parametros = new URLSearchParams(
+                            Object.entries(this.filtros).filter(([, v]) => String(v).trim() !== ''));
+                        const r = await window.api(`${this.url}?${parametros}`);
+                        this.registros = r.data ?? [];
+                        this.total = r.total ?? this.registros.length;
+                        this.truncado = !!r.truncado;
+                        this.limite = r.limite ?? 0;
+                        this.buscado = true;
+                        this.pagina = 1;
+                    } catch (e) {
+                        this.registros = [];
+                        window.Swal.fire({ icon: 'error', title: 'Error',
+                                           text: 'No se pudo consultar la auditoría.' });
+                    } finally {
+                        this.buscando = false;
+                    }
+                },
+            }));
         });
     </script>
 @endsection

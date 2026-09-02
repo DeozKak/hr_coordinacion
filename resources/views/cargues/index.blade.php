@@ -1,62 +1,23 @@
-@extends('adminlte::page')
+@extends('layouts.tw.app')
 
-@section('title', 'Asignadas')
+@section('title', 'Asignadas y cerradas')
 
 @section('content_header')
-<h1>Asignadas y cerradas</h1>
+    <h1>Asignadas y cerradas</h1>
 @endsection
 
+@section('subtitle', 'Carga de los archivos de OSF para revisiones periódicas.')
 
 @section('content')
-<link rel="stylesheet" href="{{asset('css/asignadas.css')}}">
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-md-6">
-            <div class="shadow-container">
-                <form action="{{route('cargues.store')}}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <label for="archivo" class="form-label">Asignadas OSF</label>
+    {{-- Los avisos de sesión los pinta la plantilla; antes esta vista traía su
+         propio bloque de alerta y un Swal suelto para lo mismo. --}}
+    <div class="grid gap-6 lg:grid-cols-2">
+        <x-carga-archivo titulo="Asignadas OSF"
+                         :action="route('cargues.store')"
+                         icon="fa-list-check" tint="blue" />
 
-                    <input class="form-control mb-3" type="file" name="archivo" id="archivo" required>
-
-                    <div class="button-container">
-                        <button class="btn btn-primary" type="submit">Subir Archivo</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="shadow-container">
-                <form action="{{route('cargues.storeClosed')}}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <label for="fileClosed" class="form-label">Cerradas</label>
-                    <input class="form-control mb-3" type="file" name="archivo" id="fileClosed" required>
-                    <div class="button-container">
-                        <button class="btn btn-primary" type="submit">Subir Archivo</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+        <x-carga-archivo titulo="Cerradas"
+                         :action="route('cargues.storeClosed')"
+                         icon="fa-circle-check" tint="emerald" />
     </div>
-</div>
-@if (session('error'))
-<div class="alert alert-danger">
-    {{ session('error')}}
-</div>
-@endif
-
-@if(session('success'))
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        Swal.fire({
-            position: "top-end",
-            icon: "success",
-            title: "{{ session('success') }}",
-            showConfirmButton: false,
-            toast: true,
-            timer: 3000
-        });
-    });
-</script>
-@endif
 @endsection

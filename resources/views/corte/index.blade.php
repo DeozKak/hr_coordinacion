@@ -1,175 +1,209 @@
-@extends('adminlte::page')
+@extends('layouts.tw.app')
 
-@section('title', 'Información General')
+@section('title', 'Cortes de producción')
 
 @section('content_header')
-    <h1>Información General</h1>
-@stop
+    <h1>Cortes de producción</h1>
+@endsection
+
+@section('subtitle', 'Periodos de corte y causales de devolución.')
+
+@php
+    /* La primera causal es la de por defecto y no se toca: el listado original
+       escondía sus botones comparando el índice. */
+    $causalesPayload = $causales->values()->map(fn ($c, $i) => [
+        'id' => $c->id,
+        'nombre' => $c->nom_causal,
+        'activa' => (bool) $c->status,
+        'fija' => $i === 0,
+    ]);
+@endphp
 
 @section('content')
-    <link rel="stylesheet" href="{{ asset('css/informacionGeneral/indexV1.css') }}">
-    <input type="hidden" id="token" value="{{csrf_token()}}">
+    <div x-data="cortesProduccion({
+            cortes: {{ Js::from($cortes->map(fn ($c) => [
+                'id' => $c->id,
+                'nombre' => $c->nombre,
+                'fecha_inicio' => $c->fecha_inicio,
+                'fecha_fin' => $c->fecha_fin,
+                'meta' => $c->meta,
+                'dobles' => $c->dobles,
+            ])->values()) }},
+            causales: {{ Js::from($causalesPayload) }},
+            urls: {
+                crearCorte:    '{{ route('cortes_produccion.store') }}',
+                editarCorte:   '{{ route('cortes_produccion.editCorte', ['id' => '__id__']) }}',
+                guardarCorte:  '{{ route('cortes_produccion.updateCorte', ['id' => '__id__']) }}',
+                crearCausal:   '{{ route('cortes_produccion.storeCausal') }}',
+                editarCausal:  '{{ route('cortes_produccion.editCausal', ['id' => '__id__']) }}',
+                guardarCausal: '{{ route('cortes_produccion.updateCausal', ['id' => '__id__']) }}',
+                estadoCausal:  '{{ route('cortes_produccion.changeStatusCausal') }}',
+                detalles:      '{{ route('produccion.detallesCorte', ['id' => '__id__']) }}',
+                fallidas:      '{{ route('produccion.fallidas.detalles', ['id' => '__id__']) }}',
+                graficos:      '{{ route('produccion.index') }}',
+            },
+         })"
+         class="grid gap-6 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
 
-    <div class="row">
-        {{-- Tarjeta Cortes --}}
-        <div class="col-md-6">
-            <div class="card dashboard-card">
-                <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-calendar-alt"></i> Cortes</h3>
-                </div>
-                <div class="card-body">
-                    <button class="btn-gradient btn-gradient-success mb-3" id="btnCrearCorte">Crear Corte</button>
-                    <div class="table-responsive">
-                        <table class="table" id="cortes">
-                            <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Fecha Inicio</th>
-                                <th>Fecha Fin</th>
-                                <th>Meta</th>
-                                <th>Dobles</th>
-                                <th>Acciones</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            @foreach ($cortes as $corte)
-                                <tr data-id="{{$corte->id}}">
-                                    <td>{{ $corte->nombre }}</td>
-                                    <td>{{ $corte->fecha_inicio }}</td>
-                                    <td>{{ $corte->fecha_fin }}</td>
-                                    <td>{{ $corte->meta }}</td>
-                                    <td>{{ $corte->dobles }}</td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <button class="btn-gradient btn-gradient-info btn-sm abrirCorteModal" id="btn_editar" data-corte-id="{{ $corte->id }}">Editar</button>
-                                            <button class="btn-gradient btn-gradient-primary btn-sm btndetallesCorte"  id="btn_detallesCorte" data-corte-id="{{ $corte->id }}">Detalles</button>
-                                            <button class="btn-gradient btn-gradient-primary btn-sm" id="btn_fallidas" data-corte-id="{{ $corte->id }}">Fallidas</button>
-                                            <button class="btn-gradient btn-secondary-modern btn-sm" id="btn_graficos" data-corte-id="{{ $corte->id }}">Gráficos</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                            </tbody>
-                        </table>
+        {{-- ============================== CORTES ============================= --}}
+        <section class="tw-card self-start">
+            <div class="tw-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-blue"><i class="fas fa-calendar-days"></i></span>
+                    <div>
+                        <h2 class="tw-card-title">Cortes</h2>
+                        <p class="tw-card-subtitle">
+                            <span x-text="cortesFiltrados.length"></span> de
+                            <span x-text="cortes.length"></span> periodos
+                        </p>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        {{-- Tarjeta Causales Devolución --}}
-        <div class="col-md-6">
-            <div class="card dashboard-card">
-                <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-undo-alt"></i> Causales Devolución</h3>
-                </div>
-                <div class="card-body">
-                    <button class="btn-gradient btn-gradient-success mb-3" id="btnCrearCausal">Crear Causal</button>
-                    <div class="table-responsive">
-                        <table class="table" id="causal">
-                            <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Acciones</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            @foreach ($causales as $index => $causal)
-                                <tr data-id="{{$causal->id}}">
-                                    <td>{{ $causal->nom_causal }}</td>
-                                    <td>
-                                        <div class="btn-group">
-                                            @if ($index > 0)
-                                                <button class="btn-gradient btn-gradient-info btn-sm abrirCausalModal" data-causal-id="{{ $causal->id }}">Editar</button>
-                                                @if ($causal->status == 1)
-                                                    <button class="btn-gradient btn-gradient-danger btn-sm" id="btnChangeStatusCausal" data-causal-id="{{ $causal->id }}">Desactivar</button>
-                                                @else
-                                                    <button class="btn-gradient btn-gradient-success btn-sm" id="btnChangeStatusCausal" data-causal-id="{{ $causal->id }}">Activar</button>
-                                                @endif
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                            </tbody>
-                        </table>
+                <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+                    <div class="relative min-w-0 flex-1 sm:w-52 sm:flex-none">
+                        <i class="fas fa-magnifying-glass pointer-events-none absolute left-3 top-1/2
+                                  -translate-y-1/2 text-sm text-slate-400"></i>
+                        <input type="search" class="tw-input pl-9" placeholder="Buscar corte…"
+                               x-model="buscarCorte">
                     </div>
-                    <input type="hidden" id="cambiarEstadoCausal" value="{{route('cortes_produccion.changeStatusCausal')}}">
+                    <button type="button" class="tw-btn-primary" @click="abrirCorte()">
+                        <i class="fas fa-plus"></i> Crear corte
+                    </button>
                 </div>
             </div>
-        </div>
+
+            <div class="max-h-[26rem] overflow-auto">
+                <table class="tw-table tw-table-fija">
+                    <thead>
+                    <tr>
+                        <th><i class="fas fa-tag"></i> Nombre</th>
+                        <th><i class="fas fa-calendar-day"></i> Inicio</th>
+                        <th><i class="fas fa-calendar-check"></i> Fin</th>
+                        <th class="text-right"><i class="fas fa-bullseye"></i> Meta</th>
+                        <th class="text-right"><i class="fas fa-layer-group"></i> Dobles</th>
+                        <th class="text-right"><i class="fas fa-gears"></i> Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <template x-for="corte in cortesFiltrados" :key="corte.id">
+                        <tr>
+                            <td class="font-medium text-slate-800 dark:text-slate-100" x-text="corte.nombre"></td>
+                            <td class="whitespace-nowrap" x-text="corte.fecha_inicio"></td>
+                            <td class="whitespace-nowrap" x-text="corte.fecha_fin"></td>
+                            <td class="text-right tabular-nums" x-text="corte.meta"></td>
+                            <td class="text-right tabular-nums" x-text="corte.dobles"></td>
+                            <td class="text-right">
+                                <div class="flex flex-wrap justify-end gap-1.5">
+                                    <button type="button" class="tw-btn-secondary tw-btn-sm"
+                                            @click="abrirCorte(corte)" title="Editar el corte">
+                                        <i class="fas fa-pen"></i>
+                                    </button>
+                                    <a :href="urls.detalles.replace('__id__', corte.id)"
+                                       class="tw-btn-secondary tw-btn-sm" title="Detalles del corte">
+                                        <i class="fas fa-list"></i>
+                                    </a>
+                                    <a :href="urls.fallidas.replace('__id__', corte.id)"
+                                       class="tw-btn-secondary tw-btn-sm" title="Fallidas del corte">
+                                        <i class="fas fa-triangle-exclamation"></i>
+                                    </a>
+                                    <a :href="`${urls.graficos}?id=${corte.id}`"
+                                       class="tw-btn-secondary tw-btn-sm" title="Gráficos del corte">
+                                        <i class="fas fa-chart-column"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+
+                    <tr x-show="cortesFiltrados.length === 0" x-cloak>
+                        <td colspan="6" class="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                            <i class="fas fa-calendar-xmark mb-2 block text-2xl opacity-40"></i>
+                            No hay cortes que coincidan.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        {{-- ============================= CAUSALES ============================ --}}
+        <section class="tw-card self-start">
+            <div class="tw-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-amber"><i class="fas fa-rotate-left"></i></span>
+                    <div>
+                        <h2 class="tw-card-title">Causales de devolución</h2>
+                        <p class="tw-card-subtitle">
+                            <span x-text="causalesFiltradas.length"></span> de
+                            <span x-text="causales.length"></span> causales
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+                    <div class="relative min-w-0 flex-1 sm:w-44 sm:flex-none">
+                        <i class="fas fa-magnifying-glass pointer-events-none absolute left-3 top-1/2
+                                  -translate-y-1/2 text-sm text-slate-400"></i>
+                        <input type="search" class="tw-input pl-9" placeholder="Buscar causal…"
+                               x-model="buscarCausal">
+                    </div>
+                    <button type="button" class="tw-btn-primary" @click="abrirCausal()">
+                        <i class="fas fa-plus"></i> Crear causal
+                    </button>
+                </div>
+            </div>
+
+            <div class="max-h-[26rem] overflow-auto">
+                <table class="tw-table tw-table-fija">
+                    <thead>
+                    <tr>
+                        <th><i class="fas fa-tag"></i> Nombre</th>
+                        <th><i class="fas fa-toggle-on"></i> Estado</th>
+                        <th class="text-right"><i class="fas fa-gears"></i> Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <template x-for="causal in causalesFiltradas" :key="causal.id">
+                        <tr>
+                            <td class="font-medium text-slate-800 dark:text-slate-100" x-text="causal.nombre"></td>
+                            <td>
+                                <span class="tw-badge" :class="causal.activa ? 'chip-emerald' : 'chip-rose'"
+                                      x-text="causal.activa ? 'Activa' : 'Inactiva'"></span>
+                            </td>
+                            <td class="text-right">
+                                {{-- La causal por defecto no se edita ni se desactiva. --}}
+                                <div class="flex justify-end gap-2" x-show="!causal.fija">
+                                    <button type="button" class="tw-btn-secondary tw-btn-sm"
+                                            @click="abrirCausal(causal)">
+                                        <i class="fas fa-pen"></i> Editar
+                                    </button>
+                                    <button type="button" class="tw-btn-sm"
+                                            :class="causal.activa ? 'tw-btn-danger' : 'tw-btn-primary'"
+                                            @click="cambiarEstadoCausal(causal)"
+                                            x-text="causal.activa ? 'Desactivar' : 'Activar'"></button>
+                                </div>
+                                <span class="text-xs text-slate-400" x-show="causal.fija" x-cloak>
+                                    Por defecto
+                                </span>
+                            </td>
+                        </tr>
+                    </template>
+
+                    <tr x-show="causalesFiltradas.length === 0" x-cloak>
+                        <td colspan="3" class="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                            <i class="fas fa-inbox mb-2 block text-2xl opacity-40"></i>
+                            No hay causales que coincidan.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        @include('corte.partials.modales')
     </div>
-
-    {{-- Modal para crear/editar Corte --}}
-    <div class="modal fade modal-modern" id="corteModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="corteModalLabel">Crear/Editar Corte</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="nombreCorte">Nombre</label>
-                        <input type="text" class="form-control" id="nombreCorte" name="nombre">
-                        <input type="hidden" id="idGuardarCorte">
-                    </div>
-                    <div class="form-group">
-                        <label for="fecha_inicio">Fecha Inicio</label>
-                        <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio">
-                    </div>
-                    <div class="form-group">
-                        <label for="fecha_fin">Fecha Fin</label>
-                        <input type="date" class="form-control" id="fecha_fin" name="fecha_fin">
-                    </div>
-                    <div class="form-group">
-                        <label for="meta">Meta</label>
-                        <input type="text" class="form-control" id="meta" name="meta">
-                    </div>
-                    <div class="form-group">
-                        <label for="dobles">Umbral dobles sabado</label>
-                        <input type="text" class="form-control" id="dobles" name="dobles">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-secondary-modern" id="btn_cerrarCorte">Cerrar</button>
-                    <button type="submit" id="crearCorte" class="btn-gradient btn-gradient-primary">Guardar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Modal para crear/editar Causal --}}
-    <div class="modal fade modal-modern" id="causalModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="causalModalLabel">Crear/Editar Causal</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="nombreCausal">Nombre</label>
-                        <input type="text" class="form-control" id="nombreCausal" name="nombre">
-                        <input type="hidden" id="idGuardarCausal">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-secondary-modern" id="btn_cerrarCausal">Cerrar</button>
-                    <button type="submit" id="crearCausal" class="btn-gradient btn-gradient-primary">Guardar Causal</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const rangosFechasExistentes = @json($cortes);
-    </script>
-@stop
+@endsection
 
 @section('js')
-    <script>
-        const rangosFechasExistentes = @json($cortes);
-    </script>
-
-    <script src="{{asset('js/informacion_generalV3-1.js')}}?v={{ time() }}"></script>
-@stop
+    @include('corte.partials.index-script')
+@endsection

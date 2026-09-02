@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', config('adminlte.title', config('app.name')))</title>
+    <title>@yield('title', config('navegacion.titulo', config('app.name')))</title>
 
     {{-- Evita el flash de tema claro antes de que Alpine arranque. --}}
     <script>

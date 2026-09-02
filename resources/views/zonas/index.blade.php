@@ -1,4 +1,4 @@
-@extends('adminlte::page')
+@extends('layouts.tw.app')
 
 @section('title', 'Zonificación')
 
@@ -6,332 +6,298 @@
     <h1>Zonificación</h1>
 @endsection
 
+@section('subtitle', 'Municipios, barrios y su relación con grupos, subgrupos e inspectores.')
+
+@canany(['ver_residente', 'ver_coordinacion_RP'])
+    @section('actions')
+        {{-- El botón vive en la cabecera, fuera del x-data de la vista: se avisa
+             por evento, igual que el de "Cargar Datos OSF" del inicio. --}}
+        <button type="button" class="tw-btn-secondary" @click="$dispatch('abrir-sedes')">
+            <i class="fas fa-building"></i> Gestionar sedes y zonas
+        </button>
+    @endsection
+@endcanany
+
+@include('layouts.tw.partials.handsontable')
+
+@php
+    /* Payloads explícitos: la vista no necesita los modelos completos. Los
+       identificadores de sede y zona viajan con cada municipio para poder
+       editarlo sin volver a pedirlo al servidor. */
+    $municipiosPayload = $municipios->map(fn ($m) => [
+        'id'      => $m->id,
+        'nombre'  => $m->nombre,
+        'id_sede' => $m->id_sede,
+        'id_zona' => $m->id_zona,
+        'sede'    => $m->sede->nombre ?? 'Sin asignar',
+        'zona'    => $m->zona->nombre ?? 'Sin asignar',
+        'activo'  => (bool) $m->status,
+    ])->values();
+
+    $barriosPayload = $barrios->map(fn ($b) => [
+        'id'        => $b->id,
+        'barrio'    => $b->barrio,
+        'municipio' => optional($b->municipios->first())->nombre ?? 'N/A',
+    ])->values();
+
+    $sedesPayload = $sedes->map(fn ($s) => [
+        'id' => $s->id, 'nombre' => $s->nombre, 'activo' => (bool) $s->status,
+    ])->values();
+
+    $zonasPayload = $zonas->map(fn ($z) => [
+        'id' => $z->id, 'nombre' => $z->nombre, 'activo' => (bool) $z->status,
+    ])->values();
+
+    /* Opciones iniciales de los filtros, con la forma { value, label } que
+       espera <x-select-buscador>. */
+    $opcMunicipios = $municipios->map(fn ($m) => ['value' => $m->id, 'label' => $m->nombre])->values();
+    $opcBarrios    = $barrios->map(fn ($b) => ['value' => $b->id, 'label' => $b->barrio])->values();
+    $opcGrupos     = $grupos->map(fn ($g) => ['value' => $g->id, 'label' => $g->grupo])->values();
+    $opcSubgrupos  = $subgrupos->map(fn ($s) => ['value' => $s->id, 'label' => $s->subgrupo])->values();
+    $opcInspectores = $inspectores->map(fn ($i) => [
+        'value' => $i->id, 'label' => "{$i->id}. {$i->apellidos} {$i->nombres}",
+    ])->values();
+@endphp
+
 @section('content')
+    <div x-data="zonificacion({
+            municipios: @js($municipiosPayload),
+            barrios: @js($barriosPayload),
+            sedes: @js($sedesPayload),
+            zonas: @js($zonasPayload),
+            opciones: {
+                municipio:  @js($opcMunicipios),
+                barrio:     @js($opcBarrios),
+                grupo:      @js($opcGrupos),
+                subgrupo:   @js($opcSubgrupos),
+                inspector:  @js($opcInspectores),
+            },
+            puedeGestionar: @js((bool) auth()->user()?->canany(['ver_residente', 'ver_coordinacion_RP'])),
+            urls: {
+                storeMunicipio:  '{{ route('zonas.storeMunicipio') }}',
+                updateMunicipio: '{{ route('zonas.updateMunicipio', ['id' => '__ID__']) }}',
+                storeBarrio:     '{{ route('zonas.storeBarrio') }}',
+                updateBarrio:    '{{ route('zonas.updateBarrio', ['id' => '__ID__']) }}',
+                cambiarEstado:   '{{ route('zonas.changeStatusTable') }}',
+                storeSede:       '{{ route('cortes_produccion.storeSede') }}',
+                updateSede:      '{{ route('cortes_produccion.updateSede', ['id' => '__ID__']) }}',
+                estadoSede:      '{{ route('cortes_produccion.changeStatusSede') }}',
+                storeZona:       '{{ route('cortes_produccion.storeZona') }}',
+                updateZona:      '{{ route('cortes_produccion.updateZona', ['id' => '__ID__']) }}',
+                estadoZona:      '{{ route('cortes_produccion.changeStatusZona') }}',
+                buscar:          '{{ route('zonas.buscador') }}',
+                selects:         '{{ route('zonas.actualizarSelects') }}',
+                asignarBarrio:   '{{ route('zonas.asignarBarrio') }}',
+                inspectores:     '{{ route('zonas.responsablesInsp', ['id' => '__ID__']) }}',
+            },
+         })"
+         @abrir-sedes.window="modal = 'sedes'"
+         class="space-y-6">
 
-    <input type="hidden" id="token" value="{{ csrf_token() }}">
-    <script src="{{ asset('js/zonas/zonasV1.2.js') }}"></script>
-    <script src="{{ asset('js/zonas/alerts.js') }}"></script>
-    <script src="{{ asset('js/zonas/asignador.js') }}"></script>
-    <script src="{{ asset('js/zonas/buscadorV1.3.js') }}"></script>
-    <script src="{{ asset('js/zonas/asigResponsablesV1.1.js') }}"></script>
-    <script src="{{ asset('js/zonas/insercionMasiva.js') }}"></script>
+        @canany(['ver_residente', 'ver_coordinacion_RP'])
+            <div class="grid gap-6 xl:grid-cols-2">
 
-    <link rel="stylesheet" href="{{ asset ('css/zonas/zonas.css')}}">
-    <input type="hidden" id="token" value="{{ csrf_token() }}">
-    <input type="hidden" id="url_asignarBarrio" value="{{ route('zonas.asignarBarrio') }}">
-    <input type="hidden" id="url_masivo" value="{{ route('zonas.recepcionMasiva') }}">
-    @canany(['ver_residente','ver_coordinacion_RP'])
-    <div class="row">
+                {{-- ============================ MUNICIPIOS ======================= --}}
+                <section class="tw-card flex flex-col">
+                    <div class="tw-card-header">
+                        <div class="flex items-center gap-3">
+                            <span class="tw-chip chip-blue"><i class="fas fa-city"></i></span>
+                            <div>
+                                <h2 class="tw-card-title">Municipios</h2>
+                                <p class="tw-card-subtitle" x-text="`${municipios.length} registrados`"></p>
+                            </div>
+                        </div>
+                        <button type="button" class="tw-btn-primary tw-btn-sm" @click="abrirMunicipio()">
+                            <i class="fas fa-plus"></i> Crear municipio
+                        </button>
+                    </div>
 
-        {{-- Tarjeta Sedes y zonas --}}
+                    <div class="border-b border-slate-200/80 p-4 dark:border-slate-700/60">
+                        <label class="relative block">
+                            <span class="sr-only">Buscar municipio</span>
+                            <i class="fas fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input type="search" class="tw-input pl-9" placeholder="Buscar por nombre, sede o zona…"
+                                   x-model.debounce.200ms="buscaMunicipio">
+                        </label>
+                    </div>
 
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Sedes y Zonas</h3>
+                    <div class="max-h-[22rem] flex-1 overflow-auto">
+                        <table class="tw-table tw-table-fija">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Sede</th>
+                                    <th scope="col">Zona</th>
+                                    <th scope="col">Estado</th>
+                                    <th scope="col" class="text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="m in municipiosFiltrados" :key="m.id">
+                                    <tr>
+                                        <td class="font-medium text-slate-900 dark:text-white" x-text="m.nombre"></td>
+                                        <td x-text="m.sede"></td>
+                                        <td x-text="m.zona"></td>
+                                        <td>
+                                            <span class="tw-badge" :class="m.activo ? 'chip-emerald' : 'chip-rose'"
+                                                  x-text="m.activo ? 'Activo' : 'Inactivo'"></span>
+                                        </td>
+                                        <td class="text-right">
+                                            <div class="flex justify-end gap-2">
+                                                <button type="button" class="tw-btn-secondary tw-btn-sm"
+                                                        @click="abrirMunicipio(m)">
+                                                    <i class="fas fa-pen"></i> Editar
+                                                </button>
+                                                <button type="button" class="tw-btn-sm"
+                                                        :class="m.activo ? 'tw-btn-danger' : 'tw-btn-primary'"
+                                                        @click="cambiarEstado(m, 'tbl_localidades_municipios')"
+                                                        x-text="m.activo ? 'Desactivar' : 'Activar'"></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+
+                                <tr x-show="!municipiosFiltrados.length">
+                                    <td colspan="5" class="px-4 py-10 text-center text-slate-500">
+                                        Nada encontrado — lo siento.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                {{-- ============================== BARRIOS ======================== --}}
+                <section class="tw-card flex flex-col">
+                    <div class="tw-card-header">
+                        <div class="flex items-center gap-3">
+                            <span class="tw-chip chip-violet"><i class="fas fa-map-location-dot"></i></span>
+                            <div>
+                                <h2 class="tw-card-title">Barrios</h2>
+                                <p class="tw-card-subtitle" x-text="`${barrios.length} registrados`"></p>
+                            </div>
+                        </div>
+                        <button type="button" class="tw-btn-primary tw-btn-sm" @click="abrirBarrio()">
+                            <i class="fas fa-plus"></i> Crear barrio
+                        </button>
+                    </div>
+
+                    <div class="border-b border-slate-200/80 p-4 dark:border-slate-700/60">
+                        <label class="relative block">
+                            <span class="sr-only">Buscar barrio</span>
+                            <i class="fas fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input type="search" class="tw-input pl-9" placeholder="Buscar por barrio o municipio…"
+                                   x-model.debounce.200ms="buscaBarrio">
+                        </label>
+                    </div>
+
+                    <div class="max-h-[22rem] flex-1 overflow-auto">
+                        <table class="tw-table tw-table-fija">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Barrio</th>
+                                    <th scope="col">Municipio</th>
+                                    <th scope="col" class="text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="b in barriosFiltrados" :key="b.id">
+                                    <tr>
+                                        <td class="font-medium text-slate-900 dark:text-white" x-text="b.barrio"></td>
+                                        <td x-text="b.municipio"></td>
+                                        <td class="text-right">
+                                            <button type="button" class="tw-btn-secondary tw-btn-sm"
+                                                    @click="abrirBarrio(b)">
+                                                <i class="fas fa-pen"></i> Editar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+
+                                <tr x-show="!barriosFiltrados.length">
+                                    <td colspan="3" class="px-4 py-10 text-center text-slate-500">
+                                        Nada encontrado — lo siento.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        @endcanany
+
+        {{-- ========================= BUSCAR RELACIONES ======================== --}}
+        <section class="tw-card">
+            <div class="tw-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-amber"><i class="fas fa-diagram-project"></i></span>
+                    <div>
+                        <h2 class="tw-card-title">Buscar relaciones</h2>
+                        <p class="tw-card-subtitle">
+                            Cada filtro acota los demás. El barrio se puede asignar cuando está vacío.
+                        </p>
+                    </div>
                 </div>
-                <div class="card-body text-left">
-                    <button class="btn btn-primary" data-toggle="modal" data-target="#extraCardsModal">
-                        Gestionar Sedes y Zonas
+                <button type="button" class="tw-btn-secondary tw-btn-sm" @click="limpiarFiltros()"
+                        x-show="hayFiltro" x-cloak>
+                    <i class="fas fa-eraser"></i> Limpiar filtros
+                </button>
+            </div>
+
+            {{-- Sin overflow-hidden: los desplegables de los filtros se salen de
+                 la tarjeta a propósito. --}}
+            <div class="p-5">
+                <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                    <x-select-buscador label="Municipio" model="filtros.municipio"
+                                       options="opciones.municipio" placeholder="Todos los municipios"
+                                       onChange="actualizarFiltros()" />
+                    <x-select-buscador label="Grupo" model="filtros.grupo"
+                                       options="opciones.grupo" placeholder="Todos los grupos"
+                                       onChange="actualizarFiltros()" />
+                    <x-select-buscador label="Sub grupo" model="filtros.subgrupo"
+                                       options="opciones.subgrupo" placeholder="Todos los sub grupos"
+                                       onChange="actualizarFiltros()" />
+                    <x-select-buscador label="Barrio" model="filtros.barrio"
+                                       options="opciones.barrio" placeholder="Todos los barrios"
+                                       onChange="actualizarFiltros()" />
+                    <x-select-buscador label="Inspector" model="filtros.inspector"
+                                       options="opciones.inspector" placeholder="Todos los inspectores"
+                                       onChange="actualizarFiltros()" />
+                </div>
+
+                <div class="mt-4 flex flex-wrap items-center gap-3">
+                    <button type="button" class="tw-btn-primary" @click="buscar()" :disabled="buscando">
+                        <i class="fas" :class="buscando ? 'fa-spinner fa-spin' : 'fa-magnifying-glass'"></i>
+                        Buscar
                     </button>
+                    <span class="text-sm text-slate-500" x-show="hayResultados" x-cloak
+                          x-text="`${filas.length} relaciones`"></span>
+                    <span class="text-xs text-slate-500" x-show="actualizando" x-cloak>
+                        <i class="fas fa-circle-notch fa-spin"></i> Ajustando filtros…
+                    </span>
                 </div>
+
+                <p x-show="errorBusqueda" x-cloak
+                   class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800
+                          dark:border-red-800/60 dark:bg-red-950/40 dark:text-red-200"
+                   x-text="errorBusqueda"></p>
             </div>
-        </div>
 
-        {{-- Tarjeta Municipios --}}
-
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Municipios</h3>
-                </div>
-                <div class="card-body">
-                    <a class="btn btn-primary mb-2" id="btnCrearMunicipio">Crear Municipio</a>
-                    <table class="table table-striped" id="municipios">
-                        <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Nombre</th>
-                            <th>Sede</th>
-                            <th>Zona</th>
-                            <th class="text-center">Acciones</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @foreach ($municipios as $municipio)
-                            <tr data-id="{{$municipio->id}}">
-                                <td>{{ $municipio->id }}</td>
-                                <td>{{ $municipio->nombre }}</td>
-                                <td>{{ $municipio->sede->nombre }}</td>
-                                <td>{{ $municipio->zona->nombre }}</td>
-                                <td>
-                                    <div style="display: flex; gap: 5px; justify-content: center;">
-                                        <button class="btn btn-info btn-sm abrirMunicipioModal"
-                                                data-municipio-id="{{ $municipio->id }}">Editar
-                                        </button>
-                                        @if ($municipio->status == 1)
-                                            <button class="btn btn-danger btn-sm" id="btnChangeStatusMunicipio"
-                                                    data-municipio-id="{{ $municipio->id }}">Desactivar
-                                            </button>
-                                        @else
-                                            <button class="btn btn-success btn-sm" id="btnChangeStatusMunicipio"
-                                                    data-municipio-id="{{ $municipio->id }}">Activar
-                                            </button>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                        </tbody>
-                    </table>
-                    <input type="hidden" id="cambiarEstadoTabla" value="{{route('zonas.changeStatusTable')}}">
-                </div>
+            <div class="border-t border-slate-200/80 dark:border-slate-700/60" x-show="hayResultados" x-cloak>
+                <div id="tablaRelaciones" class="ht-theme-main ht-compacta"></div>
             </div>
-        </div>
 
-        {{-- Tarjeta Barrios --}}
+            <p x-show="!hayResultados" x-cloak
+               class="border-t border-slate-200/80 px-5 py-10 text-center text-sm text-slate-500
+                      dark:border-slate-700/60">
+                Elige al menos un filtro y pulsa Buscar.
+            </p>
+        </section>
 
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Barrios</h3>
-                </div>
-                <div class="card-body">
-                    <a class="btn btn-primary mb-2" id="btnCrearBarrio">Crear Barrio</a>
-                    <table class="table table-striped" id="Barrios">
-                        <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Municipio</th>
-                            <th class="text-center">Acciones</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @foreach ($barrios as $barrio)
-                            <tr data-id="{{$barrio->id}}">
-                                <td>{{ $barrio->barrio }}</td>
-                                <td>
-                                    {{ $barrio->municipios ? ($barrio->municipios->first() ? $barrio->municipios->first()->nombre : "N/A") : "N/A" }}
-                                </td>
-                                <td>
-                                    <div style="display: flex; gap: 5px; justify-content: center;">
-                                        <button class="btn btn-info btn-sm abrirBarrioModal"
-                                                data-barrio-id="{{ $barrio->id }}">Editar
-                                        </button>
-
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        {{-- Tarjeta Grupos --}}
-
-      {{--  <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Grupos</h3>
-                </div>
-                <div class="card-body">
-                    <a class="btn btn-primary mb-2" id="btnCrearGrupo">Crear Grupo</a>
-                    <table class="table table-striped" id="grupos">
-                        <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Sede</th>
-                            <th class="text-center">Acciones</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @foreach ($grupos as $grupo)
-                            <tr data-id="{{ $grupo->id }}">
-                                <td>{{ $grupo->grupo }}</td>
-                                <td>{{ $grupo->sede?->nombre ?? 'Sin Asignar' }}</td>
-                                <td>
-                                    <div style="display: flex; gap: 5px; justify-content: center;">
-                                        <button class="btn btn-info btn-sm abrirGrupoModal"
-                                                data-grupo-id="{{ $grupo->id }}">Editar
-                                        </button>
-                                        @if ($grupo->status == 1)
-                                            <button class="btn btn-danger btn-sm" id="btnChangeStatusGrupo"
-                                                    data-grupo-id="{{ $grupo->id }}">Desactivar
-                                            </button>
-                                        @else
-                                            <button class="btn btn-success btn-sm" id="btnChangeStatusGrupo"
-                                                    data-grupo-id="{{ $grupo->id }}">Activar
-                                            </button>
-                                        @endif
-                                    </div>
-                                </td>
-
-                            </tr>
-                        @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        --}}{{-- Tarjeta Sub Grupos --}}{{--
-
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Sub Grupos</h3>
-                </div>
-                <div class="card-body">
-                    <a class="btn btn-primary mb-2" id="btnCrearSubGrupo">Crear Sub Grupo</a>
-                    <table class="table table-striped" id="subgrupos">
-                        <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Sede</th>
-                            <th class="text-center">Acciones</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @foreach ($subgrupos as $subgrupo)
-                            <tr data-id="{{ $subgrupo->id }}">
-                                <td>{{ $subgrupo->subgrupo }}</td>
-                                <td>{{ $subgrupo->sede?->nombre ?? 'Sin Asignar' }}</td>
-                                <td>
-                                    <div style="display: flex; gap: 5px; justify-content: center;">
-                                        <button class="btn btn-info btn-sm abrirSubGrupoModal"
-                                                data-subgrupo-id="{{ $subgrupo->id }}">Editar
-                                        </button>
-                                        @if ($subgrupo->status == 1)
-                                            <button class="btn btn-danger btn-sm" id="btnChangeStatusSubgrupo"
-                                                    data-subgrupo-id="{{ $subgrupo->id }}">Desactivar
-                                            </button>
-                                        @else
-                                            <button class="btn btn-success btn-sm" id="btnChangeStatusSubgrupo"
-                                                    data-subgrupo-id="{{ $subgrupo->id }}">Activar
-                                            </button>
-                                        @endif
-                                        --}}{{-- <button class="btn btn-success btn-sm btnAbrirResponsables"
-                                                 data-subgrupo-id="{{ $subgrupo->id }}">
-                                             Insp Asignados
-                                         </button>--}}{{--
-                                    </div>
-
-                                </td>
-                            </tr>
-                        @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>--}}
+        @include('zonas.partials.index_modals')
     </div>
-    @endcanany
+@endsection
 
-    {{-- Contenedor de Barras de Búsqueda y Tabla --}}
-    <div class="col-md-12">
-        <div class="card mt-3">
-            <div class="card-header">
-                <h3 class="card-title">Buscar Relaciones</h3>
-                <div class="card-tools">
-                  {{--  @canany(['ver_residente','ver_coordinacion_RP'])
-                    <button type="button" class="btn btn-primary" id="btn-masivo" style="margin-right: 50px">Inserción
-                        masiva
-                    </button>
-                    <button type="button" class="btn btn-secondary" id="btn-asignacion" style="margin-right: 25px">
-                        Gestionar Asignación
-                    </button>
-                    @endcanany--}}
-                    <button type="button" class="btn btn-tool" data-card-widget="collapse"><i
-                            class="fas fa-minus"></i>
-                    </button>
-
-                </div>
-            </div>
-            <div class="card-body">
-
-                {{-- Barras de Búsqueda --}}
-
-                <div class="row">
-                    <div class="col-md-3">
-                        <select class="form-control" id="buscarMunicipio">
-                            <option value="">Seleccione un municipio</option>
-                            @foreach ($municipios as $municipio)
-                                <option value="{{ $municipio->id }}">{{ $municipio->nombre }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-control" id="buscarGrupo">
-                            <option value="">Seleccione un grupo</option>
-                            @foreach ($grupos as $grupo)
-                                <option value="{{ $grupo->id }}">{{ $grupo->grupo }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-control" id="buscarSubGrupo">
-                            <option value="">Seleccione un sub grupo</option>
-                            @foreach ($subgrupos as $subgrupo)
-                                <option value="{{ $subgrupo->id }}">{{ $subgrupo->subgrupo }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-control" id="buscarBarrio">
-                            <option value="">Seleccione un barrio</option>
-                            @foreach ($barrios as $barrio)
-                                <option value="{{ $barrio->id }}">{{ $barrio->barrio }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <br>
-                    <br>
-                    <div class="col-md-3">
-                        <select class="form-control" id="buscarInspector">
-                            <option value="">Seleccione un inspector</option>
-                            @foreach ($inspectores as $inspector)
-                                <option value="{{ $inspector->id }}">{{ $inspector->id }}. {{ $inspector->apellidos }} {{ $inspector->nombres }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-                <br>
-                <div class="row" id="message"></div>
-                <div class="text-center mt-3">
-                    <button class="btn btn-primary" id="btnBuscar">Buscar</button>
-                </div>
-
-                {{-- Tabla --}}
-
-                <div id="table" class="mt-4" style="display: none;"></div>
-                <br>
-                <br>
-            </div>
-        </div>
-    </div>
-
-    @include('zonas.partials.index_modals')
-
-
-    @if (session('error'))
-        <script>
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: '{{ session('warning') }}',
-            })
-        </script>
-    @endif
-
-    @if(session('warning'))
-        <script>
-            let warning = '{{ session('warning') }}';
-        </script>
-    @else
-        <script>
-            let warning = '';
-        </script>
-    @endif
+@section('js')
+    @include('zonas.partials.index-script')
 @endsection

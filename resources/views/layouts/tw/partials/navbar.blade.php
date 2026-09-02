@@ -23,7 +23,8 @@
         @include('layouts.tw.partials.notifications')
     @endauth
 
-    <button type="button" @click="$store.ui.toggleDark()"
+    {{-- Se pasa el evento para que el círculo del cambio de tema nazca de aquí. --}}
+    <button type="button" @click="$store.ui.toggleDark($event)"
             class="tw-btn-ghost h-10 w-10 p-0" aria-label="Cambiar tema">
         <i class="fas" :class="$store.ui.dark ? 'fa-sun' : 'fa-moon'"></i>
     </button>

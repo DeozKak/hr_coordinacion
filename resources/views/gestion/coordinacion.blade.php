@@ -1,221 +1,197 @@
-@extends('adminlte::page')
+@extends('layouts.tw.app')
 
-@section('title', 'Coordinación')
+@section('title', 'Coordinación RP')
 
 @section('content_header')
-<h1></h1>
+    <h1>Coordinación RP</h1>
 @endsection
 
+@section('subtitle', 'Programación, asignación y cierre de las órdenes activas.')
+
+@include('layouts.tw.partials.handsontable')
+
+@php
+    $opcInspectores = $inspectors->map(fn ($i) => [
+        'value' => $i->id, 'label' => "{$i->id} - {$i->nombres} {$i->apellidos}",
+    ])->values();
+
+    /* Las sedes del filtro estaban escritas a mano en el HTML. */
+    $opcSedes = [
+        ['value' => 1, 'label' => 'Capital'],
+        ['value' => 2, 'label' => 'Norte'],
+        ['value' => 3, 'label' => 'Sur'],
+    ];
+@endphp
+
 @section('content')
-<link rel="stylesheet" href="{{asset('css/gestion/coordinacion.css')}}?v={{ time()}}">
+    <div x-data="coordinacion({
+            urls: {
+                todo:        '{{ route('getdataCoordinacionRP') }}',
+                filtrar:     '{{ route('filterData') }}',
+                programacion:'{{ route('guardarProgramacionTecnico') }}',
+                grupos:      '{{ route('getGroupsForSede') }}',
+                subgrupos:   '{{ route('getDataSubGroups') }}',
+                excel:       '{{ route('descargarExcelCoordination') }}',
+                causaCierre: '{{ route('guardarCausaCierre') }}',
+                fechaCierre: '{{ route('guardarFechaSolicitudCierre') }}',
+                marca:       '{{ route('marcaOrden') }}',
+                marcaMasiva: '{{ route('marcaOrdenMasiva') }}',
+                cercania:    '{{ route('asignarOrdCercania') }}',
+            },
+         })"
+         class="space-y-6">
 
-<div id="loaderPageCoordination" style="display: none;"></div>
-<div class="card cardCoordination" style="display: none">
-    <div class="card-body">
-        <x-adminlte-card title="Filtros" theme="info" icon="fas fa-tags" collapsible maximizable>
-            <form id="formSearchCoordination" autocomplete="off">
-                <div class="row">
-                    <div class="col-md-4">
-                        <label for="orden">Orden</label>
-                        <input class="form-control numericalInput" type="text" id="orden">
-                    </div>
-                    <div class="col-md-4">
-                        <label for="orden_solicitud_externa">Orden externa</label>
-                        <input class="form-control numericalInput" type="text" id="orden_solicitud_externa">
-                    </div>
-                    <div class="col-md-4">
-                        <label for="contrato">Contrato</label>
-                        <input class="form-control numericalInput" type="text" id="contrato">
+        {{-- =============================== FILTROS =========================== --}}
+        <section class="tw-card">
+            <button type="button" class="tw-card-header w-full text-left" @click="filtrosAbiertos = !filtrosAbiertos">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-blue"><i class="fas fa-filter"></i></span>
+                    <div>
+                        <h2 class="tw-card-title">Filtros</h2>
+                        <p class="tw-card-subtitle">
+                            Grupo y sub grupo se cargan según la sede y el grupo elegidos.
+                        </p>
                     </div>
                 </div>
-                <div class="row mt-2">
-                    <div class="col-md-4">
-                        <label for="codigo_tecnico">Inspector</label>
-                        <select class="form-control" id="codigo_tecnico">
-                            <option value="">Seleccione...</option>
-                            @foreach ($inspectors as $inspector)
-                            <option value="{{$inspector->id}}">{{$inspector->id}} - {{$inspector->nombres}} {{$inspector->apellidos}}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="localidad">Localidad</label>
-                        <input class="form-control" type="text" id="localidad">
-                    </div>
-                    <div class="col-md-4">
-                        <label for="sector_operativo">Barrio</label>
-                        <input class="form-control" type="text" id="sector_operativo">
-                    </div>
-                </div>
-                <div class="row mt-2">
-                    <div class="col-md-4">
-                        <label for="id_sede">Sede</label>
-                        <select class="form-control" id="id_sede">
-                            <option value="">Seleccione...</option>
-                            <option value="1">Capital</option>
-                            <option value="2">Norte</option>
-                            <option value="3">Sur</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="id_grupo">Grupo</label>
-                        <select class="form-control" id="id_grupo">
-                            <option value="">Seleccione...</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="id_subGrupo">Sub grupo</label>
-                        <select class="form-control" id="id_subGrupo">
-                            <option value="">Seleccione...</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="row mt-2">
-                    <div class="col-md-2">
-                        <label for="diasInicio">Desde</label>
-                        <input class="form-control inputNumericoDias" type="text" id="diasInicio">
-                    </div>
-                    <div class="col-md-2">
-                        <label for="diasFin">Hasta</label>
-                        <input class="form-control inputNumericoDias" type="text" id="diasFin">
-                    </div>
-                </div>
-                <div class="row mt-4">
-                    <div class="col-md-4">
-                        <button class="btn btn-primary btnSearchCoordination" type="button">Buscar</button>
-                        <button type="button" class="btn btn-danger btnClearCoordination">Limpiar</button>
-                        <input type="hidden" id="tokenCoordinacionRP" value="{{ csrf_token() }}">
-                    </div>
-                </div>
-            </form>
-        </x-adminlte-card>
-        <h2 style="text-align: center;">Coordinación RP</h2>
-        <button id="descargarExcelCoordination" class="btn btn-success btn-sm">
-            <i class="fas fa-file-excel"></i> Descargar Excel
-        </button>
-        <button id="impresionMasiva" class="btn btn-info btn-sm">
-            <i class="fas fa-print"></i> Impresion masiva
-        </button>
-        <button id="asignarOrdCercania" class="btn btn-primary btn-sm">
-            <i class="fas fa-tasks"></i> Asignar ordenes por cercania
-        </button>
-        <p class="mt-2 totalResults"></p>
-        <label for="marcarTodos"> Marcar todos</label>
-        <input type="checkbox" id="marcarTodos">
-        <div id="prueba" class="mt-3" style="position: relative;">
-            <!-- tabla coordinacion -->
-        </div>
-        <div id="overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); z-index: 1000;">
-            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-                <span class="loaderCoordination"></span>
-            </div>
-        </div>
-    </div>
-</div>
+                <i class="fas fa-chevron-down text-sm text-slate-400 transition"
+                   :class="filtrosAbiertos && 'rotate-180'"></i>
+            </button>
 
-<div class="modal fade" id="modalImpMasiva" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title fs-5">Impresion masiva</h3>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="container">
-                    <div class="row justify-content-center">
-                        <div class="col-md-12">
-                            <div class="card mt-3">
-                                <div class="card-body">
-                                    <form id="formPlanilla" method="post" action="{{route('generarImpMasiva')}}" autocomplete="off">
-                                        @csrf
-                                        <div class="row justify-content-center">
-                                            <div class="col-md-6 text-center">
-                                                <label for="sedeImpMas">Sede</label>
-                                                <select class="form-control mx-auto" name="sedeImpMas" id="sedeImpMas">
-                                                    @foreach($sedes as $sede)
-                                                        <option value="{{$sede->id}}">{{$sede->nombre}}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="row mt-5 justify-content-center">
-                                            <div class="col-md-6 text-center divTipoOrden">
-                                                <label for="tipoOrdenImpMasiva">Tipo orden</label>
-                                                <select class="form-control mx-auto" name="tipoOrden" id="tipoOrden">
-                                                    <option value="">Ambas</option>
-                                                    <option value="1">Masiva</option>
-                                                    <option value="2">Externa</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-6 text-center">
-                                                <label for="fechaAsigna">Fecha asigna</label>
-                                                <select class="form-control mx-auto" name="fechaAsigna" id="fechaAsigna">
-                                                    <option value="si">Si</option>
-                                                    <option value="no" selected >NO</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="row mt-5 justify-content-center divFecha" style="display: none">
-                                            <div class="col-md-6 text-center">
-                                                <label for="fechaImpMasiva">Fecha</label>
-                                                <input class="form-control mx-auto" type="date" name="fechaImpMasiva" id="fechaImpMasiva">
-                                            </div>
-                                        </div>
-                                        <div class="row mt-5 justify-content-center">
-                                            <div class="col-md-6 text-center">
-                                                <label for="expExcel" style="text-align: center;">Exportar excel</label>
-                                                <input class="form-control mx-auto" type="checkbox" name="expExcel" id="expExcel">
-                                            </div>
-                                            <div class="col-md-6 text-center">
-                                                <label for="expPdf">Exportar pdf</label>
-                                                <input class="form-control mx-auto" type="checkbox" name="expPdf" id="expPdf">
-                                            </div>
-                                        </div>
-                                        <div class="row mt-5 justify-content-center">
-                                            <button type="submit" class="btn btn-primary">Aceptar</button>
-                                        </div>
-                                    </form>
-                                </div> 
-                            </div>
+            <div x-show="filtrosAbiertos" x-cloak>
+                <div class="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">
+                    <x-lista-numeros label="Orden" model="filtros.orden" />
+                    <x-lista-numeros label="Orden externa" model="filtros.orden_solicitud_externa" />
+                    <x-lista-numeros label="Contrato" model="filtros.contrato" />
+
+                    <x-multi-select label="Inspector" :options="$opcInspectores"
+                                    model="filtros.codigo_tecnico" placeholder="Todos los inspectores" />
+
+                    <div>
+                        <label class="tw-label" for="localidad">Localidad</label>
+                        <input type="text" id="localidad" class="tw-input" x-model="filtros.localidad">
+                    </div>
+
+                    <div>
+                        <label class="tw-label" for="sector_operativo">Barrio</label>
+                        <input type="text" id="sector_operativo" class="tw-input" x-model="filtros.sector_operativo">
+                    </div>
+
+                    <x-multi-select label="Sede" :options="$opcSedes"
+                                    model="filtros.id_sede" placeholder="Todas las sedes" />
+
+                    {{-- Grupo y sub grupo dependen de lo anterior: sus opciones son
+                         estado de Alpine, no <option> escritos en el HTML. --}}
+                    <x-select-buscador label="Grupo" model="filtros.id_grupo"
+                                       options="opcionesGrupo" placeholder="Todos los grupos"
+                                       onChange="cargarSubgrupos()" />
+
+                    <x-select-buscador label="Sub grupo" model="filtros.id_subGrupo"
+                                       options="opcionesSubgrupo" placeholder="Todos los sub grupos" />
+
+                    <div class="grid grid-cols-2 gap-4 sm:col-span-2 lg:col-span-1">
+                        <div>
+                            <label class="tw-label" for="diasInicio">Días desde</label>
+                            <input type="text" id="diasInicio" class="tw-input" inputmode="numeric"
+                                   x-model="filtros.diasInicio"
+                                   @input="filtros.diasInicio = soloEnteros($event.target.value)">
+                        </div>
+                        <div>
+                            <label class="tw-label" for="diasFin">Días hasta</label>
+                            <input type="text" id="diasFin" class="tw-input" inputmode="numeric"
+                                   x-model="filtros.diasFin"
+                                   @input="filtros.diasFin = soloEnteros($event.target.value)">
                         </div>
                     </div>
                 </div>
+
+                <div class="flex flex-wrap items-center gap-2 border-t border-slate-200/80 px-5 py-4
+                            dark:border-slate-700/60">
+                    <button type="button" class="tw-btn-primary" @click="buscar()" :disabled="cargando">
+                        <i class="fas" :class="cargando ? 'fa-spinner fa-spin' : 'fa-magnifying-glass'"></i>
+                        Buscar
+                    </button>
+                    <button type="button" class="tw-btn-secondary" @click="limpiar()" x-show="hayFiltro" x-cloak>
+                        <i class="fas fa-eraser"></i> Limpiar
+                    </button>
+                </div>
             </div>
-        </div>
+        </section>
+
+        {{-- ============================== RESULTADOS ========================= --}}
+        <section class="tw-card">
+            <div class="tw-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip chip-amber"><i class="fas fa-diagram-project"></i></span>
+                    <div>
+                        <h2 class="tw-card-title">Coordinación RP</h2>
+                        <p class="tw-card-subtitle" x-text="`${total} registros`"></p>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-2
+                                  text-sm dark:border-slate-600">
+                        <input type="checkbox" x-model="marcarTodos" @change="marcarTodas()"
+                               class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+                        Marcar todas
+                    </label>
+
+                    <a :href="urls.excel" class="tw-btn-secondary tw-btn-sm">
+                        <i class="fas fa-file-excel"></i> Excel
+                    </a>
+                    <button type="button" class="tw-btn-secondary tw-btn-sm" @click="modal = 'impresion'">
+                        <i class="fas fa-print"></i> Impresión masiva
+                    </button>
+                    <button type="button" class="tw-btn-secondary tw-btn-sm" @click="asignarPorCercania()"
+                            :disabled="asignando">
+                        <i class="fas" :class="asignando ? 'fa-spinner fa-spin' : 'fa-location-arrow'"></i>
+                        Asignar por cercanía
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 px-5 py-3
+                        text-sm dark:border-slate-700/60">
+                <x-color-legend :items="[
+                    ['g1', 'Base OSF'],
+                    ['g2', 'Complementaria'],
+                    ['g3', 'Programación'],
+                    ['g4', 'Inspector'],
+                    ['g5', 'Recepción'],
+                    ['g6', 'Oficina'],
+                    ['g7', 'Formulación'],
+                ]" />
+
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-500" x-text="`Página ${pagina} de ${totalPaginas}`"></span>
+                    <button type="button" class="tw-btn-secondary tw-btn-sm"
+                            @click="irA(pagina - 1)" :disabled="pagina === 1 || cargando">Anterior</button>
+                    <button type="button" class="tw-btn-secondary tw-btn-sm"
+                            @click="irA(pagina + 1)" :disabled="pagina >= totalPaginas || cargando">Siguiente</button>
+                </div>
+            </div>
+
+            <div class="relative border-t border-slate-200/80 dark:border-slate-700/60">
+                <div id="tablaCoordinacion" class="ht-theme-main ht-compacta"></div>
+
+                <div x-show="cargando" x-cloak
+                     class="absolute inset-0 z-[900] flex items-center justify-center bg-white/70
+                            backdrop-blur-[1px] dark:bg-slate-800/70">
+                    <i class="fas fa-spinner fa-spin text-2xl text-brand-600 dark:text-brand-300"></i>
+                </div>
+            </div>
+
+            <p x-show="!total && !cargando" x-cloak
+               class="border-t border-slate-200/80 px-5 py-10 text-center text-sm text-slate-500
+                      dark:border-slate-700/60">
+                No se encontraron datos con los filtros seleccionados.
+            </p>
+        </section>
+
+        @include('gestion.partials.coordinacion-modales')
     </div>
-</div>
+@endsection
 
 @section('js')
-<script src="{{asset('js/management/coordinaciontbl.js')}}?v={{ time()}}"></script>
-
-@if(session('error'))
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        Swal.fire({
-            position: "top-end",
-            icon: "warning",
-            title: "{{ session('error') }}",
-            toast: true,
-            timer: 3000,
-        });
-    });
-</script>
-@endif
-
-<script>
-    const url1 = "{{route('getdataCoordinacionRP')}}"
-    const url2 = "{{route('filterData')}}"
-    const url3 = "{{route('guardarProgramacionTecnico')}}"
-    const url4 = "{{route('getGroupsForSede')}}"
-    const url5 = "{{route('getDataSubGroups')}}"
-    const url6 = "{{route('descargarExcelCoordination')}}"
-    const url7 = "{{route('guardarCausaCierre')}}"
-    const url8 = "{{route('guardarFechaSolicitudCierre')}}"
-    const url9 = "{{route('marcaOrden')}}"
-    const url10 = "{{ route('marcaOrdenMasiva')}}"
-    const url11 = "{{ route('asignarOrdCercania')}}"
-</script>
-@stop
+    @include('gestion.partials.coordinacion-script')
 @endsection

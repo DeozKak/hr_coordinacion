@@ -24,12 +24,17 @@
      x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
      @keydown.escape.window="if (!$store.alertas?.visible) { {{ $close }} }"
      {{-- z por encima de 9999, el máximo que usa Handsontable. --}}
-     class="fixed inset-0 z-[10000] overflow-y-auto" role="dialog" aria-modal="true"
-     x-data="{ bloqueado: false }"
-     x-effect="if ({{ $show }} && !bloqueado) { bloqueado = true; Alpine.store('scroll').bloquear(); }
-               else if (!({{ $show }}) && bloqueado) { bloqueado = false; Alpine.store('scroll').liberar(); }">
+     class="fixed inset-0 z-[10000] overflow-y-auto" role="dialog" aria-modal="true">
 
-    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+    {{-- El contador de scroll necesita estado propio, pero su x-data NO puede ir
+         en la raíz del modal: x-ref se registra en el x-data más cercano hacia
+         arriba, así que los inputs del slot quedarían colgando de este ámbito y
+         la vista que abre el modal no vería sus $refs. Va en el fondo, que no
+         contiene nada. --}}
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+         x-data="{ bloqueado: false }"
+         x-effect="if ({{ $show }} && !bloqueado) { bloqueado = true; Alpine.store('scroll').bloquear(); }
+                   else if (!({{ $show }}) && bloqueado) { bloqueado = false; Alpine.store('scroll').liberar(); }"></div>
 
     <div class="flex min-h-full items-center justify-center p-4">
         <div x-show="{{ $show }}"

@@ -191,17 +191,6 @@ class UserController extends Controller
         return view('users.show', compact('userlogin','user', 'currentRole'));
     }
 
-    public function editProfile(){
-        $userlogin = auth()->user();
-        $user = auth()->user();
-        $roles = Role::all();
-        $currentRole = $user->roles->first();
-        $permissions = Permission::all();
-        $userPermissions = $user->permissions;
-        $availablePermissions = $permissions->diff($userPermissions);
-        return view('users.edit', compact('userlogin','user', 'roles', 'permissions', 'userPermissions', 'availablePermissions', 'currentRole'));
-    }
-
     public function updateProfile(Request $request, User $user)
     {
         $user->name = $request->name;

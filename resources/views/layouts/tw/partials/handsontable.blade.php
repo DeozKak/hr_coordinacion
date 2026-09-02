@@ -4,7 +4,7 @@
 
      Dos cosas que hay que respetar:
      · Desde la v15 el CSS vive en styles/ (no en dist/) y se divide en base + tema.
-       La versión se replica en config/adminlte.php; manténlas iguales.
+       La versión se replica en el CSS del tema; manténlas iguales.
      · La arroba va DENTRO de la interpolación: `handsontable@{{ $v }}` dispararía
        el escape @{{ }} de Blade y saldría el literal. --}}
 @once
@@ -210,9 +210,79 @@
             window.registrarHot = function (hot) {
                 window.hotInstancias.add(hot);
                 const destruir = hot.destroy.bind(hot);
-                hot.destroy = function () { window.hotInstancias.delete(hot); destruir(); };
+                hot.destroy = function () {
+                    window.hotInstancias.delete(hot);
+                    window.hotCentradas?.delete(hot);
+                    destruir();
+                };
                 return hot;
             };
+
+            /* Centrado de rejillas estrechas.
+               En pantallas anchas una tabla de pocas columnas quedaba pegada al
+               borde izquierdo con media tarjeta vacía a la derecha. No se puede
+               centrar por CSS: Handsontable coloca sus capas superpuestas
+               (cabeceras y columnas fijas) contra el borde izquierdo del
+               contenedor, así que desplazar la tabla las descuadraría.
+               En su lugar se le da al contenedor el ancho exacto de la rejilla
+               y se centra ese contenedor, que sí es DOM propio. */
+            window.hotCentradas = new Set();
+
+            window.centrarHot = function (hot) {
+                if (!hot || hot.isDestroyed) return;
+                const raiz = hot.rootElement;
+                const padre = raiz.parentElement;
+                if (!padre) return;
+
+                window.hotCentradas.add(hot);
+
+                // Se suelta el ancho anterior para medir el espacio real.
+                raiz.style.width = '';
+                raiz.style.marginInline = '';
+
+                // Sumar getColWidth en vez de medir el <table>: con virtualización
+                // horizontal el DOM solo tiene las columnas visibles, así que una
+                // tabla ancha se habría medido como si cupiese justo.
+                let ancho = 0;
+                for (let c = 0; c < hot.countCols(); c++) ancho += hot.getColWidth(c);
+
+                const encabezado = raiz.querySelector('.ht_master .htCore tbody tr > th');
+                if (encabezado) ancho += encabezado.offsetWidth;
+
+                // +2 por los bordes; el margen evita centrar por uno o dos píxeles.
+                if (ancho <= 0 || ancho + 2 >= padre.clientWidth) {
+                    hot.refreshDimensions();
+                    return;
+                }
+
+                raiz.style.width = (ancho + 2) + 'px';
+                raiz.style.marginInline = 'auto';
+                hot.refreshDimensions();
+
+                /* Comprobación: si al ceñir el contenedor la rejilla necesita
+                   scroll horizontal, el ancho calculado se quedó corto (las
+                   anchuras de columna aún no estaban medidas, por ejemplo) y
+                   habríamos encogido la tabla en vez de centrarla. Se revierte
+                   y se deja a lo ancho, que es el comportamiento de siempre. */
+                const holder = raiz.querySelector('.ht_master .wtHolder');
+                if (holder && holder.scrollWidth > holder.clientWidth + 1) {
+                    raiz.style.width = '';
+                    raiz.style.marginInline = '';
+                    hot.refreshDimensions();
+                }
+            };
+
+            (function () {
+                let ajuste = null;
+                window.addEventListener('resize', function () {
+                    clearTimeout(ajuste);
+                    ajuste = setTimeout(function () {
+                        window.hotCentradas.forEach(function (h) {
+                            try { window.centrarHot(h); } catch (e) {}
+                        });
+                    }, 150);
+                });
+            })();
 
             (function () {
                 let congelado = false;

@@ -34,6 +34,14 @@
     --color-ink-900: #1a1622;
     --color-ink-950: #110e17;
 
+    /* Colores del logotipo. No son estimaciones: salen de muestrear
+       public/favicon.ico, que es el propio isotipo de la empresa, agrupando
+       sus píxeles opacos por familia y tomando la mediana de cada canal.
+       Se usan sólo donde aparece la marca, no como paleta de interfaz. */
+    --color-marca-rojo:  #e32520;
+    --color-marca-azul:  #2b4b99;
+    --color-marca-verde: #369e39;
+
     /* Lienzo de la aplicación. */
     --color-canvas: #f6f7fb;
     --color-canvas-dark: #0f1117;
@@ -61,6 +69,20 @@ body { text-rendering: optimizeLegibility; }
         background-color: #1e293b;
         color: #e2e8f0;
     }
+
+    /* Cambio de tema.
+       Por omisión el navegador funde la instantánea vieja con la nueva. Aquí se
+       apagan las dos animaciones para que la vieja se quede quieta debajo y la
+       nueva, encima, se descubra con el círculo que anima resources/js/tw.js.
+       Sin `animation: none` el fundido se sumaría al recorte y el cambio se
+       vería lavado. */
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+        animation: none;
+        mix-blend-mode: normal;
+    }
+    ::view-transition-old(root) { z-index: 0; }
+    ::view-transition-new(root) { z-index: 1; }
 
     ::-webkit-scrollbar { width: 10px; height: 10px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -103,6 +125,13 @@ body { text-rendering: optimizeLegibility; }
         @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-base;
     }
 
+    /* Etiqueta de texto. Comparte los tintes chip-* con .tw-chip, pero se ciñe
+       al contenido: .tw-chip es un cuadrado de 44px y el texto se le salía. */
+    .tw-badge {
+        @apply inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1
+               text-xs font-semibold leading-tight;
+    }
+
     /* ---------- Botones ---------- */
     .tw-btn, .tw-btn-primary, .tw-btn-secondary, .tw-btn-danger, .tw-btn-ghost, .tw-btn-dark {
         @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-sm
@@ -140,11 +169,195 @@ body { text-rendering: optimizeLegibility; }
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2.2' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
     }
 
-    /* El icono del calendario en <input type=date> es del navegador:
-       en oscuro se invierte para que se vea. */
-    .dark input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.75); }
+    /* ---------- Desplegable del <select> ----------
+       La lista que se abre al pulsar un <select> la dibuja el navegador, no la
+       página: sale con esquinas rectas y la tipografía del sistema, y no hay
+       forma de tocarla con CSS corriente. Solo se puede sacando el control del
+       modo nativo con `appearance: base-select`.
+
+       Va dentro de @supports a propósito: donde el navegador no lo implementa
+       el bloque se ignora entero y el desplegable se queda exactamente como
+       está hoy. Es una mejora progresiva, nunca un requisito, así que ningún
+       filtro deja de funcionar si el navegador es viejo.
+
+       Está escrito con selectores `.dark …` explícitos en vez de con la
+       variante `dark:`, porque esa variante se compila añadiendo
+       `:where(.dark, .dark *)` AL FINAL del selector y no se puede encadenar
+       nada detrás de un pseudo-elemento como ::picker(). */
+    @supports (appearance: base-select) {
+        select.tw-select,
+        select.tw-select::picker(select) {
+            appearance: base-select;
+        }
+
+        /* En modo base el navegador añade su propia flecha; la nuestra ya va
+           como imagen de fondo, y así el control cerrado no cambia nada. */
+        select.tw-select::picker-icon { display: none; }
+
+        /* El modo base convierte el control en un contenedor: se centra el
+           texto a mano y se recorta con puntos suspensivos si no cabe. */
+        select.tw-select { @apply flex items-center; }
+        select.tw-select selectedcontent { @apply block min-w-0 flex-1 truncate text-left; }
+
+        /* Misma forma y misma sombra que las tarjetas y los menús de la app. */
+        select.tw-select::picker(select) {
+            @apply mt-1.5 max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5
+                   text-sm text-slate-900 shadow-lift;
+            transition: opacity 120ms ease, translate 120ms ease, overlay 120ms allow-discrete,
+                        display 120ms allow-discrete;
+        }
+        .dark select.tw-select::picker(select) {
+            @apply border-slate-600 bg-slate-800 text-slate-100;
+        }
+
+        /* Sale desplegándose un poco, como el resto de menús. */
+        select.tw-select:not(:open)::picker(select) { opacity: 0; translate: 0 -0.25rem; }
+        @starting-style {
+            select.tw-select:open::picker(select) { opacity: 0; translate: 0 -0.25rem; }
+        }
+
+        select.tw-select option {
+            @apply flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 leading-tight;
+        }
+        /* La marca de selección la pone el navegador delante de cada opción y
+           descuadraría la lista: aquí lo que marca la opción activa es el
+           fondo, igual que en los demás menús. */
+        select.tw-select option::checkmark { display: none; }
+
+        select.tw-select option:hover,
+        select.tw-select option:focus { @apply bg-slate-100; }
+        select.tw-select option:checked { @apply bg-brand-50 font-semibold text-brand-700; }
+        select.tw-select option:disabled { @apply cursor-not-allowed text-slate-400; }
+
+        .dark select.tw-select option:hover,
+        .dark select.tw-select option:focus { @apply bg-slate-700; }
+        .dark select.tw-select option:checked { @apply bg-brand-900/50 text-brand-100; }
+        .dark select.tw-select option:disabled { @apply text-slate-500; }
+    }
+
+    /* ---------- Calendario del <input type=date> ----------
+       El panel que despliega el navegador no lo puede tocar el CSS: no hay
+       pseudo-elemento para él en ningún navegador, ni siquiera el equivalente
+       a ::picker() del <select>. Así que se dibuja el nuestro (ver
+       resources/js/datepicker.js) y aquí se le quita al campo el icono que
+       abriría el nativo, sustituyéndolo por uno propio. El <input> sigue
+       siendo de tipo date: conserva su valor, su validación y el tecleo.
+
+       Fuera de las vistas migradas (Handsontable, AdminLTE) no llevan
+       .tw-input y se quedan con el calendario del navegador, que es lo que
+       necesitan. */
+    input[type="date"].tw-input {
+        @apply bg-[length:1.05em] bg-[right_0.75rem_center] bg-no-repeat pr-10;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.8' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5'/%3E%3C/svg%3E");
+    }
+    .dark input[type="date"].tw-input {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.8' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5'/%3E%3C/svg%3E");
+    }
+    input[type="date"].tw-input::-webkit-calendar-picker-indicator { display: none; }
+
+    /* Los campos que no abren calendario (deshabilitados o de solo lectura)
+       tampoco enseñan el icono: ahí no hay nada que pulsar. */
+    input[type="date"].tw-input:disabled,
+    input[type="date"].tw-input[readonly] { @apply bg-none pr-3.5; }
+
+    /* El icono del calendario de los campos NO migrados lo pinta el
+       navegador: en oscuro se invierte para que se vea. */
+    .dark input[type="date"]:not(.tw-input)::-webkit-calendar-picker-indicator {
+        filter: invert(0.75);
+    }
+
+    /* ---------- Panel del calendario ---------- */
+    /* Vive colgado del <body>, así que se apila por encima de las ventanas
+       modales (z-10000) y de sus velos de carga (z-10050). */
+    .tw-cal {
+        @apply fixed z-[10060] w-[17.5rem] rounded-2xl border border-slate-200 bg-white p-3
+               text-slate-700 shadow-lift
+               dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200;
+    }
+    .tw-cal-cab { @apply mb-2 flex items-center gap-1; }
+    .tw-cal-titulo {
+        @apply flex-1 text-center text-sm font-semibold capitalize text-slate-900 dark:text-white;
+    }
+    .tw-cal-nav {
+        @apply flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs text-slate-500
+               transition hover:bg-slate-100 hover:text-slate-900
+               dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white;
+    }
+    .tw-cal-dow {
+        @apply grid grid-cols-7 gap-0.5 pb-1 text-center text-[11px] font-semibold uppercase
+               tracking-[0.04em] text-slate-400 dark:text-slate-500;
+    }
+    .tw-cal-rejilla { @apply grid grid-cols-7 gap-0.5; }
+    .tw-cal-dia {
+        @apply flex h-8 items-center justify-center rounded-lg text-sm tabular-nums transition
+               hover:bg-slate-100 dark:hover:bg-slate-700;
+    }
+    .tw-cal-dia.es-otro-mes { @apply text-slate-300 dark:text-slate-600; }
+    .tw-cal-dia.es-hoy { @apply font-bold text-brand-600 dark:text-brand-300; }
+    .tw-cal-dia.es-elegido {
+        @apply bg-brand-600 font-semibold text-white hover:bg-brand-700 dark:bg-brand-600 dark:text-white;
+    }
+    .tw-cal-dia:disabled {
+        @apply cursor-not-allowed text-slate-300 line-through opacity-60 hover:bg-transparent
+               dark:text-slate-600 dark:hover:bg-transparent;
+    }
+    .tw-cal-pie {
+        @apply mt-2 flex items-center justify-between border-t border-slate-200 pt-2
+               dark:border-slate-700;
+    }
+    .tw-cal-enlace {
+        @apply rounded-lg px-2 py-1 text-xs font-semibold text-brand-600 transition
+               hover:bg-brand-50 disabled:cursor-not-allowed disabled:text-slate-400
+               disabled:hover:bg-transparent
+               dark:text-brand-300 dark:hover:bg-slate-700 dark:disabled:text-slate-600;
+    }
     .tw-label { @apply mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300; }
     .tw-hint  { @apply mt-1.5 text-xs text-slate-500 dark:text-slate-400; }
+
+    /* ---------- Fondo de la pantalla de acceso ---------- */
+    /* El degradado y las manchas difuminadas recorren la pantalla entera. El
+       recorrido de cada mancha se declara en el HTML con --dx/--dy en unidades
+       de ventana, así que cruzan de lado a lado sea cual sea el tamaño.
+
+       Se anima `transform` y `background-position`, que el navegador resuelve
+       sin volver a calcular la maqueta; mover las manchas con `left`/`top`
+       obligaría a rehacer un desenfoque de 64px en cada fotograma. */
+    .tw-auth-fondo {
+        background-size: 220% 220%;
+        animation: tw-auth-degradado 14s ease-in-out infinite alternate;
+    }
+
+    .tw-auth-mancha {
+        will-change: transform;
+        /* Sin `alternate`: el recorrido ya vuelve al punto de partida, así que
+           el ciclo encadena en vez de deshacer el camino andado. */
+        animation: tw-auth-deriva var(--dur, 16s) ease-in-out infinite;
+        animation-delay: var(--esperar, 0s);
+    }
+
+    @keyframes tw-auth-degradado {
+        0%   { background-position:   0% 25%; }
+        50%  { background-position: 100% 70%; }
+        100% { background-position:  25% 100%; }
+    }
+
+    /* Cuatro escalas del recorrido en vez de una ida y vuelta: la mancha
+       describe un lazo y no se ve rebotar entre dos puntos. */
+    @keyframes tw-auth-deriva {
+        0%   { transform: translate3d(0, 0, 0) scale(1); }
+        25%  { transform: translate3d(var(--dx, 40vw), calc(var(--dy, 30vh) * 0.3), 0)
+                          scale(var(--esc, 1.3)); }
+        50%  { transform: translate3d(calc(var(--dx, 40vw) * 0.55), var(--dy, 30vh), 0)
+                          scale(1); }
+        75%  { transform: translate3d(calc(var(--dx, 40vw) * -0.35), calc(var(--dy, 30vh) * 0.55), 0)
+                          scale(var(--esc, 1.3)); }
+        100% { transform: translate3d(0, 0, 0) scale(1); }
+    }
+
+    /* Quien pide menos movimiento ve el fondo quieto. */
+    @media (prefers-reduced-motion: reduce) {
+        .tw-auth-fondo, .tw-auth-mancha { animation: none; }
+    }
 
     /* ---------- Píldoras / insignias ---------- */
     .tw-pill, .pill-blue, .pill-rose, .pill-amber, .pill-emerald, .pill-sky, .pill-slate {
@@ -158,12 +371,30 @@ body { text-rendering: optimizeLegibility; }
                font-semibold uppercase tracking-[0.06em] text-slate-500
                dark:border-slate-700/60 dark:bg-slate-900/40 dark:text-slate-400;
     }
+
     .tw-table tbody td { @apply border-b border-slate-100 px-4 py-3 dark:border-slate-700/50; }
     .tw-table tbody tr:last-child td { @apply border-b-0; }
     .tw-table tbody tr { @apply transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-700/30; }
     .tw-table tfoot td {
         @apply border-t border-slate-200 bg-slate-50/60 px-4 py-3 font-semibold
                dark:border-slate-700 dark:bg-slate-900/40;
+    }
+
+    /* Para tablas dentro de un contenedor con scroll propio: la cabecera se
+       queda arriba en vez de perderse al desplazar. El fondo va opaco a
+       propósito — el de .tw-table es semitransparente y dejaría verse las
+       filas por debajo al pasar bajo él. */
+    .tw-table-fija thead th {
+        @apply sticky top-0 z-10 bg-slate-50 dark:bg-slate-900;
+    }
+
+    /* La fila de totales se queda abajo por el mismo motivo, y también con el
+       fondo opaco: con el semitransparente de .tw-table se veían las filas
+       pasando por debajo al desplazar.
+       Va en las celdas y no en el <tfoot>: position:sticky sobre el grupo de
+       filas no lo respetan todos los navegadores. */
+    .tw-table-fija tfoot td {
+        @apply sticky bottom-0 z-10 bg-slate-50 dark:bg-slate-900;
     }
 
     /* ---------- Barra de progreso ---------- */

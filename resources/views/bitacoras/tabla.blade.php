@@ -149,7 +149,7 @@
         </div>
 
         <div class="max-h-[560px] overflow-auto">
-            <table class="tw-table whitespace-nowrap">
+            <table class="tw-table whitespace-nowrap tw-table-fija">
                 <thead class="sticky top-0 z-10">
                     <tr>
                         <th>ID</th><th>Inspector</th><th>CC operario</th><th>Municipio</th><th>Fecha</th>

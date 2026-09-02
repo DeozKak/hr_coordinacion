@@ -1,4 +1,20 @@
 <script>
+/* Aplica min/max al input del editor de fecha.
+   Hay que hacerlo ANTES de que el editor abra: Handsontable 18 usa un
+   <input type="date"> nativo y su open() llama a showPicker(), que corre antes
+   del hook afterBeginEditing. El reintento cubre que el input aún no exista. */
+function ponerLimitesFecha(hot, limites, intentos = 12) {
+    const editor = hot?.getActiveEditor?.();
+    const input = editor?.TEXTAREA
+        ?? hot?.rootElement?.querySelector('.handsontableInput[type="date"]');
+
+    if (input) {
+        for (const [nombre, valor] of Object.entries(limites)) input[nombre] = valor;
+        return;
+    }
+    if (intentos > 0) requestAnimationFrame(() => ponerLimitesFecha(hot, limites, intentos - 1));
+}
+
 /* Las instancias de Handsontable viven fuera del estado de Alpine. */
 let hotDetalles = null;
 let hotDia = null;
@@ -119,6 +135,10 @@ document.addEventListener('alpine:init', () => {
                 function (instancia, TD, row, col, prop, value, cellProperties) {
                     Handsontable.renderers.TextRenderer(instancia, TD, row, col, prop, value, cellProperties);
 
+                    // Al no partirse, un nombre largo se recorta: se deja el
+                    // completo en el tooltip.
+                    if (col === 1) TD.title = value ?? '';
+
                     TD.style.removeProperty('background-color');
                     const clave = self.claveCelda(instancia, row, col, value);
                     if (!clave) return;
@@ -237,11 +257,17 @@ document.addEventListener('alpine:init', () => {
                 filters: true,
                 autoWrapRow: true,
                 autoWrapCol: true,
+                /* Sin esto los nombres largos parten en dos líneas y esa fila crece:
+                   las columnas congeladas y el cuerpo se calculan por separado y
+                   dejaban de cuadrar. Una línea por fila y alto uniforme. */
+                wordWrap: false,
+                rowHeights: 24,
                 fixedColumnsStart: 2,
                 /* +40px sobre el alto útil: con alto exacto la barra horizontal
                    se comía la última fila (PROMEDIO). */
                 height: '660px',
-                colWidths: (i) => (i === 0 ? 100 : i === 1 ? 260 : undefined),
+                colWidths: (i) => (i === 0 ? 110 : i === 1 ? 320 : undefined),
+                manualColumnResize: true,
                 licenseKey: 'non-commercial-and-evaluation',
                 cells: () => ({ renderer: 'customStylesRenderer' }),
                 afterOnCellCornerDblClick: () => this.abrirDia(),
@@ -522,10 +548,10 @@ document.addEventListener('alpine:init', () => {
                     {}, { type: 'text' },
                     { type: 'numeric', validator: 'custom.numeric' },
                     { type: 'text' },
-                    { type: 'date', dateFormat: 'YYYY-MM-DD', datePickerConfig: {
-                        minDate: new Date(this.fechaInicioCorte),
-                        maxDate: new Date(Date.now() - 86400000),
-                    } },
+                    /* El rango va en los atributos min/max del input y no en la
+                       opción datePickerConfig, que dejó de tener efecto cuando
+                       Handsontable 18 cambió Pikaday por un input date nativo. */
+                    { type: 'date', dateFormat: 'YYYY-MM-DD' },
                     { type: 'numeric', validator: 'custom.numeric' },
                     { editor: 'select', selectOptions: ['RP 10444', 'RP 12161', 'RN 12162', 'SA 12164', 'SA 12163'] },
                     { type: 'numeric', validator: 'custom.numeric' },
@@ -573,8 +599,23 @@ document.addEventListener('alpine:init', () => {
                         if (viejo !== nuevo) this.guardarCelda(row, viejo, nuevo);
                     }
                 },
+
+                // Antes de open(), que es quien despliega el calendario nativo.
+                // El cuerpo de bloque es obligatorio: devolver algo desde
+                // beforeBeginEditing cancelaría la edición.
+                beforeBeginEditing: (fila, columna) => { this.limitarFecha(columna); },
+                afterBeginEditing: (fila, columna) => { this.limitarFecha(columna); },
             });
             window.registrarHot?.(hotDia);
+        },
+
+        /* La columna FECHA solo admite del inicio del corte hasta ayer. */
+        limitarFecha(columna) {
+            if (columna !== 5) return;
+            ponerLimitesFecha(hotDia, {
+                min: this.fechaInicioCorte,
+                max: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
+            });
         },
 
         pintarAcciones(td, row) {
