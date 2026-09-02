@@ -200,6 +200,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <td>${fila.operario}</td>
                     <td>${fila.localidad}</td> <!-- Municipio añadido -->
                     <td>${fila.tarea}</td>
+                    <td data-order="${fila.meses ?? -1}">${fila.meses ?? '-'}</td>
                     <td><span class="badge badge-secondary badge-dashboard">${fila.cierre}</span></td>
                     <td data-order="${fila.fecha_orden || ''}">${fila.fecha || '-'}</td>
                 `;

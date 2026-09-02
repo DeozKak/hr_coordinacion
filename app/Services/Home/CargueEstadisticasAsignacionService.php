@@ -2,9 +2,12 @@
 
 namespace App\Services\Home;
 
+use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
+use Box\Spout\Reader\ReaderAbstract;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Shared\Date as FechaExcel;
 
 class CargueEstadisticasAsignacionService
 {
@@ -20,8 +23,9 @@ class CargueEstadisticasAsignacionService
      */
     public function procesar(?UploadedFile $archivoAsignacion, ?UploadedFile $archivoCerradas): array
     {
-        // Aumentamos tiempo y memoria temporalmente para que PhpSpreadsheet trabaje tranquilo
-        ini_set('max_execution_time', 300);
+        // Los archivos se leen fila por fila, así que la memoria ya no crece con el tamaño
+        // del Excel. El tope se deja solo como margen para el control de duplicados.
+        ini_set('max_execution_time', 600);
         ini_set('memory_limit', '512M');
 
         return [
@@ -39,22 +43,32 @@ class CargueEstadisticasAsignacionService
     {
         DB::table('tbl_asignaciones')->truncate();
 
-        // Una misma orden puede venir repetida en el Excel: se conserva solo la primera
-        $datos = collect($this->leerFilas($archivo))
-            ->filter(fn (array $fila) => !empty($fila['numero_orden']))
-            ->unique('numero_orden')
-            ->values()
-            ->all();
-
         $insertadas = 0;
+        $bloque = [];
+        // Una misma orden puede venir repetida en el Excel: se conserva solo la primera.
+        // Guardamos únicamente la llave, no la fila, para no acumular el archivo en memoria.
+        $ordenesVistas = [];
 
-        foreach (array_chunk($datos, self::TAMANO_BLOQUE) as $chunk) {
-            $insertData = array_map(fn (array $fila) => $this->mapearAsignacion($fila), $chunk);
+        foreach ($this->filas($archivo) as $fila) {
+            $orden = $fila['numero_orden'] ?? null;
 
-            if (!empty($insertData)) {
-                DB::table('tbl_asignaciones')->insert($insertData);
-                $insertadas += count($insertData);
+            if (empty($orden) || isset($ordenesVistas[$orden])) {
+                continue;
             }
+
+            $ordenesVistas[$orden] = true;
+            $bloque[] = $this->mapearAsignacion($fila);
+
+            if (count($bloque) >= self::TAMANO_BLOQUE) {
+                DB::table('tbl_asignaciones')->insert($bloque);
+                $insertadas += count($bloque);
+                $bloque = [];
+            }
+        }
+
+        if (!empty($bloque)) {
+            DB::table('tbl_asignaciones')->insert($bloque);
+            $insertadas += count($bloque);
         }
 
         return $insertadas;
@@ -67,66 +81,200 @@ class CargueEstadisticasAsignacionService
      */
     public function importarCerradas(UploadedFile $archivo): int
     {
-        $datos = $this->leerFilas($archivo);
-        $columnasActualizables = array_diff(
+        $columnasActualizables = array_values(array_diff(
             array_keys($this->mapearCerrada([])),
             ['NUMERO_ORDEN']
-        );
+        ));
 
         $procesadas = 0;
+        // Indexado por número de orden para descartar duplicados dentro del mismo bloque
+        $bloque = [];
 
-        foreach (array_chunk($datos, self::TAMANO_BLOQUE) as $chunk) {
-            // Filtramos únicos por si vienen duplicados en el mismo Excel
-            $upsertData = collect($chunk)
-                ->filter(fn (array $fila) => !empty($fila['numero_orden']))
-                ->map(fn (array $fila) => $this->mapearCerrada($fila))
-                ->unique('NUMERO_ORDEN')
-                ->values()
-                ->toArray();
+        foreach ($this->filas($archivo) as $fila) {
+            $orden = $fila['numero_orden'] ?? null;
 
-            if (!empty($upsertData)) {
-                DB::table('tbl_cerradas')->upsert(
-                    $upsertData,
-                    ['NUMERO_ORDEN'], // Llave principal
-                    array_values($columnasActualizables)
-                );
-                $procesadas += count($upsertData);
+            if (empty($orden) || isset($bloque[$orden])) {
+                continue;
+            }
+
+            $bloque[$orden] = $this->mapearCerrada($fila);
+
+            if (count($bloque) >= self::TAMANO_BLOQUE) {
+                $procesadas += $this->guardarCerradas($bloque, $columnasActualizables);
+                $bloque = [];
             }
         }
+
+        $procesadas += $this->guardarCerradas($bloque, $columnasActualizables);
 
         return $procesadas;
     }
 
     /**
-     * Lee la hoja activa y devuelve cada fila como array asociativo,
-     * usando los encabezados de la fila 1 (en minúsculas) como llaves.
-     *
-     * @return array<int, array<string, mixed>>
+     * @param array<string, array<string, mixed>> $bloque
+     * @param array<int, string> $columnasActualizables
+     * @return int filas enviadas al upsert.
      */
-    private function leerFilas(UploadedFile $archivo): array
+    private function guardarCerradas(array $bloque, array $columnasActualizables): int
     {
-        $spreadsheet = IOFactory::load($archivo->getRealPath());
-        $rows = $spreadsheet->getActiveSheet()->toArray();
-
-        $headers = array_map(
-            fn ($h) => strtolower(trim((string) $h)),
-            array_shift($rows) ?? []
-        );
-
-        $datos = [];
-        foreach ($rows as $row) {
-            if (empty(array_filter($row))) continue;
-
-            $fila = [];
-            foreach ($headers as $i => $header) {
-                if ($header) {
-                    $fila[$header] = $row[$i] ?? null;
-                }
-            }
-            $datos[] = $fila;
+        if (empty($bloque)) {
+            return 0;
         }
 
-        return $datos;
+        DB::table('tbl_cerradas')->upsert(
+            array_values($bloque),
+            ['NUMERO_ORDEN'], // Llave principal
+            $columnasActualizables
+        );
+
+        return count($bloque);
+    }
+
+    /**
+     * Recorre la primera hoja y va entregando fila por fila como array asociativo,
+     * usando los encabezados de la fila 1 (en minúsculas) como llaves.
+     *
+     * Es un generador: nunca se mantiene el archivo completo en memoria.
+     *
+     * @return \Generator<int, array<string, mixed>>
+     */
+    private function filas(UploadedFile $archivo): \Generator
+    {
+        $ruta = $archivo->getRealPath();
+        $extension = strtolower($archivo->getClientOriginalExtension());
+
+        return match ($extension) {
+            // Spout lee en streaming; es el camino normal para los archivos del día
+            'csv'  => $this->filasEnStreaming(ReaderEntityFactory::createCSVReader(), $ruta),
+            // Spout no soporta el formato viejo .xls, ahí toca PhpSpreadsheet
+            'xls'  => $this->filasConPhpSpreadsheet($ruta),
+            default => $this->filasEnStreaming(ReaderEntityFactory::createXLSXReader(), $ruta),
+        };
+    }
+
+    /**
+     * @return \Generator<int, array<string, mixed>>
+     */
+    private function filasEnStreaming(ReaderAbstract $reader, string $ruta): \Generator
+    {
+        // Pedimos las fechas como objetos, no como texto: el formato de la celda varía
+        // entre archivos y aquí las normalizamos todas a un mismo patrón.
+        $reader->setShouldFormatDates(false);
+        $reader->open($ruta);
+
+        try {
+            foreach ($reader->getSheetIterator() as $hoja) {
+                $headers = null;
+
+                foreach ($hoja->getRowIterator() as $fila) {
+                    $valores = $fila->toArray();
+
+                    if ($headers === null) {
+                        $headers = $this->normalizarEncabezados($valores);
+                        continue;
+                    }
+
+                    if ($registro = $this->combinar($headers, $valores)) {
+                        yield $registro;
+                    }
+                }
+
+                break; // Solo la primera hoja, como antes con getActiveSheet()
+            }
+        } finally {
+            $reader->close();
+        }
+    }
+
+    /**
+     * Camino alterno para .xls. Se lee solo el valor de las celdas (sin estilos),
+     * que es lo que disparaba el agotamiento de memoria.
+     *
+     * @return \Generator<int, array<string, mixed>>
+     */
+    private function filasConPhpSpreadsheet(string $ruta): \Generator
+    {
+        $reader = IOFactory::createReaderForFile($ruta);
+        $reader->setReadDataOnly(true);
+
+        $hoja = $reader->load($ruta)->getActiveSheet();
+        $headers = null;
+
+        foreach ($hoja->getRowIterator() as $fila) {
+            $celdas = $fila->getCellIterator();
+            $celdas->setIterateOnlyExistingCells(false);
+
+            $valores = [];
+            foreach ($celdas as $celda) {
+                $valores[] = $celda->getValue();
+            }
+
+            if ($headers === null) {
+                $headers = $this->normalizarEncabezados($valores);
+                continue;
+            }
+
+            if ($registro = $this->combinar($headers, $valores)) {
+                yield $registro;
+            }
+        }
+    }
+
+    /**
+     * @param array<int, mixed> $valores
+     * @return array<int, string>
+     */
+    private function normalizarEncabezados(array $valores): array
+    {
+        return array_map(fn ($h) => strtolower(trim((string) $h)), $valores);
+    }
+
+    /**
+     * Arma la fila asociativa. Devuelve null si la fila viene vacía.
+     *
+     * @param array<int, string> $headers
+     * @param array<int, mixed> $valores
+     * @return array<string, mixed>|null
+     */
+    private function combinar(array $headers, array $valores): ?array
+    {
+        if (empty(array_filter($valores))) {
+            return null;
+        }
+
+        $registro = [];
+        foreach ($headers as $i => $header) {
+            if ($header !== '') {
+                $registro[$header] = str_starts_with($header, 'fecha')
+                    ? $this->normalizarFecha($valores[$i] ?? null)
+                    : ($valores[$i] ?? null);
+            }
+        }
+
+        return $registro;
+    }
+
+    /**
+     * Deja cualquier fecha en 'Y-m-d H:i:s', venga como objeto, como serial de Excel
+     * o como texto.
+     *
+     * Excel guarda las fechas como un número de días desde 1900. Si la celda no trae
+     * un formato de fecha reconocible, el lector entrega ese número crudo y sin esta
+     * conversión terminaba guardado tal cual en la base.
+     */
+    private function normalizarFecha(mixed $valor): ?string
+    {
+        if ($valor instanceof \DateTimeInterface) {
+            return $valor->format('Y-m-d H:i:s');
+        }
+
+        if (is_numeric($valor) && (float) $valor > 0) {
+            return FechaExcel::excelToDateTimeObject((float) $valor)->format('Y-m-d H:i:s');
+        }
+
+        $valor = is_string($valor) ? trim($valor) : $valor;
+
+        return ($valor === '' || $valor === null) ? null : (string) $valor;
     }
 
     /**

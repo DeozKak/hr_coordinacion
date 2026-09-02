@@ -70,6 +70,7 @@
             </select>
         </label>
 
+
         <button type="submit" class="tw-btn-dark">
             <i class="fas fa-magnifying-glass"></i> Filtrar
         </button>
@@ -297,6 +298,7 @@
 
                     <tfoot>
                         <tr>
+
                             <td class="text-right uppercase tracking-wide text-slate-500">Total</td>
                             <td class="text-right tabular-nums">
                                 <span x-show="vista === 'tipos'">{{ number_format($baseTotalTipos, 0, ',', '.') }}</span>
@@ -389,4 +391,5 @@
 @section('js')
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     @include('home.partials.script')
+
 @endsection
