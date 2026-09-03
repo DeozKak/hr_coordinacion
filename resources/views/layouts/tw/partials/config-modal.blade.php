@@ -27,10 +27,10 @@
                  icon="fa-gear" tint="slate" title="Configuración">
             <x-slot:subtitle>Accesos de administración</x-slot:subtitle>
 
-            <div class="grid grid-cols-2 gap-3 p-5 sm:grid-cols-3">
+            <div class="grid grid-cols-2 gap-3 p-4 2xl:p-5 sm:grid-cols-3">
                 @foreach ($opciones as $o)
                     <a href="{{ $o['url'] }}"
-                       class="group flex flex-col items-center gap-3 rounded-2xl border border-slate-200/80 p-5 text-center
+                       class="group flex flex-col items-center gap-3 rounded-2xl border border-slate-200/80 p-4 2xl:p-5 text-center
                               transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md
                               dark:border-slate-700/60 dark:hover:border-brand-700">
                         <span class="flex h-14 w-14 items-center justify-center rounded-2xl text-xl transition group-hover:scale-105 chip-{{ $o['tint'] }}">

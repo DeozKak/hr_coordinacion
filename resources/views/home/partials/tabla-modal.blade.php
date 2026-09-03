@@ -1,7 +1,9 @@
 {{-- Tabla de detalle dentro de un modal.
      Lee el estado directamente del componente `dashboard` (tabla*, filas*):
      solo hay un modal abierto a la vez, así que comparten estado.
-     $columnas = ['clave' => 'Encabezado']. --}}
+     $columnas  = ['clave' => 'Encabezado'].
+     $numericas = claves que se alinean a la derecha con cifras de ancho fijo. --}}
+@php $numericas = $numericas ?? []; @endphp
 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 px-5 py-3 dark:border-slate-700/60">
     <label class="relative w-full sm:max-w-xs">
         <span class="sr-only">Buscar</span>
@@ -15,11 +17,11 @@
     <thead class="sticky top-0 z-10">
         <tr>
             @foreach ($columnas as $clave => $encabezado)
-                <th>
+                <th @class(['text-right' => in_array($clave, $numericas, true)])>
                     <button type="button" @click="ordenarPor('{{ $clave }}')"
                             class="inline-flex items-center gap-1 hover:text-slate-800 dark:hover:text-slate-200">
                         {{ $encabezado }}
-                        <i class="fas text-[10px]"
+                        <i class="fas text-[0.625rem]"
                            :class="tablaOrden.key === '{{ $clave }}'
                                ? (tablaOrden.dir === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down')
                                : 'fa-sort opacity-30'"></i>
@@ -34,9 +36,14 @@
         <template x-for="(fila, i) in filasPaginadas" :key="i">
             <tr>
                 @foreach ($columnas as $clave => $encabezado)
-                    <td>
+                    <td @class(['text-right' => in_array($clave, $numericas, true)])>
                         @if (($pill ?? null) === $clave)
                             <span class="pill-slate" x-text="fila.{{ $clave }} ?? '—'"></span>
+                        @elseif (in_array($clave, $numericas, true))
+                            {{-- Cifras de ancho fijo para que la columna se lea en vertical.
+                                 El valor puede llegar nulo o vacío: ahí va la raya. --}}
+                            <span class="tabular-nums"
+                                  x-text="(fila.{{ $clave }} ?? '') !== '' ? fila.{{ $clave }} : '—'"></span>
                         @else
                             <span x-text="fila.{{ $clave }} ?? '—'"></span>
                         @endif
@@ -46,7 +53,7 @@
                 @if ($estado ?? false)
                     <td>
                         <span :class="progEstado === 'ejecutadas' ? 'pill-emerald' : 'pill-rose'">
-                            <i class="fas text-[10px]" :class="progEstado === 'ejecutadas' ? 'fa-circle-check' : 'fa-clock'"></i>
+                            <i class="fas text-[0.625rem]" :class="progEstado === 'ejecutadas' ? 'fa-circle-check' : 'fa-clock'"></i>
                             <span x-text="progEstado === 'ejecutadas' ? 'Ejecutada' : 'Pendiente'"></span>
                         </span>
                     </td>

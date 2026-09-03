@@ -9,7 +9,7 @@
           @submit="if (!impresionValida()) $event.preventDefault()">
         @csrf
 
-        <div class="space-y-4 px-5 py-5">
+        <div class="space-y-4 px-4 py-4 2xl:px-5 2xl:py-5">
             <div>
                 <label class="tw-label" for="sedeImpMas">Sede</label>
                 <select class="tw-select" name="sedeImpMas" id="sedeImpMas" x-model="impresion.sede">

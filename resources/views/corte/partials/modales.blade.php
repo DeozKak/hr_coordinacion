@@ -4,7 +4,7 @@
     <x-slot:titleSlot><span x-text="editandoCorte ? 'Editar corte' : 'Crear corte'"></span></x-slot:titleSlot>
     <x-slot:subtitle>Periodo, meta y umbral de dobles</x-slot:subtitle>
 
-    <div class="space-y-4 px-5 py-5">
+    <div class="space-y-4 px-4 py-4 2xl:px-5 2xl:py-5">
         <template x-if="error">
             <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800
                         dark:border-red-800/60 dark:bg-red-950/40 dark:text-red-200"
@@ -66,7 +66,7 @@
     <x-slot:titleSlot><span x-text="editandoCausal ? 'Editar causal' : 'Crear causal'"></span></x-slot:titleSlot>
     <x-slot:subtitle>Causal de devolución</x-slot:subtitle>
 
-    <div class="space-y-4 px-5 py-5">
+    <div class="space-y-4 px-4 py-4 2xl:px-5 2xl:py-5">
         <template x-if="error">
             <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800
                         dark:border-red-800/60 dark:bg-red-950/40 dark:text-red-200"

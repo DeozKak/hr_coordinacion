@@ -25,7 +25,9 @@
     ];
 @endphp
 
-<div x-data data-capa-alertas>
+{{-- data-capa-flotante: se pinta al final del <body>, fuera del árbol del modal.
+     La marca le dice al modal que un clic aquí no es un clic "fuera" suyo. --}}
+<div x-data data-capa-alertas data-capa-flotante>
     {{-- ==================== DIÁLOGO ==================== --}}
     {{-- La raíz también necesita transición: sin ella se ocultaba de golpe al
          cerrar y las transiciones del velo y del cuadro no se llegaban a ver. --}}
@@ -62,7 +64,7 @@
                  :style="$store.alertas.dialogo.ancho ? `max-width:${$store.alertas.dialogo.ancho}` : ''"
                  :class="$store.alertas.dialogo.claseExtra"
                  class="relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white
-                        p-6 text-center shadow-2xl dark:border-slate-700 dark:bg-slate-800">
+                        p-4 2xl:p-5 2xl:p-6 text-center shadow-2xl dark:border-slate-700 dark:bg-slate-800">
 
                 {{-- Icono --}}
                 <div x-show="$store.alertas.dialogo.icono"
@@ -83,11 +85,11 @@
                     x-text="$store.alertas.dialogo.titulo"></h2>
 
                 <p x-show="$store.alertas.dialogo.texto"
-                   class="mt-2 text-[15px] leading-relaxed text-slate-500 dark:text-slate-400"
+                   class="mt-2 text-[0.9375rem] leading-relaxed text-slate-500 dark:text-slate-400"
                    x-text="$store.alertas.dialogo.texto"></p>
 
                 <div x-show="$store.alertas.dialogo.html"
-                     class="mt-3 text-[15px] leading-relaxed text-slate-500 dark:text-slate-400"
+                     class="mt-3 text-[0.9375rem] leading-relaxed text-slate-500 dark:text-slate-400"
                      x-html="$store.alertas.dialogo.html"></div>
 
                 {{-- Campo de entrada --}}

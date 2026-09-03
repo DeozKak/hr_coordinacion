@@ -82,7 +82,7 @@
             municipios: @js(route('municipios.json')),
         },
      })"
-     class="space-y-6">
+     class="space-y-4 2xl:space-y-6">
 
     {{-- ============ BARRA DE CONTROL ============ --}}
     <section class="tw-card">
@@ -112,7 +112,7 @@
     </section>
 
     {{-- ============ INDICADORES DEL INSPECTOR ACTIVO ============ --}}
-    <section class="grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
+    <section class="grid gap-4 2xl:gap-5 sm:grid-cols-2 lg:grid-cols-5">
         @foreach ([
             ['clave' => 'certificada',     'label' => 'Certificada',              'icon' => 'fa-circle-check',        'tint' => 'emerald'],
             ['clave' => 'conNovedades',    'label' => 'Certificada con novedades','icon' => 'fa-circle-exclamation',  'tint' => 'amber'],
@@ -120,7 +120,7 @@
             ['clave' => 'defectoNoCritico','label' => 'Defecto no crítico',       'icon' => 'fa-circle-info',         'tint' => 'sky'],
             ['clave' => 'total',           'label' => 'Total contratos OK',       'icon' => 'fa-list-check',          'tint' => 'blue'],
         ] as $kpi)
-            <div class="tw-card p-5">
+            <div class="tw-card p-4 2xl:p-5">
                 <div class="flex items-start justify-between gap-3">
                     <span class="tw-eyebrow max-w-[9rem]">{{ $kpi['label'] }}</span>
                     <span class="tw-chip chip-{{ $kpi['tint'] }}"><i class="fas {{ $kpi['icon'] }}"></i></span>
@@ -148,7 +148,7 @@
             </div>
         </div>
 
-        <div class="max-h-[560px] overflow-auto">
+        <div class="max-h-[35rem] tw-card-scroll">
             <table class="tw-table whitespace-nowrap tw-table-fija">
                 <thead class="sticky top-0 z-10">
                     <tr>

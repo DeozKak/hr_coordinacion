@@ -43,7 +43,7 @@
                 graficos:      '{{ route('produccion.index') }}',
             },
          })"
-         class="grid gap-6 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+         class="grid gap-4 2xl:gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
 
         {{-- ============================== CORTES ============================= --}}
         <section class="tw-card self-start">
@@ -72,7 +72,7 @@
                 </div>
             </div>
 
-            <div class="max-h-[26rem] overflow-auto">
+            <div class="max-h-[26rem] tw-card-scroll">
                 <table class="tw-table tw-table-fija">
                     <thead>
                     <tr>
@@ -153,7 +153,7 @@
                 </div>
             </div>
 
-            <div class="max-h-[26rem] overflow-auto">
+            <div class="max-h-[26rem] tw-card-scroll">
                 <table class="tw-table tw-table-fija">
                     <thead>
                     <tr>

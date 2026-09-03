@@ -37,7 +37,7 @@
                 noContarDoblesSabado:  '{{ route('produccion.noContarDoblesSaturday') }}',
             },
          })"
-         class="space-y-6">
+         class="space-y-4 2xl:space-y-6">
 
         {{-- ============================== LEYENDA ============================= --}}
         <section class="tw-card">

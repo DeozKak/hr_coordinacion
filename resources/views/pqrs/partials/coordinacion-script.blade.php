@@ -1,5 +1,25 @@
 <script>
 /* =====================================================================
+   Anchos de las columnas de nombres.
+
+   No son cifras a ojo: se midió el texto real contra la fuente que sirve
+   la página (Plus Jakarta Sans 400) al tamaño de la rejilla compacta,
+   11px. El nombre más largo de los 155 posibles —los 106 que hay en datos
+   más la lista completa de inspectores activos, que es lo que ofrece el
+   desplegable— es "111. CUBIDES CASTELLANOS MICHAEL EDUARDO" y ocupa
+   254px. A eso se le suman el relleno de la celda (6px por lado) y, sólo
+   en las columnas editables, los 28px de la flecha del desplegable
+   (16 de icono + 8 de margen inicial + 4 de final).
+
+   SUPERVISOR se queda como estaba: guarda nombres de usuario, y el más
+   largo que existe hoy mide 185px, así que sus 210 ya sobran.
+   ===================================================================== */
+const ANCHO_NOMBRE_EDITABLE = 296;   // 254 + 12 de relleno + 28 de flecha
+const ANCHO_NOMBRE_LECTURA  = 268;   // 254 + 12 de relleno
+const ANCHO_RECEPCION       = 136;   // "NO PROCEDENTE" (94) + 12 + 28
+const ANCHO_MOTIVO          = 184;   // "Demora prestacion servicio" (143) + 12 + 28
+
+/* =====================================================================
    Mapeo fila BD -> arreglo de la tabla.
    El orden DEBE coincidir con `colHeaders`; lo usan tanto la carga inicial
    como el refresco automático de datos-actualizados.
@@ -261,7 +281,13 @@ document.addEventListener('alpine:init', () => {
                 // calculaba 8px por letra para una fuente bastante mayor.
                 colWidths: (index) => {
                     const h = colHeaders[index];
-                    if (h === 'ASIGNADO' || h === 'RESPONSABLE' || h === 'SUPERVISOR') return 210;
+                    // Los tres que llevan nombre de inspector. Los dos primeros
+                    // son desplegables y necesitan sitio para la flecha.
+                    if (h === 'ASIGNADO' || h === 'RESPONSABLE') return ANCHO_NOMBRE_EDITABLE;
+                    if (h === 'TÉCNICO PROXIMA PROGRAMACION') return ANCHO_NOMBRE_LECTURA;
+                    if (h === 'SUPERVISOR') return 210;
+                    if (h === 'RECEPCIÓN') return ANCHO_RECEPCION;
+                    if (h === 'MOTIVO DE PQR') return ANCHO_MOTIVO;
                     if (h === 'OBSERVACIÓN SOLICITUD' || h === 'OBSERVACIÓN GESTIÓN'
                         || h === 'OBSERVACION SUPERVISOR' || h === 'INSTRUCCIONES CAMPO') return 260;
                     return Math.max(84, (h.length * 6) + 30);
@@ -632,7 +658,18 @@ document.addEventListener('alpine:init', () => {
                 autoWrapRow: false,
                 autoWrapCol: false,
                 wordWrap: false,
-                colWidths: 130,
+                /* Aquí la tabla entera es de sólo lectura, así que las columnas
+                   de nombres no reservan sitio para ninguna flecha. El resto
+                   conserva los 130 de siempre. */
+                colWidths: (index) => {
+                    const h = cabeceras[index];
+                    if (h === 'RESPONSABLE' || h === 'ASIGNADO') return ANCHO_NOMBRE_LECTURA;
+                    if (h === 'SUPERVISOR') return 190;
+                    if (h === 'RECEPCIÓN') return ANCHO_RECEPCION - 28;
+                    // Aquí la cabecera es 'MOTIVO PQR', sin el 'DE'.
+                    if (h === 'MOTIVO PQR') return ANCHO_MOTIVO - 28;
+                    return 130;
+                },
                 fixedColumnsStart: 2,
                 licenseKey: 'non-commercial-and-evaluation',
                 cells: (row, col) => (!sinIcono.includes(cabeceras[col]) ? { renderer: 'verMasRenderer' } : {}),

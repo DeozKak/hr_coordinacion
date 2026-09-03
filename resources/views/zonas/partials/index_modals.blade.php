@@ -3,7 +3,7 @@
          icon="fa-city" tint="blue">
     <x-slot:titleSlot><span x-text="municipio.id ? 'Editar municipio' : 'Crear municipio'"></span></x-slot:titleSlot>
 
-    <div class="space-y-4 px-5 py-5">
+    <div class="space-y-4 px-4 py-4 2xl:px-5 2xl:py-5">
         <div>
             <label class="tw-label" for="nombreMunicipio">Nombre</label>
             {{-- En mayúsculas al escribir, como en la versión anterior. --}}
@@ -52,7 +52,7 @@
          icon="fa-map-location-dot" tint="violet">
     <x-slot:titleSlot><span x-text="barrio.id ? 'Editar barrio' : 'Crear barrio'"></span></x-slot:titleSlot>
 
-    <div class="space-y-4 px-5 py-5">
+    <div class="space-y-4 px-4 py-4 2xl:px-5 2xl:py-5">
         <div>
             <label class="tw-label" for="nombreBarrio">Nombre</label>
             <input type="text" id="nombreBarrio" class="tw-input" :class="claseCampo('barrio')"
@@ -84,7 +84,7 @@
          icon="fa-building" tint="slate"
          title="Gestionar sedes y zonas">
 
-    <div class="grid gap-5 px-5 py-5 md:grid-cols-2">
+    <div class="grid gap-4 2xl:gap-5 px-4 py-4 2xl:px-5 2xl:py-5 md:grid-cols-2">
 
         @foreach ([
             ['clave' => 'sedes', 'titulo' => 'Sedes', 'singular' => 'sede', 'icono' => 'fa-building'],
@@ -155,7 +155,7 @@
          icon="fa-building" tint="slate">
     <x-slot:titleSlot><span x-text="sede.id ? 'Editar sede' : 'Crear sede'"></span></x-slot:titleSlot>
 
-    <div class="space-y-4 px-5 py-5">
+    <div class="space-y-4 px-4 py-4 2xl:px-5 2xl:py-5">
         <div>
             <label class="tw-label" for="nombreSede">Nombre</label>
             <input type="text" id="nombreSede" class="tw-input" :class="claseCampo('nombre')"
@@ -182,7 +182,7 @@
          icon="fa-earth-americas" tint="emerald">
     <x-slot:titleSlot><span x-text="zona.id ? 'Editar zona' : 'Crear zona'"></span></x-slot:titleSlot>
 
-    <div class="space-y-4 px-5 py-5">
+    <div class="space-y-4 px-4 py-4 2xl:px-5 2xl:py-5">
         <div>
             <label class="tw-label" for="nombreZona">Nombre</label>
             <input type="text" id="nombreZona" class="tw-input" :class="claseCampo('nombre')"
@@ -211,7 +211,7 @@
         <span x-text="detalle.grupo ? `Grupo ${detalle.grupo} · sub grupo ${detalle.subgrupo}` : ''"></span>
     </x-slot:subtitle>
 
-    <div class="px-5 py-5">
+    <div class="px-4 py-4 2xl:px-5 2xl:py-5">
         <div x-show="cargandoInspectores" x-cloak class="py-6 text-center">
             <i class="fas fa-spinner fa-spin text-2xl text-brand-600 dark:text-brand-300"></i>
         </div>

@@ -26,9 +26,9 @@ class mensajeVisita extends Command
     public function handle()
     {
         /*// Tus credenciales
-        $token = 'EAAQ4E5HlwmIBQiYsj6V2p0bNF0eRadr5z0T6YZC9gdMSr9ogJXCNjSMvQZBUeFBjoo36coQrGgOmMfK2T1FAjHYZCvK3Fr9FtwxKT3aeYSM0ZAHxHyGM2HLNZAWkIjXAy2XZCpvkJAjMtOhlO9wuZAEoVbf3w0DcgW2bHpAZAWn7I3NUuY2MuUK6RnIhGqyKfWHUopQ9SOBRjV1JMh41KHRpE7DzmOWue0ZC7RT3zwte0d9gwiK8MOUIW6TOYZBZBJOq4KFLN5y0LcDK7pqaFQraNjO';
-        $phoneId = '897325653475062';
-        $version = 'v22.0';
+        $token = config('services.meta_whatsapp.token');
+        $phoneId = config('services.meta_whatsapp.phone_id');
+        $version = config('services.meta_whatsapp.version');
         $destinatario = '573184280662';
 
         $response = Http::withToken($token)
@@ -45,9 +45,9 @@ class mensajeVisita extends Command
 
         dd($response->json());*/
         // Tus datos (idealmente sacados del .env)
-        $token = 'EAAQ4E5HlwmIBQgjz1GzBMIRV5Gx0uVvZBrtLQBFlG5CzYiUYJm5qeQIqwCy2GCcufgxBdjQyDZAS6KZAEE4ZCozMM0u8Y9PPS9n4ZApFGsjmz2ciA59bNZCM80oduifNZA30LdxYPGs1BxEJZAVST5mbOjxxEYdggSRbzybYCujl3tpZAN5vlT0LJvMloUPRrUGQV0v0geUZCHn3787uZCfWQCa0OzI6BQr71tDUQLGvy5cI6B4cp7aslW0x7FlQTSgvLR25eJqNPZCCXCMqwZA8d4pNYBAZDZD';
-        $phoneId = '897325653475062';
-        $version = 'v22.0';
+        $token = config('services.meta_whatsapp.token');
+        $phoneId = config('services.meta_whatsapp.phone_id');
+        $version = config('services.meta_whatsapp.version');
         $destinatario = '573184280662'; // Tu número
 
         $response = Http::withToken($token)

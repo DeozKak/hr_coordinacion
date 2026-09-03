@@ -92,10 +92,10 @@
             },
          })"
          @abrir-sedes.window="modal = 'sedes'"
-         class="space-y-6">
+         class="space-y-4 2xl:space-y-6">
 
         @canany(['ver_residente', 'ver_coordinacion_RP'])
-            <div class="grid gap-6 xl:grid-cols-2">
+            <div class="grid gap-4 2xl:gap-6 md:grid-cols-2">
 
                 {{-- ============================ MUNICIPIOS ======================= --}}
                 <section class="tw-card flex flex-col">
@@ -121,7 +121,7 @@
                         </label>
                     </div>
 
-                    <div class="max-h-[22rem] flex-1 overflow-auto">
+                    <div class="max-h-[22rem] flex-1 tw-card-scroll">
                         <table class="tw-table tw-table-fija">
                             <thead>
                                 <tr>
@@ -191,7 +191,7 @@
                         </label>
                     </div>
 
-                    <div class="max-h-[22rem] flex-1 overflow-auto">
+                    <div class="max-h-[22rem] flex-1 tw-card-scroll">
                         <table class="tw-table tw-table-fija">
                             <thead>
                                 <tr>
@@ -246,8 +246,8 @@
 
             {{-- Sin overflow-hidden: los desplegables de los filtros se salen de
                  la tarjeta a propósito. --}}
-            <div class="p-5">
-                <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            <div class="p-4 2xl:p-5">
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                     <x-select-buscador label="Municipio" model="filtros.municipio"
                                        options="opciones.municipio" placeholder="Todos los municipios"
                                        onChange="actualizarFiltros()" />

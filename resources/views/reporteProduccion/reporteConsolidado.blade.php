@@ -28,10 +28,10 @@
                  voltear el arreglo esos sufijos llegarían al JS como números. --}}
             sufijos: {{ Js::from(array_map('strval', array_flip($meses))) }},
          })"
-         class="space-y-6">
+         class="space-y-4 2xl:space-y-6">
 
         {{-- ============================== FILTROS ============================= --}}
-        <section class="tw-card p-5">
+        <section class="tw-card p-4 2xl:p-5">
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-[200px_1fr] lg:items-end">
                 <div>
                     <label class="tw-label" for="selectorAnio">Año</label>
@@ -86,7 +86,7 @@
         </section>
 
         {{-- ================= TIPO DE TRABAJO + ZONA (lado a lado) ============ --}}
-        <div class="grid gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]" x-show="hayDatos" x-cloak>
+        <div class="grid gap-4 2xl:gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]" x-show="hayDatos" x-cloak>
 
             <section class="tw-card">
                 <div class="tw-card-header">

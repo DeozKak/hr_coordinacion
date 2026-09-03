@@ -171,6 +171,8 @@ class MetricasDiariasService
                 return $this->municipios->limpiar($loc);
             })
             ->filter()
+            // Sólo municipios madre: por un corregimiento no se filtra.
+            ->filter(fn (string $loc) => $this->municipios->esMadre($loc))
             ->unique()
             ->sort()
             ->values();

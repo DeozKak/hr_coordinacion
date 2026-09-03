@@ -14,7 +14,7 @@
         <i class="fas fa-bell"></i>
         <span x-show="total > 0" x-cloak x-transition
               class="absolute -right-0.5 -top-0.5 flex min-w-[1.15rem] items-center justify-center rounded-full
-                     bg-red-600 px-1 text-[10px] font-bold leading-[1.15rem] text-white ring-2 ring-white
+                     bg-red-600 px-1 text-[0.625rem] font-bold leading-[1.15rem] text-white ring-2 ring-white
                      dark:ring-slate-800"
               x-text="total > 99 ? '99+' : total"></span>
     </button>

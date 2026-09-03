@@ -48,7 +48,7 @@
                 </div>
             </div>
 
-            <div class="space-y-5 p-5">
+            <div class="space-y-4 2xl:space-y-5 p-4 2xl:p-5">
                 <div>
                     <label class="tw-label" for="inspectorPlanilla">Inspector</label>
                     <select class="tw-select" name="inspectorPlanilla" id="inspectorPlanilla" x-model="inspector">

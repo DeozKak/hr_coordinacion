@@ -23,7 +23,7 @@
                 filtrar: '{{ route('management.filterDataReception') }}',
             },
          })"
-         class="space-y-6">
+         class="space-y-4 2xl:space-y-6">
 
         {{-- =============================== FILTROS =========================== --}}
         <section class="tw-card">
@@ -44,7 +44,7 @@
             {{-- Sin x-collapse: aquí no hay ventana de por medio, pero se mantiene
                  la misma forma que en el resto de la aplicación. --}}
             <div x-show="filtrosAbiertos" x-cloak>
-                <div class="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="grid gap-4 p-4 2xl:p-5 sm:grid-cols-2 lg:grid-cols-4">
                     <x-lista-numeros label="Orden principal" model="filtros.ordenTrabajo" />
                     <x-lista-numeros label="Orden secundaria" model="filtros.ordenExterna" />
                     <x-lista-numeros label="Número de solicitud" model="filtros.numeroSolicitud" />

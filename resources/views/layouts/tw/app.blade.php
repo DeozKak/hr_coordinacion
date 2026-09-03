@@ -42,19 +42,19 @@
 
         @include('layouts.tw.partials.navbar')
 
-        <main class="flex-1 px-4 py-8 sm:px-6 lg:px-8">
+        <main class="flex-1 px-4 py-5 sm:px-5 lg:px-6 2xl:px-8 2xl:py-8">
             <div class="mx-auto max-w-[1600px]">
 
                 @hasSection('content_header')
-                    <header class="mb-8 flex flex-wrap items-end justify-between gap-4">
+                    <header class="mb-5 flex flex-wrap items-end justify-between gap-4 2xl:mb-8">
                         <div class="min-w-0">
                             {{-- Las vistas heredadas ponen un <h1> aquí; lo estilizamos desde el contenedor. --}}
-                            <div class="[&>h1]:text-3xl [&>h1]:font-bold [&>h1]:tracking-tight [&>h1]:text-slate-900
-                                        dark:[&>h1]:text-white sm:[&>h1]:text-[34px]">
+                            <div class="[&>h1]:text-2xl [&>h1]:font-bold [&>h1]:tracking-tight [&>h1]:text-slate-900
+                                        dark:[&>h1]:text-white lg:[&>h1]:text-3xl 2xl:[&>h1]:text-[2.125rem]">
                                 @yield('content_header')
                             </div>
                             @hasSection('subtitle')
-                                <p class="mt-1.5 text-[15px] text-slate-500 dark:text-slate-400">@yield('subtitle')</p>
+                                <p class="mt-1.5 text-[0.9375rem] text-slate-500 dark:text-slate-400">@yield('subtitle')</p>
                             @endif
                         </div>
 

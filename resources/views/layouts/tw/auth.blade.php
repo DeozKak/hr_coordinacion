@@ -65,7 +65,7 @@
                  class="h-auto w-[240px] max-w-full">
         </div>
 
-        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/50">
+        <p class="text-[0.6875rem] font-semibold uppercase tracking-[0.18em] text-white/50">
             Seguimiento Operación Valle
         </p>
     </div>
@@ -75,11 +75,11 @@
          interruptor de tema y siempre va sobre el fondo oscuro. --}}
     <div class="w-full max-w-[420px] rounded-2xl border border-white/10 bg-white p-8 shadow-2xl shadow-black/40">
 
-        <h1 class="text-[26px] font-bold tracking-tight text-slate-900">
+        <h1 class="text-[1.625rem] font-bold tracking-tight text-slate-900">
             @yield('auth_header', 'Bienvenido')
         </h1>
         @hasSection('auth_intro')
-            <p class="mt-2 text-[15px] text-slate-500">@yield('auth_intro')</p>
+            <p class="mt-2 text-[0.9375rem] text-slate-500">@yield('auth_intro')</p>
         @endif
 
         <div class="mt-7">

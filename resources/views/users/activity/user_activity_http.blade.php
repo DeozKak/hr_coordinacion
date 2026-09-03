@@ -27,10 +27,10 @@
                 'fecha' => $a->created_at->format('d/m/Y H:i:s'),
             ])->values()) }},
          })"
-         class="space-y-6">
+         class="space-y-4 2xl:space-y-6">
 
         {{-- Filtros por GET, igual que la vista de base de datos. --}}
-        <section class="tw-card p-5">
+        <section class="tw-card p-4 2xl:p-5">
             <form method="GET" action="{{ route('admin.user.http_activity.show', $user) }}"
                   class="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-end">
                 <div>

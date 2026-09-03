@@ -11,7 +11,7 @@
 @section('content')
     {{-- Los avisos de sesión los pinta la plantilla; antes esta vista traía su
          propio bloque de alerta y un Swal suelto para lo mismo. --}}
-    <div class="grid gap-6 lg:grid-cols-2">
+    <div class="grid gap-4 2xl:gap-6 md:grid-cols-2">
         <x-carga-archivo titulo="Asignadas OSF"
                          :action="route('cargues.store')"
                          icon="fa-list-check" tint="blue" />

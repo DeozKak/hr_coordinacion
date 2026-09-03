@@ -24,7 +24,7 @@
                 exportarHistorico: '{{ route('pqrs.coordinacion.exportarHistorico') }}',
             },
          })"
-         class="space-y-6">
+         class="space-y-4 2xl:space-y-6">
 
         {{-- =========================== BARRA DE ACCIONES ======================= --}}
         <section class="tw-card">
@@ -38,7 +38,7 @@
                             actualiza solo cada minuto
                             <span class="ml-1 inline-flex items-center gap-1"
                                   :class="refrescando ? 'text-brand-600 dark:text-brand-300' : 'text-slate-400'">
-                                <i class="fas fa-rotate text-[10px]" :class="refrescando && 'fa-spin'"></i>
+                                <i class="fas fa-rotate text-[0.625rem]" :class="refrescando && 'fa-spin'"></i>
                                 <span x-text="ultimaActualizacion"></span>
                             </span>
                         </p>

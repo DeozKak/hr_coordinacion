@@ -26,7 +26,7 @@
            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
            x-transition:leave="transition-opacity duration-100"
            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-           class="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+           class="px-3 pb-1.5 pt-5 text-[0.625rem] font-bold uppercase tracking-[0.12em] text-slate-400">
             {{ $item['header'] }}
         </p>
         <div x-show="!$store.ui.expanded" class="mx-3 my-3 border-t border-slate-200 dark:border-slate-700"></div>
@@ -103,12 +103,12 @@
                     {{-- `gap-0` al contraer: el hueco entre icono y texto seguía
                          contando aunque el texto midiera 0, y descentraba el icono. --}}
                     :class="!$store.ui.expanded && 'lg:justify-center lg:gap-0 lg:px-0'">
-                <i class="{{ $item['icon'] ?? 'far fa-circle' }} w-5 shrink-0 text-center text-[15px]"></i>
+                <i class="{{ $item['icon'] ?? 'far fa-circle' }} w-5 shrink-0 text-center text-[0.9375rem]"></i>
                 <span class="flex-1 overflow-hidden truncate text-left transition-[opacity,max-width]
                              duration-300 ease-[cubic-bezier(.4,0,.2,1)] motion-reduce:transition-none"
                       :class="$store.ui.expanded ? 'max-w-[12rem] opacity-100' : 'max-w-0 opacity-0'"
                 >{{ $item['text'] }}</span>
-                <i class="fas fa-chevron-down overflow-hidden text-[10px] transition-all duration-300
+                <i class="fas fa-chevron-down overflow-hidden text-[0.625rem] transition-all duration-300
                           ease-[cubic-bezier(.4,0,.2,1)] motion-reduce:transition-none"
                    :class="[
                        open && 'rotate-180',
@@ -132,16 +132,16 @@
                  x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
                  @mouseenter="clearTimeout(cierre)" @mouseleave="cerrar()"
                  :style="`top: ${arriba}px`"
-                 class="fixed left-[78px] z-50 ml-1 hidden w-60 overflow-hidden rounded-xl border
+                 class="fixed left-[4.875rem] z-50 ml-1 hidden w-60 overflow-hidden rounded-xl border
                         border-slate-200 bg-white py-1.5 shadow-2xl lg:block
                         dark:border-slate-700 dark:bg-slate-800">
 
-                <p class="truncate px-3 pb-1.5 pt-1 text-[10px] font-bold uppercase tracking-[0.12em]
+                <p class="truncate px-3 pb-1.5 pt-1 text-[0.625rem] font-bold uppercase tracking-[0.12em]
                           text-slate-400">{{ $item['text'] }}</p>
 
                 @foreach ($planos as $entrada)
                     @if ($entrada['tipo'] === 'grupo')
-                        <p class="truncate border-t border-slate-100 px-3 pb-1 pt-2 text-[10px] font-semibold
+                        <p class="truncate border-t border-slate-100 px-3 pb-1 pt-2 text-[0.625rem] font-semibold
                                   uppercase tracking-wider text-slate-400 dark:border-slate-700">
                             {{ $entrada['texto'] }}
                         </p>
@@ -181,7 +181,7 @@
                     'bg-slate-300 group-hover:bg-slate-400 dark:bg-slate-600' => ! $active,
                 ])></span>
             @else
-                <i class="{{ $item['icon'] ?? 'far fa-circle' }} w-5 shrink-0 text-center text-[15px]"></i>
+                <i class="{{ $item['icon'] ?? 'far fa-circle' }} w-5 shrink-0 text-center text-[0.9375rem]"></i>
             @endif
             <span class="overflow-hidden truncate transition-[opacity,max-width] duration-300
                          ease-[cubic-bezier(.4,0,.2,1)] motion-reduce:transition-none"

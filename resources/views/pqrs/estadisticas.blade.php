@@ -9,11 +9,11 @@
 @section('subtitle', 'Distribución por técnico, motivo, resolución y cumplimiento de tiempos.')
 
 @section('content')
-    <div x-data="estadisticasPqrs({ estadoInicial: '{{ $estadoFiltro }}' })" class="space-y-6">
+    <div x-data="estadisticasPqrs({ estadoInicial: '{{ $estadoFiltro }}' })" class="space-y-4 2xl:space-y-6">
 
         {{-- ================================ FILTROS ============================ --}}
         <form method="GET" action="{{ route('pqrs.coordinacion.estadisticas') }}"
-              class="tw-card border-l-4 border-l-brand-600 p-5">
+              class="tw-card border-l-4 border-l-brand-600 p-4 2xl:p-5">
             <div class="grid gap-4 lg:grid-cols-4">
                 <div>
                     <label class="tw-label" for="filtroEstado">
@@ -74,7 +74,7 @@
         </form>
 
         {{-- ================================ GRÁFICAS =========================== --}}
-        <div class="grid gap-6 xl:grid-cols-2">
+        <div class="grid gap-4 2xl:gap-6 md:grid-cols-2">
             @php
                 $tarjetas = [
                     ['chartTecnicos', 'Top 10: técnicos con más quejas',  'Cantidad de quejas por técnico',      'fa-users',          'emerald'],
@@ -96,7 +96,7 @@
                         </div>
                     </div>
                     <div class="tw-card-body">
-                        <div class="h-[300px]" x-show="hayDatos('{{ $id }}')">
+                        <div class="h-[18.75rem]" x-show="hayDatos('{{ $id }}')">
                             <canvas id="{{ $id }}" role="img" aria-label="{{ $titulo }}"></canvas>
                         </div>
                         <p x-show="!hayDatos('{{ $id }}')" x-cloak

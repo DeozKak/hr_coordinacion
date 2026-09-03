@@ -86,11 +86,11 @@
                 serialesAsignados:    '{{ route('bitacora.stickers.getSerialesAsignados', ['idInspector' => ':id']) }}',
             },
          })"
-         class="space-y-6">
+         class="space-y-4 2xl:space-y-6">
 
         {{-- ============================== RESUMEN ============================== --}}
-        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <div class="tw-card p-5">
+        <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="tw-card p-4 2xl:p-5">
                 <div class="flex items-start justify-between gap-3">
                     <div>
                         <p class="tw-eyebrow">Disponible en inventario</p>
@@ -104,7 +104,7 @@
                 </p>
             </div>
 
-            <div class="tw-card p-5">
+            <div class="tw-card p-4 2xl:p-5">
                 <div class="flex items-start justify-between gap-3">
                     <div>
                         <p class="tw-eyebrow">Asignado a inspectores</p>
@@ -118,7 +118,7 @@
                 </p>
             </div>
 
-            <div class="tw-card p-5">
+            <div class="tw-card p-4 2xl:p-5">
                 <div class="flex items-start justify-between gap-3">
                     <div>
                         <p class="tw-eyebrow">Inspectores activos</p>
@@ -151,7 +151,7 @@
             </div>
 
             <div class="tw-card-body">
-                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                <div class="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
                     @foreach($tipos as $t)
                         <div class="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm
                                     transition hover:shadow-md dark:border-slate-700 dark:bg-slate-800/60">
@@ -213,7 +213,7 @@
                             <button type="button" class="inline-flex items-center gap-1.5 uppercase tracking-[0.06em]"
                                     @click="ordenarPor('nombre')">
                                 <i class="fas fa-user"></i> Inspector
-                                <i class="fas text-[10px]"
+                                <i class="fas text-[0.625rem]"
                                    :class="orden === 'nombre'
                                         ? (direccion === 'asc' ? 'fa-arrow-up-short-wide' : 'fa-arrow-down-wide-short')
                                         : 'fa-sort opacity-40'"></i>
@@ -223,7 +223,7 @@
                             <button type="button" class="inline-flex items-center gap-1.5 uppercase tracking-[0.06em]"
                                     @click="ordenarPor('total')">
                                 <i class="fas fa-note-sticky"></i> Stickers asignados
-                                <i class="fas text-[10px]"
+                                <i class="fas text-[0.625rem]"
                                    :class="orden === 'total'
                                         ? (direccion === 'asc' ? 'fa-arrow-up-short-wide' : 'fa-arrow-down-wide-short')
                                         : 'fa-sort opacity-40'"></i>

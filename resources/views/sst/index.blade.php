@@ -10,7 +10,7 @@
 
 @section('content')
     <div x-data="preoperacional({ url: '{{ route('sst.exportar') }}' })"
-         class="max-w-2xl space-y-6">
+         class="max-w-2xl space-y-4 2xl:space-y-6">
 
         <section class="tw-card">
             <div class="tw-card-header">
@@ -23,7 +23,7 @@
                 </div>
             </div>
 
-            <div class="space-y-4 px-5 py-5">
+            <div class="space-y-4 px-4 py-4 2xl:px-5 2xl:py-5">
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div>
                         <label class="tw-label" for="fecha_inicio">Desde</label>

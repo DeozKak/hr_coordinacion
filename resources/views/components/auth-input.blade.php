@@ -15,7 +15,7 @@
     <div class="relative">
         @if ($icon)
             <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                <i class="{{ $icon }} text-[15px]"></i>
+                <i class="{{ $icon }} text-[0.9375rem]"></i>
             </span>
         @endif
 
@@ -34,7 +34,7 @@
             <button type="button" @click="show = !show" tabindex="-1"
                     class="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-2 text-slate-400 transition hover:text-slate-600"
                     :aria-label="show ? 'Ocultar contraseña' : 'Mostrar contraseña'">
-                <i class="fas text-[15px]" :class="show ? 'fa-eye-slash' : 'fa-eye'"></i>
+                <i class="fas text-[0.9375rem]" :class="show ? 'fa-eye-slash' : 'fa-eye'"></i>
             </button>
         @endif
     </div>

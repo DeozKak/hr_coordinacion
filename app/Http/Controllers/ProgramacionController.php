@@ -490,7 +490,7 @@ class ProgramacionController extends Controller
                     'json' => $bodyData,
                     'headers' => [
                         'accept' => 'application/json',
-                        'authorization' => 'Bearer bGBktWXeKxgX1syNGKtT8al4rfZHRemt',
+                        'authorization' => 'Bearer ' . config('services.whapi.token'),
                         'content-type' => 'application/json',
                     ],
                 ]);*/
@@ -1317,7 +1317,7 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
                         ],
                         'headers' => [
                             'accept' => 'application/json',
-                            'authorization' => 'Bearer bGBktWXeKxgX1syNGKtT8al4rfZHRemt',
+                            'authorization' => 'Bearer ' . config('services.whapi.token'),
                             'content-type' => 'application/json',
                         ],
                     ]);
@@ -1332,7 +1332,7 @@ Agradecemos su colaboración para coordinar esta inspección a la brevedad posib
                         'json' => $bodyData,
                         'headers' => [
                             'accept' => 'application/json',
-                            'authorization' => 'Bearer bGBktWXeKxgX1syNGKtT8al4rfZHRemt',
+                            'authorization' => 'Bearer ' . config('services.whapi.token'),
                             'content-type' => 'application/json',
                         ],
                     ]);

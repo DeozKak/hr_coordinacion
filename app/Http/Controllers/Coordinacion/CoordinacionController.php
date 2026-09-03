@@ -29,6 +29,15 @@ use ZipArchive;
 
 class CoordinacionController extends Controller
 {
+    /**
+     * Columnas y agrupaciones por las que las pantallas de coordinación e
+     * histórico dejan filtrar. 'datos' trae grupo y subgrupo; 'dias', el rango.
+     */
+    private const FILTROS_PERMITIDOS = [
+        'orden', 'orden_solicitud_externa', 'contrato', 'codigo_tecnico',
+        'localidad', 'sector_operativo', 'id_sede', 'datos', 'dias',
+    ];
+
     public function coordinacion()
     {
         set_time_limit(400);
@@ -497,6 +506,10 @@ class CoordinacionController extends Controller
         } else {
             $data = [];
         }
+
+        /* Igual que en recepción: las claves llegan del cliente y se usan como
+           nombre de columna, así que sólo pasan las que la pantalla ofrece. */
+        $data = array_intersect_key(is_array($data) ? $data : [], array_flip(self::FILTROS_PERMITIDOS));
 
         $query = asignadas::select('*')
             ->whereIn('asignadas.tipo_trabajo', [10444, 12161])
@@ -2022,6 +2035,9 @@ class CoordinacionController extends Controller
         } else {
             $data = [];
         }
+
+        // Mismo filtrado de claves que en filterData: van a ->where($key, …).
+        $data = array_intersect_key(is_array($data) ? $data : [], array_flip(self::FILTROS_PERMITIDOS));
 
         $marca = $request->input('marca');
 

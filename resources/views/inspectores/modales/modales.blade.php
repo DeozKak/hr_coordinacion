@@ -3,7 +3,7 @@
          icon="fa-user-plus" tint="emerald" title="Nuevo inspector"
          subtitle="Los datos deben coincidir con movilidad">
 
-    <div class="space-y-4 px-5 py-5">
+    <div class="space-y-4 px-4 py-4 2xl:px-5 2xl:py-5">
         <div class="flex items-start gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm
                     text-sky-900 dark:border-sky-800/60 dark:bg-sky-950/40 dark:text-sky-200">
             <i class="fas fa-circle-info mt-0.5"></i>
@@ -80,7 +80,7 @@
          icon="fa-user-pen" tint="blue" title="Editar inspector"
          subtitle="El ID y la identificación no se pueden cambiar">
 
-    <div class="space-y-4 px-5 py-5">
+    <div class="space-y-4 px-4 py-4 2xl:px-5 2xl:py-5">
         <template x-if="error">
             <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800
                         dark:border-red-800/60 dark:bg-red-950/40 dark:text-red-200"
@@ -150,7 +150,7 @@
          icon="fa-user-slash" tint="slate" title="Inspectores desactivados"
          subtitle="Vuelve a activarlos cuando haga falta">
 
-    <div class="px-5 py-5">
+    <div class="px-4 py-4 2xl:px-5 2xl:py-5">
         <div class="relative mb-4 sm:max-w-sm" x-show="!cargandoDesactivados && desactivados.length > 0"
              x-cloak>
             <i class="fas fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2

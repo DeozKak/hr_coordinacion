@@ -17,7 +17,7 @@
         <x-auth-input name="password_confirmation" label="Confirmar contraseña"
                       placeholder="Repite la contraseña" icon="fas fa-lock" toggle />
 
-        <button type="submit" class="tw-btn-primary w-full py-3 text-[15px]">
+        <button type="submit" class="tw-btn-primary w-full py-3 text-[0.9375rem]">
             <i class="fas fa-rotate text-xs"></i> Restablecer contraseña
         </button>
     </form>

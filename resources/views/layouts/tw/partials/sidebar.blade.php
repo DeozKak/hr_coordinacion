@@ -10,7 +10,7 @@
               dark:border-slate-700/60 dark:bg-slate-800"
        :class="[
            $store.ui.mobileOpen ? 'translate-x-0' : '-translate-x-full',
-           $store.ui.sidebarOpen ? 'lg:w-72' : 'lg:w-[78px]'
+           $store.ui.sidebarOpen ? 'lg:w-72' : 'lg:w-[4.875rem]'
        ]"
        x-cloak>
 
@@ -37,10 +37,10 @@
                  agrandada se iría a 179. El asta del peso 500 mide 93, que
                  agrandada da 127: a un 3% de las 131 de al lado. --}}
             @php $grande = 'text-[1.3645em] font-medium leading-[0]'; @endphp
-            <span class="block truncate text-[16px] font-bold tracking-tight text-slate-900 dark:text-white">
+            <span class="block truncate text-[1rem] font-bold tracking-tight text-slate-900 dark:text-white">
                 <span class="{{ $grande }}">e</span>&amp;<span class="{{ $grande }}">c</span> ingeniería
             </span>
-            <span class="block truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+            <span class="block truncate text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-slate-400">
                 Seguimiento Operación
             </span>
         </span>

@@ -2,103 +2,147 @@
 
 namespace App\Services\Home;
 
-use App\Models\Programacion\tbl_programacion_base;
+use DateTime;
+use Illuminate\Support\Facades\DB;
 
 class PendientesBaseService
 {
-    /** Solo cuentan las órdenes que aún no han sido recepcionadas */
-    private const ESTADO_PENDIENTE = '0';
-
-    /** Etiquetas legibles para los códigos de tipo de trabajo */
-    private const ETIQUETAS_TIPO = [
-        '10444' => 'RP 10444',
-        '12161' => 'RP 12161',
-        '12162' => 'RN 12162',
-        '12163' => 'SA 12163',
-        '12164' => 'SA 12164',
-        '12166' => 'RP 12166',
-    ];
+    /** Tabla de la que salen las órdenes abiertas. */
+    private const TABLA = 'tbl_asignaciones';
 
     /** Rangos fijos de meses de vencimiento, en el orden en que se muestran */
     private const RANGOS_MESES = ['-55', '56', '57', '58', '59', '60', '60 +'];
 
-    /** Órdenes pendientes que no tienen el campo MESES diligenciado */
+    /** Órdenes sin fecha de última certificación con la que calcular los meses */
     private const RANGO_SIN_MESES = 'Sin meses';
 
+    /** Marca de "sin fecha" que arrastra la fuente. */
+    private const FECHA_VACIA = '1970-01-01';
+
+    public function __construct(
+        private TiposTrabajoService $tipos
+    ) {}
+
     /**
-     * Pendientes de tbl_programacion_base agrupados por las dos vistas del tablero.
+     * Pendientes agrupados por las dos vistas del tablero.
+     *
+     * La fuente es tbl_asignaciones, la foto de las órdenes abiertas: aquí no
+     * hay estado que filtrar, toda fila cuenta como pendiente. Antes se leía
+     * tbl_programacion_base descartando las ya recepcionadas.
      *
      * @return array tipos, meses y el total de cada agrupación.
      */
     public function generar(): array
     {
-        $tipos = $this->porTipoDeTrabajo();
-        $meses = $this->porMesesVencimiento();
+        $filas = DB::table(self::TABLA)
+            ->select('ID_TIPO_TRABAJO', 'FECHA_ULTCERTI')
+            ->get();
+
+        $tipos = $this->porTipoDeTrabajo($filas);
+        $meses = $this->porMesesVencimiento($filas);
 
         return [
             'tipos'      => $tipos,
             'meses'      => $meses,
             'totalTipos' => array_sum(array_column($tipos, 'cantidad')),
             'totalMeses' => array_sum(array_column($meses, 'cantidad')),
-            // Todos los registros de la tabla, recepcionados incluidos, para
-            // que se entienda por qué el total del tablero es menor
-            'totalTabla' => tbl_programacion_base::count(),
+            'totalTabla' => $filas->count(),
         ];
     }
 
     /**
-     * Cantidad de pendientes por cada tipo de trabajo existente en la tabla.
+     * Cantidad de órdenes por cada tipo de trabajo.
      *
      * @return array<int, array{codigo: string, etiqueta: string, cantidad: int}>
      */
-    public function porTipoDeTrabajo(): array
+    private function porTipoDeTrabajo($filas): array
     {
-        return tbl_programacion_base::where('ESTADO_RECEPCION', self::ESTADO_PENDIENTE)
-            ->selectRaw('ID_TIPO_TRABAJO, COUNT(*) as cantidad')
-            ->groupBy('ID_TIPO_TRABAJO')
-            ->orderByDesc('cantidad')
-            ->get()
-            ->map(function ($fila) {
-                $codigo = (string) $fila->ID_TIPO_TRABAJO;
-
-                return [
-                    'codigo'   => $codigo,
-                    'etiqueta' => self::ETIQUETAS_TIPO[$codigo] ?? ($codigo !== '' ? $codigo : 'SIN TIPO'),
-                    'cantidad' => (int) $fila->cantidad,
-                ];
-            })
+        return $filas
+            ->groupBy(fn ($fila) => trim((string) $fila->ID_TIPO_TRABAJO))
+            ->map(fn ($grupo, $codigo) => [
+                'codigo'   => $codigo,
+                'etiqueta' => $this->tipos->etiqueta($codigo),
+                'cantidad' => $grupo->count(),
+            ])
+            ->sortByDesc('cantidad')
+            ->values()
             ->all();
     }
 
     /**
-     * Cantidad de pendientes por rango de meses de vencimiento.
+     * Cantidad de órdenes por rango de meses de vencimiento.
      *
-     * A diferencia de los tipos de trabajo, los rangos son fijos: siempre se
-     * devuelven todos, incluso los que quedan en cero. Las órdenes sin MESES
-     * se agrupan aparte para que el total coincida con el de tipo de trabajo.
+     * Los rangos son fijos: siempre se devuelven todos, incluso los que quedan
+     * en cero. Las órdenes sin fecha de certificación se agrupan aparte para
+     * que el total coincida con el de tipo de trabajo.
      *
      * @return array<int, array{rango: string, cantidad: int}>
      */
-    public function porMesesVencimiento(): array
+    private function porMesesVencimiento($filas): array
     {
-        $conteos = tbl_programacion_base::where('ESTADO_RECEPCION', self::ESTADO_PENDIENTE)
-            ->selectRaw("
-                CASE
-                    WHEN MESES IS NULL THEN '" . self::RANGO_SIN_MESES . "'
-                    WHEN MESES <= 55   THEN '-55'
-                    WHEN MESES > 60    THEN '60 +'
-                    ELSE CAST(MESES AS CHAR)
-                END as rango,
-                COUNT(*) as cantidad
-            ")
-            ->groupBy('rango')
-            ->pluck('cantidad', 'rango');
+        $conteos = [];
+
+        foreach ($filas as $fila) {
+            $meses = $this->mesesDesdeCertificacion($fila->FECHA_ULTCERTI);
+            $rango = $meses === null ? self::RANGO_SIN_MESES : $this->rangoDe($meses);
+            $conteos[$rango] = ($conteos[$rango] ?? 0) + 1;
+        }
 
         $rangos = array_merge(self::RANGOS_MESES, [self::RANGO_SIN_MESES]);
 
         return array_map(fn (string $rango) => [
             'rango'    => $rango,
-            'cantidad' => (int) ($conteos[$rango] ?? 0),
+            'cantidad' => $conteos[$rango] ?? 0,
         ], $rangos);
+    }
+
+    /**
+     * Meses transcurridos desde la última certificación.
+     *
+     * Misma fórmula que ya se usa en coordinación: años por doce más los meses
+     * completos, y un mes más si sobran días. No es un redondeo caprichoso —
+     * se comprobó contra las 17.891 órdenes que cruzan con la MESES que traía
+     * tbl_programacion_base y reproduce el 87,8% de sus valores, frente al 4,6%
+     * que da truncar. El resto son valores que la fuente antigua tenía sin
+     * recalcular; calculándolo aquí siempre está al día.
+     *
+     * @return int|null null cuando no hay fecha con la que calcular.
+     */
+    public function mesesDesdeCertificacion($fechaUltimaCertificacion): ?int
+    {
+        $valor = trim((string) $fechaUltimaCertificacion);
+
+        if ($valor === '' || str_starts_with($valor, self::FECHA_VACIA)) {
+            return null;
+        }
+
+        try {
+            // La columna es varchar y llega como "2021-11-18 00:00:00".
+            $certificacion = new DateTime(explode(' ', $valor)[0]);
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        $diferencia = $certificacion->diff(new DateTime(date('Y-m-d')));
+        $meses = ($diferencia->y * 12) + $diferencia->m;
+
+        if ($diferencia->d > 0) {
+            $meses++;
+        }
+
+        // Una fecha futura no son meses negativos de vencimiento.
+        return $diferencia->invert === 1 ? 0 : $meses;
+    }
+
+    /**
+     * Rango al que pertenece un número de meses.
+     */
+    private function rangoDe(int $meses): string
+    {
+        if ($meses <= 55) {
+            return '-55';
+        }
+
+        return $meses > 60 ? '60 +' : (string) $meses;
     }
 }

@@ -9,7 +9,7 @@
         <x-auth-input name="password" label="Contraseña"
                       placeholder="••••••••" icon="fas fa-lock" toggle autofocus />
 
-        <button type="submit" class="tw-btn-primary w-full py-3 text-[15px]">
+        <button type="submit" class="tw-btn-primary w-full py-3 text-[0.9375rem]">
             <i class="fas fa-lock-open text-xs"></i> Confirmar
         </button>
     </form>

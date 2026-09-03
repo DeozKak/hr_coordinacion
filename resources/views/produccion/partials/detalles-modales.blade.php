@@ -7,7 +7,7 @@
         <span x-show="!cantidadDobles">Inspecciones registradas en el día</span>
     </x-slot:subtitle>
 
-    <div class="px-5 py-5">
+    <div class="px-4 py-4 2xl:px-5 2xl:py-5">
         <div x-show="sinDatosDia" x-cloak
              class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900
                     dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-200">
@@ -47,7 +47,7 @@
          title="Contar dobles" icon="fa-calculator" tint="amber">
     <x-slot:subtitle>Sábado con inspecciones dobles</x-slot:subtitle>
 
-    <div class="space-y-4 px-5 py-5">
+    <div class="space-y-4 px-4 py-4 2xl:px-5 2xl:py-5">
         <div>
             <label class="tw-label" for="contarSabado">
                 Inspecciones a contar
@@ -77,7 +77,7 @@
          title="Agregar inspección" icon="fa-plus" tint="emerald">
     <x-slot:subtitle><span x-text="form.nombreInspector"></span></x-slot:subtitle>
 
-    <div class="px-5 py-5">
+    <div class="px-4 py-4 2xl:px-5 2xl:py-5">
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div>
                 <label class="tw-label">Inspector</label>

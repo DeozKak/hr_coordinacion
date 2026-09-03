@@ -33,7 +33,7 @@
                 estado:      '{{ route('inspectores.change_state', ['inspector' => '__id__']) }}',
             },
          })"
-         class="space-y-6">
+         class="space-y-4 2xl:space-y-6">
 
         <section class="tw-card">
             <div class="tw-card-header">
@@ -74,7 +74,7 @@
                                 <button type="button" class="inline-flex items-center gap-1.5 uppercase tracking-[0.06em]"
                                         @click="ordenarPor('{{ $campo }}')">
                                     <i class="fas {{ $icono }}"></i> {{ $texto }}
-                                    <i class="fas text-[10px]"
+                                    <i class="fas text-[0.625rem]"
                                        :class="orden === '{{ $campo }}'
                                             ? (direccion === 'asc' ? 'fa-arrow-up-short-wide' : 'fa-arrow-down-wide-short')
                                             : 'fa-sort opacity-40'"></i>

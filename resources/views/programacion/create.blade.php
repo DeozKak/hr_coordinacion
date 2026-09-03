@@ -47,7 +47,7 @@
                 municipios:'{{ route('municipios.json') }}',
             },
          })"
-         class="space-y-6">
+         class="space-y-4 2xl:space-y-6">
 
         <section class="tw-card">
             <div class="tw-card-header">

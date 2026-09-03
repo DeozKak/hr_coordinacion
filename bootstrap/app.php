@@ -5,6 +5,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\CheckUserStatus;
 use App\Http\Middleware\LogUserHttpActivity;
+use Illuminate\Routing\Exceptions\InvalidSignatureException;
 use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -44,5 +45,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        /* Un enlace de registro caducado o manipulado lanza esta excepción, que
+           por omisión sale como un 403 pelado. Se traduce a algo que la persona
+           pueda entender y accionar: pedir otro enlace. */
+        $exceptions->render(function (InvalidSignatureException $e) {
+            return redirect()->route('login')->with(
+                'error',
+                'El enlace de registro no es válido o ya caducó. Pide uno nuevo al administrador.'
+            );
+        });
     })->create();

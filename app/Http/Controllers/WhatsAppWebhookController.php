@@ -16,13 +16,22 @@ class WhatsAppWebhookController extends Controller
         if ($request->isMethod('get'))
         {
 
-            $verifyToken = env('META_WHATSAPP_VERIFY_TOKEN');
+            $verifyToken = config('services.meta_whatsapp.verify_token');
+
+            /* Sin token configurado no se verifica nada. Antes esto se leía con
+               env() y la clave nunca estuvo en el .env, así que valía null: una
+               petición SIN hub_verify_token comparaba null === null y pasaba. */
+            if (blank($verifyToken)) {
+                Log::error('Webhook de WhatsApp sin META_WHATSAPP_VERIFY_TOKEN configurado.');
+                return response('Forbidden', 403);
+            }
 
             $mode = $request->query('hub_mode');
-            $token = $request->query('hub_verify_token');
+            $token = (string) $request->query('hub_verify_token', '');
             $challenge = $request->query('hub_challenge');
-            //return $token;
-            if ($mode === 'subscribe' && $token === $verifyToken) {
+
+            // Comparación en tiempo constante, como la de la firma.
+            if ($mode === 'subscribe' && hash_equals($verifyToken, $token)) {
 
                 // Respondemos con el challenge y status 200 como pide Meta
                 return response($challenge, 200)->header('Content-Type', 'text/plain');
@@ -95,7 +104,15 @@ class WhatsAppWebhookController extends Controller
             return false;
         }
 
-        $appSecret = env('META_WHATSAPP_APP_SECRET');
+        $appSecret = config('services.meta_whatsapp.app_secret');
+
+        /* Sin secreto no se puede comprobar nada, así que se rechaza. Firmar con
+           un secreto vacío no protege: cualquiera puede calcular ese mismo HMAC
+           y hacerse pasar por Meta. */
+        if (blank($appSecret)) {
+            Log::error('Webhook de WhatsApp sin META_WHATSAPP_APP_SECRET configurado.');
+            return false;
+        }
 
         // La firma viene como "sha256=hash...", quitamos el prefijo
         $expectedHash = hash_hmac('sha256', $payload, $appSecret);
@@ -107,9 +124,9 @@ class WhatsAppWebhookController extends Controller
 
     private function enviarMensaje($para, $mensaje)
     {
-        $token = env('META_WHATSAPP_TOKEN'); // Asegúrate de tener esto en .env
-        $phoneId = '936199389570659'; // Tu ID
-        $version = 'v21.0';
+        $token = config('services.meta_whatsapp.token');
+        $phoneId = config('services.meta_whatsapp.phone_id');
+        $version = config('services.meta_whatsapp.version');
 
         Http::withToken($token)->post("https://graph.facebook.com/{$version}/{$phoneId}/messages", [
             'messaging_product' => 'whatsapp',

@@ -11,7 +11,7 @@
         <x-slot:subtitle>Suma unidades o registra un rango de seriales</x-slot:subtitle>
 
         <form @submit.prevent="enviarAgregar()" id="formAgregarSticker">
-            <div class="space-y-4 px-5 py-5">
+            <div class="space-y-4 px-4 py-4 2xl:px-5 2xl:py-5">
                 <div>
                     <label class="tw-label" for="tipoSticker">Tipo de sticker</label>
                     <select class="tw-select" id="tipoSticker" x-model="agregar.tipo">
@@ -73,7 +73,7 @@
         </x-slot:subtitle>
 
         <form @submit.prevent="enviarAsignar()" id="formAsignarSticker">
-            <div class="px-5 py-5">
+            <div class="px-4 py-4 2xl:px-5 2xl:py-5">
                 <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
                     <table class="tw-table">
                         <thead>
@@ -151,7 +151,7 @@
         </x-slot:subtitle>
 
         <form @submit.prevent="enviarDesasignar()" id="formDesasignarSticker">
-            <div class="px-5 py-5">
+            <div class="px-4 py-4 2xl:px-5 2xl:py-5">
                 <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
                     <table class="tw-table">
                         <thead>
@@ -231,7 +231,7 @@
     <x-slot:titleSlot><span x-text="seriales.titulo"></span></x-slot:titleSlot>
     <x-slot:subtitle><span x-text="seriales.subtitulo"></span></x-slot:subtitle>
 
-    <div class="px-5 py-5">
+    <div class="px-4 py-4 2xl:px-5 2xl:py-5">
         <div x-show="seriales.cargando" class="py-8 text-center text-slate-500 dark:text-slate-400">
             <i class="fas fa-spinner fa-spin mb-2 block text-2xl"></i>
             <span class="text-sm">Cargando…</span>
@@ -249,7 +249,7 @@
                     </div>
                 </template>
 
-                <div x-show="seriales.rangos.length > 0" class="max-h-[400px] space-y-2 overflow-y-auto pr-1">
+                <div x-show="seriales.rangos.length > 0" class="max-h-[25rem] space-y-2 overflow-y-auto pr-1">
                     <template x-for="(rango, i) in seriales.rangos" :key="i">
                         <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5
                                     dark:border-slate-700 dark:bg-slate-800/60">

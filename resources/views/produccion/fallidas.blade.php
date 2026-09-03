@@ -23,7 +23,7 @@
                 obtenerDetalles: '{{ route('obtener-url-detalles-fallidas') }}',
             },
          })"
-         class="space-y-6">
+         class="space-y-4 2xl:space-y-6">
 
         <section class="tw-card">
             <div class="tw-card-header">
@@ -65,7 +65,7 @@
             <x-slot:titleSlot><span x-text="tituloDia"></span></x-slot:titleSlot>
             <x-slot:subtitle>Fallidas registradas en el día</x-slot:subtitle>
 
-            <div class="px-5 py-5">
+            <div class="px-4 py-4 2xl:px-5 2xl:py-5">
                 <div x-show="sinDatosDia" x-cloak
                      class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900
                             dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-200">

@@ -41,7 +41,7 @@
 
     <span class="tw-label">{{ $label }}</span>
 
-    <button type="button" class="tw-select flex min-h-[42px] w-full items-center gap-2 text-left"
+    <button type="button" class="tw-select flex min-h-[2.625rem] w-full items-center gap-2 text-left"
             @click="abierto = !abierto" :aria-expanded="abierto">
         <span class="flex min-w-0 flex-1 flex-wrap gap-1.5">
             <template x-if="{{ $model }}.length === 0">

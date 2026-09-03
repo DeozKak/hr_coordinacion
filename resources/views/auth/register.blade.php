@@ -4,7 +4,9 @@
 @section('auth_intro', 'Registra un nuevo usuario en el sistema.')
 
 @section('auth_body')
-    <form action="{{ route('register') }}" method="post" autocomplete="off"
+    {{-- A la URL completa, no a route('register'): así la firma del
+         enlace de invitación viaja también en el envío. --}}
+    <form action="{{ url()->full() }}" method="post" autocomplete="off"
           x-data="{ identification: '{{ old('identification') }}' }">
         @csrf
 
@@ -44,7 +46,7 @@
         <x-auth-input name="password_confirmation" label="Confirmar contraseña"
                       placeholder="Repite la contraseña" icon="fas fa-lock" toggle />
 
-        <button type="submit" class="tw-btn-primary w-full py-3 text-[15px]">
+        <button type="submit" class="tw-btn-primary w-full py-3 text-[0.9375rem]">
             <i class="fas fa-user-plus text-xs"></i> Registrarse
         </button>
     </form>

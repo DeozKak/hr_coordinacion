@@ -106,7 +106,7 @@
                             <button type="button" @click="ordenarPor('{{ $k }}')"
                                     class="inline-flex items-center gap-1 hover:text-slate-800 dark:hover:text-slate-200">
                                 {{ $label }}
-                                <i class="fas text-[10px]"
+                                <i class="fas text-[0.625rem]"
                                    :class="orden.key === '{{ $k }}'
                                        ? (orden.dir === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down')
                                        : 'fa-sort opacity-30'"></i>

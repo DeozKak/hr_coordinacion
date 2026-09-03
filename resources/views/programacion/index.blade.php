@@ -54,11 +54,11 @@
                 verBase:  '{{ route('programacion.show', ['id' => '__id__']) }}',
             },
          })"
-         class="space-y-6">
+         class="space-y-4 2xl:space-y-6">
 
         {{-- ============================== CARGUES ============================= --}}
         @haspermission('ver_programacion')
-            <section class="tw-card p-5">
+            <section class="tw-card p-4 2xl:p-5">
                 <div class="flex flex-wrap items-end justify-between gap-4">
                     <div class="min-w-0">
                         <span class="tw-eyebrow">Cargues</span>
@@ -83,7 +83,7 @@
         @endhaspermission
 
         {{-- =========================== BUSCAR CONTRATO ======================== --}}
-        <section class="tw-card p-5">
+        <section class="tw-card p-4 2xl:p-5">
             <label class="tw-label" for="buscadorContrato">Buscar por contrato</label>
             <div class="relative sm:max-w-md">
                 <i class="fas fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2
@@ -148,7 +148,7 @@
                                 <button type="button" class="inline-flex items-center gap-1.5 uppercase tracking-[0.06em]"
                                         @click="ordenarPor('{{ $campo }}')">
                                     <i class="fas {{ $icono }}"></i> {{ $texto }}
-                                    <i class="fas text-[10px]"
+                                    <i class="fas text-[0.625rem]"
                                        :class="orden === '{{ $campo }}'
                                             ? (direccion === 'asc' ? 'fa-arrow-up-short-wide' : 'fa-arrow-down-wide-short')
                                             : 'fa-sort opacity-40'"></i>

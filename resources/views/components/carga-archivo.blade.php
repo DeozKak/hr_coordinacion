@@ -31,7 +31,7 @@
         </div>
     </div>
 
-    <div class="flex-1 p-5">
+    <div class="flex-1 p-4 2xl:p-5">
         <label class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2
                       border-dashed border-slate-300 px-5 py-8 text-center transition
                       hover:border-brand-400 hover:bg-slate-50

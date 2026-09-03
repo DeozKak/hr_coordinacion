@@ -6,7 +6,7 @@
          icon="fa-file-circle-plus" tint="emerald" title="Agregar Inspección en Papel">
     <x-slot:subtitle>Se añade a la bitácora del inspector seleccionado</x-slot:subtitle>
 
-    <div class="grid gap-4 p-5 sm:grid-cols-2">
+    <div class="grid gap-4 p-4 2xl:p-5 sm:grid-cols-2">
 
         <div class="sm:col-span-2">
             <label for="p-inspector" class="tw-label">Inspector</label>

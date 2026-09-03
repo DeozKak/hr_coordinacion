@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Facades\URL;
 
 class UserController extends Controller
 {
@@ -211,6 +212,25 @@ class UserController extends Controller
         return response()->json([
             'asignadas' => $userPermissions,
             'disponibles' => $availablePermissions
+        ]);
+    }
+
+    /**
+     * Genera el enlace con el que una persona puede registrarse.
+     *
+     * El registro dejó de ser público: la ruta exige una firma temporal, así que
+     * este enlace es el único camino y caduca solo. La cuenta sigue creándose
+     * inactiva (state = 0) y hace falta activarla desde esta misma pantalla.
+     */
+    public function enlaceRegistro(Request $request)
+    {
+        $dias = (int) $request->input('dias', 0);
+        $dias = max(1, min($dias, 30));
+
+        return response()->json([
+            'url'     => URL::temporarySignedRoute('register', now()->addDays($dias)),
+            'caduca'  => now()->addDays($dias)->format('d/m/Y'),
+            'dias'    => $dias,
         ]);
     }
 }

@@ -43,7 +43,7 @@
                 totalData:  '{{ route('produccion.getCorteTotalData') }}',
             },
          })"
-         class="space-y-6">
+         class="space-y-4 2xl:space-y-6">
 
         {{-- ============================== PESTAÑAS ============================= --}}
         <nav class="flex gap-1 border-b border-slate-200 dark:border-slate-700" role="tablist">
@@ -80,8 +80,8 @@
                 </div>
             </div>
 
-            <div class="tw-card-body space-y-5">
-                <div class="grid gap-4 lg:grid-cols-2">
+            <div class="tw-card-body space-y-4 2xl:space-y-5">
+                <div class="grid gap-4 md:grid-cols-2">
                     {{-- El tope cambia con la selección de inspectores, igual que antes:
                          1 corte cuando se miran todos, hasta 6 al filtrar por inspector. --}}
                     <div>
@@ -121,7 +121,7 @@
                     </button>
                 </div>
 
-                <div class="h-[520px]">
+                <div class="h-[32.5rem]">
                     <canvas id="inspeccionesDiarias" role="img"
                             aria-label="Total de inspecciones por operario"></canvas>
                 </div>
@@ -140,7 +140,7 @@
                 </div>
             </div>
 
-            <div class="tw-card-body space-y-5">
+            <div class="tw-card-body space-y-4 2xl:space-y-5">
                 <div class="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-start">
                     <x-multi-select label="Cortes a comparar"
                                     :options="$opcionesCortes"
@@ -154,7 +154,7 @@
                     </button>
                 </div>
 
-                <div class="h-[480px]">
+                <div class="h-[30rem]">
                     <canvas id="comparacionInspecciones" role="img"
                             aria-label="Comparación de inspecciones entre cortes"></canvas>
                 </div>

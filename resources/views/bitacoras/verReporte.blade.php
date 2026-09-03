@@ -25,12 +25,12 @@
     <input type="hidden" id="id_bitacora" value="{{ route('bitacoras.consulta_reporte', ['id_bitacora' => $bitacora->id]) }}">
     <input type="hidden" id="url_indicadores" value="{{ route('bitacoras.Consulta_indicadores', ['id_bitacora' => $bitacora->id]) }}">
 
-    <div class="space-y-6">
+    <div class="space-y-4 2xl:space-y-6">
         {{-- Indicadores: el JS inyecta aquí las tarjetas --}}
-        <div id="indicadores" class="grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
+        <div id="indicadores" class="grid gap-4 2xl:gap-5 sm:grid-cols-2 lg:grid-cols-5">
             {{-- Esqueleto mientras carga --}}
                 @for ($i = 0; $i < 5; $i++)
-                <div class="tw-card animate-pulse p-5">
+                <div class="tw-card animate-pulse p-4 2xl:p-5">
                     <div class="h-3 w-24 rounded bg-slate-200 dark:bg-slate-700"></div>
                     <div class="mt-4 h-8 w-16 rounded bg-slate-200 dark:bg-slate-700"></div>
                 </div>
@@ -47,7 +47,7 @@
                     </div>
                 </div>
             </div>
-            <div class="p-5 pt-0">
+            <div class="p-4 2xl:p-5 pt-0">
                 {{-- Siempre ht-theme-main: el modo oscuro lo resuelve
                      `color-scheme` desde app.css, sin reinicializar la grilla. --}}
                 <div id="tabla" class="ht-theme-main"></div>

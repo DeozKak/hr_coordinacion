@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\DB;
 class EstadisticasProgramadasService
 {
     public function __construct(
-        private LimpiezaMunicipioService $municipios
+        private LimpiezaMunicipioService $municipios,
+        private TiposTrabajoService $tipos
     ) {}
 
     /**
@@ -25,6 +26,10 @@ class EstadisticasProgramadasService
 
         $ejecutadasRaw = $this->programacionesEjecutadas($fechaReporte);
 
+        /* El selector se arma con el día completo y sin el filtro puesto, igual
+           que el de la cabecera: sólo aparecen los municipios que de verdad
+           tienen programación ese día, no los 29 que existen en la tabla. */
+        $ciudades = $this->municipiosDelDia($pendientesRaw->concat($ejecutadasRaw));
 
         $pendientesRaw = $this->filtrarPorLocalidad($pendientesRaw, $localidadSeleccionada);
         $ejecutadasRaw = $this->filtrarPorLocalidad($ejecutadasRaw, $localidadSeleccionada);
@@ -71,6 +76,9 @@ class EstadisticasProgramadasService
 
             $estadisticasProgramadas[] = [
                 'tipo'       => $nombreTipo,
+                // Con sus iniciales: RP, RN o SA. `tipo` sigue siendo la clave
+                // con la que la vista pide el detalle, así que no se toca.
+                'etiqueta'   => $this->tipos->etiqueta($nombreTipo),
                 'total'      => $total,
                 'ejecutadas' => $cantEjec,
                 'pendientes' => $cantPend,
@@ -90,7 +98,34 @@ class EstadisticasProgramadasService
             'estadisticas' => $estadisticasProgramadas,
             'totales'      => $totalesProg,
             'detalles'     => $detallesProgramaciones,
+            'ciudades'     => $ciudades,
         ];
+    }
+
+    /**
+     * Municipios madre con programación en el día, listos para el selector.
+     *
+     * Se saca de las mismas filas que cuenta la tarjeta, así que lo que se
+     * ofrece filtrar siempre devuelve algo. Antes la lista salía de un
+     * DISTINCT sobre toda la tabla: 29 municipios, de los que un día cualquiera
+     * sólo ocho tenían programación.
+     *
+     * Los nombres se normalizan a su municipio madre —la columna trae
+     * corregimientos y direcciones— y se descarta lo que no sea una madre,
+     * porque por un corregimiento no se filtra.
+     *
+     * @return array<int, string> Nombres únicos y ordenados.
+     */
+    private function municipiosDelDia(Collection $programaciones): array
+    {
+        return $programaciones
+            ->pluck('CIUDAD')
+            ->map(fn ($ciudad) => $this->municipios->limpiar($ciudad))
+            ->filter(fn (string $ciudad) => $ciudad !== '' && $this->municipios->esMadre($ciudad))
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
     }
 
     /**

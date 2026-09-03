@@ -32,10 +32,10 @@
                 'Noviembre' => route('produccion.noviembre'),   'Diciembre' => route('produccion.diciembre'),
             ]) }},
          })"
-         class="space-y-6">
+         class="space-y-4 2xl:space-y-6">
 
         {{-- ============================== FILTROS ============================= --}}
-        <section class="tw-card p-5">
+        <section class="tw-card p-4 2xl:p-5">
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-[200px_260px_1fr] lg:items-end">
                 <div>
                     <label class="tw-label" for="nominaSelectorAnio">Año</label>

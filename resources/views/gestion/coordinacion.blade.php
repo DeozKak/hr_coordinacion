@@ -39,7 +39,7 @@
                 cercania:    '{{ route('asignarOrdCercania') }}',
             },
          })"
-         class="space-y-6">
+         class="space-y-4 2xl:space-y-6">
 
         {{-- =============================== FILTROS =========================== --}}
         <section class="tw-card">
@@ -58,7 +58,7 @@
             </button>
 
             <div x-show="filtrosAbiertos" x-cloak>
-                <div class="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="grid gap-4 p-4 2xl:p-5 sm:grid-cols-2 lg:grid-cols-3">
                     <x-lista-numeros label="Orden" model="filtros.orden" />
                     <x-lista-numeros label="Orden externa" model="filtros.orden_solicitud_externa" />
                     <x-lista-numeros label="Contrato" model="filtros.contrato" />

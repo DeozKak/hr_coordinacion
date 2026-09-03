@@ -42,6 +42,16 @@ class RegisterController extends Controller
     public function __construct()
     {
         $this->middleware('guest');
+
+        /* El registro no es público: se llega con un enlace firmado y temporal
+           que genera un administrador desde gestión de usuarios. Se protege en
+           el controlador y no en la ruta porque Auth::routes() se invoca desde
+           varios archivos de rutas y la última definición gana; aquí la
+           protección va pegada al destino y no depende de ese orden.
+
+           `signed` cubre tanto el formulario (GET) como el envío (POST): la
+           vista manda el formulario a la URL completa, con su firma. */
+        $this->middleware('signed');
     }
 
     /**

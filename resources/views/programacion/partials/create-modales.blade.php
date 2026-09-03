@@ -3,7 +3,7 @@
          icon="fa-file-lines" tint="blue" title="Programación en plantilla"
          subtitle="Registro manual, sin buscar en la base">
 
-    <div class="grid gap-4 px-5 py-5 sm:grid-cols-2">
+    <div class="grid gap-4 px-4 py-4 2xl:px-5 2xl:py-5 sm:grid-cols-2">
 
         {{-- Contrato --}}
         <div>
@@ -103,7 +103,7 @@
         {{-- Estado --}}
         <div>
             <span class="tw-label"><i class="fas fa-toggle-on"></i> Estado</span>
-            <div class="flex items-center gap-5 pt-1.5">
+            <div class="flex items-center gap-4 2xl:gap-5 pt-1.5">
                 @foreach ([['activo', 'Activo'], ['suspendido', 'Suspendido']] as [$valor, $texto])
                     <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
                         <input type="radio" name="estado" value="{{ $valor }}" x-model="plantilla.estado"
@@ -185,7 +185,7 @@
 {{-- ===================== OBSERVACIÓN COMPLETA =========================== --}}
 <x-modal show="modal === 'verMas'" close="modal = null" size="max-w-2xl"
          icon="fa-circle-info" tint="sky" title="Información completa">
-    <div class="px-5 py-5">
+    <div class="px-4 py-4 2xl:px-5 2xl:py-5">
         <p class="whitespace-pre-wrap break-words rounded-xl border border-slate-200 bg-slate-50 p-4
                   text-sm leading-relaxed text-slate-700
                   dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300"

@@ -3,7 +3,7 @@
          icon="fa-code" tint="slate" title="Detalle completo">
     <x-slot:subtitle><span x-text="verMas?.clave ?? ''"></span></x-slot:subtitle>
 
-    <div class="px-5 py-5">
+    <div class="px-4 py-4 2xl:px-5 2xl:py-5">
         <pre class="max-h-[60vh] overflow-auto whitespace-pre-wrap break-words rounded-xl border
                     border-slate-200 bg-slate-50 p-4 font-mono text-xs leading-relaxed text-slate-700
                     dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300"

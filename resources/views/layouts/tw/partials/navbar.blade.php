@@ -45,7 +45,7 @@
                         {{ auth()->user()->roles->first()->name ?? auth()->user()->email }}
                     </span>
                 </span>
-                <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform" :class="open && 'rotate-180'"></i>
+                <i class="fas fa-chevron-down text-[0.625rem] text-slate-400 transition-transform" :class="open && 'rotate-180'"></i>
             </button>
 
             <div x-show="open" x-cloak x-transition.origin.top.right

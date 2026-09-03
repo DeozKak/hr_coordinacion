@@ -5,16 +5,24 @@
     </x-slot:title-slot>
     <x-slot:subtitle>Detalle de la operación del día</x-slot:subtitle>
 
+        {{-- "Meses" va pegada al contrato porque es un dato suyo, no de la
+             ejecución. El servidor ya la manda en cada fila del detalle
+             (infoModal en MetricasDiariasService y PendientesLegalizarService),
+             así que aparece en todas estas ventanas; en la de inspectores sale
+             vacía, igual que el contrato y la tarea, porque esas filas son un
+             recuento de personas y no de contratos. --}}
         @include('home.partials.tabla-modal', [
             'columnas' => [
                 'contrato'  => 'Contrato / Sitio',
                 'operario'  => 'Nombre operario',
                 'localidad' => 'Municipio',
                 'tarea'     => 'Tipo tarea',
+                 'meses'     => 'Meses',
                 'cierre'    => 'Cierre',
                 'fecha'     => 'Fecha ejecución',
             ],
             'pill' => 'cierre',
+            'numericas' => ['meses'],
         ])
 </x-modal>
 
@@ -64,13 +72,18 @@
 
 {{-- ============ ASIGNAR TÉCNICOS ============ --}}
 @can('ver_coordinacion_RP')
-<x-modal show="modal === 'asignacion'" icon="fa-user-plus" tint="blue" size="max-w-3xl"
+<x-modal show="modal === 'asignacion'" icon="fa-user-plus" tint="blue" size="max-w-5xl"
          title="Asignar Técnicos a Localidad">
     <x-slot:subtitle>Puede seleccionar varios técnicos a la vez</x-slot:subtitle>
 
-    <form action="{{ route('asignacion.guardar_tecnicos') }}" method="POST" id="formAsignacion">
+    {{-- El envío lo hace Alpine para no recargar la página entera. `action` y
+         `method` se dejan puestos a propósito: si el JS no llegara a cargar,
+         @submit.prevent no se registra y el formulario se envía como siempre,
+         que es el camino que el controlador sigue respondiendo con un redirect. --}}
+    <form action="{{ route('asignacion.guardar_tecnicos') }}" method="POST" id="formAsignacion"
+          @submit.prevent="guardarAsignacion()">
         @csrf
-        <div class="space-y-5 p-5">
+        <div class="space-y-4 2xl:space-y-5 p-4 2xl:p-5">
             <div>
                 <label for="localidad_input" class="tw-label">Localidad / Municipio</label>
                 <input type="text" name="localidad" id="localidad_input" class="tw-input" required
@@ -95,24 +108,40 @@
                 <input type="search" class="tw-input mb-3" placeholder="Buscar técnico por nombre o ID…"
                        x-model.debounce.150ms="asigBusqueda">
 
-                <div class="max-h-[280px] overflow-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                {{-- Dos columnas a partir de sm: con 150 técnicos, una sola
+                     obligaba a desplazar mucho para marcar unos pocos.
+
+                     Las líneas de separación no son bordes de cada fila: son
+                     el fondo del contenedor asomando por un hueco de 1px entre
+                     celdas. Con dos columnas los bordes por elemento no salen
+                     —no hay forma fiable de saber quién cierra fila, y el
+                     <template> de x-for cuenta como hijo y desbarata cualquier
+                     :nth-child—, mientras que el hueco se dibuja solo. --}}
+                <div class="grid max-h-[17.5rem] gap-px overflow-auto rounded-xl border border-slate-200
+                            bg-slate-100 dark:border-slate-700 dark:bg-slate-700/50 sm:grid-cols-2">
                     <template x-for="t in tecnicosFiltrados" :key="t.id">
-                        <label class="flex cursor-pointer items-start gap-3 border-b border-slate-100 px-4 py-3 last:border-b-0
-                                      hover:bg-slate-50 dark:border-slate-700/50 dark:hover:bg-slate-700/40">
+                        <label class="flex cursor-pointer items-start gap-3 bg-white px-4 py-3
+                                      hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700/40">
                             <input type="checkbox" name="tecnicos[]" :value="t.id" x-model.number="asigSeleccionados"
                                    class="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
                             <span class="min-w-0">
                                 <span class="block truncate font-medium text-slate-800 dark:text-slate-200" x-text="t.nombre"></span>
                                 <span class="block text-xs text-slate-400" x-text="`ID: ${t.id}`"></span>
                                 <span x-show="t.asignado_en && t.asignado_en !== asigLocalidad" class="pill-amber mt-1">
-                                    <i class="fas fa-location-dot text-[10px]"></i>
+                                    <i class="fas fa-location-dot text-[0.625rem]"></i>
                                     <span x-text="`Actualmente en: ${t.asignado_en}`"></span>
                                 </span>
                             </span>
                         </label>
                     </template>
 
-                    <p x-show="!tecnicosFiltrados.length" class="py-10 text-center text-sm text-slate-400">
+                    {{-- Relleno para el hueco que deja una lista impar: sin él
+                         se vería el fondo del contenedor como un bloque gris. --}}
+                    <div x-show="tecnicosFiltrados.length % 2 === 1"
+                         class="hidden bg-white dark:bg-slate-800 sm:block"></div>
+
+                    <p x-show="!tecnicosFiltrados.length"
+                       class="col-span-full bg-white py-10 text-center text-sm text-slate-400 dark:bg-slate-800">
                         Ningún técnico coincide con la búsqueda.
                     </p>
                 </div>
@@ -121,9 +150,11 @@
     </form>
 
     <x-slot:footer>
-        <button type="button" @click="modal = null" class="tw-btn-secondary">Cancelar</button>
-        <button type="submit" form="formAsignacion" class="tw-btn-primary">
-            <i class="fas fa-floppy-disk"></i> Guardar asignación
+        <button type="button" @click="modal = null" class="tw-btn-secondary"
+                :disabled="asigGuardando">Cancelar</button>
+        <button type="submit" form="formAsignacion" class="tw-btn-primary" :disabled="asigGuardando">
+            <i class="fas" :class="asigGuardando ? 'fa-spinner fa-spin' : 'fa-floppy-disk'"></i>
+            <span x-text="asigGuardando ? 'Guardando…' : 'Guardar asignación'"></span>
         </button>
     </x-slot:footer>
 </x-modal>
@@ -138,7 +169,7 @@
     <form action="{{ route('insercion_estadisticas_asignacion') }}" method="POST"
           enctype="multipart/form-data" id="formCargue" @submit="validarCargue($event)">
         @csrf
-        <div class="space-y-4 p-5">
+        <div class="space-y-4 p-4 2xl:p-5">
             <p class="text-sm text-slate-500">
                 Seleccione ambos archivos para actualizar la base de datos.
             </p>

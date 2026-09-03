@@ -29,10 +29,10 @@
                 trabajos:    '{{ route('jobs.pnd') }}',
             },
          })"
-         class="space-y-6">
+         class="space-y-4 2xl:space-y-6">
 
         {{-- ============================== BÚSQUEDA ============================ --}}
-        <section class="tw-card p-5">
+        <section class="tw-card p-4 2xl:p-5">
             {{-- Los campos crecen a la izquierda y el grupo de acciones queda
                  anclado a la derecha con ml-auto. Antes esto era una rejilla de
                  tres columnas: al ocultar la fecha final su celda desaparecía
@@ -136,7 +136,7 @@
         {{-- ===================== OBSERVACIÓN COMPLETA ======================== --}}
         <x-modal show="modal === 'verMas'" close="modal = null" size="max-w-2xl"
                  icon="fa-circle-info" tint="sky" title="Información completa">
-            <div class="px-5 py-5">
+            <div class="px-4 py-4 2xl:px-5 2xl:py-5">
                 <p class="whitespace-pre-wrap break-words rounded-xl border border-slate-200 bg-slate-50 p-4
                           text-sm leading-relaxed text-slate-700
                           dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300"

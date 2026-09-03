@@ -8,12 +8,17 @@
     'size' => 'max-w-3xl',
 ])
 
-{{-- Las alertas se pintan fuera de este árbol, así que pulsar "Cancelar" en una
-     de ellas cuenta como clic fuera y cerraba también el modal.
+{{-- Hay cosas que se pintan al final del <body> y no dentro de este árbol —las
+     alertas y el calendario de los campos de fecha—, porque tienen que poder
+     salirse de la caja del modal. Para `click.outside` eso las convierte en
+     "fuera", y pulsar "Cancelar" en una alerta o elegir un día en el calendario
+     cerraba también el modal. Todas llevan `data-capa-flotante` y por ahí se
+     reconocen.
      El clic se juzga por su DESTINO y no por `$store.alertas.visible`: el botón
      de la alerta ya apagó ese flag cuando este listener llega a ejecutarse.
      Para Escape sí sirve el flag, porque este handler corre antes que el de la
-     alerta (Alpine registra en orden de aparición en el DOM). --}}
+     alerta (Alpine registra en orden de aparición en el DOM). El calendario no
+     necesita nada aquí: corta el Escape en captura antes de llegar a esta capa. --}}
 {{-- La transición va también en la raíz: sin ella `x-show` la ocultaba de
      inmediato al cerrar y las transiciones de dentro no llegaban a verse.
      Salida algo más corta que la entrada, que es lo que se siente natural. --}}
@@ -44,7 +49,7 @@
              x-transition:leave="transition duration-150 ease-in"
              x-transition:leave-start="opacity-100 scale-100 translate-y-0"
              x-transition:leave-end="opacity-0 scale-95 translate-y-2"
-             @click.outside="if (!$store.alertas?.visible && !$event.target.closest('[data-capa-alertas]')) { {{ $close }} }"
+             @click.outside="if (!$store.alertas?.visible && !$event.target.closest('[data-capa-flotante]')) { {{ $close }} }"
              x-trap="{{ $show }}"
              class="relative flex w-full {{ $size }} max-h-[88vh] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-800">
 

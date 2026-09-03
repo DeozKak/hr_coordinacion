@@ -22,7 +22,7 @@
             causantes: {{ Js::from($users_for_filter->map(fn ($n, $id) => ['id' => $id, 'nombre' => $n])->values()) }},
             url: '{{ route('admin.global_audit.fetch') }}',
          })"
-         class="space-y-6">
+         class="space-y-4 2xl:space-y-6">
 
         {{-- ============================== USUARIOS ============================ --}}
         <section class="tw-card">
@@ -46,7 +46,7 @@
                 </div>
             </div>
 
-            <div class="max-h-96 overflow-auto">
+            <div class="max-h-96 tw-card-scroll">
                 <table class="tw-table tw-table-fija">
                     <thead>
                     <tr>
@@ -97,7 +97,7 @@
                 </div>
             </div>
 
-            <div class="grid gap-4 border-t border-slate-200/80 px-5 py-5 dark:border-slate-700/60
+            <div class="grid gap-4 border-t border-slate-200/80 px-4 py-4 2xl:px-5 2xl:py-5 dark:border-slate-700/60
                         sm:grid-cols-2 lg:grid-cols-3">
                 <div>
                     <label class="tw-label" for="date_from_audit">Desde</label>

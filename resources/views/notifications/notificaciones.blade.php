@@ -20,8 +20,8 @@
 
                 <div class="divide-y divide-slate-200/80 dark:divide-slate-700/60">
                     @foreach ($porDia as $dia => $delDia)
-                        <div class="p-5">
-                            <p class="mb-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500
+                        <div class="p-4 2xl:p-5">
+                            <p class="mb-4 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-slate-500
                                       dark:text-slate-400">
                                 {{-- El idioma se pide explícito: la aplicación corre con locale 'en'. --}}
                                 {{ \Carbon\Carbon::parse($dia)->locale('es')->translatedFormat('d \d\e F \d\e Y') }}
@@ -53,7 +53,7 @@
                                                    class="block text-sm font-medium text-slate-800 hover:text-brand-700
                                                           dark:text-slate-100 dark:hover:text-brand-300">
                                                     {{ $texto }}
-                                                    <i class="fas fa-arrow-up-right-from-square ml-1 text-[10px] opacity-50"></i>
+                                                    <i class="fas fa-arrow-up-right-from-square ml-1 text-[0.625rem] opacity-50"></i>
                                                 </a>
                                             @else
                                                 <span class="block text-sm font-medium text-slate-800 dark:text-slate-100">

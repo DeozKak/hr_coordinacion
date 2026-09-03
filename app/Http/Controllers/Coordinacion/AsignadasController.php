@@ -11,6 +11,7 @@ use App\Models\Coordinacion\TblRecepcionVneDetalle;
 use App\Models\tbl_insp_cali;
 use DateTime;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -164,6 +165,14 @@ class AsignadasController extends Controller
         return redirect()->route('cargues.load')->with('success', 'Datos cargados correctamente.');
     }
 
+    /**
+     * Columnas por las que la pantalla de recepción deja filtrar.
+     */
+    private const FILTROS_PERMITIDOS = [
+        'ordenTrabajo', 'ordenExterna', 'numeroSolicitud', 'contrato', 'numActa',
+        'direccion', 'ccOperario', 'tipo', 'estadoRecepcion', 'created_at',
+    ];
+
     public function uploadFile(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -178,9 +187,17 @@ class AsignadasController extends Controller
 
         if ($request->hasFile('archivo')) {
             $archivo = $request->file('archivo');
-            $nombreArchivo = $archivo->getClientOriginalName();
-            $ruta_archivo = $archivo->move(public_path('uploads'), $nombreArchivo);
-            return $ruta_archivo->getPathname();
+
+            /* Fuera de la raíz web y con nombre generado.
+               Antes iba a public_path('uploads'), un directorio que sirve el
+               servidor web, y conservaba el nombre que traía el archivo: quien
+               sube elegía la ruta de destino y podía pisar lo que hubiera.
+               Ahora cae en storage/app/uploads, que no se sirve, con un nombre
+               aleatorio; el proceso lo lee y eraseFile lo borra igual. */
+            $nombreArchivo = Str::random(40) . '.' . ($archivo->getClientOriginalExtension() ?: 'xls');
+            $archivo->storeAs('uploads', $nombreArchivo);
+
+            return storage_path('app/uploads/' . $nombreArchivo);
         }
     }
 
@@ -467,6 +484,11 @@ class AsignadasController extends Controller
         } else {
             $data = [];
         }
+
+        /* Las claves llegan del cliente y se usan como nombre de columna. Se
+           filtran contra la lista de las que la pantalla ofrece: cualquier otra
+           reventaría la consulta con un 500. */
+        $data = array_intersect_key(is_array($data) ? $data : [], array_flip(self::FILTROS_PERMITIDOS));
 
         $query = TblRecepcion::select('*');
 

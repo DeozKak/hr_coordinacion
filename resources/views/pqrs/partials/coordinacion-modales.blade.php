@@ -9,7 +9,7 @@
     <x-slot:subtitle>Bases OSF y soportes HTML</x-slot:subtitle>
 
     <form @submit.prevent="enviarCargar()" enctype="multipart/form-data">
-        <div class="space-y-4 px-5 py-5">
+        <div class="space-y-4 px-4 py-4 2xl:px-5 2xl:py-5">
             <x-file-input label="Quejas asignadas" hint="Excel .xlsx o .xls" tint="sky"
                           icon="fa-inbox" ref="asignadas" model="cargar.nombres.asignadas"
                           accept=".xlsx,.xls" />
@@ -48,7 +48,7 @@
          title="Histórico de quejas" icon="fa-clock-rotate-left" tint="amber">
     <x-slot:subtitle>Consulta de quejas ya legalizadas</x-slot:subtitle>
 
-    <div class="px-5 py-5">
+    <div class="px-4 py-4 2xl:px-5 2xl:py-5">
         <form @submit.prevent="buscarHistorico()"
               class="grid gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4
                      dark:border-slate-700 dark:bg-slate-900/40 sm:grid-cols-2 lg:grid-cols-5">
@@ -123,7 +123,7 @@
     <x-slot:subtitle>Genera los archivos de punto de interés y tareas</x-slot:subtitle>
 
     <form @submit.prevent="enviarExportarGDW()">
-        <div class="space-y-4 px-5 py-5">
+        <div class="space-y-4 px-4 py-4 2xl:px-5 2xl:py-5">
             <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-rose-200 bg-rose-50/70 p-4
                           dark:border-rose-900/50 dark:bg-rose-950/30">
                 <input type="checkbox" class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-brand-600
@@ -169,7 +169,7 @@
 {{-- ======================== EXPORTAR POR SUPERVISOR ===================== --}}
 <x-modal show="modal === 'supervisor'" close="cerrar()" size="max-w-lg"
          title="Exportar por supervisor" icon="fa-user-shield" tint="violet">
-    <div class="space-y-4 px-5 py-5">
+    <div class="space-y-4 px-4 py-4 2xl:px-5 2xl:py-5">
         <div>
             <label class="tw-label" for="selectSupervisor">Seleccione el supervisor</label>
             <select class="tw-select" id="selectSupervisor" x-model="supervisor.seleccionado"
@@ -197,7 +197,7 @@
 {{-- ============================== VER MÁS ============================== --}}
 <x-modal show="modal === 'verMas'" close="cerrar()" size="max-w-2xl"
          title="Información completa" icon="fa-circle-info" tint="blue">
-    <div class="px-5 py-5">
+    <div class="px-4 py-4 2xl:px-5 2xl:py-5">
         <p class="whitespace-pre-wrap break-words rounded-xl border border-slate-200 bg-slate-50/60 p-4
                   text-sm leading-relaxed text-slate-700
                   dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200"

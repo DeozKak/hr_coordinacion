@@ -9,7 +9,7 @@
 @section('subtitle', 'Tus datos de acceso a Seguimiento Operación.')
 
 @section('content')
-    <div class="mx-auto max-w-2xl space-y-6"
+    <div class="mx-auto max-w-2xl space-y-4 2xl:space-y-6"
          x-data="perfil({
             nombre: @js($user->name),
             email: @js($user->email),
@@ -17,7 +17,7 @@
 
         {{-- ============================= IDENTIDAD ============================ --}}
         <section class="tw-card overflow-hidden">
-            <div class="flex items-center gap-4 border-b border-slate-200/80 bg-slate-50/60 px-5 py-5
+            <div class="flex items-center gap-4 border-b border-slate-200/80 bg-slate-50/60 px-4 py-4 2xl:px-5 2xl:py-5
                         dark:border-slate-700/60 dark:bg-slate-900/40">
                 <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-600
                              text-xl font-bold text-white">
@@ -39,7 +39,7 @@
                 @csrf
                 @method('PUT')
 
-                <div class="grid gap-4 p-5 sm:grid-cols-2">
+                <div class="grid gap-4 p-4 2xl:p-5 sm:grid-cols-2">
                     <div class="sm:col-span-2">
                         <label class="tw-label" for="name">Nombre</label>
                         <input type="text" name="name" id="name" class="tw-input" :class="claseCampo('nombre')"
@@ -86,7 +86,7 @@
 
         {{-- ============================= SEGURIDAD =========================== --}}
         <section class="tw-card">
-            <div class="flex flex-wrap items-center justify-between gap-4 p-5">
+            <div class="flex flex-wrap items-center justify-between gap-4 p-4 2xl:p-5">
                 <div class="flex items-center gap-3">
                     <span class="tw-chip chip-amber"><i class="fas fa-key"></i></span>
                     <div>

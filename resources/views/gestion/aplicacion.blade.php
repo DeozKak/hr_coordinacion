@@ -30,7 +30,7 @@
             </div>
 
             <form id="formAplication" method="get" action="{{ route('generarTablaAplication') }}"
-                  autocomplete="off" class="p-5">
+                  autocomplete="off" class="p-4 2xl:p-5">
 
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <div>

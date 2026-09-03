@@ -24,7 +24,7 @@
                 </div>
             </div>
 
-            <div class="space-y-4 p-5">
+            <div class="space-y-4 p-4 2xl:p-5">
                 @foreach ([
                     ['campo' => 'nueva',     'name' => 'new_password',  'etiqueta' => 'Nueva contraseña'],
                     ['campo' => 'confirmar', 'name' => 'conf_password', 'etiqueta' => 'Confirmar contraseña'],

@@ -26,7 +26,7 @@
             </a>
         </div>
 
-        <button type="submit" class="tw-btn-primary w-full py-3 text-[15px]">
+        <button type="submit" class="tw-btn-primary w-full py-3 text-[0.9375rem]">
             Acceder <i class="fas fa-arrow-right text-xs"></i>
         </button>
     </form>

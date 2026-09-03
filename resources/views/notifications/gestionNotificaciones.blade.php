@@ -64,7 +64,7 @@
                             <button type="button" @click="ordenarPor('name')"
                                     class="inline-flex items-center gap-1 hover:text-slate-800 dark:hover:text-slate-200">
                                 Usuario
-                                <i class="fas text-[10px]"
+                                <i class="fas text-[0.625rem]"
                                    :class="orden.campo === 'name'
                                        ? (orden.dir === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down')
                                        : 'fa-sort opacity-30'"></i>

@@ -14,6 +14,7 @@ Route::middleware(CheckRole::class)->group(function () {
     Route::get('/users', [UserController::class, 'index'])->name('index');
     Route::post('/users', [UserController::class, 'update'])->name('update');
     Route::post('/users/changeStatus/{user}', [UserController::class, 'changeStatus'])->name('changeStatus');
+    Route::post('/users/enlace-registro', [UserController::class, 'enlaceRegistro'])->name('enlaceRegistro');
     Route::get('notifications/manage', [NotificationsController::class, 'manage'])->name('notifications.manage');
     Route::post('/notifications/getUserNotifications', [NotificationsController::class, 'getUserNotifications'])->name('notifications.getUserNotifications');
     Route::post('/notifications/update', [NotificationsController::class, 'update'])->name('notifications.update');

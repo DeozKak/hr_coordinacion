@@ -15,9 +15,9 @@ class WhatsAppBotService
 
     public function __construct()
     {
-        $this->token = env('META_WHATSAPP_TOKEN');
-        $this->phoneId = '897325653475062'; // Idealmente esto también va al .env
-        $this->version = 'v21.0';
+        $this->token = config('services.meta_whatsapp.token');
+        $this->phoneId = config('services.meta_whatsapp.phone_id');
+        $this->version = config('services.meta_whatsapp.version');
     }
 
     public function procesarMensaje($numero, $mensaje)

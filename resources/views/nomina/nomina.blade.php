@@ -24,10 +24,10 @@
                 multa:   '{{ route('nomina.guardarMultaRodamiento') }}',
             },
          })"
-         class="space-y-6">
+         class="space-y-4 2xl:space-y-6">
 
         {{-- =============================== FILTRO ============================ --}}
-        <section class="tw-card p-5">
+        <section class="tw-card p-4 2xl:p-5">
             <div class="flex flex-wrap items-end gap-4">
                 <div class="w-full sm:w-56">
                     <label class="tw-label" for="mesAnio">Mes del corte</label>

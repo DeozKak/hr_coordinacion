@@ -97,6 +97,11 @@ export default function registrarCalendario() {
         panel.className = 'tw-cal';
         panel.setAttribute('role', 'dialog');
         panel.setAttribute('aria-label', 'Calendario');
+        /* El panel cuelga del <body>, no del campo, así que para una ventana
+           modal un clic aquí cae "fuera" y la cerraba al elegir un día. La
+           marca la comparte con la capa de alertas, que tiene el mismo
+           problema por la misma razón: se pinta fuera del árbol del modal. */
+        panel.setAttribute('data-capa-flotante', '');
         panel.hidden = true;
         panel.innerHTML = `
             <div class="tw-cal-cab">
@@ -244,6 +249,11 @@ export default function registrarCalendario() {
     /* Alt+↓ y F4 también abren el calendario del navegador. */
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && abierto()) {
+            /* Escape cierra sólo el calendario. Sin cortarlo aquí el evento
+               seguía subiendo hasta la ventana modal que lo contiene, y una
+               sola pulsación cerraba las dos cosas. Este escuchador va en
+               captura, así que detenerlo alcanza al de `window`. */
+            e.stopPropagation();
             const destino = campo;
             cerrar();
             destino?.focus({ preventScroll: true });

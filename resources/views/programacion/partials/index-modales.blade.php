@@ -3,7 +3,7 @@
 <x-modal show="modal === 'base'" close="cerrarModal()" size="max-w-lg"
          icon="fa-database" tint="blue" title="Añadir a base"
          subtitle="Carga el Excel con la base de contratos">
-    <div class="space-y-4 px-5 py-5">
+    <div class="space-y-4 px-4 py-4 2xl:px-5 2xl:py-5">
         <template x-if="errores.length">
             <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800
                         dark:border-red-800/60 dark:bg-red-950/40 dark:text-red-200">
@@ -35,7 +35,7 @@
 <x-modal show="modal === 'tecnicos'" close="cerrarModal()" size="max-w-lg"
          icon="fa-helmet-safety" tint="amber" title="Programadas técnicos"
          subtitle="Carga el Excel de programadas de técnicos">
-    <div class="space-y-4 px-5 py-5">
+    <div class="space-y-4 px-4 py-4 2xl:px-5 2xl:py-5">
         <template x-if="errores.length">
             <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800
                         dark:border-red-800/60 dark:bg-red-950/40 dark:text-red-200">
@@ -60,7 +60,7 @@
 <x-modal show="modal === 'gdo'" close="cerrarModal()" size="max-w-lg"
          icon="fa-headset" tint="violet" title="Programadas GDO"
          subtitle="El archivo se procesa en segundo plano">
-    <div class="space-y-4 px-5 py-5">
+    <div class="space-y-4 px-4 py-4 2xl:px-5 2xl:py-5">
         <template x-if="errores.length">
             <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800
                         dark:border-red-800/60 dark:bg-red-950/40 dark:text-red-200">

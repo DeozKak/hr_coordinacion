@@ -11,7 +11,7 @@
 @include('layouts.tw.partials.handsontable')
 
 @section('content')
-    <div x-data="historico({ url: '{{ route('getDataHistorico') }}' })" class="space-y-6">
+    <div x-data="historico({ url: '{{ route('getDataHistorico') }}' })" class="space-y-4 2xl:space-y-6">
 
         <section class="tw-card">
             <div class="tw-card-header">

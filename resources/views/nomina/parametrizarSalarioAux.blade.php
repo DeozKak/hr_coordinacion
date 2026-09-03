@@ -36,7 +36,7 @@
                 actualizar: '{{ route('nomina.actualizarSalarioAux') }}',
             },
          })"
-         class="space-y-6">
+         class="space-y-4 2xl:space-y-6">
 
         {{-- =============================== FORMULARIO ======================== --}}
         <section class="tw-card">
@@ -60,7 +60,7 @@
                 </button>
             </div>
 
-            <div class="space-y-5 px-5 py-5">
+            <div class="space-y-4 2xl:space-y-5 px-4 py-4 2xl:px-5 2xl:py-5">
                 <template x-if="error">
                     <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800
                                 dark:border-red-800/60 dark:bg-red-950/40 dark:text-red-200"

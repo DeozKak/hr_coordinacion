@@ -98,18 +98,31 @@ Alpine.store('ui', {
            despachando. Sin evento, cae en la esquina superior derecha, que es
            donde vive el interruptor. */
         const caja = evento?.currentTarget?.getBoundingClientRect?.();
-        const x = caja ? caja.left + caja.width / 2 : window.innerWidth - 48;
-        const y = caja ? caja.top + caja.height / 2 : 48;
 
-        // Radio hasta la esquina más lejana, para que el círculo cubra todo.
-        const radio = Math.hypot(Math.max(x, window.innerWidth - x),
-                                 Math.max(y, window.innerHeight - y));
+        /* La referencia es clientWidth/clientHeight y no innerWidth/innerHeight:
+           el primero descuenta las barras de desplazamiento, igual que el bloque
+           sobre el que se dibuja la instantánea de la transición. */
+        const raiz = document.documentElement;
+        const ancho = raiz.clientWidth || 1;
+        const alto = raiz.clientHeight || 1;
+
+        /* El centro va en porcentaje, no en píxeles. El recorte se resuelve
+           contra el bloque de la instantánea, que no tiene por qué medir lo
+           mismo que la ventana —con el navegador ampliado o con barras de
+           desplazamiento no coinciden—, y ahí el círculo salía desplazado. En
+           relativo cae siempre sobre el botón, se cambie el tamaño que se
+           cambie. Sin evento, la esquina donde vive el interruptor. */
+        const x = caja ? ((caja.left + caja.width / 2) / ancho) * 100 : 96;
+        const y = caja ? ((caja.top + caja.height / 2) / alto) * 100 : 4;
 
         const transicion = document.startViewTransition(aplicar);
 
         transicion.ready.then(() => {
-            document.documentElement.animate(
-                { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radio}px at ${x}px ${y}px)`] },
+            /* 150%: un radio en porcentaje se mide contra
+               sqrt(ancho² + alto²) / sqrt(2), así que hay que pasar de 141,4%
+               para tapar la esquina más lejana nazca donde nazca el círculo. */
+            raiz.animate(
+                { clipPath: [`circle(0% at ${x}% ${y}%)`, `circle(150% at ${x}% ${y}%)`] },
                 { duration: 480, easing: 'cubic-bezier(.4, 0, .2, 1)',
                   pseudoElement: '::view-transition-new(root)' },
             );

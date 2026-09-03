@@ -10,7 +10,7 @@
 <div x-data="generarBitacora({
         urlDiaria: '{{ route('bitacoras.diaria') }}',
      })"
-     class="grid gap-6 lg:grid-cols-2">
+     class="grid gap-4 2xl:gap-6 md:grid-cols-2">
 
     @unlessrole('Supervisor')
         {{-- Bitácora Todos (no suma producción) --}}
@@ -90,7 +90,6 @@
                     <select name="supervisor" id="supervisor"
                             @class(['tw-select', 'border-red-400' => $errors->has('supervisor')])>
                         <option value="">Seleccione Supervisor</option>
-                        <option value="0">Todos</option>
                         @foreach ($supervisores as $supervisor)
                             <option value="{{ $supervisor->id }}" @selected(old('supervisor') == $supervisor->id)>
                                 {{ $supervisor->name }}
@@ -185,7 +184,11 @@ document.addEventListener('alpine:init', () => {
     </script>
 @endif
 
-@if (session('warning'))
+{{-- El aviso y $temp van juntos: el controlador sólo manda la bitácora a medias
+     cuando existe, y el bloque la usa para armar las dos rutas. Comprobar sólo
+     la sesión no bastaba —si el aviso venía de otro sitio, la vista reventaba
+     con "Undefined variable $temp"—, así que se exigen las dos cosas. --}}
+@if (session('warning') && isset($temp))
     {{-- Flujo de bitácora temporal: restaurar, descartar o mantener cambios. --}}
     <script>
         document.addEventListener('DOMContentLoaded', () => {

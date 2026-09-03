@@ -84,9 +84,11 @@ class BitacoraController extends Controller
             return redirect()->route('bitacora')->withErrors($validator)->withInput()->with('error', $validator->errors()->first());
         }
 
+        $nombreOriginal = $this->sinSufijoDeDescarga($request->archivo->getClientOriginalName());
+
         if ($request->supervisor === "0") {
 
-            $nombreArchivo = $request->archivo->getClientOriginalName() . "Todos" . ".xls";
+            $nombreArchivo = $nombreOriginal . "Todos" . ".xls";
 
             $request->archivo->storeAs('uploads', $nombreArchivo);
 
@@ -99,7 +101,7 @@ class BitacoraController extends Controller
 
         $supervisor = User::find($request->supervisor);
 
-        $nombreArchivo = $request->archivo->getClientOriginalName() . $supervisor->name . ".xls";
+        $nombreArchivo = $nombreOriginal . $supervisor->name . ".xls";
 
         $request->archivo->storeAs('uploads', $nombreArchivo);
 
@@ -108,6 +110,27 @@ class BitacoraController extends Controller
         $excelFilePath = $rutaDestino;
 
         return $this->procesarArchivoExcel($excelFilePath, new AutoGuardadoController(), $supervisor->name, $supervisor->id);
+    }
+
+    /**
+     * Quita el "(1)" que el navegador añade al descargar un archivo repetido.
+     *
+     * El nombre del archivo subido acaba dentro de tbl_bitacora_archivos, y de
+     * ahí lo lee producción con esta expresión:
+     *
+     *     /Bitacora Valle_(dd-mm-aaaa)____(dd-mm-aaaa) (.+)$/
+     *
+     * ...tomando el último grupo como nombre del supervisor. Con el sufijo por
+     * medio, ese grupo pasa a ser "(1) Orlando Montaño" y deja de coincidir con
+     * el supervisor real, así que la bitácora no se encuentra.
+     *
+     * Se recorta sólo el paréntesis con dígitos pegado a la extensión —o al
+     * final del nombre—, que es donde lo pone el navegador. Un paréntesis en
+     * cualquier otra parte del nombre se respeta.
+     */
+    private function sinSufijoDeDescarga(string $nombre): string
+    {
+        return preg_replace('/\s*\(\d+\)(?=\.[^.]*$|$)/', '', $nombre) ?? $nombre;
     }
 
     public function procesarArchivoExcel($excelFilePath, AutoGuardadoController $Guardado, $nom_super = null, $id_super = null, $cierre = null)

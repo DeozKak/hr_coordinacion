@@ -28,6 +28,7 @@
                 permissions: '{{ route('profile.getDataPermissions') }}',
                 update: '{{ route('admin.update') }}',
                 changeStatus: '{{ route('admin.changeStatus', ['user' => '__ID__']) }}',
+                invitacion: '{{ route('admin.enlaceRegistro') }}',
             },
          })"
          class="tw-card">
@@ -43,14 +44,45 @@
                        class="tw-input pl-9">
             </label>
 
-            <div class="flex items-center gap-2 text-sm text-slate-500">
+            <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500">
                 <span x-text="`${filtered.length} de ${users.length} usuarios`"></span>
                 <select x-model.number="perPage" class="tw-select w-auto py-1.5">
                     <template x-for="n in [10, 25, 50, 100]" :key="n">
                         <option :value="n" x-text="`${n} / página`"></option>
                     </template>
                 </select>
+
+                {{-- El registro ya no es público: para que alguien se registre
+                     hay que darle este enlace, que caduca solo. --}}
+                <button type="button" class="tw-btn-primary tw-btn-sm" @click="invitar()"
+                        :disabled="invitando">
+                    <i class="fas" :class="invitando ? 'fa-spinner fa-spin' : 'fa-user-plus'"></i>
+                    Invitar usuario
+                </button>
             </div>
+        </div>
+
+        {{-- Enlace de invitación recién generado --}}
+        <div x-show="invitacion" x-cloak
+             class="flex flex-wrap items-center gap-3 border-b border-slate-200 bg-brand-50/60 px-4 py-3
+                    dark:border-slate-700 dark:bg-brand-900/20">
+            <div class="min-w-0 flex-1">
+                <p class="text-xs font-semibold uppercase tracking-wide text-brand-700 dark:text-brand-300">
+                    Enlace de registro · caduca el <span x-text="invitacionCaduca"></span>
+                </p>
+                <p class="mt-1 truncate font-mono text-xs text-slate-600 dark:text-slate-300"
+                   x-text="invitacion" :title="invitacion"></p>
+                <p class="tw-hint mt-1">
+                    Quien lo use creará su cuenta inactiva; actívala desde esta lista cuando llegue.
+                </p>
+            </div>
+            <button type="button" class="tw-btn-secondary tw-btn-sm" @click="copiarInvitacion()">
+                <i class="fas" :class="copiado ? 'fa-check' : 'fa-copy'"></i>
+                <span x-text="copiado ? 'Copiado' : 'Copiar'"></span>
+            </button>
+            <button type="button" class="tw-btn-ghost tw-btn-sm" @click="invitacion = ''" aria-label="Cerrar">
+                <i class="fas fa-xmark"></i>
+            </button>
         </div>
 
         {{-- Tabla --}}
@@ -62,7 +94,7 @@
                             <th scope="col" class="px-4 py-3">
                                 <button type="button" @click="sortBy('{{ $key }}')" class="inline-flex items-center gap-1 hover:text-slate-800 dark:hover:text-slate-200">
                                     {{ $label }}
-                                    <i class="fas text-[10px]"
+                                    <i class="fas text-[0.625rem]"
                                        :class="sort.key === '{{ $key }}' ? (sort.dir === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down') : 'fa-sort opacity-30'"></i>
                                 </button>
                             </th>
@@ -165,6 +197,10 @@
                 urls,
 
                 search: '',
+                invitacion: '',
+                invitacionCaduca: '',
+                invitando: false,
+                copiado: false,
                 sort: { key: 'name', dir: 'asc' },
                 page: 1,
                 perPage: 10,
@@ -208,6 +244,35 @@
                     // Si el filtro dejó la página actual fuera de rango, vuelve a la última válida.
                     if (this.page > this.totalPages) this.page = this.totalPages;
                     return this.filtered.slice((this.page - 1) * this.perPage, this.page * this.perPage);
+                },
+
+                async invitar() {
+                    this.invitando = true;
+                    this.copiado = false;
+                    try {
+                        const r = await window.api(this.urls.invitacion, { method: 'POST' });
+                        this.invitacion = r.url;
+                        this.invitacionCaduca = r.caduca;
+                    } catch (e) {
+                        window.Swal.fire({ icon: 'error', title: 'Error',
+                                           text: 'No se pudo generar el enlace de registro.' });
+                    } finally {
+                        this.invitando = false;
+                    }
+                },
+
+                async copiarInvitacion() {
+                    try {
+                        await navigator.clipboard.writeText(this.invitacion);
+                        this.copiado = true;
+                        setTimeout(() => (this.copiado = false), 2000);
+                    } catch (e) {
+                        /* El portapapeles necesita contexto seguro (HTTPS o
+                           localhost); si no está, el enlace se queda a la vista
+                           para copiarlo a mano. */
+                        window.Swal.fire({ icon: 'info', title: 'Copia el enlace a mano',
+                                           text: this.invitacion });
+                    }
                 },
 
                 sortBy(key) {

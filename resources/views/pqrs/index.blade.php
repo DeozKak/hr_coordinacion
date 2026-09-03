@@ -17,7 +17,7 @@
 @include('layouts.tw.partials.handsontable')
 
 @section('content')
-    <div x-data="quejasIndex()" class="space-y-6">
+    <div x-data="quejasIndex()" class="space-y-4 2xl:space-y-6">
 
         @can('cargar_PQRS')
             <section class="tw-card mx-auto max-w-2xl">
@@ -32,7 +32,7 @@
                 </div>
 
                 <form @submit.prevent="subir()" enctype="multipart/form-data">
-                    <div class="space-y-4 px-5 py-5">
+                    <div class="space-y-4 px-4 py-4 2xl:px-5 2xl:py-5">
                         <x-file-input label="Archivo" hint="Excel .xlsx, .xls o .xlsm" tint="sky"
                                       ref="archivo" model="nombreArchivo"
                                       accept=".xlsx,.xls,.xlsm" />

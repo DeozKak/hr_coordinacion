@@ -63,6 +63,22 @@ body { text-rendering: optimizeLegibility; }
     :root { color-scheme: light; }
     :root.dark { color-scheme: dark; }
 
+    /* ---------- Escala de la interfaz ----------
+       En portátiles de 1366 o 1440 la aplicación se veía grande y obligaba a
+       reducir con el zoom del navegador. Se ajusta desde la raíz porque en
+       Tailwind tanto los tamaños de letra como el espaciado se expresan en rem:
+       moviendo esta única medida encoge todo a la vez y en proporción, sin
+       tocar ni una vista ni romper el ritmo del diseño.
+
+       Es lo que haría el zoom, pero al revés y sólo donde hace falta: los
+       puntos de corte de Tailwind siguen midiéndose en píxeles de ventana, así
+       que la maqueta no cambia de forma, sólo de talla. */
+    html { font-size: 16px; }
+
+    @media (max-width: 1600px) { html { font-size: 15px; } }
+    @media (max-width: 1400px) { html { font-size: 14px; } }
+    @media (max-width: 1200px) { html { font-size: 13.5px; } }
+
     /* Refuerzo explícito para el popup del select en oscuro. */
     .dark select option,
     .dark optgroup {
@@ -105,10 +121,10 @@ body { text-rendering: optimizeLegibility; }
                dark:border-slate-700/60 dark:bg-slate-800;
     }
     .tw-card-header {
-        @apply flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 px-5 py-4
-               dark:border-slate-700/60;
+        @apply flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 px-4 py-3
+               dark:border-slate-700/60 2xl:gap-4 2xl:px-5 2xl:py-4;
     }
-    .tw-card-body { @apply p-5; }
+    .tw-card-body { @apply p-4 2xl:p-5; }
 
     .tw-card-title { @apply text-base font-semibold text-slate-900 dark:text-white; }
     .tw-card-subtitle { @apply mt-0.5 text-sm text-slate-500 dark:text-slate-400; }
@@ -118,7 +134,7 @@ body { text-rendering: optimizeLegibility; }
         @apply text-[11px] font-semibold uppercase leading-tight tracking-[0.08em] text-slate-500
                dark:text-slate-400;
     }
-    .tw-metric { @apply text-4xl font-bold leading-none tracking-tight text-slate-900 dark:text-white; }
+    .tw-metric { @apply text-3xl font-bold leading-none tracking-tight text-slate-900 dark:text-white 2xl:text-4xl; }
 
     /* Chip cuadrado con icono tintado (esquina superior derecha de los KPI). */
     .tw-chip {
@@ -396,6 +412,19 @@ body { text-rendering: optimizeLegibility; }
     .tw-table-fija tfoot td {
         @apply sticky bottom-0 z-10 bg-slate-50 dark:bg-slate-900;
     }
+
+    /* Caja con scroll que ocupa el final de una tarjeta.
+
+       .tw-card redondea sus esquinas pero no recorta —hay desplegables y
+       menús que tienen que poder salirse—, así que el contenido de la caja
+       con scroll se pintaba por encima de las dos esquinas de abajo y
+       asomaba fuera del borde: la última fila y la de totales fija salían
+       cuadradas y sobresalían de la tarjeta.
+
+       `overflow` ya recorta; lo que faltaba era que las esquinas de la caja
+       coincidieran con las de la tarjeta. Se recorta sólo aquí, no en
+       .tw-card, para no cortar lo que otras tarjetas despliegan por fuera. */
+    .tw-card-scroll { @apply overflow-auto rounded-b-2xl; }
 
     /* ---------- Barra de progreso ---------- */
     .tw-progress { @apply h-1.5 w-full overflow-hidden rounded-full bg-black/[0.07] dark:bg-white/10; }

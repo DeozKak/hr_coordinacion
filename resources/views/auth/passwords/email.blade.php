@@ -16,7 +16,7 @@
         <x-auth-input name="email" type="email" label="Correo electrónico"
                       placeholder="nombre@eyc.com.co" icon="fas fa-envelope" autofocus />
 
-        <button type="submit" class="tw-btn-primary w-full py-3 text-[15px]">
+        <button type="submit" class="tw-btn-primary w-full py-3 text-[0.9375rem]">
             <i class="fas fa-paper-plane text-xs"></i> Enviar enlace
         </button>
     </form>
