@@ -160,6 +160,98 @@
 </x-modal>
 @endcan
 
+{{-- ============ CORTE DE GDO ============ --}}
+<x-modal show="modal === 'corte'" icon="fa-scissors" tint="violet" size="max-w-lg"
+         title="Corte de GDO">
+    <x-slot:subtitle>Periodo sobre el que se mide la legalización</x-slot:subtitle>
+
+    <form @submit.prevent="guardarCorte()" id="formCorte" class="space-y-4 p-4 2xl:p-5">
+
+        {{-- Corregir el corte de ahora o abrir el siguiente. Sólo aparece si ya
+             hay alguno: con la tabla vacía lo único posible es crear. --}}
+        <template x-if="corte">
+            <div class="flex rounded-xl bg-slate-100 p-1 dark:bg-slate-900/50" role="tablist">
+                <button type="button" role="tab" @click="modoCorte(true)"
+                        :aria-selected="corteEditando"
+                        class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+                        :class="corteEditando
+                            ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
+                            : 'text-slate-500 hover:text-slate-700'">Corregir el actual</button>
+                <button type="button" role="tab" @click="modoCorte(false)"
+                        :aria-selected="!corteEditando"
+                        class="flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+                        :class="!corteEditando
+                            ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
+                            : 'text-slate-500 hover:text-slate-700'">Crear uno nuevo</button>
+            </div>
+        </template>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+            <div>
+                <label for="corte_inicio" class="tw-label">Fecha de inicio</label>
+                <input type="date" id="corte_inicio" class="tw-input" x-model="corteForm.inicio" required>
+            </div>
+            <div>
+                <label for="corte_fin" class="tw-label">Fecha de fin</label>
+                {{-- El fin no puede quedar antes del inicio: el navegador lo
+                     impide y el servidor lo vuelve a comprobar. --}}
+                <input type="date" id="corte_fin" class="tw-input" x-model="corteForm.fin"
+                       :min="corteForm.inicio" required>
+            </div>
+        </div>
+
+        <p class="tw-hint mt-0">
+            <i class="fas fa-circle-info"></i>
+            Lo legalizado se cuenta por su fecha de legalización dentro del periodo.
+            Los acumulados de pendientes y prioridades arrancan en la fecha de inicio.
+        </p>
+
+        <div x-show="corteError" x-cloak x-transition
+             class="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800
+                    dark:border-red-800 dark:bg-red-950 dark:text-red-200"
+             role="alert" x-text="corteError"></div>
+
+        {{-- Historial breve: el corte anterior sigue siendo la referencia de lo
+             que se reportó en su momento, así que conviene tenerlo a la vista. --}}
+        <template x-if="corte && !corteEditando">
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+                El corte vigente
+                <span class="font-medium" x-text="`${corte.inicio_mostrado} → ${corte.fin_mostrado}`"></span>
+                se conserva; este se guarda aparte.
+            </p>
+        </template>
+    </form>
+
+    <x-slot:footer>
+        <button type="button" @click="modal = null" class="tw-btn-secondary"
+                :disabled="corteGuardando">Cancelar</button>
+        <button type="submit" form="formCorte" class="tw-btn-primary" :disabled="corteGuardando">
+            <i class="fas" :class="corteGuardando ? 'fa-spinner fa-spin' : 'fa-floppy-disk'"></i>
+            <span x-text="corteGuardando ? 'Guardando…' : (corteEditando ? 'Guardar cambios' : 'Crear corte')"></span>
+        </button>
+    </x-slot:footer>
+</x-modal>
+
+{{-- ============ LEGALIZADO EN EL CORTE ============ --}}
+<x-modal show="modal === 'legalizado'" icon="fa-file-circle-check" tint="violet" size="max-w-6xl">
+    <x-slot:title-slot>
+        <span x-text="detalleTitulo"></span>
+    </x-slot:title-slot>
+    <x-slot:subtitle>Órdenes legalizadas dentro del corte de GDO</x-slot:subtitle>
+
+        @include('home.partials.tabla-modal', [
+            'columnas' => [
+                'contrato'  => 'Contrato',
+                'orden'     => 'Número orden',
+                'operario'  => 'Técnico',
+                'tarea'     => 'Tipo trabajo',
+                'localidad' => 'Municipio',
+                'causal'    => 'Causal',
+                'fecha'     => 'Fecha legalización',
+            ],
+        ])
+</x-modal>
+
 {{-- ============ CARGAR ARCHIVOS OT ============ --}}
 @haspermission('ver_residente')
 <x-modal show="modal === 'cargue'" icon="fa-file-excel" tint="emerald" size="max-w-xl"

@@ -115,23 +115,35 @@ class MetricasDiariasService
     }
 
     /**
-     * Inspecciones efectivas de todos los días anteriores al indicado.
+     * Inspecciones efectivas anteriores al día indicado.
      *
-     * Sirve para calcular el acumulado histórico: arranca en el registro más
-     * antiguo de reportes_diarios y llega hasta el día previo al seleccionado.
-     * Una misma orden pudo ejecutarse varias veces en ese lapso, así que se
+     * Sirve para el acumulado: lo que se viene arrastrando sin legalizar. El
+     * arranque lo pone `$desde`, que es el inicio del corte de GDO vigente;
+     * sin corte definido se recorre todo el histórico, como antes.
+     *
+     * Acotar por el corte no es solo una cuestión de significado —el acumulado
+     * que se reporta es el del corte, no el de todos los tiempos—: sin tope,
+     * esta consulta se trae reportes_diarios entero en cada carga del inicio y
+     * crece para siempre.
+     *
+     * Una misma orden pudo ejecutarse varias veces en el lapso, así que se
      * conserva solo la ejecución más reciente de cada contrato y tipo de tarea.
      *
      * @param string $fechaReporte Fecha del reporte en formato Y-m-d.
      * @param string $localidadSeleccionada Municipio madre a filtrar, o 'TODAS'.
+     * @param string|null $desde Fecha Y-m-d desde la que acumular.
      * @return array Reportes crudos, listos para el cruce de legalización.
      */
-    public function ejecutadasAnteriores(string $fechaReporte, string $localidadSeleccionada): array
+    public function ejecutadasAnteriores(string $fechaReporte, string $localidadSeleccionada, ?string $desde = null): array
     {
-        $reportes = DB::table('reportes_diarios')
-            ->where('FechaRealFin', '<', $fechaReporte . ' 00:00:00')
-            ->orderBy('FechaRealFin')
-            ->get();
+        $consulta = DB::table('reportes_diarios')
+            ->where('FechaRealFin', '<', $fechaReporte . ' 00:00:00');
+
+        if ($desde !== null) {
+            $consulta->where('FechaRealFin', '>=', $desde . ' 00:00:00');
+        }
+
+        $reportes = $consulta->orderBy('FechaRealFin')->get();
 
         return $this->filtrarPorLocalidad($reportes, $localidadSeleccionada)
             ->filter(fn ($rep) => in_array(strtoupper(trim($rep->Cierre3)), self::CIERRES_EFECTIVOS))

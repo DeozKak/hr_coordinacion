@@ -16,10 +16,10 @@ document.addEventListener('alpine:init', () => {
        aparecer en las dos líneas. */
     Alpine.data('dashboard', ({ detalles, programaciones, meses, tecnicos,
                                 progInicial, urlProgramaciones, metricas, urlReporte,
-                                fuerzaInicial, urlAsignacion }) => ({
+                                fuerzaInicial, urlAsignacion, corteInicial, urlCorte }) => ({
         // Fuentes de datos (inyectadas desde Blade)
         detalles, programaciones, meses, tecnicos, progInicial, urlProgramaciones,
-        metricas, urlReporte, fuerzaInicial, urlAsignacion,
+        metricas, urlReporte, fuerzaInicial, urlAsignacion, corteInicial, urlCorte,
 
         modal: null,
 
@@ -59,6 +59,12 @@ document.addEventListener('alpine:init', () => {
         tecnicosLocalidad: '',
         tecnicosLista: [],
 
+        // --- Corte de GDO ---
+        corte: null,
+        corteForm: { id: null, inicio: '', fin: '' },
+        corteGuardando: false,
+        corteError: '',
+
         // --- Fuerza de trabajo por localidad ---
         fuerza: [],
 
@@ -88,6 +94,9 @@ document.addEventListener('alpine:init', () => {
             /* La tarjeta de fuerza de trabajo arranca con lo que pintó el
                servidor y a partir de ahí la reemplaza cada guardado. */
             this.fuerza = this.fuerzaInicial ?? [];
+
+            // El corte vigente; null mientras no se haya definido ninguno.
+            this.corte = this.corteInicial ?? null;
         },
 
         get filasFiltradas() {
@@ -176,6 +185,9 @@ document.addEventListener('alpine:init', () => {
                 const r = await window.api(`${this.urlReporte}?${p.toString()}`);
 
                 this.metricas = r.metricas ?? {};
+                // El corte no cambia con el filtro, pero lo legalizado dentro
+                // de él sí: se filtra por municipio como todo lo demás.
+                this.corte = r.corte ?? null;
                 /* Las ventanas de detalle leen de aquí: si no se reemplazaran,
                    al pulsar un indicador saldrían las filas del filtro anterior. */
                 this.detalles = r.detalles ?? {};
@@ -280,6 +292,110 @@ document.addEventListener('alpine:init', () => {
             this.tecnicosLocalidad = localidad;
             this.tecnicosLista = lista;
             this.modal = 'tecnicos';
+        },
+
+        /* ---- Corte de GDO ---- */
+
+        // Rótulo de los dos acumulados: siguen al corte, no al histórico.
+        get rotuloAcumulado() {
+            if (!this.corte) return 'todo el histórico';
+            return `corte ${this.corte.inicio_mostrado} → ${this.corte.fin_mostrado}`;
+        },
+
+        abrirCorte() {
+            /* Se abre editando el corte vigente: lo normal es venir a corregir
+               una fecha mal puesta, no a crear otro periodo. Para lo segundo
+               está el conmutador de la ventana. */
+            this.corteForm = {
+                id:     this.corte?.id ?? null,
+                inicio: this.corte?.inicio ?? '',
+                fin:    this.corte?.fin ?? '',
+            };
+            this.corteError = '';
+            this.modal = 'corte';
+        },
+
+        // ¿La ventana está corrigiendo el corte actual o creando otro?
+        get corteEditando() {
+            return this.corteForm.id !== null;
+        },
+
+        /* Cambia entre corregir y crear. Al crear se propone arrancar el día
+           después de que termine el actual, que es como se encadenan de verdad
+           los cortes; las fechas quedan editables igual. */
+        modoCorte(editar) {
+            this.corteError = '';
+
+            if (editar) {
+                this.corteForm = {
+                    id:     this.corte?.id ?? null,
+                    inicio: this.corte?.inicio ?? '',
+                    fin:    this.corte?.fin ?? '',
+                };
+                return;
+            }
+
+            let siguiente = '';
+            if (this.corte?.fin) {
+                const d = new Date(this.corte.fin + 'T00:00:00');
+                d.setDate(d.getDate() + 1);
+                siguiente = d.toISOString().slice(0, 10);
+            }
+            this.corteForm = { id: null, inicio: siguiente, fin: '' };
+        },
+
+        verLegalizado() {
+            const filas = this.detalles?.legalizado_corte ?? [];
+            this.cargarTabla(filas, { orden: 'fecha_orden', porPagina: 15 });
+            this.detalleTitulo = `Legalizado en el corte (${filas.length} registros)`;
+            this.modal = 'legalizado';
+        },
+
+        /* Guarda el corte y repinta con lo que devuelve el servidor: cambian
+           tanto lo legalizado del periodo como los dos acumulados, que arrancan
+           en su fecha de inicio. */
+        async guardarCorte() {
+            this.corteError = '';
+
+            if (!this.corteForm.inicio || !this.corteForm.fin) {
+                this.corteError = 'Indica las dos fechas del corte.';
+                return;
+            }
+            if (this.corteForm.fin < this.corteForm.inicio) {
+                this.corteError = 'El fin del corte no puede ser anterior a su inicio.';
+                return;
+            }
+
+            this.corteGuardando = true;
+            try {
+                const store = Alpine.store('reporte');
+                const r = await window.api(this.urlCorte, {
+                    method: 'POST',
+                    body: {
+                        id:           this.corteForm.id,
+                        fecha_inicio: this.corteForm.inicio,
+                        fecha_fin:    this.corteForm.fin,
+                        // El tablero se recalcula con el filtro que esté puesto.
+                        fecha:        store.fecha,
+                        localidad:    store.localidad,
+                    },
+                });
+
+                this.corte = r.corte ?? null;
+                this.metricas = r.metricas ?? this.metricas;
+                this.detalles = r.detalles ?? this.detalles;
+                this.modal = null;
+
+                window.Swal.fire({ icon: 'success', title: 'Listo',
+                                   text: r.mensaje ?? '' });
+            } catch (e) {
+                this.corteError = e?.data?.message
+                    ?? e?.data?.errors?.fecha_fin?.[0]
+                    ?? e?.data?.errors?.fecha_inicio?.[0]
+                    ?? 'No se pudo guardar el corte.';
+            } finally {
+                this.corteGuardando = false;
+            }
         },
 
         get fuerzaTotal() {

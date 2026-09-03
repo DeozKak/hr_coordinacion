@@ -36,6 +36,11 @@
                    portátiles dejaba de caber. Se vuelve a la densidad del tema con
                    la fuente un punto más baja: fila de 27px. */
                 --ht-font-size: 12px;
+                /* Tamaño del rótulo de la cabecera. Va aparte del de la celda
+                   porque son cosas distintas: el encabezado se lee de un
+                   vistazo y en versalitas, y con muchas columnas conviene que
+                   sea el que menos sitio ocupe. */
+                --ht-header-font-size: 9px;
                 --ht-line-height: 18px;
                 --ht-cell-horizontal-padding: 8px;
                 --ht-cell-vertical-padding: 4px;
@@ -165,7 +170,20 @@
             .ht-theme-main .htCore th {
                 letter-spacing: .02em;
                 text-transform: uppercase;
-                font-size: 10px;
+            }
+
+            /* El tamaño del encabezado tiene que ponerse AQUÍ, en el <span>, y
+               no en el <th>. handsontable.css trae:
+
+                   .colHeader { font-size: var(--ht-font-size) }
+
+               es decir, el rótulo lleva su propio font-size, y un font-size
+               propio gana siempre sobre lo que se herede del padre. Por eso el
+               `font-size: 10px` que había en el <th> no llegaba nunca al texto:
+               la cabecera se estaba pintando al tamaño de las celdas y salía
+               cortada por más que se ensancharan las columnas. */
+            .ht-theme-main .htCore th .colHeader {
+                font-size: var(--ht-header-font-size);
             }
 
             /* Añade `ht-compacta` al contenedor cuando la rejilla tenga muchas
@@ -177,7 +195,7 @@
                 --ht-cell-horizontal-padding: 6px;
                 --ht-cell-vertical-padding: 2px;
             }
-            .ht-theme-main.ht-compacta .htCore th { font-size: 9px; }
+            .ht-theme-main.ht-compacta { --ht-header-font-size: 8px; }
 
             /* Columna de selección: centrada (antes se veía como un bloque macizo). */
             .ht-theme-main td.col-seleccion { text-align: center; vertical-align: middle; }
@@ -217,6 +235,62 @@
                 };
                 return hot;
             };
+
+            /* Ancho de columna para que el encabezado se lea entero.
+
+               Sin esto las columnas se quedan en el ancho por defecto de
+               Handsontable y los encabezados salen cortados: "MIÉRCOLE…" en vez
+               de "MIÉRCOLES 03", justo con el número —el dato que distingue una
+               columna de otra— fuera de la vista.
+
+               El tamaño se lee de --ht-header-font-size, que es el del <span>
+               que contiene el rótulo. Medir con el font-size del <th> no vale:
+               ese nunca llega al texto (ver la regla de .colHeader más arriba).
+
+               Al hueco del rótulo hay que descontarle el relleno de la celda,
+               el separador flex y el botón del desplegable de filtros, que mide
+               --ht-icon-button-hit-area-size (24px). Encima va un margen del
+               10%: medir con canvas y lo que acaba pintando el navegador no
+               coinciden al píxel —la fuente puede no estar cargada todavía
+               cuando se mide, y ahí cae en la de reserva—, y quedarse corto
+               significa volver a ver puntos suspensivos. */
+            window.anchoDeCabecera = (function () {
+                const MINIMO  = 48;    // por debajo la celda queda apretada
+                const MAXIMO  = 200;
+                const BOTON   = 24;    // --ht-icon-button-hit-area-size
+                const HUECO   = 4;     // gap del flex + borde de la celda
+                const MARGEN  = 1.10;  // colchón sobre el texto medido
+
+                let medidor = null;
+
+                const leer = (estilos, prop, respaldo) =>
+                    (estilos?.getPropertyValue(prop) || '').trim() || respaldo;
+
+                return function (texto, contenedor) {
+                    if (!medidor) {
+                        medidor = document.createElement('canvas').getContext('2d');
+                    }
+
+                    const raiz = contenedor ?? document.querySelector('.ht-theme-main');
+                    const est = raiz ? getComputedStyle(raiz) : null;
+
+                    const tam     = leer(est, '--ht-header-font-size', '9px');
+                    const familia = leer(est, '--ht-font-family', 'sans-serif');
+                    const peso    = leer(est, '--ht-header-font-weight', '600');
+                    const relleno = parseFloat(leer(est, '--ht-cell-horizontal-padding', '6px')) * 2;
+
+                    medidor.font = `${peso} ${tam} ${familia}`;
+
+                    /* La cabecera va en versalitas y con letter-spacing, que
+                       measureText no conoce: se pasa a mayúsculas y se suma el
+                       espaciado a mano. */
+                    const t = String(texto ?? '').toUpperCase();
+                    const px = parseFloat(tam);
+                    const rotulo = (medidor.measureText(t).width + t.length * px * 0.02) * MARGEN;
+
+                    return Math.min(MAXIMO, Math.max(MINIMO, Math.ceil(rotulo + relleno + HUECO + BOTON)));
+                };
+            })();
 
             /* Centrado de rejillas estrechas.
                En pantallas anchas una tabla de pocas columnas quedaba pegada al

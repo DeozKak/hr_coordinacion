@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\CorteGdo;
 use App\Services\Home\CargueEstadisticasAsignacionService;
+use App\Services\Home\CorteGdoService;
 use App\Services\Home\EstadisticasProgramadasService;
 use App\Services\Home\FuerzaTrabajoService;
 use App\Services\Home\PendientesBaseService;
@@ -83,6 +85,7 @@ class HomeController extends Controller
             'totalesProg'             => $programadas['totales'],
             'detallesProgramaciones'  => $programadas['detalles'],
             'ciudadesProgramaciones'  => $programadas['ciudades'],
+            'corteGdo'                => $reporte['corte'],
             'baseTipos'               => $base['tipos'],
             'baseMeses'               => $base['meses'],
             'baseTotalTipos'          => $base['totalTipos'],
@@ -122,6 +125,7 @@ class HomeController extends Controller
             'mesesData'              => $reporte['mesesData'],
             'localidadesDisponibles' => $reporte['localidadesDisponibles'],
             'acumuladoDesde'         => $reporte['acumuladoDesde'],
+            'corte'                  => $reporte['corte'],
             'fecha'                  => $datos['fecha'],
             'localidad'              => $localidad,
         ]);
@@ -200,6 +204,69 @@ class HomeController extends Controller
         }
 
         return redirect()->back()->with('success', $mensaje);
+    }
+
+
+    /**
+     * Define el corte de GDO y devuelve el tablero recalculado.
+     *
+     * El corte manda sobre tres cifras —lo legalizado en el periodo y los dos
+     * acumulados—, así que al guardarlo se responde con las métricas y los
+     * detalles ya rehechos y la vista se actualiza sin recargar.
+     */
+    public function guardarCorte(Request $request, CorteGdoService $corteGdo)
+    {
+        $datos = $request->validate([
+            // Con id se corrige el corte que ya existe; sin id se crea uno nuevo.
+            'id'           => ['nullable', 'integer', 'exists:tbl_cortes_gdo,id'],
+            'fecha_inicio' => ['required', 'date_format:Y-m-d'],
+            'fecha_fin'    => ['required', 'date_format:Y-m-d', 'after_or_equal:fecha_inicio'],
+        ], [
+            'id.exists'                 => 'El corte que intentas editar ya no existe.',
+            'fecha_inicio.required'     => 'Indica la fecha de inicio del corte.',
+            'fecha_inicio.date_format'  => 'La fecha de inicio no tiene un formato válido.',
+            'fecha_fin.required'        => 'Indica la fecha de fin del corte.',
+            'fecha_fin.date_format'     => 'La fecha de fin no tiene un formato válido.',
+            'fecha_fin.after_or_equal'  => 'El fin del corte no puede ser anterior a su inicio.',
+        ]);
+
+        /* Un corte que se solape con otro dejaría ambiguo cuál es el vigente,
+           y la vista tendría que elegir por su cuenta. Se rechaza aquí.
+           Al editar se excluye el propio corte: si no, chocaría consigo mismo
+           y no habría forma de corregir una fecha. */
+        $solapado = CorteGdo::query()
+            ->where('fecha_inicio', '<=', $datos['fecha_fin'])
+            ->where('fecha_fin', '>=', $datos['fecha_inicio'])
+            ->when(! empty($datos['id']), fn ($q) => $q->whereKeyNot($datos['id']))
+            ->first();
+
+        if ($solapado) {
+            return response()->json([
+                'message' => 'Ese periodo se cruza con el corte del '
+                    . $solapado->fecha_inicio->format('d/m/Y') . ' al '
+                    . $solapado->fecha_fin->format('d/m/Y') . '.',
+            ], 422);
+        }
+
+        $campos = ['fecha_inicio' => $datos['fecha_inicio'], 'fecha_fin' => $datos['fecha_fin']];
+
+        if (! empty($datos['id'])) {
+            CorteGdo::findOrFail($datos['id'])->update($campos);
+        } else {
+            CorteGdo::create($campos + ['creado_por' => auth()->id()]);
+        }
+
+        $reporte = $this->reporteOperativo->generar(
+            $request->input('fecha', Carbon::today()->format('Y-m-d')),
+            $request->input('localidad', 'TODAS')
+        );
+
+        return response()->json([
+            'mensaje'  => empty($datos['id']) ? 'Corte de GDO creado.' : 'Corte de GDO actualizado.',
+            'corte'    => $reporte['corte'],
+            'metricas' => $reporte['metricas'],
+            'detalles' => $reporte['detalles'],
+        ]);
     }
 
 

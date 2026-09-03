@@ -28,12 +28,17 @@
          'titulo' => 'Programadas para hoy'],
         ['tipo' => 'fallidas', 'label' => 'Tareas fallidas',          'icon' => 'fa-circle-xmark', 'tint' => 'slate', 'nota' => 'en la fecha seleccionada',
          'titulo' => 'Tareas Fallidas'],
+        /* Estos dos van acotados al corte de GDO, y el corte se cambia sin
+           recargar: la nota la pinta Alpine para que siga al periodo. El
+           rango ya no va en el título del modal, que se quedaría viejo. */
         ['tipo' => 'pendientes_legalizar_acumulado', 'label' => 'Pendiente x legalizar acumulado',
          'icon' => 'fa-clock-rotate-left', 'tint' => 'amber',
-         'nota' => $rotuloAcumulado, 'titulo' => "Pendientes por Legalizar acumulados ($rotuloAcumulado)"],
+         'nota' => null, 'nota_dinamica' => 'rotuloAcumulado',
+         'titulo' => 'Pendientes por Legalizar acumulados'],
         ['tipo' => 'prioridades_acumulado', 'label' => 'Prioridades acumuladas',
          'icon' => 'fa-clock-rotate-left', 'tint' => 'rose',
-         'nota' => $rotuloAcumulado, 'titulo' => "Prioridades Pendientes acumuladas ($rotuloAcumulado)"],
+         'nota' => null, 'nota_dinamica' => 'rotuloAcumulado',
+         'titulo' => 'Prioridades Pendientes acumuladas'],
     ];
 @endphp
 
@@ -79,8 +84,12 @@
             Filtrar
         </button>
     </form>
-
     @haspermission('ver_residente')
+    <button type="button" x-data @click="$dispatch('abrir-corte')" class="tw-btn-secondary">
+        <i class="fas fa-scissors"></i> Corte GDO
+    </button>
+
+
         <button type="button" @click="$dispatch('abrir-cargue')" class="tw-btn-primary">
             <i class="fas fa-cloud-arrow-up"></i> Cargar Datos OSF
         </button>
@@ -105,8 +114,11 @@
         tecnicos: @js($catalogoTecnicos),
         fuerzaInicial: @js($fuerzaLocalidades),
         urlAsignacion: '{{ route('asignacion.guardar_tecnicos') }}',
+        corteInicial: @js($corteGdo),
+        urlCorte: '{{ route('corte.guardar') }}',
      })"
      @filtrar-reporte.window="filtrarReporte()"
+     @abrir-corte.window="abrirCorte()"
      class="space-y-4 2xl:space-y-6">
 
     {{-- ============ INDICADORES DEL DÍA ============ --}}
@@ -135,6 +147,66 @@
         </div>
     </section>
 
+    {{-- ============ CORTE DE GDO ============ ---
+         El periodo sobre el que se mide la legalización. Manda sobre tres
+         cifras: lo legalizado dentro del corte y los dos acumulados de la
+         fila de abajo, que arrancan en su fecha de inicio. --}}
+    <section aria-label="Corte de GDO">
+        <div class="tw-card flex flex-wrap items-center gap-4 p-4 2xl:p-5">
+
+            <span class="tw-chip chip-violet shrink-0"><i class="fas fa-scissors"></i></span>
+
+            {{-- Periodo --}}
+            <div class="min-w-[12rem] flex-1">
+                <p class="tw-eyebrow">Corte de GDO</p>
+                <template x-if="corte">
+                    <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+                        <span x-text="corte.inicio_mostrado"></span>
+                        <span class="mx-1 text-slate-400">&rarr;</span>
+                        <span x-text="corte.fin_mostrado"></span>
+                    </p>
+                </template>
+                <template x-if="!corte">
+                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        Sin definir. Los acumulados van sobre todo el histórico.
+                    </p>
+                </template>
+            </div>
+
+            {{-- Días que faltan --}}
+            <template x-if="corte">
+                <div class="shrink-0">
+                    <span class="pill-rose" x-show="corte.cerrado" x-cloak>
+                        <i class="fas fa-flag-checkered text-[0.625rem]"></i> Corte cerrado
+                    </span>
+                    <span class="pill-amber" x-show="!corte.cerrado && corte.dias_restantes === 0" x-cloak>
+                        <i class="fas fa-hourglass-end text-[0.625rem]"></i> Último día
+                    </span>
+                    <span class="pill-emerald" x-show="!corte.cerrado && corte.dias_restantes > 0" x-cloak>
+                        <i class="fas fa-hourglass-half text-[0.625rem]"></i>
+                        <span x-text="`Faltan ${corte.dias_restantes} ${corte.dias_restantes === 1 ? 'día' : 'días'}`"></span>
+                    </span>
+                </div>
+            </template>
+
+            {{-- Legalizado dentro del corte --}}
+            <button type="button" @click="verLegalizado()"
+                    class="group shrink-0 rounded-xl border border-slate-200 px-4 py-2.5 text-left transition
+                           hover:border-brand-400 hover:bg-brand-50/40
+                           dark:border-slate-700 dark:hover:bg-slate-700/40">
+                <p class="tw-eyebrow">Legalizado en el corte</p>
+                <p class="mt-1 text-2xl font-bold leading-none tracking-tight text-slate-900 dark:text-white"
+                   x-text="formatoMiles(metricas['legalizado_corte'])"></p>
+            </button>
+            @haspermission('ver_residente')
+            <button type="button" @click="abrirCorte()" class="tw-btn-secondary shrink-0">
+                <i class="fas fa-pen"></i>
+                <span x-text="corte ? 'Cambiar corte' : 'Definir corte'"></span>
+            </button>
+            @endhaspermission
+        </div>
+    </section>
+
     {{-- ============ CONTEXTO Y ACUMULADOS ============ --}}
     <section aria-label="Acumulados">
         {{-- Cuatro por fila desde 1024px y no desde 1280: por debajo de ese
@@ -151,7 +223,10 @@
                     </div>
                     <p class="mt-3 text-2xl font-bold leading-none tracking-tight text-slate-900 dark:text-white 2xl:text-3xl"
                        x-text="formatoMiles(metricas['{{ $kpi['tipo'] }}'])"></p>
-                    @if ($kpi['nota'] === null)
+                    @if (isset($kpi['nota_dinamica']))
+                        <p class="mt-2.5 truncate text-xs text-slate-500 dark:text-slate-400"
+                           x-text="{{ $kpi['nota_dinamica'] }}"></p>
+                    @elseif ($kpi['nota'] === null)
                         <p class="mt-2.5 truncate text-xs text-slate-500 dark:text-slate-400"
                            x-text="fechaReporteMostrada"></p>
                     @else

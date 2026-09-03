@@ -155,7 +155,8 @@ document.addEventListener('alpine:init', () => {
                 /* +40px sobre el alto útil para que la barra horizontal no se
                    coma la última fila (la de TOTAL). */
                 height: '660px',
-                colWidths: (i) => (i === 0 ? 110 : i === 1 ? 320 : undefined),
+                // Las dos primeras llevan ancho propio; el resto, el de su encabezado.
+                colWidths: (i) => (i === 0 ? 110 : i === 1 ? 320 : window.anchoDeCabecera(inferior[i], contenedor)),
                 manualColumnResize: true,
                 licenseKey: 'non-commercial-and-evaluation',
                 cells: () => ({ renderer: 'fallidasRenderer' }),
