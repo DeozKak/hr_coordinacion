@@ -30,7 +30,7 @@ return [
     'inicio' => 'home',
 
     /* Logotipo de la empresa, relativo a public/. */
-    'logo' => 'favicon.ico',
+    'logo' => 'img/logo-ec-isotipo.png',
     'logo_alt' => 'E&C Ingeniería',
 
     'menu' => [

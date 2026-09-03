@@ -9,6 +9,14 @@
 
     <title>@yield('title', config('navegacion.titulo', config('app.name')))</title>
 
+    {{-- Icono de la pestaña. Sin declararlo, el navegador se descarga por su
+         cuenta /favicon.ico y ahí seguía el logotipo anterior. Se apunta al
+         isotipo actual y se le cuelga la versión: los navegadores guardan el
+         favicon en una caché aparte, muy insistente, y sin cambiar la URL se
+         quedan con el viejo durante días. --}}
+    <link rel="icon" type="image/png" href="{{ asset('img/logo-ec-isotipo.png') }}?v=2">
+    <link rel="apple-touch-icon" href="{{ asset('img/logo-ec-isotipo.png') }}?v=2">
+
     {{-- Evita el flash de tema claro antes de que Alpine arranque. --}}
     <script>
         try {
