@@ -2,7 +2,9 @@
 use App\Http\Controllers\WhatsAppWebhookController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CausalesLegalizacionController;
 use App\Http\Controllers\HomeController;
+use App\Http\Middleware\CheckPermission;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\DescargasController;
 use App\Http\Controllers\UserActivityController;
@@ -46,6 +48,19 @@ Route::middleware('web')->group(function () {
         Route::get('/home/programaciones', [HomeController::class, 'programaciones'])->name('home.programaciones');
         Route::post('/estado-asignacion/guardar-tecnicos', [HomeController::class, 'guardarAsignacion'])->name('asignacion.guardar_tecnicos');
         Route::post('/corte-gdo', [HomeController::class, 'guardarCorte'])->name('corte.guardar');
+
+        /* Causales que cuentan como legalización. Mismo permiso que los cortes
+           de producción: es quien lleva la legalización quien las conoce. */
+        Route::middleware(CheckPermission::class . ':ver_residente,ver_coordinacion_RP')->group(function () {
+            Route::get('/causales-legalizacion', [CausalesLegalizacionController::class, 'index'])
+                ->name('causales.index');
+            Route::post('/causales-legalizacion', [CausalesLegalizacionController::class, 'store'])
+                ->name('causales.store');
+            Route::post('/causales-legalizacion/{causal}/alternar', [CausalesLegalizacionController::class, 'alternar'])
+                ->name('causales.alternar');
+            Route::delete('/causales-legalizacion/{causal}', [CausalesLegalizacionController::class, 'destroy'])
+                ->name('causales.destroy');
+        });
         Route::get('/home', [HomeController::class, 'index'])->name('home');
         Route::get('/jobs-pnd', function () {
 

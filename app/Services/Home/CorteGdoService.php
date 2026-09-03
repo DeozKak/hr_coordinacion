@@ -2,6 +2,7 @@
 
 namespace App\Services\Home;
 
+use App\Models\CausalLegalizacion;
 use App\Models\CorteGdo;
 use DateTime;
 use Illuminate\Support\Facades\DB;
@@ -118,6 +119,9 @@ class CorteGdoService
             ->get();
 
         return $filas
+            /* Sólo las que de verdad legalizan: el archivo trae también
+               cierres que no lo son y contarlos inflaba la cifra del corte. */
+            ->filter(fn ($fila) => CausalLegalizacion::legaliza($fila->DESCCAUSAL))
             // El filtro de municipio se aplica sobre el municipio madre, no
             // sobre la localidad cruda, igual que en el resto del tablero.
             ->filter(fn ($fila) => $localidadSeleccionada === 'TODAS'

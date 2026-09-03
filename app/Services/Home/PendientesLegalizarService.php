@@ -2,6 +2,7 @@
 
 namespace App\Services\Home;
 
+use App\Models\CausalLegalizacion;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -57,10 +58,20 @@ class PendientesLegalizarService
             return ltrim($r->NroSitio, ':');
         })->unique()->toArray();
 
+        /* Sólo cuentan los cierres cuya causal legaliza. Estar en tbl_cerradas
+           no basta: el archivo de GDO trae también visitas que no legalizaron
+           —aplazada por el usuario, casa sola— y esas dejaban el contrato fuera
+           de los pendientes sin haberse legalizado nunca.
+
+           El descarte va ANTES de agrupar a propósito: si un contrato tiene dos
+           cierres del mismo tipo de trabajo, uno que legaliza y otro que no,
+           buscarCoincidencia devuelve el primero que encuentra y podría quedarse
+           con el que no sirve. Filtrando antes, sólo llegan los que valen. */
         $cerradas = $this->agruparPorContrato(
             'tbl_cerradas',
             $contratosEfectivos,
-            ['CONTRATO', 'ID_TIPO_TRABAJO']
+            ['CONTRATO', 'ID_TIPO_TRABAJO', 'DESCCAUSAL'],
+            fn ($fila) => CausalLegalizacion::legaliza($fila->DESCCAUSAL)
         );
 
         $tiposSinLegalizacion = array_map(
@@ -104,14 +115,16 @@ class PendientesLegalizarService
      *
      * @param array $contratos Contratos a buscar.
      * @param array $columnas Columnas a traer.
+     * @param callable|null $filtro Se aplica a cada fila antes de agrupar.
      */
-    private function agruparPorContrato(string $tabla, array $contratos, array $columnas): Collection
+    private function agruparPorContrato(string $tabla, array $contratos, array $columnas, ?callable $filtro = null): Collection
     {
         return collect($contratos)
             ->chunk(self::CONTRATOS_POR_BLOQUE)
             ->flatMap(fn (Collection $bloque) => DB::table($tabla)
                 ->whereIn('CONTRATO', $bloque->all())
                 ->get($columnas))
+            ->when($filtro !== null, fn (Collection $filas) => $filas->filter($filtro))
             ->groupBy('CONTRATO');
     }
 

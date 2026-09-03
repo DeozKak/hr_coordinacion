@@ -18,6 +18,8 @@
          'ver' => fn () => auth()->user()->can('gestion_nomina')],
         ['label' => 'Zonificación',          'url' => route('zonas.index'),                     'icon' => 'fa-map-location-dot', 'tint' => 'sky',
          'ver' => fn () => auth()->user()->canany(['ver_residente', 'ver_coordinacion_RP', 'ver_coordinacion_RN', 'ver_PQRS'])],
+        ['label' => 'Causales de legalización', 'url' => route('causales.index'),               'icon' => 'fa-file-circle-check', 'tint' => 'violet',
+         'ver' => fn () => auth()->user()->canany(['ver_residente', 'ver_coordinacion_RP'])],
     ])->filter(fn ($o) => ($o['ver'])())->values();
 @endphp
 

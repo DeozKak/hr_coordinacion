@@ -135,13 +135,25 @@
                         <span class="tw-eyebrow max-w-[9rem]">{{ $kpi['label'] }}</span>
                         <span class="tw-chip chip-{{ $kpi['tint'] }}"><i class="fas {{ $kpi['icon'] }}"></i></span>
                     </div>
-                    <p class="tw-metric mt-3" x-text="formatoMiles(metricas['{{ $kpi['tipo'] }}'])"></p>
-                    {{-- Va superpuesto: como sólo se ve al pasar por encima, si
-                         ocupara sitio estaría estirando la tarjeta todo el rato. --}}
-                    <p class="pointer-events-none absolute bottom-3 left-4 text-xs font-medium text-brand-600
-                              opacity-0 transition group-hover:opacity-100 2xl:left-5">
-                        Ver detalle <i class="fas fa-arrow-right text-[0.625rem]"></i>
-                    </p>
+                    {{-- El aviso va al lado de la cifra, no debajo.
+
+                         Estaba superpuesto con `absolute bottom-3` para no
+                         estirar la tarjeta, y funcionaba mientras la tarjeta
+                         era alta. Al apretar la densidad —p-4 en vez de p-5—
+                         el número bajó hasta esa franja y el texto le caía
+                         encima al pasar el ratón.
+
+                         Puesto en la misma fila y alineado a la derecha no hay
+                         nada que reservar: ocupa sitio a lo ancho, que sobra
+                         junto a una cifra de dos o tres dígitos, y el alto de
+                         la tarjeta sigue siendo el mismo. --}}
+                    <div class="mt-3 flex items-end justify-between gap-3">
+                        <p class="tw-metric" x-text="formatoMiles(metricas['{{ $kpi['tipo'] }}'])"></p>
+                        <span class="pointer-events-none shrink-0 pb-1 text-xs font-medium text-brand-600
+                                     opacity-0 transition group-hover:opacity-100">
+                            Ver detalle <i class="fas fa-arrow-right text-[0.625rem]"></i>
+                        </span>
+                    </div>
                 </button>
             @endforeach
         </div>
