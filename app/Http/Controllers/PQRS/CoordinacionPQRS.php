@@ -118,7 +118,25 @@ class CoordinacionPQRS extends Controller
     }
 
 
-    public function getDatosActualizados()
+    /**
+     * Datos de la tabla para el sondeo automático, que corre cada minuto.
+     *
+     * Devuelve la tabla entera sólo cuando ha cambiado algo. El cliente manda
+     * la firma de lo que ya tiene pintado y, si coincide, se le responde con
+     * un aviso de dos campos en vez de con todas las filas.
+     *
+     * La firma se calcula sobre el resultado ya armado, no sobre las marcas de
+     * tiempo de las tablas: ninguna de las que intervienen tiene
+     * `ON UPDATE CURRENT_TIMESTAMP`, así que fiarse de `updated_at` habría
+     * dejado la tabla sin refrescar en silencio. Sobre el propio resultado no
+     * hay forma de equivocarse: si cambia un solo dato, cambia la firma.
+     *
+     * Lo que se ahorra no es tanto la consulta —que con el índice de
+     * tbl_programacion_contratos tarda 5 ms— como el trabajo del navegador:
+     * sin esto, cada minuto se reconstruía la rejilla entera y había que
+     * reponerle orden, filtros, selección y posición del scroll.
+     */
+    public function getDatosActualizados(Request $request)
     {
 
         // 1. Subconsulta para traer el técnico de la programación más reciente
@@ -139,6 +157,7 @@ class CoordinacionPQRS extends Controller
             ->selectSub($tecnicoSubquery, 'TECNICO_AGENDADO')
             ->selectSub($fechaSubquery, 'FECHA_AGENDAMIENTO')
             ->where('estado', 1)
+            ->orderBy('id')
             ->get();
 
         CoordinacionUpdateRecepcion::Responsables($completeData);
@@ -171,8 +190,18 @@ class CoordinacionPQRS extends Controller
             }
         }
 
-        // En lugar de retornar una vista, retornamos los datos en JSON
-        return response()->json(['data' => $completeData]);
+        /* La firma va sobre el JSON definitivo. El orden de las filas se fija
+           por clave primaria más arriba: sin un ORDEN estable, dos consultas
+           idénticas podrían devolver las filas en distinto orden y la firma
+           cambiaría sin que hubiera cambiado ningún dato. */
+        $datos = $completeData->toArray();
+        $firma = md5(json_encode($datos));
+
+        if ($request->query('firma') === $firma) {
+            return response()->json(['sin_cambios' => true, 'firma' => $firma]);
+        }
+
+        return response()->json(['data' => $datos, 'firma' => $firma]);
     }
 
 

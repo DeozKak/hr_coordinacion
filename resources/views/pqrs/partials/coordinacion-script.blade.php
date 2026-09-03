@@ -52,6 +52,9 @@ document.addEventListener('alpine:init', () => {
         conteoContratos: {},
         totalFilas: 0,
         refrescando: false,
+        /* Firma de lo que hay pintado ahora mismo. Viaja en cada sondeo para
+           que el servidor pueda contestar "sin cambios" en vez de la tabla. */
+        firmaDatos: '',
         ultimaActualizacion: '',
         temporizador: null,
 
@@ -408,9 +411,16 @@ document.addEventListener('alpine:init', () => {
 
                 this.refrescando = true;
                 try {
-                    const res = await window.api(this.urls.datosActualizados);
+                    const p = this.firmaDatos
+                        ? `?firma=${encodeURIComponent(this.firmaDatos)}`
+                        : '';
+                    const res = await window.api(this.urls.datosActualizados + p);
+
+                    // Nada cambió: se deja la rejilla como está y se sale.
+                    if (res.sin_cambios) { this.marcarActualizacion(); return; }
                     if (!res.data) return;
 
+                    this.firmaDatos = res.firma ?? '';
                     const nuevas = res.data.map(mapearFila);
 
                     const plugSort    = this.hot.getPlugin('columnSorting');

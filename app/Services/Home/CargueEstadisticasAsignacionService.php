@@ -2,6 +2,7 @@
 
 namespace App\Services\Home;
 
+use App\Support\FiltroDeFilas;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 use Box\Spout\Reader\ReaderAbstract;
 use Illuminate\Http\UploadedFile;
@@ -13,6 +14,9 @@ class CargueEstadisticasAsignacionService
 {
     /** Filas por bloque de inserción, para no reventar el límite de placeholders */
     private const TAMANO_BLOQUE = 500;
+
+    /** Filas que se traen del .xls de una vez. Acota la memoria del lector. */
+    private const FILAS_POR_LECTURA = 2000;
 
     /**
      * Carga los dos archivos del día: asignaciones (foto del día) y cerradas (histórico).
@@ -187,8 +191,18 @@ class CargueEstadisticasAsignacionService
     }
 
     /**
-     * Camino alterno para .xls. Se lee solo el valor de las celdas (sin estilos),
-     * que es lo que disparaba el agotamiento de memoria.
+     * Camino alterno para el formato viejo .xls, que Spout no sabe leer.
+     *
+     * Se lee por bloques de filas en vez de cargar el libro entero. Hasta ahora
+     * esto hacía un solo `load()`, y aunque pidiera únicamente los valores
+     * —sin estilos— PhpSpreadsheet materializa igualmente TODAS las celdas del
+     * archivo: de ahí el agotamiento de los 512 MB. Con un filtro de filas, la
+     * memoria queda acotada al bloque y ya no depende del tamaño del archivo.
+     *
+     * El precio es que cada bloque vuelve a recorrer el archivo, así que esto
+     * es más lento que el streaming de Spout. Es el compromiso que impone el
+     * formato: en .xls no hay forma de leer en flujo. Si los archivos se
+     * guardaran como .xlsx, entrarían por el camino rápido.
      *
      * @return \Generator<int, array<string, mixed>>
      */
@@ -197,26 +211,50 @@ class CargueEstadisticasAsignacionService
         $reader = IOFactory::createReaderForFile($ruta);
         $reader->setReadDataOnly(true);
 
-        $hoja = $reader->load($ruta)->getActiveSheet();
+        // listWorksheetInfo mira la cabecera de la hoja, no sus celdas: da el
+        // total de filas sin traerse nada a memoria.
+        $info = $reader->listWorksheetInfo($ruta)[0] ?? null;
+        $totalFilas = (int) ($info['totalRows'] ?? 0);
+
+        if (isset($info['worksheetName'])) {
+            $reader->setLoadSheetsOnly($info['worksheetName']);
+        }
+
         $headers = null;
 
-        foreach ($hoja->getRowIterator() as $fila) {
-            $celdas = $fila->getCellIterator();
-            $celdas->setIterateOnlyExistingCells(false);
+        for ($desde = 1; $desde <= $totalFilas; $desde += self::FILAS_POR_LECTURA) {
+            $hasta = min($desde + self::FILAS_POR_LECTURA - 1, $totalFilas);
 
-            $valores = [];
-            foreach ($celdas as $celda) {
-                $valores[] = $celda->getValue();
+            $reader->setReadFilter(new FiltroDeFilas($desde, $hasta));
+            $libro = $reader->load($ruta);
+            $hoja = $libro->getActiveSheet();
+
+            foreach ($hoja->getRowIterator($desde, $hasta) as $fila) {
+                $celdas = $fila->getCellIterator();
+                // Sin esto se saltan las celdas vacías y las columnas se
+                // desalinean respecto a los encabezados.
+                $celdas->setIterateOnlyExistingCells(false);
+
+                $valores = [];
+                foreach ($celdas as $celda) {
+                    $valores[] = $celda->getValue();
+                }
+
+                if ($headers === null) {
+                    $headers = $this->normalizarEncabezados($valores);
+                    continue;
+                }
+
+                if ($registro = $this->combinar($headers, $valores)) {
+                    yield $registro;
+                }
             }
 
-            if ($headers === null) {
-                $headers = $this->normalizarEncabezados($valores);
-                continue;
-            }
-
-            if ($registro = $this->combinar($headers, $valores)) {
-                yield $registro;
-            }
+            /* Sin desconectar las hojas, PhpSpreadsheet deja referencias
+               cruzadas entre libro y hojas que el recolector no puede soltar, y
+               los bloques se irían acumulando igual que antes. */
+            $libro->disconnectWorksheets();
+            unset($hoja, $libro);
         }
     }
 

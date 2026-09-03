@@ -80,10 +80,16 @@ class LogUserHttpActivity
             // 'admin.activity.index', // Si tienes un visor de logs con nombre
 
 
+            /* Sondeos automáticos: se repiten cada minuto por pestaña abierta
+               y no dicen nada de lo que hizo la persona. Registrarlos llenaba
+               activity_log de ruido —la mitad de la tabla era el sondeo de
+               quejas— y convertía cada consulta de lectura en una escritura. */
             'notifications.get',
+            'notifications.json',
             'notifications.markAsRead',
             'notifications.markAllAsRead',
             'notifications.index',
+            'pqrs.coordinacion.datosActualizados',
             'jobs.pnd',
             'admin.user.http_activity.show',
             'admin.user.activity.show',
