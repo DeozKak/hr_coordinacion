@@ -2,7 +2,7 @@
 
 namespace App\Services\Programacion;
 
-use App\Models\tbl_insp_cali;
+use App\Models\TblInspCali;
 use DateTime;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
@@ -116,7 +116,7 @@ class PlantillaGdwService
         preg_match('/^(\d+)\./', $tecnico, $partes);
 
         $inspector = isset($partes[1])
-            ? tbl_insp_cali::select('cedula')->where('id', $partes[1])->first()
+            ? TblInspCali::select('cedula')->where('id', $partes[1])->first()
             : null;
 
         if ($inspector === null) {

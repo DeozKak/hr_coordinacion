@@ -4,7 +4,7 @@ namespace App\Rules;
 
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
-use App\Models\Zonificacion\tbl_localidades_municipio;
+use App\Models\Zonificacion\TblLocalidadesMunicipio;
 class UniqueMunicipio implements ValidationRule
 {
     protected $sede;
@@ -21,7 +21,7 @@ class UniqueMunicipio implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $existingMunicipio = tbl_localidades_municipio::where('nombre', $value)
+        $existingMunicipio = TblLocalidadesMunicipio::where('nombre', $value)
             ->where('id_sede', $this->sede)
             ->where('id_zona', $this->zona)
             ->exists();

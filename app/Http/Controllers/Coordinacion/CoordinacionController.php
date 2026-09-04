@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\Coordinacion;
 
 use App\Http\Controllers\Controller;
-use App\Models\Bitacoras\tbl_bitacora_contrato;
-use App\Models\Bitacoras\tbl_dv_insp;
-use App\Models\Coordinacion\asignadas;
+use App\Models\Bitacoras\TblBitacoraContrato;
+use App\Models\Bitacoras\TblDvInsp;
+use App\Models\Coordinacion\Asignadas;
 use App\Models\Coordinacion\TblCausasCierre;
 use App\Models\Coordinacion\TblRecepcion;
 use App\Models\Coordinacion\TblRecepcionVneDetalle;
-use App\Models\Programacion\tbl_programacion_contrato;
-use App\Models\tbl_insp_cali;
-use App\Models\Zonificacion\tbl_localidades_municipio;
-use App\Models\Zonificacion\tbl_localidades_sede;
+use App\Models\Programacion\TblProgramacionContrato;
+use App\Models\TblInspCali;
+use App\Models\Zonificacion\TblLocalidadesMunicipio;
+use App\Models\Zonificacion\TblLocalidadesSede;
 use App\Models\Zonificacion\TblBarrios;
 use App\Models\Zonificacion\TblGrupo;
 use App\Models\Zonificacion\TblGruposDetalle;
@@ -42,11 +42,11 @@ class CoordinacionController extends Controller
     {
         set_time_limit(400);
 
-        $inspectors = tbl_insp_cali::all();
+        $inspectors = TblInspCali::all();
         $groups = TblGrupo::all();
         $subgroups = TblSubgrupo::all();
 
-        $query = asignadas::select("*")
+        $query = Asignadas::select("*")
             ->whereIn('asignadas.tipo_trabajo', [10444, 12161])
             ->where('asignadas.status', 1);
         $completeData = $query->get();
@@ -124,14 +124,14 @@ class CoordinacionController extends Controller
             }
             if ($item->dias_ejecutar != $diferenciaDias) {
                 // actualizamos los dias para ejecutar
-                asignadas::where('orden', $item->orden)
+                Asignadas::where('orden', $item->orden)
                             ->where('status', 1)
                             ->update(['dias_ejecutar' => $diferenciaDias]);
             }
         }*/
 
         // traemos las sedes para crear el selector en el modal de impresion masiva
-        $sedes = tbl_localidades_sede::all();
+        $sedes = TblLocalidadesSede::all();
 
         return view('gestion.coordinacion', compact('inspectors', 'sedes'));
     }
@@ -143,7 +143,7 @@ class CoordinacionController extends Controller
         $offset = ($pagina - 1) * $porPagina;
 
         // Obtener los datos necesarios
-        $query = asignadas::select("*")
+        $query = Asignadas::select("*")
             ->whereIn('asignadas.tipo_trabajo', [10444, 12161])
             ->where('status', 1);
 
@@ -160,7 +160,7 @@ class CoordinacionController extends Controller
         $causasCierre = TblCausasCierre::all();
 
         // CONSULTAMOS LOS INSPECTORES
-        $inspectores = tbl_insp_cali::select('id', 'nombres', 'apellidos')
+        $inspectores = TblInspCali::select('id', 'nombres', 'apellidos')
             ->where('state', 1)
             ->get();
 
@@ -194,7 +194,7 @@ class CoordinacionController extends Controller
                     $ultimaVne = $detalleRecepcion[0]->idVne;
 
                     // consultamos los inspectores para sacar el id del ultimo inspector
-                    $queryInspectores = tbl_insp_cali::where('cedula', $detalleRecepcion[0]->ccOperario)->first();
+                    $queryInspectores = TblInspCali::where('cedula', $detalleRecepcion[0]->ccOperario)->first();
 
                     $inspectorUltimaVne = $queryInspectores->id;
 
@@ -221,12 +221,12 @@ class CoordinacionController extends Controller
                 $contratoBuscar = ":" . $item->contrato;
 
                 // consultamos la tabla de bitacoras
-                $queryBitacora = tbl_bitacora_contrato::where($columnaConsultar, $item->orden)
+                $queryBitacora = TblBitacoraContrato::where($columnaConsultar, $item->orden)
                     ->where('CONTRATO', $contratoBuscar)
                     ->first();
 
                 // consultamos en la tabla de devoluciones
-                $queryDev = tbl_dv_insp::with('Supervisor')
+                $queryDev = TblDvInsp::with('Supervisor')
                     ->where($columnaConsultar, $item->orden)
                     ->where('CONTRATO', $contratoBuscar)
                     ->first();
@@ -247,7 +247,7 @@ class CoordinacionController extends Controller
             }
 
             // consultamos la tabla de contratos con la orden
-            $queryProCont = tbl_programacion_contrato::where('CONTRATO', $item->contrato)->first();
+            $queryProCont = TblProgramacionContrato::where('CONTRATO', $item->contrato)->first();
             if ($queryProCont != null) {
                 $jornada = explode(" ", $queryProCont->HORA_INICIO);
 
@@ -276,9 +276,9 @@ class CoordinacionController extends Controller
             }
 
             try{
-            $queryMunicipio = tbl_localidades_municipio::where(DB::raw('trim(nombre)'), trim($item->localidad))->first();
+            $queryMunicipio = TblLocalidadesMunicipio::where(DB::raw('trim(nombre)'), trim($item->localidad))->first();
             // Obtenemos la sede directamente desde la consulta anterior
-            $querySede = tbl_localidades_sede::where('id', $queryMunicipio->id_sede)->first();
+            $querySede = TblLocalidadesSede::where('id', $queryMunicipio->id_sede)->first();
             }catch (\Exception $e){
                 log::error($e->getMessage());
             }
@@ -357,7 +357,7 @@ class CoordinacionController extends Controller
             if ($item->codigo_tecnico != null) {
                 $fechaActual = new DateTime();
                 //consultamos la tabla programacion contratos con el contrato
-                $queryProgramacionContrato = tbl_programacion_contrato::where('CONTRATO', $item->contrato)->first();
+                $queryProgramacionContrato = TblProgramacionContrato::where('CONTRATO', $item->contrato)->first();
                 // consultamos la tabla de recepcion vne detalle para saber si la orden tiene volantes
                 $queryVneDetalle = TblRecepcionVneDetalle::where('ordenTrabajo', $item->orden)->first();
 
@@ -511,7 +511,7 @@ class CoordinacionController extends Controller
            nombre de columna, así que sólo pasan las que la pantalla ofrece. */
         $data = array_intersect_key(is_array($data) ? $data : [], array_flip(self::FILTROS_PERMITIDOS));
 
-        $query = asignadas::select('*')
+        $query = Asignadas::select('*')
             ->whereIn('asignadas.tipo_trabajo', [10444, 12161])
             ->where('asignadas.status', 1);
 
@@ -526,7 +526,7 @@ class CoordinacionController extends Controller
         $causasCierre = TblCausasCierre::all();
 
         // CONSULTAMOS LOS INPSECTORES
-        $inspectores = tbl_insp_cali::select('id', 'nombres', 'apellidos')
+        $inspectores = TblInspCali::select('id', 'nombres', 'apellidos')
             ->where('state', 1)
             ->get();
 
@@ -602,7 +602,7 @@ class CoordinacionController extends Controller
 
                     foreach ($arrayIdMun as $idMun) {
                         // consultamos el nombre del municipio con el id del municipio
-                        $sqlMunQuery = tbl_localidades_municipio::where('id', $idMun)
+                        $sqlMunQuery = TblLocalidadesMunicipio::where('id', $idMun)
                                                                 ->whereIn('id_sede', $arrayIdSede);
 
                         // Ejecutar la consulta y obtener los resultados
@@ -693,7 +693,7 @@ class CoordinacionController extends Controller
                     $ultimaVne = $detalleRecepcion[0]->idVne;
 
                     // consultamos los inspectores para sacar el id del ultimo inspector
-                    $queryInspectores = tbl_insp_cali::where('cedula', $detalleRecepcion[0]->ccOperario)->first();
+                    $queryInspectores = TblInspCali::where('cedula', $detalleRecepcion[0]->ccOperario)->first();
 
                     $inspectorUltimaVne = $queryInspectores->id;
 
@@ -720,12 +720,12 @@ class CoordinacionController extends Controller
                 $contratoBuscar = ":" . $item->contrato;
 
                 // consultamos la tabla de bitacoras
-                $queryBitacora = tbl_bitacora_contrato::where($columnaConsultar, $item->orden)
+                $queryBitacora = TblBitacoraContrato::where($columnaConsultar, $item->orden)
                     ->where('CONTRATO', $contratoBuscar)
                     ->first();
 
                 // consultamos en la tabla de devoluciones
-                $queryDev = tbl_dv_insp::with('Supervisor')
+                $queryDev = TblDvInsp::with('Supervisor')
                     ->where($columnaConsultar, $item->orden)
                     ->where('CONTRATO', $contratoBuscar)
                     ->first();
@@ -746,7 +746,7 @@ class CoordinacionController extends Controller
             }
 
             // consultamos la tabla de contratos con la orden
-            $queryProCont = tbl_programacion_contrato::where('ORDEN_TRABAJO', $item->orden)->first();
+            $queryProCont = TblProgramacionContrato::where('ORDEN_TRABAJO', $item->orden)->first();
             if ($queryProCont != null) {
                 $jornada = explode(" ", $queryProCont->HORA_INICIO);
 
@@ -774,10 +774,10 @@ class CoordinacionController extends Controller
                 }
             }
 
-            $queryMunicipio = tbl_localidades_municipio::where('nombre', $item->localidad)->first();
+            $queryMunicipio = TblLocalidadesMunicipio::where('nombre', $item->localidad)->first();
 
             // Obtenemos la sede directamente desde la consulta anterior
-            $querySede = tbl_localidades_sede::where('id', $queryMunicipio->id_sede)->first();
+            $querySede = TblLocalidadesSede::where('id', $queryMunicipio->id_sede)->first();
 
             // Consultamos primero el municipio
             $queryLugar = $queryMunicipio;
@@ -847,7 +847,7 @@ class CoordinacionController extends Controller
             // En campo
             if ($item->codigo_tecnico != null) {
                 //consultamos la tabla programacion contratos con el contrato
-                $queryProgramacionContrato = tbl_programacion_contrato::where('CONTRATO', $item->contrato)->first();
+                $queryProgramacionContrato = TblProgramacionContrato::where('CONTRATO', $item->contrato)->first();
                 // consultamos la tabla de recepcion vne detalle para saber si la orden tiene volantes
                 $queryVneDetalle = TblRecepcionVneDetalle::where('ordenTrabajo', $item->orden)->first();
 
@@ -992,7 +992,7 @@ class CoordinacionController extends Controller
         if ($codigoTecnico != NULL) {
 
             // consultamos el nombre del ispector con el  codigo
-            $queryInspector = tbl_insp_cali::where('id', $codigoTecnico)->first();
+            $queryInspector = TblInspCali::where('id', $codigoTecnico)->first();
             if ($queryInspector != null) {
                 $nombreInspector = $queryInspector->apellidos . " " . $queryInspector->nombres;
             } else {
@@ -1048,7 +1048,7 @@ class CoordinacionController extends Controller
         }
 
         // consultamos los municipios con el id de las sedes
-        $sqlTblMun = tbl_localidades_municipio::select('id')->whereIn('id_sede', $arrayIdSede)->get();
+        $sqlTblMun = TblLocalidadesMunicipio::select('id')->whereIn('id_sede', $arrayIdSede)->get();
 
         // con el id del municipio consultamos los grupos a los que pertenece ese municipio
         // sacamos el id de los municipios
@@ -1259,7 +1259,7 @@ class CoordinacionController extends Controller
         }
 
         // Obtener los datos necesarios
-        $query = asignadas::select('*')
+        $query = Asignadas::select('*')
             ->whereIn('asignadas.tipo_trabajo', [10444, 12161])
             ->where('status', 1)
             ->get();
@@ -1289,7 +1289,7 @@ class CoordinacionController extends Controller
                     $ultimaVne = $detalleRecepcion[0]->idVne;
 
                     // consultamos los inspectores para sacar el id del ultimo inspector
-                    $queryInspectores = tbl_insp_cali::where('cedula', $detalleRecepcion[0]->ccOperario)->first();
+                    $queryInspectores = TblInspCali::where('cedula', $detalleRecepcion[0]->ccOperario)->first();
 
                     $inspectorUltimaVne = $queryInspectores->id;
 
@@ -1316,12 +1316,12 @@ class CoordinacionController extends Controller
                 $contratoBuscar = ":" . $item->contrato;
 
                 // consultamos la tabla de bitacoras
-                $queryBitacora = tbl_bitacora_contrato::where($columnaConsultar, $item->orden)
+                $queryBitacora = TblBitacoraContrato::where($columnaConsultar, $item->orden)
                     ->where('CONTRATO', $contratoBuscar)
                     ->first();
 
                 // consultamos en la tabla de devoluciones
-                $queryDev = tbl_dv_insp::with('Supervisor')
+                $queryDev = TblDvInsp::with('Supervisor')
                     ->where($columnaConsultar, $item->orden)
                     ->where('CONTRATO', $contratoBuscar)
                     ->first();
@@ -1342,7 +1342,7 @@ class CoordinacionController extends Controller
             }
 
             // consultamos la tabla de contratos con la orden
-            $queryProCont = tbl_programacion_contrato::where('ORDEN_TRABAJO', $item->orden)->first();
+            $queryProCont = TblProgramacionContrato::where('ORDEN_TRABAJO', $item->orden)->first();
             if ($queryProCont != null) {
                 $jornada = explode(" ", $queryProCont->HORA_INICIO);
 
@@ -1370,10 +1370,10 @@ class CoordinacionController extends Controller
                 }
             }
 
-            $queryMunicipio = tbl_localidades_municipio::where('nombre', $item->localidad)->first();
+            $queryMunicipio = TblLocalidadesMunicipio::where('nombre', $item->localidad)->first();
 
             // Obtenemos la sede directamente desde la consulta anterior
-            $querySede = tbl_localidades_sede::where('id', $queryMunicipio->id_sede)->first();
+            $querySede = TblLocalidadesSede::where('id', $queryMunicipio->id_sede)->first();
 
             // Consultamos el barrio
             $queryLugar = TblBarrios::where('barrio', $item->sector_operativo)->first();
@@ -1439,7 +1439,7 @@ class CoordinacionController extends Controller
             // En campo
             if ($item->codigo_tecnico != null) {
                 //consultamos la tabla programacion contratos con el contrato
-                $queryProgramacionContrato = tbl_programacion_contrato::where('CONTRATO', $item->contrato)->first();
+                $queryProgramacionContrato = TblProgramacionContrato::where('CONTRATO', $item->contrato)->first();
                 // consultamos la tabla de recepcion vne detalle para saber si la orden tiene volantes
                 $queryVneDetalle = TblRecepcionVneDetalle::where('ordenTrabajo', $item->orden)->first();
 
@@ -1604,7 +1604,7 @@ class CoordinacionController extends Controller
         }
 
         // consultamos la tabla de asignadas con el numero de orden y actualizamos la columna
-        $queryAsignadas = asignadas::where('orden', $orden)->first();
+        $queryAsignadas = Asignadas::where('orden', $orden)->first();
 
         $queryAsignadas->update([
             'causa_cierre' => $causaCierre
@@ -1624,7 +1624,7 @@ class CoordinacionController extends Controller
         $fechaSolicitudCierre = $request->input('fechaSolicitudCierre');
 
         // consultamos la tabla de asignadas con el numero de orden y actualizamos la columna
-        $queryAsignadas = asignadas::where('orden', $orden)->first();
+        $queryAsignadas = Asignadas::where('orden', $orden)->first();
 
         $queryAsignadas->update([
             'fecha_solicitud_cierre' => $fechaSolicitudCierre
@@ -1639,7 +1639,7 @@ class CoordinacionController extends Controller
 
     public function historico()
     {
-        $inspectors = tbl_insp_cali::all();
+        $inspectors = TblInspCali::all();
         return view('seguimiento.historico', compact('inspectors'));
     }
 
@@ -1651,7 +1651,7 @@ class CoordinacionController extends Controller
         $offset = ($pagina - 1) * $porPagina;
 
         // Obtener los datos necesarios
-        $query = asignadas::select("*")
+        $query = Asignadas::select("*")
             ->whereIn('asignadas.tipo_trabajo', [10444, 12161])
             ->where('status', 0);
 
@@ -1685,7 +1685,7 @@ class CoordinacionController extends Controller
                     $ultimaVne = $detalleRecepcion[0]->idVne;
 
                     // consultamos los inspectores para sacar el id del ultimo inspector
-                    $queryInspectores = tbl_insp_cali::where('cedula', $detalleRecepcion[0]->ccOperario)->first();
+                    $queryInspectores = TblInspCali::where('cedula', $detalleRecepcion[0]->ccOperario)->first();
 
                     $inspectorUltimaVne = $queryInspectores->id;
 
@@ -1712,12 +1712,12 @@ class CoordinacionController extends Controller
                 $contratoBuscar = ":" . $item->contrato;
 
                 // consultamos la tabla de bitacoras
-                $queryBitacora = tbl_bitacora_contrato::where($columnaConsultar, $item->orden)
+                $queryBitacora = TblBitacoraContrato::where($columnaConsultar, $item->orden)
                     ->where('CONTRATO', $contratoBuscar)
                     ->first();
 
                 // consultamos en la tabla de devoluciones
-                $queryDev = tbl_dv_insp::with('Supervisor')
+                $queryDev = TblDvInsp::with('Supervisor')
                     ->where($columnaConsultar, $item->orden)
                     ->where('CONTRATO', $contratoBuscar)
                     ->first();
@@ -1738,7 +1738,7 @@ class CoordinacionController extends Controller
             }
 
             // consultamos la tabla de contratos con la orden
-            $queryProCont = tbl_programacion_contrato::where('ORDEN_TRABAJO', $item->orden)->first();
+            $queryProCont = TblProgramacionContrato::where('ORDEN_TRABAJO', $item->orden)->first();
             if ($queryProCont != null) {
                 $jornada = explode(" ", $queryProCont->HORA_INICIO);
 
@@ -1766,10 +1766,10 @@ class CoordinacionController extends Controller
                 }
             }
 
-            $queryMunicipio = tbl_localidades_municipio::where('nombre', $item->localidad)->first();
+            $queryMunicipio = TblLocalidadesMunicipio::where('nombre', $item->localidad)->first();
 
             // Obtenemos la sede directamente desde la consulta anterior
-            $querySede = tbl_localidades_sede::where('id', $queryMunicipio->id_sede)->first();
+            $querySede = TblLocalidadesSede::where('id', $queryMunicipio->id_sede)->first();
 
             // Consultamos el barrio
             $queryLugar = TblBarrios::where('barrio', $item->sector_operativo)->first();
@@ -1835,7 +1835,7 @@ class CoordinacionController extends Controller
             // En campo
             if ($item->codigo_tecnico != null) {
                 //consultamos la tabla programacion contratos con el contrato
-                $queryProgramacionContrato = tbl_programacion_contrato::where('CONTRATO', $item->contrato)->first();
+                $queryProgramacionContrato = TblProgramacionContrato::where('CONTRATO', $item->contrato)->first();
                 // consultamos la tabla de recepcion vne detalle para saber si la orden tiene volantes
                 $queryVneDetalle = TblRecepcionVneDetalle::where('ordenTrabajo', $item->orden)->first();
 
@@ -2011,7 +2011,7 @@ class CoordinacionController extends Controller
         $orden = $request->input('ordenEnviar');
 
         // consultamos la orden en asignadas
-        $queryAsignadas = asignadas::where('orden', $orden)->first();
+        $queryAsignadas = Asignadas::where('orden', $orden)->first();
         if($queryAsignadas->marca == 0){
             $queryAsignadas->marca = 1;
         }else{
@@ -2041,7 +2041,7 @@ class CoordinacionController extends Controller
 
         $marca = $request->input('marca');
 
-        $query = asignadas::select('*')
+        $query = Asignadas::select('*')
             ->whereIn('asignadas.tipo_trabajo', [10444, 12161])
             ->where('status', 1);
 
@@ -2117,7 +2117,7 @@ class CoordinacionController extends Controller
 
                     foreach ($arrayIdMun as $idMun) {
                         // consultamos el nombre del municipio con el id del municipio
-                        $sqlMunQuery = tbl_localidades_municipio::where('id', $idMun)
+                        $sqlMunQuery = TblLocalidadesMunicipio::where('id', $idMun)
                                                                 ->whereIn('id_sede', $arrayIdSede);
 
                         // Ejecutar la consulta y obtener los resultados
@@ -2176,7 +2176,7 @@ class CoordinacionController extends Controller
 
         foreach($datos as $val){
             // actualizamos el valor de todas los registros que traiga datos
-            $updateDatos = asignadas::where('id', $val->id)->first();
+            $updateDatos = Asignadas::where('id', $val->id)->first();
 
             if($marca == "true"){
                 $updateDatos->marca = 1;
@@ -2194,7 +2194,7 @@ class CoordinacionController extends Controller
     }
 
     public function planilla(){
-        $inspectors = tbl_insp_cali::all();
+        $inspectors = TblInspCali::all();
         return view('gestion.planilla', compact('inspectors'));
     }
 
@@ -2233,7 +2233,7 @@ class CoordinacionController extends Controller
         $sheet->mergeCells('A1:O1');
 
         // consultamos el nombre del inspector con el id que enviamos
-        $queryInspector = tbl_insp_cali::where('id', $inspector)->first();
+        $queryInspector = TblInspCali::where('id', $inspector)->first();
 
         if($expExcel == "on"){
             $arrayHeader = [
@@ -2343,12 +2343,12 @@ class CoordinacionController extends Controller
 
         if ($parametro === null) {
             // Caso 1: Sin parámetro
-            $queryAsignadas = asignadas::where('codigo_tecnico', $inspector)
+            $queryAsignadas = Asignadas::where('codigo_tecnico', $inspector)
                 ->where('status', 1)
                 ->get();
         } elseif ($parametro === "2") {
             // Caso 2: Con marca
-            $query = asignadas::where('marca', 1)->where('status', 1);
+            $query = Asignadas::where('marca', 1)->where('status', 1);
 
             if ($tipoOrden === "1") {
                 $query->where('tipo_trabajo', 10444);
@@ -2363,7 +2363,7 @@ class CoordinacionController extends Controller
                 return redirect()->route('planilla')->with('error', 'Por favor seleccione una fecha');
             }
 
-            $queryAsignadas = asignadas::where('codigo_tecnico', $inspector)
+            $queryAsignadas = Asignadas::where('codigo_tecnico', $inspector)
                 ->where('fecha_asignacion_inspector', $fechaAsignacion)
                 ->where('status', 1)
                 ->get();
@@ -2420,7 +2420,7 @@ class CoordinacionController extends Controller
 
                 $contrato = $asignada->contrato;
 
-                $queryMunicipio = tbl_localidades_municipio::where('nombre', $asignada->localidad)->first();
+                $queryMunicipio = TblLocalidadesMunicipio::where('nombre', $asignada->localidad)->first();
 
                 // Consultamos primero el municipio
                 $queryLugar = $queryMunicipio;
@@ -2487,7 +2487,7 @@ class CoordinacionController extends Controller
                 }
 
                 // consultamos la tabla de contratos con el numero de contraro
-                $queryProgramacionContrato = tbl_programacion_contrato::where('CONTRATO', $asignada->contrato)->first();
+                $queryProgramacionContrato = TblProgramacionContrato::where('CONTRATO', $asignada->contrato)->first();
 
                 if ($queryProgramacionContrato != null) {
                     $jornada = explode(" ", $queryProgramacionContrato->HORA_INICIO);
@@ -3101,7 +3101,7 @@ class CoordinacionController extends Controller
 
                 $contrato = $val->contrato;
 
-                $queryMunicipio = tbl_localidades_municipio::where('nombre', $val->localidad)->first();
+                $queryMunicipio = TblLocalidadesMunicipio::where('nombre', $val->localidad)->first();
 
                 $queryLugar = $queryMunicipio;
                 $columnaLugar = 'id_mun';
@@ -3166,7 +3166,7 @@ class CoordinacionController extends Controller
                 }
 
                 // consultamos la tabla de contratos con el numero de contraro
-                $queryProgramacionContrato = tbl_programacion_contrato::where('CONTRATO', $val->contrato)->first();
+                $queryProgramacionContrato = TblProgramacionContrato::where('CONTRATO', $val->contrato)->first();
 
                 if ($queryProgramacionContrato != null) {
                     $jornada = explode(" ", $queryProgramacionContrato->HORA_INICIO);
@@ -3244,7 +3244,7 @@ class CoordinacionController extends Controller
                     foreach ($values as $value) {
 
                         // consultamos los inspectores
-                        $nombreTecnico = tbl_insp_cali::where('id', $value['P'])->first();
+                        $nombreTecnico = TblInspCali::where('id', $value['P'])->first();
 
                         if($expExcel == "on"){
 
@@ -3467,7 +3467,7 @@ class CoordinacionController extends Controller
 
                     foreach ($val as $values) {
 
-                        $queryInspector = tbl_insp_cali::where('id', $values['P'])->first();
+                        $queryInspector = TblInspCali::where('id', $values['P'])->first();
 
                         // Extraer información específica de cada campo
                         $partesDireccionUsuario = explode("//", $values['G']);
@@ -3620,7 +3620,7 @@ class CoordinacionController extends Controller
                     foreach ($values as $value) {
 
                         // consultamos los inspectores
-                        $nombreTecnico = tbl_insp_cali::where('id', $value['P'])->first();
+                        $nombreTecnico = TblInspCali::where('id', $value['P'])->first();
 
                         $arrayHeader = [
                             "A1" => "Asignación ".$nombreTecnico->apellidos." ".$nombreTecnico->nombres,
@@ -3872,7 +3872,7 @@ class CoordinacionController extends Controller
     public function asignarOrdCercania(){
 
         // consultamos todas las ordenes que esten asignadas para sacar el inspector y el subgrupo
-        $queryAsignadas = asignadas::where('status', 1)->get();
+        $queryAsignadas = Asignadas::where('status', 1)->get();
 
         // creamos un array para almacenar el subgrupo y el inspector
         $arraySubGrupoInspector = [];
@@ -3881,7 +3881,7 @@ class CoordinacionController extends Controller
         foreach($queryAsignadas as $asignada){
 
             //con el nombre del municipio consultamos el municipio para sacar el id
-            $queryMunicipio = tbl_localidades_municipio::where('nombre', $asignada->localidad)->first();
+            $queryMunicipio = TblLocalidadesMunicipio::where('nombre', $asignada->localidad)->first();
 
             // Consultamos primero el municipio
             $queryLugar = $queryMunicipio;
@@ -3959,12 +3959,12 @@ class CoordinacionController extends Controller
 
         foreach($asignaciones as $asignar){
             // consultamos el nombre del inspector con el id
-            $queryInspectorAsignar = tbl_insp_cali::where('id', $asignar['inspector'])->first();
+            $queryInspectorAsignar = TblInspCali::where('id', $asignar['inspector'])->first();
 
             $nombreInspectorAsignar = $queryInspectorAsignar->apellidos." ".$queryInspectorAsignar->nombres;
 
             // asignamos las ordenes a los inspectores
-            asignadas::where('id', $asignar['id'])
+            Asignadas::where('id', $asignar['id'])
                         ->where('status', 1)
                         ->update(['codigo_tecnico' => $asignar['inspector'], 'nom_inspector' => $nombreInspectorAsignar, 'fecha_asignacion_inspector' => $fechaActual]);
         }
@@ -3974,7 +3974,7 @@ class CoordinacionController extends Controller
 
     public function aplicacion(){
 
-        $inspectors = tbl_insp_cali::all();
+        $inspectors = TblInspCali::all();
 
         return view('gestion.aplicacion', compact('inspectors'));
     }

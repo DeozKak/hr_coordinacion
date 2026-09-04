@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Programacion;
 
 use App\Http\Controllers\Controller;
 
-use App\Models\Programacion\tbl_programacion_contrato;
-use App\Models\Programacion\tbl_programacion_usuario;
+use App\Models\Programacion\TblProgramacionContrato;
+use App\Models\Programacion\TblProgramacionUsuario;
 use App\Models\User;
 use App\Services\Programacion\CierreProgramacionService;
 use App\Services\Programacion\ProgramacionContratoService;
@@ -74,7 +74,7 @@ class ProgramacionController extends Controller
     public function show(Request $request, $id)
     {
         $action = $request->query('action');
-        $programacion = tbl_programacion_usuario::find($id);
+        $programacion = TblProgramacionUsuario::find($id);
 
         if ($action === 'edit') {
             if (! auth()->user()->hasPermissionTo('generar_programacion')) {
@@ -207,9 +207,9 @@ class ProgramacionController extends Controller
         $array = array();
 
         try {
-            $programadas = tbl_programacion_usuario::whereIn(
+            $programadas = TblProgramacionUsuario::whereIn(
                 'id',
-                tbl_programacion_contrato::select('id_programacion')
+                TblProgramacionContrato::select('id_programacion')
                     ->where('CONTRATO', 'LIKE', '%' . $contrato . '%')
             )->get();
 

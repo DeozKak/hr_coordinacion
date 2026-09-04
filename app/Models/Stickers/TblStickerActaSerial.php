@@ -2,7 +2,7 @@
 
 namespace App\Models\Stickers;
 
-use App\Models\tbl_insp_cali;
+use App\Models\TblInspCali;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -24,7 +24,7 @@ class TblStickerActaSerial extends Model
      */
     public function tipo(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(tbl_sticker_tipo::class, 'id_sticker_tipo');
+        return $this->belongsTo(TblStickerTipo::class, 'id_sticker_tipo');
     }
 
     /**
@@ -32,6 +32,6 @@ class TblStickerActaSerial extends Model
      */
     public function inspector(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(tbl_insp_cali::class, 'id_inspector');
+        return $this->belongsTo(TblInspCali::class, 'id_inspector');
     }
 }

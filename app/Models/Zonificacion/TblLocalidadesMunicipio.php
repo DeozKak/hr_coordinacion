@@ -2,14 +2,14 @@
 
 namespace App\Models\Zonificacion;
 
-use App\Models\Produccion\tbl_produccion_zona;
+use App\Models\Produccion\TblProduccionZona;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use OwenIt\Auditing\Auditable as AuditableTrait;
-class tbl_localidades_municipio extends Model implements AuditableContract
+class TblLocalidadesMunicipio extends Model implements AuditableContract
 {
     use HasFactory, AuditableTrait;
 
@@ -53,10 +53,10 @@ public function subgrupos(): HasManyThrough
     }
     public function sede(): BelongsTo
     {
-        return $this->belongsTo(tbl_localidades_sede::class, 'id_sede', 'id');
+        return $this->belongsTo(TblLocalidadesSede::class, 'id_sede', 'id');
     }
     public function zona(): BelongsTo
     {
-        return $this->belongsTo(tbl_produccion_zona::class, 'id_zona', 'id');
+        return $this->belongsTo(TblProduccionZona::class, 'id_zona', 'id');
     }
 }

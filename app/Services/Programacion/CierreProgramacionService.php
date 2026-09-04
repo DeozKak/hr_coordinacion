@@ -3,8 +3,8 @@
 namespace App\Services\Programacion;
 
 use App\Jobs\CorreoProgramacion;
-use App\Models\Programacion\tbl_programacion_contrato;
-use App\Models\Programacion\tbl_programacion_usuario;
+use App\Models\Programacion\TblProgramacionContrato;
+use App\Models\Programacion\TblProgramacionUsuario;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -29,13 +29,13 @@ class CierreProgramacionService
         DB::beginTransaction();
 
         try {
-            $programacion = tbl_programacion_usuario::find($id);
+            $programacion = TblProgramacionUsuario::find($id);
             $programacion->finished = 1;
             $programacion->save();
 
             $this->avisarUnaVez($programacion);
 
-            foreach (tbl_programacion_contrato::where('id_programacion', $id)->get() as $contrato) {
+            foreach (TblProgramacionContrato::where('id_programacion', $id)->get() as $contrato) {
                 if (! $this->hayQueMarcar($contrato)) {
                     continue;
                 }
@@ -67,7 +67,7 @@ class CierreProgramacionService
     }
 
     /** El correo a quien armó la programación, sólo la primera vez. */
-    private function avisarUnaVez(tbl_programacion_usuario $programacion): void
+    private function avisarUnaVez(TblProgramacionUsuario $programacion): void
     {
         if ($programacion->mensaje != 0) {
             return;
@@ -86,7 +86,7 @@ class CierreProgramacionService
      * ya no existe, pero la marca se conserva porque es la que evita repetir
      * trabajo al reabrir y volver a cerrar una programación.
      */
-    private function hayQueMarcar(tbl_programacion_contrato $contrato): bool
+    private function hayQueMarcar(TblProgramacionContrato $contrato): bool
     {
         return $contrato->CELULAR !== null
             && $contrato->CELULAR !== ''

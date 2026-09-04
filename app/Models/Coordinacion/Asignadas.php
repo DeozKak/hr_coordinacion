@@ -5,7 +5,7 @@ namespace App\Models\Coordinacion;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class asignadas extends Model
+class Asignadas extends Model
 {
     use HasFactory;
 

@@ -4,8 +4,8 @@ namespace App\Http\Controllers\PQRS;
 
 use App\Http\Controllers\Controller;
 
-use App\Models\tbl_queja;
-use App\Models\tbl_quejas_contrato;
+use App\Models\TblQueja;
+use App\Models\TblQuejasContrato;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -24,7 +24,7 @@ class PQRSImportController extends Controller
     public function getQuejas()
     {
         // Hacemos join para traer los datos del inspector
-        $quejas = \App\Models\tbl_queja::query()
+        $quejas = \App\Models\TblQueja::query()
             ->select([
                 // lista solo los campos que mostrarás (excluyendo id, created_at, updated_at)
                 'CONTRATO',
@@ -130,7 +130,7 @@ class PQRSImportController extends Controller
         $errores = [];
         $procesados = 0;
 
-        tbl_queja::truncate();
+        TblQueja::truncate();
 
         foreach ($sheet->getRowIterator() as $row) {
             // Saltar la cabecera (solo si la cabecera está en la fila 1)
@@ -140,7 +140,7 @@ class PQRSImportController extends Controller
 
             try {
                 DB::beginTransaction();
-                $queja = new tbl_queja();
+                $queja = new TblQueja();
                 $queja->CONTRATO = $sheet->getCell('B' . $row->getRowIndex())->getValue();
                 $queja->LOCALIDAD = $sheet->getCell('I' . $row->getRowIndex())->getValue();
                 $queja->BARRIO = $sheet->getCell('J' . $row->getRowIndex())->getValue();
@@ -149,7 +149,7 @@ class PQRSImportController extends Controller
                 if($sheet->getCell('AO' . $row->getRowIndex())->getValue() === 1){
                     $queja->recepcion = "MACRO";
                 }else{
-                    $Consulta_movilidad = tbl_quejas_contrato::where('CONTRATO', $queja->CONTRATO)
+                    $Consulta_movilidad = TblQuejasContrato::where('CONTRATO', $queja->CONTRATO)
                         ->where('ORDEN_TRABAJO', $sheet->getCell('A' . $row->getRowIndex())->getValue())
                         ->where('RESULTADO_CIERRE','EJECUTADA')
                         ->exists();

@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Coordinacion;
 
 
 use App\Http\Controllers\Controller;
-use App\Models\Coordinacion\asignadas;
+use App\Models\Coordinacion\Asignadas;
 use App\Models\Coordinacion\TblEstadosVne;
 use App\Models\Coordinacion\TblRecepcion;
 use App\Models\Coordinacion\TblRecepcionVneDetalle;
-use App\Models\tbl_insp_cali;
+use App\Models\TblInspCali;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -325,7 +325,7 @@ class AsignadasController extends Controller
                                     $fechaPartes = explode(" ", $fechaLegible);
 
                                     // consultamos el nombre del operario con la cedula
-                                    $queryInsp = tbl_insp_cali::where('cedula', $item[1])->first();
+                                    $queryInsp = TblInspCali::where('cedula', $item[1])->first();
 
                                     if ($queryInsp != null) {
                                         $nombreInsp = $queryInsp->nombres . " " . $queryInsp->apellidos;
@@ -426,7 +426,7 @@ class AsignadasController extends Controller
 
     public function getReceptions()
     {
-        $inspectors = tbl_insp_cali::all();
+        $inspectors = TblInspCali::all();
         return view('gestion.reception', compact('inspectors'));
     }
 
@@ -446,7 +446,7 @@ class AsignadasController extends Controller
         $datosConIndice = $datos->map(function ($item, $index) use ($offset) {
 
             // consultamos la tabla de inspectores cali para obtener el codigo del inspector
-            $inspector = tbl_insp_cali::where('cedula', $item->ccOperario)->first();
+            $inspector = TblInspCali::where('cedula', $item->ccOperario)->first();
 
             if ($inspector) {
                 $codigoTecnico = $inspector->id;
@@ -515,7 +515,7 @@ class AsignadasController extends Controller
                     $arrayInspectors = [];
                     foreach ($value as $val) {
                         $arrayInspectors[] = intval($val);
-                        $inspector = tbl_insp_cali::where('id', $val)->first();
+                        $inspector = TblInspCali::where('id', $val)->first();
                         $arrayValues[] = $inspector->cedula;
                     }
                 } else if ($key == "tipo" || $key == "estadoRecepcion") {
@@ -548,7 +548,7 @@ class AsignadasController extends Controller
         $datosConIndice = $sqlReceptiopn->map(function ($item, $index) use ($offset) {
 
             // consultamos la tabla de inspectores cali para obtener el codigo del inspector
-            $inspector = tbl_insp_cali::where('cedula', $item->ccOperario)->first();
+            $inspector = TblInspCali::where('cedula', $item->ccOperario)->first();
 
             if ($inspector) {
                 $codigoTecnico = $inspector->id;
@@ -604,7 +604,7 @@ class AsignadasController extends Controller
                 }
 
                 // consultamos en la tabla de asigandas con el numero de orden del excel
-                $queryAsignadas = asignadas::where('orden_solicitud_externa', $item[0])
+                $queryAsignadas = Asignadas::where('orden_solicitud_externa', $item[0])
                     ->orWhere('contrato', $item[1])
                     ->orWhere('orden', $item[0])
                     ->where('status', 1)

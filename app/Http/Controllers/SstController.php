@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\tbl_insp_cali;
+use App\Models\TblInspCali;
 use DateInterval;
 use DatePeriod;
 use DateTime;
@@ -42,7 +42,7 @@ class SstController extends Controller
         $fecha_inicio = $request->fecha_inicio;
         $fecha_fin = $request->fecha_fin;
 
-        $inspectores = tbl_insp_cali::where('state', 1)->get();
+        $inspectores = TblInspCali::where('state', 1)->get();
 
         // Convertir las cadenas en objetos DateTime
         $inicio = new DateTime($fecha_inicio);

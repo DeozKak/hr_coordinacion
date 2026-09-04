@@ -4,7 +4,7 @@ namespace App\Rules;
 
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
-use App\Models\Produccion\tbl_produccion_corte;
+use App\Models\Produccion\TblProduccionCorte;
 
 class SolapamientoCorte implements ValidationRule
 {

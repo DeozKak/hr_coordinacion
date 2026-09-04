@@ -16,7 +16,7 @@ class TblBarrios extends Model implements AuditableContract
 
     public function municipios(){
         return $this->hasManyThrough(
-            tbl_localidades_municipio::class,
+            TblLocalidadesMunicipio::class,
             TblGruposDetalle::class,
             'id_barrio',
             'id',

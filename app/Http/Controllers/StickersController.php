@@ -3,14 +3,14 @@
 namespace App\Http\Controllers;
 
 
-use App\Models\tbl_insp_cali;
+use App\Models\TblInspCali;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\Stickers\tbl_sticker_tipo;
-use App\Models\Stickers\tbl_sticker_inventario;
-use App\Models\Stickers\tbl_inspector_sticker;
-use App\Models\Stickers\tbl_asignacion_sticker_historial;
+use App\Models\Stickers\TblStickerTipo;
+use App\Models\Stickers\TblStickerInventario;
+use App\Models\Stickers\TblInspectorSticker;
+use App\Models\Stickers\TblAsignacionStickerHistorial;
 use App\Models\Stickers\TblStickerActaSerial;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -25,7 +25,7 @@ class StickersController extends Controller
     {
         // Esto busca el ID del sticker "ACTA".
         // Si el nombre cambia, solo debes ajustarlo aquí.
-        $stickerActa = tbl_sticker_tipo::where('nombre', 'ACTAS')->first();
+        $stickerActa = TblStickerTipo::where('nombre', 'ACTAS')->first();
         $this->idStickerActa = $stickerActa ? $stickerActa->id : null;
     }
     /**
@@ -35,10 +35,10 @@ class StickersController extends Controller
      */
     public function index(): \Illuminate\Contracts\View\View
     {
-        $Stickers = tbl_sticker_tipo::with('Inventario')->OrderBy('nombre')->get();
+        $Stickers = TblStickerTipo::with('Inventario')->OrderBy('nombre')->get();
         // dd($stickers);
         // Consulta a inspectores activos y la última fecha de asignación por tipo de sticker
-        $inspectores = tbl_insp_cali::where('state', 1)
+        $inspectores = TblInspCali::where('state', 1)
             ->selectRaw('id, CONCAT(apellidos, " ", nombres) as nombre_completo')
             ->with('Stickers') // Relación con todos los stickers asignados a cada inspector
             ->with(['HistoricoStickers' => function ($q) {
@@ -63,7 +63,7 @@ class StickersController extends Controller
      */
     public function getInventario(): \Illuminate\Http\JsonResponse
     {
-        $Stickers = tbl_sticker_tipo::with('Inventario')->OrderBy('nombre')->get();
+        $Stickers = TblStickerTipo::with('Inventario')->OrderBy('nombre')->get();
         // Devuelve solo los datos necesarios para JS
         $data = [];
         foreach ($Stickers as $sticker) {
@@ -141,7 +141,7 @@ class StickersController extends Controller
                     ->where('estado', 'en_inventario')
                     ->count();
 
-                $inventario = tbl_sticker_inventario::firstOrCreate(['id_sticker_tipo' => $id]);
+                $inventario = TblStickerInventario::firstOrCreate(['id_sticker_tipo' => $id]);
                 $inventario->cantidad_disponible = $inventarioTotalActas;
                 $inventario->save();
 
@@ -179,7 +179,7 @@ class StickersController extends Controller
             //Actualizar valor ingresado a BD de inventario
             try {
                 DB::beginTransaction();
-                $tipo = tbl_sticker_inventario::where('id_sticker_tipo', $id)->first();
+                $tipo = TblStickerInventario::where('id_sticker_tipo', $id)->first();
                 $tipo->cantidad_disponible = $tipo->cantidad_disponible + $cantidad;
                 $tipo->save();
                 DB::commit();
@@ -246,12 +246,12 @@ class StickersController extends Controller
                 if ($id_sticker_tipo == $this->idStickerActa) continue;
 
                 // Buscar si el registro ya existe
-                $registro = tbl_inspector_sticker::where('id_inspector', $id_inspector)
+                $registro = TblInspectorSticker::where('id_inspector', $id_inspector)
                     ->where('id_sticker_tipo', $id_sticker_tipo)
                     ->first();
 
                 // Validar inventario
-                $inventario = tbl_sticker_inventario::where('id_sticker_tipo', $id_sticker_tipo)->first();
+                $inventario = TblStickerInventario::where('id_sticker_tipo', $id_sticker_tipo)->first();
                 if (!$inventario || $inventario->cantidad_disponible < $cantidad) {
                     throw new \Exception("Inventario insuficiente para el sticker tipo ID: {$id_sticker_tipo}");
                 }
@@ -260,7 +260,7 @@ class StickersController extends Controller
                     $registro->cantidad_asignada = $registro->cantidad_asignada + $cantidad;
                     $registro->save();
                 } else {
-                    tbl_inspector_sticker::create([
+                    TblInspectorSticker::create([
                         'id_inspector' => $id_inspector,
                         'id_sticker_tipo' => $id_sticker_tipo,
                         'cantidad_asignada' => $cantidad,
@@ -272,7 +272,7 @@ class StickersController extends Controller
                 $inventario->save();
 
                 // se crea un registro de historial de lo asignado
-                tbl_asignacion_sticker_historial::create([
+                TblAsignacionStickerHistorial::create([
                     'id_inspector' => $id_inspector,
                     'id_sticker_tipo' => $id_sticker_tipo,
                     'cantidad' => $cantidad,
@@ -317,7 +317,7 @@ class StickersController extends Controller
                     ->where('estado', 'asignado')
                     ->count();
 
-                $registroInspector = tbl_inspector_sticker::firstOrCreate(
+                $registroInspector = TblInspectorSticker::firstOrCreate(
                     ['id_inspector' => $id_inspector, 'id_sticker_tipo' => $this->idStickerActa],
                     ['cantidad_asignada' => 0]
                 );
@@ -329,12 +329,12 @@ class StickersController extends Controller
                     ->where('estado', 'en_inventario')
                     ->count();
 
-                $inventarioActas = tbl_sticker_inventario::where('id_sticker_tipo', $this->idStickerActa)->first();
+                $inventarioActas = TblStickerInventario::where('id_sticker_tipo', $this->idStickerActa)->first();
                 $inventarioActas->cantidad_disponible = $totalActasEnInventario;
                 $inventarioActas->save();
 
                 // Guardar historial (guardamos la cantidad y un detalle de los rangos)
-                tbl_asignacion_sticker_historial::create([
+                TblAsignacionStickerHistorial::create([
                     'id_inspector' => $id_inspector,
                     'id_sticker_tipo' => $this->idStickerActa,
                     'cantidad' => $cantidad_actas, // Cantidad total
@@ -362,7 +362,7 @@ class StickersController extends Controller
     public function getStickersAsignados($idInspector): JsonResponse
     {
         try {
-            $stickersAsignados = tbl_inspector_sticker::where('id_inspector', $idInspector)
+            $stickersAsignados = TblInspectorSticker::where('id_inspector', $idInspector)
                 ->get();
 
             return response()->json($stickersAsignados, 200);
@@ -413,7 +413,7 @@ class StickersController extends Controller
 
                 if ($id_sticker_tipo == $this->idStickerActa) continue;
 
-                $registro = tbl_inspector_sticker::where('id_inspector', $id_inspector)
+                $registro = TblInspectorSticker::where('id_inspector', $id_inspector)
                     ->where('id_sticker_tipo', $id_sticker_tipo)
                     ->first();
 
@@ -430,12 +430,12 @@ class StickersController extends Controller
                 }
 
                 // Devolver al inventario (sumar la cantidad)
-                $inventario = tbl_sticker_inventario::where('id_sticker_tipo', $id_sticker_tipo)->first();
+                $inventario = TblStickerInventario::where('id_sticker_tipo', $id_sticker_tipo)->first();
                 $inventario->cantidad_disponible = $inventario->cantidad_disponible + $cantidad;
                 $inventario->save();
 
                 // Crear registro histórico con cantidad negativa
-                tbl_asignacion_sticker_historial::create([
+                TblAsignacionStickerHistorial::create([
                     'id_inspector' => $id_inspector,
                     'id_sticker_tipo' => $id_sticker_tipo,
                     'cantidad' => -$cantidad,
@@ -482,7 +482,7 @@ class StickersController extends Controller
                     ->where('estado', 'asignado')
                     ->count();
 
-                $registroInspector = tbl_inspector_sticker::where('id_inspector', $id_inspector)
+                $registroInspector = TblInspectorSticker::where('id_inspector', $id_inspector)
                     ->where('id_sticker_tipo', $this->idStickerActa)
                     ->first();
 
@@ -500,12 +500,12 @@ class StickersController extends Controller
                     ->where('estado', 'en_inventario')
                     ->count();
 
-                $inventarioActas = tbl_sticker_inventario::where('id_sticker_tipo', $this->idStickerActa)->first();
+                $inventarioActas = TblStickerInventario::where('id_sticker_tipo', $this->idStickerActa)->first();
                 $inventarioActas->cantidad_disponible = $totalActasEnInventario;
                 $inventarioActas->save();
 
                 // Guardar historial
-                tbl_asignacion_sticker_historial::create([
+                TblAsignacionStickerHistorial::create([
                     'id_inspector' => $id_inspector,
                     'id_sticker_tipo' => $this->idStickerActa,
                     'cantidad' => -$cantidad_actas, // Negativo para indicar desasignación

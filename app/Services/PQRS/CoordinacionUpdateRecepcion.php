@@ -2,9 +2,9 @@
 
 namespace App\Services\PQRS;
 
-use App\Models\Bitacoras\tbl_bitacora_contrato;
-use App\Models\tbl_insp_cali;
-use App\Models\tbl_quejas_contrato;
+use App\Models\Bitacoras\TblBitacoraContrato;
+use App\Models\TblInspCali;
+use App\Models\TblQuejasContrato;
 
 class CoordinacionUpdateRecepcion
 {
@@ -12,7 +12,7 @@ class CoordinacionUpdateRecepcion
 
     public static function Responsables($completeData)
     {
-        $todos_inspectores = tbl_insp_cali::all();
+        $todos_inspectores = TblInspCali::all();
         $tipos_trabajo_rp = array("10444", "12161");
         $tipos_trabajo_sa = array("12163", "12164");
 
@@ -22,7 +22,7 @@ class CoordinacionUpdateRecepcion
             ->map(fn($item) => ':' . $item);
 
         // 2. Realizamos la consulta ordenando por fecha descendente
-        $bitacoras = tbl_bitacora_contrato::whereIn('CONTRATO', $contratosConPrefijo)
+        $bitacoras = TblBitacoraContrato::whereIn('CONTRATO', $contratosConPrefijo)
             ->select('CONTRATO', 'TIPO_TRABAJO', 'CC_OPERARIO', 'FECHA')
             ->orderBy('FECHA', 'desc') // Los más recientes primero
             ->get()
@@ -66,7 +66,7 @@ class CoordinacionUpdateRecepcion
     {
         // Traemos las quejas cruzadas para optimizar
         $ordenes = $completeData->pluck('NUMERO_ORDEN')->filter()->unique();
-        $quejasContrato = tbl_quejas_contrato::whereIn('ORDEN_TRABAJO', $ordenes)
+        $quejasContrato = TblQuejasContrato::whereIn('ORDEN_TRABAJO', $ordenes)
             ->get(['CONTRATO', 'ORDEN_TRABAJO', 'RESULTADO_CIERRE'])
             ->groupBy('ORDEN_TRABAJO');
         //dd($quejasContrato);

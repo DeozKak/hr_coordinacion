@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Bitacoras;
 
 use App\Http\Controllers\Controller;
-use App\Models\Bitacoras\tbl_bitacora_contrato;
+use App\Models\Bitacoras\TblBitacoraContrato;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -304,7 +304,7 @@ class BitacoraDiariaController extends Controller
     public function VstCategoria(): \Illuminate\Contracts\View\View
     {
 
-        $contratos_sin_categoria = tbl_bitacora_contrato::whereNotIn('TIPO_TRABAJO', [
+        $contratos_sin_categoria = TblBitacoraContrato::whereNotIn('TIPO_TRABAJO', [
             'FI-29 revisión periódica línea matriz',
             'FI-31 REVISIÓN NUEVA LINEA MATRIZ',
         ])->
@@ -330,7 +330,7 @@ class BitacoraDiariaController extends Controller
             return response()->json(['message' => $validator->errors()->first()], 422);
         }
         try{
-        $registro = tbl_bitacora_contrato::find($request->id);
+        $registro = TblBitacoraContrato::find($request->id);
 
         DB::beginTransaction();
 

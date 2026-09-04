@@ -2,10 +2,10 @@
 
 namespace App\Services\Programacion\Importacion;
 
-use App\Models\Programacion\tbl_programacion_base;
-use App\Models\Programacion\tbl_programacion_contrato;
-use App\Models\Programacion\tbl_programacion_usuario;
-use App\Models\tbl_insp_cali;
+use App\Models\Programacion\TblProgramacionBase;
+use App\Models\Programacion\TblProgramacionContrato;
+use App\Models\Programacion\TblProgramacionUsuario;
+use App\Models\TblInspCali;
 use App\Services\ProgramacionService;
 use Carbon\Carbon;
 use DateTime;
@@ -105,9 +105,9 @@ class ProgramacionMasivaService
     }
 
     /** La programación del día donde entra todo el archivo. */
-    private function abrirProgramacion(): tbl_programacion_usuario
+    private function abrirProgramacion(): TblProgramacionUsuario
     {
-        $tabla = new tbl_programacion_usuario();
+        $tabla = new TblProgramacionUsuario();
         $tabla->nombre = 'Programación tecnicos ' . Carbon::now()->format('Y-m-d');
         $tabla->id_usuario = Auth::id();
         $tabla->finished = 1;   // no se edita: nace cerrada
@@ -134,13 +134,13 @@ class ProgramacionMasivaService
     /**
      * Arma el contrato de una fila.
      *
-     * @return tbl_programacion_contrato|string El contrato, o el mensaje de error.
+     * @return TblProgramacionContrato|string El contrato, o el mensaje de error.
      */
-    private function armarContrato(Worksheet $hoja, int $n, $idProgramacion): tbl_programacion_contrato|string
+    private function armarContrato(Worksheet $hoja, int $n, $idProgramacion): TblProgramacionContrato|string
     {
         $celda = fn (string $col) => $hoja->getCell($col . $n)->getValue();
 
-        $c = new tbl_programacion_contrato();
+        $c = new TblProgramacionContrato();
         $c->ACTIVA = self::ACTIVA;
         $c->SUSPENDIDO = self::SUSPENDIDO;
         $c->PORQUE_PROGRAMO = self::ORIGEN;
@@ -249,7 +249,7 @@ class ProgramacionMasivaService
     private function tecnico(Worksheet $hoja, int $n, string $nombre): string
     {
         try {
-            $inspector = tbl_insp_cali::whereRaw("CONCAT(apellidos, ' ', nombres) = ?", [$nombre])->first();
+            $inspector = TblInspCali::whereRaw("CONCAT(apellidos, ' ', nombres) = ?", [$nombre])->first();
 
             if ($inspector->aprendiz === 0) {
                 return $inspector->id . '. ' . $nombre;
@@ -264,13 +264,13 @@ class ProgramacionMasivaService
                 ? $externa
                 : $hoja->getCell('S' . $n)->getValue();
 
-            $base = tbl_programacion_base::where('NUMERO_ORDEN', $orden)->first();
+            $base = TblProgramacionBase::where('NUMERO_ORDEN', $orden)->first();
 
             if (! $base) {
                 return self::OFICINA;
             }
 
-            $duenio = tbl_insp_cali::where('id', $base->ID_TECNICO)->first();
+            $duenio = TblInspCali::where('id', $base->ID_TECNICO)->first();
 
             return $duenio->id . '. ' . $duenio->apellidos . ' ' . $duenio->nombres;
         } catch (\Exception $e) {
@@ -288,7 +288,7 @@ class ProgramacionMasivaService
      */
     private function retirarProgramacionFutura(?string $contrato): void
     {
-        tbl_programacion_contrato::where('CONTRATO', $contrato)
+        TblProgramacionContrato::where('CONTRATO', $contrato)
             ->where('FECHA_AGENDAMIENTO', '>=', date('Y-m-d'))
             ->first()
             ?->delete();

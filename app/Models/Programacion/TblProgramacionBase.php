@@ -5,7 +5,7 @@ namespace App\Models\Programacion;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class tbl_programacion_base extends Model
+class TblProgramacionBase extends Model
 {
     use HasFactory;
 

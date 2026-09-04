@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Models\Bitacoras;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class tbl_temp_fallida extends Model
+class TblQuejasContrato extends Model
 {
 
     protected $fillable = [
@@ -19,8 +19,5 @@ class tbl_temp_fallida extends Model
         'ORDEN_EXT',
         'CATEGORIA',
         'RESULTADO_CIERRE',
-        'id_bitacora',
-        'id_usuario',
-        'id_super',
     ];
 }

@@ -2,7 +2,7 @@
 
 namespace App\Services\Programacion;
 
-use App\Models\tbl_insp_cali;
+use App\Models\TblInspCali;
 use Exception;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -103,7 +103,7 @@ class ReporteSupervisorService
         $grupos = [];
 
         foreach ($data as $fila) {
-            $inspector = tbl_insp_cali::find((int) strtok($fila[self::COL_TECNICO], '.'));
+            $inspector = TblInspCali::find((int) strtok($fila[self::COL_TECNICO], '.'));
 
             if (! $inspector || ! $inspector->supervisor) {
                 continue;

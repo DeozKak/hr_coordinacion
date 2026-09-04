@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Produccion\tbl_produccion_zona;
-use App\Models\tbl_insp_cali;
-use App\Models\Zonificacion\tbl_localidades_sede;
+use App\Models\Produccion\TblProduccionZona;
+use App\Models\TblInspCali;
+use App\Models\Zonificacion\TblLocalidadesSede;
 use App\Models\Zonificacion\TblGrupo;
 use App\Models\Zonificacion\TblGruposDetalle;
 use App\Models\Zonificacion\TblSubgrupo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\Zonificacion\tbl_localidades_municipio;
+use App\Models\Zonificacion\TblLocalidadesMunicipio;
 use App\Models\Zonificacion\TblBarrios;
 use Illuminate\Support\Facades\Validator;
 use App\Services\BarrioService;
@@ -35,13 +35,13 @@ class ZonificacionController extends Controller
     public function datosAsignador(): \Illuminate\Http\JsonResponse
     {
         //$municipios_sin_grupo = $this->municipioService->MunicipiosSinGrupo();
-        $municipios = tbl_localidades_municipio::all();
+        $municipios = TblLocalidadesMunicipio::all();
         $barrios_disponibles = TblBarrios::whereDoesntHave('detalle')->get();
         $barrios_asignados = TblBarrios::with('municipios')->get();
         $grupos = TblGrupo::all();
         $subgrupos = TblSubgrupo::all();
-        $sedes = tbl_localidades_sede::all();
-        $zonas = tbl_produccion_zona::all();
+        $sedes = TblLocalidadesSede::all();
+        $zonas = TblProduccionZona::all();
 
         return response()->json(
             [
@@ -184,13 +184,13 @@ class ZonificacionController extends Controller
         $mun_sin_grupo = $this->municipioService->VerificarGrupo();
 
         //consultas de todos los registros con  sus relaciones
-        $municipios = tbl_localidades_municipio::all();
+        $municipios = TblLocalidadesMunicipio::all();
         $barrios = TblBarrios::with('municipios')->get();
         $grupos = TblGrupo::all();
         $subgrupos = TblSubgrupo::all();
-        $sedes = tbl_localidades_sede::all();
-        $zonas = tbl_produccion_zona::all();
-        $inspectores = tbl_insp_cali::where('state', 1)->get();
+        $sedes = TblLocalidadesSede::all();
+        $zonas = TblProduccionZona::all();
+        $inspectores = TblInspCali::where('state', 1)->get();
 
         if ($mun_sin_grupo) {
             session()->flash('warning', 'Existen municipios sin grupo o sub grupo relacionado. ');
@@ -222,7 +222,7 @@ class ZonificacionController extends Controller
         }
         try {
             DB::beginTransaction();
-            $municipio = new tbl_localidades_municipio();
+            $municipio = new TblLocalidadesMunicipio();
             $municipio->nombre = $request->nombre;
             $municipio->id_sede = $request->sede;
             $municipio->id_zona = $request->zona;
@@ -245,7 +245,7 @@ class ZonificacionController extends Controller
     public function editMunicipio($id): \Illuminate\Http\JsonResponse
     {
         try {
-            $municipio = tbl_localidades_municipio::find($id);
+            $municipio = TblLocalidadesMunicipio::find($id);
             return response()->json([$municipio]);
         } catch (\Exception $e) {
             Log::error($e->getMessage());
@@ -276,7 +276,7 @@ class ZonificacionController extends Controller
 
         try {
             DB::beginTransaction();
-            $municipio = tbl_localidades_municipio::find($id);
+            $municipio = TblLocalidadesMunicipio::find($id);
             $municipio->nombre = $request->nombre;
             $municipio->id_sede = $request->sede;
             $municipio->id_zona = $request->zona;
@@ -486,7 +486,7 @@ class ZonificacionController extends Controller
             $grupo->save();
 
             //consulta nombre sede para insertar en la tabla
-            $sede = tbl_localidades_sede::find($request->id_sede);
+            $sede = TblLocalidadesSede::find($request->id_sede);
             //confirmar transacción
             DB::commit();
         } catch (\Exception $e) {
@@ -547,7 +547,7 @@ class ZonificacionController extends Controller
             $grupo->save();
 
             //consulta nombre sede para insertar en la tabla
-            $sede = tbl_localidades_sede::find($request->id_sede);
+            $sede = TblLocalidadesSede::find($request->id_sede);
 
             //confirma
             DB::commit();
@@ -601,7 +601,7 @@ class ZonificacionController extends Controller
             //confirmar transacción
 
             //consulta nombre sede para insertar en la tabla
-            $sede = tbl_localidades_sede::find($request->id_sede);
+            $sede = TblLocalidadesSede::find($request->id_sede);
             DB::commit();
         } catch (\Exception $e) {
             //devuelve cambios hechos
@@ -661,7 +661,7 @@ class ZonificacionController extends Controller
             $sub_grupo->save();
 
             //consulta nombre sede para insertar en la tabla
-            $sede = tbl_localidades_sede::find($request->id_sede);
+            $sede = TblLocalidadesSede::find($request->id_sede);
 
             //confirma
             DB::commit();
@@ -794,7 +794,7 @@ class ZonificacionController extends Controller
         $asignados = $detalle ? $detalle->inspectores->pluck('id')->toArray() : [];
 
         // Todos los inspectores activos
-        $inspectores = tbl_insp_cali::where('state', 1)->get();
+        $inspectores = TblInspCali::where('state', 1)->get();
 
         // Divide asignados y disponibles
         $inspectores_asignados = $inspectores->whereIn('id', $asignados)->values();
@@ -934,7 +934,7 @@ class ZonificacionController extends Controller
                 foreach ($dato as $index2 => $dato2) {
                     switch ($index2) {
                         case 0: // ID de municipio
-                            $exist = tbl_localidades_municipio::where('id', $dato2)->exists();
+                            $exist = TblLocalidadesMunicipio::where('id', $dato2)->exists();
                             if ($exist) {
                                 $fila['id_mun'] = $dato2;
                             } else {

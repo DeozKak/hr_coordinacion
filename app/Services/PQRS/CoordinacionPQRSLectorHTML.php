@@ -4,7 +4,7 @@ namespace App\Services\PQRS;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
-use App\Models\tbl_insp_cali;
+use App\Models\TblInspCali;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\File;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -113,7 +113,7 @@ class CoordinacionPQRSLectorHTML
         };
 
         // OPTIMIZACIÓN: Traemos todas las cédulas de los inspectores de una vez
-        $inspectores = tbl_insp_cali::pluck('cedula', 'id')->toArray();
+        $inspectores = TblInspCali::pluck('cedula', 'id')->toArray();
 
         // Fechas actuales fijas para el archivo de Tareas
         $fechaActual = Carbon::now()->format('d/m/Y');

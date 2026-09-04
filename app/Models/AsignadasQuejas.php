@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 
-class asignadas_quejas extends Model implements AuditableContract
+class AsignadasQuejas extends Model implements AuditableContract
 {
     use HasFactory,AuditableTrait;
     protected $table = "asignadas_quejas";

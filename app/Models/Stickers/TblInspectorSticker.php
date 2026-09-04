@@ -4,7 +4,7 @@ namespace App\Models\Stickers;
 
 use Illuminate\Database\Eloquent\Model;
 
-class tbl_inspector_sticker extends Model
+class TblInspectorSticker extends Model
 {
     protected $fillable = [
         'id_inspector',

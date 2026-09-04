@@ -5,7 +5,7 @@ namespace App\Models\Zonificacion;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\relations\HasOne;
-use App\Models\Zonificacion\tbl_localidades_sede;
+use App\Models\Zonificacion\TblLocalidadesSede;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 class TblGrupo extends Model implements AuditableContract
@@ -18,7 +18,7 @@ class TblGrupo extends Model implements AuditableContract
     public function municipios()
     {
         return $this->belongsToMany(
-            tbl_localidades_municipio::class,
+            TblLocalidadesMunicipio::class,
             'tbl_grupos_detalle', // Nombre de la tabla intermedia (pivote)
             'id_grupo',           // Clave foránea en la tabla pivote para este modelo
             'id_mun'              // Clave foránea en la tabla pivote para el modelo relacionado

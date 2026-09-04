@@ -5,18 +5,18 @@ namespace App\Http\Controllers\Bitacoras;
 use App\Notifications\Mod_Devolucion;
 use App\Http\Controllers\Controller;
 use App\Jobs\CorreoBitacora;
-use App\Models\Bitacoras\tbl_bitacora_archivo;
-use App\Models\Bitacoras\tbl_bitacora_contrato;
-use App\Models\Bitacoras\tbl_bitacora_fallida;
-use App\Models\Bitacoras\tbl_bitacoras_causal;
-use App\Models\Bitacoras\tbl_dv_insp;
-use App\Models\Bitacoras\tbl_temp_contrato;
-use App\Models\Bitacoras\tbl_temp_fallida;
+use App\Models\Bitacoras\TblBitacoraArchivo;
+use App\Models\Bitacoras\TblBitacoraContrato;
+use App\Models\Bitacoras\TblBitacoraFallida;
+use App\Models\Bitacoras\TblBitacorasCausal;
+use App\Models\Bitacoras\TblDvInsp;
+use App\Models\Bitacoras\TblTempContrato;
+use App\Models\Bitacoras\TblTempFallida;
 use App\Models\Movilidad;
-use App\Models\Programacion\tbl_programacion_base;
-use App\Models\tbl_insp_cali;
+use App\Models\Programacion\TblProgramacionBase;
+use App\Models\TblInspCali;
 use App\Models\User;
-use App\Models\Zonificacion\tbl_localidades_municipio;
+use App\Models\Zonificacion\TblLocalidadesMunicipio;
 use App\Notifications\devolucion;
 use DateTime;
 use DOMDocument;
@@ -38,7 +38,7 @@ class BitacoraController extends Controller
         $id_user = $supervisores->id;
         if ($supervisores->hasRole('Supervisor')) {
 
-            $temp = tbl_bitacora_archivo::where('id_usuario', '=', $id_user)->where('finished', '=', 0)->first();
+            $temp = TblBitacoraArchivo::where('id_usuario', '=', $id_user)->where('finished', '=', 0)->first();
 
 
             if (!$temp) {
@@ -55,7 +55,7 @@ class BitacoraController extends Controller
             ->where('state', 1)
             ->get();
 
-        $temp = tbl_bitacora_archivo::where('id_usuario', '=', $id_user)->where('finished', '=', 0)->first();
+        $temp = TblBitacoraArchivo::where('id_usuario', '=', $id_user)->where('finished', '=', 0)->first();
 
         if (!$temp) {
 
@@ -153,17 +153,17 @@ class BitacoraController extends Controller
         session(['super' => $nom_super]);
         //consultas a la base de datos
         if ($nom_super === null || $id_super === null) {
-            $inspectores = tbl_insp_cali::where('state', 1)
+            $inspectores = TblInspCali::where('state', 1)
                 ->orderBy('apellidos', 'asc')
                 ->get();
         } else {
-            $inspectores = tbl_insp_cali::where('SUPERVISOR', $id_super)
+            $inspectores = TblInspCali::where('SUPERVISOR', $id_super)
                 ->where('state', 1)
                 ->orderBy('apellidos', 'asc')
                 ->get();
         }
 
-        $municipios = tbl_localidades_municipio::all();
+        $municipios = TblLocalidadesMunicipio::all();
 
         $nombres = array();
         $ids = array();
@@ -188,7 +188,7 @@ class BitacoraController extends Controller
         }
 
         unlink($excelFilePath);
-        $causales = tbl_bitacoras_causal::all();
+        $causales = TblBitacorasCausal::all();
 
         $response = $Guardado->guardar($spreadsheet, $nombres, $id_super, $cedulas, $cierre);
 
@@ -526,7 +526,7 @@ class BitacoraController extends Controller
                     try {
 
 
-                        $resultado_ok = Tbl_dv_insp::where('contrato', $datos_ok['contrato'])
+                        $resultado_ok = TblDvInsp::where('contrato', $datos_ok['contrato'])
                             ->where('orden_trabajo', $datos_ok['orden_de_trabajo'])
                             ->get();
 
@@ -569,13 +569,13 @@ class BitacoraController extends Controller
         if ($super !== null) {
             try {
                 $usuario = Auth::user();
-                $bitacora = tbl_bitacora_archivo::where('id_usuario', $usuario->id)->where('finished', '=', 0)->first();
+                $bitacora = TblBitacoraArchivo::where('id_usuario', $usuario->id)->where('finished', '=', 0)->first();
 
                 $bitacora->finished = 1;
                 $bitacora->save();
-                $bitacoraFallidas = tbl_temp_fallida::where('id_bitacora', $bitacora->id);
+                $bitacoraFallidas = TblTempFallida::where('id_bitacora', $bitacora->id);
 
-                tbl_bitacora_fallida::insertUsing([
+                TblBitacoraFallida::insertUsing([
                     'NOMBRE',
                     'id',
                     'CC_OPERARIO',
@@ -596,7 +596,7 @@ class BitacoraController extends Controller
                 ], $bitacoraFallidas);
                 // Opcional: Eliminar los registros de la tabla temporal
                 $bitacoraFallidas->delete();
-                tbl_temp_contrato::where('id_bitacora', $bitacora->id)->delete();
+                TblTempContrato::where('id_bitacora', $bitacora->id)->delete();
             } catch (\Exception $e) {
                 log::error($e);
             }
@@ -615,7 +615,7 @@ class BitacoraController extends Controller
 
                     if ($datos['categoria'] === null) {
                         $contrato = str_replace(':', '', $datos['contrato']);
-                        $consultaCategoria = tbl_programacion_base::select('NOM_CATE')->where('CONTRATO', $contrato)->first();
+                        $consultaCategoria = TblProgramacionBase::select('NOM_CATE')->where('CONTRATO', $contrato)->first();
 
                         if (!is_null($consultaCategoria) && $consultaCategoria->NOM_CATE !== null) {
                             $datos['categoria'] = $consultaCategoria->NOM_CATE;
@@ -624,20 +624,20 @@ class BitacoraController extends Controller
                     }
 
                     if ($datos['tipo_de_trabajo'] === 'SA 12164' || $datos['tipo_de_trabajo'] === 'SA 12163') {
-                        $exist = tbl_bitacora_contrato::where('CONTRATO', $datos['contrato'])->where('ORDEN_TRABAJO', $datos['orden_de_trabajo'])->where('No_ACTA', $datos['no_acta'])->exists();
+                        $exist = TblBitacoraContrato::where('CONTRATO', $datos['contrato'])->where('ORDEN_TRABAJO', $datos['orden_de_trabajo'])->where('No_ACTA', $datos['no_acta'])->exists();
                         if ($exist) {
                             continue;
                         }
                     } else {
 
-                        $exist = tbl_bitacora_contrato::where('CONTRATO', $datos['contrato'])->where('ORDEN_TRABAJO', $datos['orden_de_trabajo'])->where('TIPO_TRABAJO', $datos['tipo_de_trabajo'])->exists();
+                        $exist = TblBitacoraContrato::where('CONTRATO', $datos['contrato'])->where('ORDEN_TRABAJO', $datos['orden_de_trabajo'])->where('TIPO_TRABAJO', $datos['tipo_de_trabajo'])->exists();
                         if ($exist) {
                             continue;
                         }
                     }
                     /*   $consultaPrioridad = Movilidad::select('Prioridad')->where('NroSitio', $datos['contrato'])->where('IdTarea', $datos['no_acta'])->first();*/
                     // $datos['prioridad'] = $consultaPrioridad->Prioridad ?? 'Sin prioridad';
-                    $contrato = new tbl_bitacora_contrato();
+                    $contrato = new TblBitacoraContrato();
                     $contrato->CC_OPERARIO = $datos['cc_operario'];
                     $contrato->MUNICIPIO = $datos['municipio'];
                     $contrato->FECHA = $datos['fecha_inspeccion'];
@@ -672,7 +672,7 @@ class BitacoraController extends Controller
                 foreach ($datos_array as $dato) {
                     try {
 
-                        $resultado = Tbl_dv_insp::where('contrato', $dato['contrato'])
+                        $resultado = TblDvInsp::where('contrato', $dato['contrato'])
                             ->where('orden_trabajo', $dato['orden_de_trabajo'])
                             ->get();
 
@@ -698,7 +698,7 @@ class BitacoraController extends Controller
 
                         $duracion = $horaInicio->diff($horaFinal);
 
-                        $guardar_dv = new Tbl_dv_insp();
+                        $guardar_dv = new TblDvInsp();
                         $guardar_dv->supervisor = $dato['supervisor'];
                         $guardar_dv->inspector = $dato['inspector'];
                         $guardar_dv->CC_OPERARIO = $dato['cc_operario'];
@@ -738,9 +738,9 @@ class BitacoraController extends Controller
         } else {
 
             $user = Auth::user();
-            $bitacora = tbl_bitacora_archivo::where('id_usuario', $user->id)->where('finished', '=', 0)->first();
+            $bitacora = TblBitacoraArchivo::where('id_usuario', $user->id)->where('finished', '=', 0)->first();
 
-            tbl_temp_contrato::where('id_bitacora', $bitacora->id)->delete();
+            TblTempContrato::where('id_bitacora', $bitacora->id)->delete();
 
             $bitacora->delete();
         }
@@ -849,8 +849,8 @@ class BitacoraController extends Controller
 
     public function devoluciones()
     {
-        $devoluciones = Tbl_dv_insp::where('ACTIVADO', 1)->get();
-        $gestionados = Tbl_dv_insp::where('ACTIVADO', 0)->get();
+        $devoluciones = TblDvInsp::where('ACTIVADO', 1)->get();
+        $gestionados = TblDvInsp::where('ACTIVADO', 0)->get();
         /*
                 foreach ($devoluciones as $devolucion) {
                     if ($devolucion->GESTIONADO == 1) {
@@ -995,7 +995,7 @@ class BitacoraController extends Controller
     }
     public function reportes()
     {
-        $bitacoras = tbl_bitacora_archivo::where('finished', '=', '1')->get()->map(function ($bitacora) {
+        $bitacoras = TblBitacoraArchivo::where('finished', '=', '1')->get()->map(function ($bitacora) {
             $bitacora->fecha_creacion = $bitacora->created_at->format('Y-m-d');
             return $bitacora;
         });
@@ -1004,8 +1004,8 @@ class BitacoraController extends Controller
 
     public function verReporte($id_bitacora)
     {
-        $bitacora = tbl_bitacora_archivo::find($id_bitacora);
-        $causales_dv = tbl_bitacoras_causal::all();
+        $bitacora = TblBitacoraArchivo::find($id_bitacora);
+        $causales_dv = TblBitacorasCausal::all();
 
         if ($bitacora == null) {
             return redirect()->route('bitacoras.reportes')->with('error', 'Bitacora no encontrada');
@@ -1016,7 +1016,7 @@ class BitacoraController extends Controller
     public function consultaReporte($id_bitacora)
     {
         //contratos asignados a la bitacora
-        $contratos = tbl_bitacora_contrato::selectRaw("CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.id,tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP,
+        $contratos = TblBitacoraContrato::selectRaw("CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.id,tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP,
                         CASE
                         WHEN tbl_bitacora_contratos.vence IS NOT NULL THEN tbl_bitacora_contratos.vence
                         WHEN tbl_bitacora_contratos.PERIODO_GRACIA = 1 THEN 'PERIODO DE GRACIA'
@@ -1033,11 +1033,11 @@ class BitacoraController extends Controller
     public function consultaIndicadores($id_bitacora)
     {
         //contadores de cierres
-        $certificadas = tbl_bitacora_contrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', 'CERTIFICADA')->count();
-        $certificadasConNovedades = tbl_bitacora_contrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', 'CERTIFICADA CON NOVEDADES')->count();
-        $inspeccionadasConDefectoCritico = tbl_bitacora_contrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', 'INSPECCIONADA CON DEFECTO CRITICO VALLE')->count();
-        $inspeccionadasConDefectoNoCritico = tbl_bitacora_contrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', 'INSPECCIONADA CON DEFECTO NO CRITICO VALLE')->count();
-        $totalContratosOK = tbl_bitacora_contrato::where('id_bitacora', $id_bitacora)->count();
+        $certificadas = TblBitacoraContrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', 'CERTIFICADA')->count();
+        $certificadasConNovedades = TblBitacoraContrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', 'CERTIFICADA CON NOVEDADES')->count();
+        $inspeccionadasConDefectoCritico = TblBitacoraContrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', 'INSPECCIONADA CON DEFECTO CRITICO VALLE')->count();
+        $inspeccionadasConDefectoNoCritico = TblBitacoraContrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', 'INSPECCIONADA CON DEFECTO NO CRITICO VALLE')->count();
+        $totalContratosOK = TblBitacoraContrato::where('id_bitacora', $id_bitacora)->count();
         return response()->json([
             'certificadas' => $certificadas,
             'certificadasConNovedades' => $certificadasConNovedades,
@@ -1050,14 +1050,14 @@ class BitacoraController extends Controller
     public function actualizar_devolucion(Request $request, $id)
     {
 
-        $devolucion = tbl_dv_insp::find($id);
+        $devolucion = TblDvInsp::find($id);
         $devolucion->GESTIONADO = 1;
         $devolucion->FECHA_GESTION = date('Y-m-d');
         $devolucion->OBSERVACION_GESTION = $request->observacion;
         $devolucion->save();
         if ($request->agregar_produccion === "1") {
 
-            $exist = tbl_bitacora_contrato::where('CONTRATO', $devolucion->CONTRATO)->where('ORDEN_TRABAJO', $devolucion->ORDEN_TRABAJO)->exists();
+            $exist = TblBitacoraContrato::where('CONTRATO', $devolucion->CONTRATO)->where('ORDEN_TRABAJO', $devolucion->ORDEN_TRABAJO)->exists();
             if ($exist) {
                 // Obtener los usuarios que deben recibir la notificación
                // $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN'])
@@ -1071,7 +1071,7 @@ class BitacoraController extends Controller
                 return redirect()->route('bitacora.devoluciones');
             }
 
-            $contrato = new tbl_bitacora_contrato();
+            $contrato = new TblBitacoraContrato();
             $contrato->CC_OPERARIO = $devolucion->CC_OPERARIO;
             $contrato->MUNICIPIO = $devolucion->MUNICIPIO;
             $contrato->FECHA = $devolucion->FECHA_INSP;
@@ -1108,9 +1108,9 @@ class BitacoraController extends Controller
 
         $contrato = $request->input('contrato');
 
-        $bitacoras = tbl_bitacora_archivo::whereIn(
+        $bitacoras = TblBitacoraArchivo::whereIn(
             'id',
-            tbl_bitacora_contrato::select('id_bitacora')
+            TblBitacoraContrato::select('id_bitacora')
                 ->where('CONTRATO', 'LIKE', '%' . $contrato . '%')
         )->get();
 
@@ -1123,7 +1123,7 @@ class BitacoraController extends Controller
     {
         $term = $request->input('term');
 
-        $municipios = tbl_localidades_municipio::where('nombre', 'like', "%$term%")
+        $municipios = TblLocalidadesMunicipio::where('nombre', 'like', "%$term%")
             ->pluck('nombre', 'nombre'); // Obtener nombre e ID
 
         return response()->json($municipios);
@@ -1148,15 +1148,15 @@ class BitacoraController extends Controller
     public function devolver(Request $request, $ids, $bitacora)
     {
         $idsArray = explode(',', $ids);
-        $archivo = tbl_bitacora_archivo::find($bitacora);
+        $archivo = TblBitacoraArchivo::find($bitacora);
 
         // Validar y sanitizar los IDs (como en el ejemplo anterior)
         try {
-            $contratos = tbl_bitacora_contrato::findMany($idsArray);
+            $contratos = TblBitacoraContrato::findMany($idsArray);
 
             foreach ($contratos as $contrato) {
-                $inspector = tbl_insp_cali::where('cedula', $contrato->CC_OPERARIO)->first();
-                $devolucion = new tbl_dv_insp();
+                $inspector = TblInspCali::where('cedula', $contrato->CC_OPERARIO)->first();
+                $devolucion = new TblDvInsp();
                 $devolucion->supervisor = $archivo->id_usuario;
                 $devolucion->inspector = $inspector->id;
                 $devolucion->CC_OPERARIO = $contrato->CC_OPERARIO;

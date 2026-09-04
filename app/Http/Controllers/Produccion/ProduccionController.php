@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Produccion;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\CorreoProduccion;
-use App\Models\Bitacoras\tbl_bitacora_archivo;
-use App\Models\Bitacoras\tbl_bitacora_contrato;
-use App\Models\Produccion\tbl_produccion_corte;
-use App\Models\Produccion\tbl_produccion_historico;
-use App\Models\Produccion\tbl_produccion_zona;
-use App\Models\tbl_insp_cali;
-use App\Models\Zonificacion\tbl_localidades_municipio;
+use App\Models\Bitacoras\TblBitacoraArchivo;
+use App\Models\Bitacoras\TblBitacoraContrato;
+use App\Models\Produccion\TblProduccionCorte;
+use App\Models\Produccion\TblProduccionHistorico;
+use App\Models\Produccion\TblProduccionZona;
+use App\Models\TblInspCali;
+use App\Models\Zonificacion\TblLocalidadesMunicipio;
 use Carbon\Carbon;
 use DateInterval;
 use DatePeriod;
@@ -27,13 +27,13 @@ class ProduccionController extends Controller
     {
 
         $arrayInspectores = [];
-        $cortes = tbl_produccion_corte::all();
+        $cortes = TblProduccionCorte::all();
         if ($request->id) {
-            $corte = tbl_produccion_corte::find($request->id);
+            $corte = TblProduccionCorte::find($request->id);
         } else {
             $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
             $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
-            $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
+            $corte = TblProduccionCorte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
                 ->where('fecha_fin', '>=', $fecha_resta_un_dia)
                 ->first();
         }
@@ -50,7 +50,7 @@ class ProduccionController extends Controller
         session(['corte_actual_id' => $corte->id]);
 
         // sacar contratos del corte activo
-        $contratosCorte = tbl_bitacora_contrato::where('FECHA', '>=', $corte->fecha_inicio)
+        $contratosCorte = TblBitacoraContrato::where('FECHA', '>=', $corte->fecha_inicio)
             ->where('FECHA', '<=', $corte->fecha_fin)->where('state', '=', 1)
             ->get();
 
@@ -60,7 +60,7 @@ class ProduccionController extends Controller
         }
 
         // Obtenemos los inspectores con producción dentro del rango de fechas especificado
-        $inspectores = tbl_insp_cali::whereHas('contratos', function ($query) use ($corte) {
+        $inspectores = TblInspCali::whereHas('contratos', function ($query) use ($corte) {
             $query->where('FECHA', '>=', $corte->fecha_inicio)
                 ->where('FECHA', '<=', $corte->fecha_fin)
                 ->where('state', 1)
@@ -78,7 +78,7 @@ class ProduccionController extends Controller
         $produccionInspector = array();
         foreach ($inspectores as $inspector) {
 
-            $contratos = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
+            $contratos = TblBitacoraContrato::where('CC_OPERARIO', '=', $inspector->cedula)
                 ->where('FECHA', '>=', $corte->fecha_inicio)
                 ->where('FECHA', '<=', $corte->fecha_fin)
                 ->where('state', '=', 1)
@@ -101,7 +101,7 @@ class ProduccionController extends Controller
 
         // Verificador de municipios no encontrados
         // Obtener los municipios de tbl_bitacora_contrato
-        $municipiosContratos = tbl_bitacora_contrato::select('MUNICIPIO')
+        $municipiosContratos = TblBitacoraContrato::select('MUNICIPIO')
             ->where('FECHA', '>=', $corte->fecha_inicio)
             ->where('FECHA', '<=', $corte->fecha_fin)
             ->where('state', '=', 1)
@@ -114,7 +114,7 @@ class ProduccionController extends Controller
             ->pluck('MUNICIPIO');
 
         // Obtener los municipios de tbl_localidades_municipios
-        $municipiosLocalidades = tbl_localidades_municipio::select('nombre')
+        $municipiosLocalidades = TblLocalidadesMunicipio::select('nombre')
             ->distinct()
             ->get()
             ->pluck('nombre');
@@ -143,7 +143,7 @@ class ProduccionController extends Controller
         $corteId = $request->id;
         $inspectorCC = $request->inspector_cc;
         // Buscar el corte seleccionado por ID
-        $corte = tbl_produccion_corte::find($corteId);
+        $corte = TblProduccionCorte::find($corteId);
 
         if (!$corte) {
             return response()->json(['error' => 'Corte no encontrado'], 404);
@@ -151,10 +151,10 @@ class ProduccionController extends Controller
 
         // Obtener los inspectores y sus inspecciones para el corte seleccionado
         if ($inspectorCC) {
-            $inspectores = tbl_insp_cali::whereIn('cedula', $inspectorCC)->get();
+            $inspectores = TblInspCali::whereIn('cedula', $inspectorCC)->get();
         } else {
             // Obtenemos los inspectores con producción dentro del rango de fechas especificado
-            $inspectores = tbl_insp_cali::whereHas('contratos', function ($query) use ($corte) {
+            $inspectores = TblInspCali::whereHas('contratos', function ($query) use ($corte) {
                 $query->where('FECHA', '>=', $corte->fecha_inicio)
                     ->where('FECHA', '<=', $corte->fecha_fin)
                     ->where('state', 1)
@@ -168,7 +168,7 @@ class ProduccionController extends Controller
         $produccionInspector = [];
 
         foreach ($inspectores as $inspector) {
-            $contratos = tbl_bitacora_contrato::where('CC_OPERARIO', '=', $inspector->cedula)
+            $contratos = TblBitacoraContrato::where('CC_OPERARIO', '=', $inspector->cedula)
                 ->where('FECHA', '>=', $corte->fecha_inicio)
                 ->where('FECHA', '<=', $corte->fecha_fin)
                 ->where('state', '=', 1)
@@ -201,12 +201,12 @@ class ProduccionController extends Controller
             return response()->json(['error' => 'Corte no encontrado'], 404);
         }
 
-        $cortes = tbl_produccion_corte::whereIn('id', $cortes_id)->get();
+        $cortes = TblProduccionCorte::whereIn('id', $cortes_id)->get();
 
         $results = [];
 
         foreach ($cortes as $corte) {
-            $contratos = tbl_bitacora_contrato::where('FECHA', '>=', $corte->fecha_inicio)
+            $contratos = TblBitacoraContrato::where('FECHA', '>=', $corte->fecha_inicio)
                 ->where('FECHA', '<=', $corte->fecha_fin)
                 ->where('state', '=', 1)
                 ->whereNotIn('TIPO_TRABAJO', [
@@ -234,9 +234,9 @@ class ProduccionController extends Controller
     public function detalles()
     {
 
-        $municipios = tbl_localidades_municipio::all();
+        $municipios = TblLocalidadesMunicipio::all();
         if (session('id_corte')) {
-            $corte = tbl_produccion_corte::find(session('id_corte'));
+            $corte = TblProduccionCorte::find(session('id_corte'));
             $id_corte = session('id_corte');
             if ($corte) { // Verificación adicional
                 session(['fecha_inicio' => $corte->fecha_inicio]);
@@ -249,7 +249,7 @@ class ProduccionController extends Controller
         $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
 
         $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
-        $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
+        $corte = TblProduccionCorte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
             ->where('fecha_fin', '>=', $fecha_resta_un_dia)
             ->first();
         return view('produccion.detalles', compact('municipios', 'corte'));
@@ -260,12 +260,12 @@ class ProduccionController extends Controller
         $f = [];
         if (session('id_corte') || $request->idCorteDetalles) {
             $idCorte = session('id_corte') ?? $request->idCorteDetalles;
-            $corte = tbl_produccion_corte::find($idCorte);
+            $corte = TblProduccionCorte::find($idCorte);
 
-            $exist = tbl_produccion_historico::where('id_corte', $corte->id)->exists();
+            $exist = TblProduccionHistorico::where('id_corte', $corte->id)->exists();
 
             if ($exist) {
-                $historico = tbl_produccion_historico::where('id_corte', $corte->id)->first();
+                $historico = TblProduccionHistorico::where('id_corte', $corte->id)->first();
                 //$response = json_decode($historico->data);
                 session()->forget('id_corte');
                 session()->save();
@@ -280,7 +280,7 @@ class ProduccionController extends Controller
 
             $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
 
-            $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
+            $corte = TblProduccionCorte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
                 ->where('fecha_fin', '>=', $fecha_resta_un_dia)
                 ->first();
 
@@ -304,8 +304,8 @@ class ProduccionController extends Controller
             $fechasIntermedias[] = $fecha->format('Y-m-d');
         }
         // sacar inspectores
-        //$inspectores = tbl_insp_cali::orderBy('apellidos', 'asc')->get();
-        $inspectores = tbl_insp_cali::whereHas('contratos', function ($query) use ($corte) {
+        //$inspectores = TblInspCali::orderBy('apellidos', 'asc')->get();
+        $inspectores = TblInspCali::whereHas('contratos', function ($query) use ($corte) {
             $query->where('FECHA', '>=', $corte->fecha_inicio)
                 ->where('FECHA', '<=', $corte->fecha_fin)
                 ->where('state', 1);
@@ -313,7 +313,7 @@ class ProduccionController extends Controller
         $cedulas = $inspectores->pluck('cedula');
 
         // 1. REALIZAR UNA ÚNICA CONSULTA PARA TODOS LOS CONTRATOS
-        $todosLosContratos = tbl_bitacora_contrato::whereIn('CC_OPERARIO', $cedulas)
+        $todosLosContratos = TblBitacoraContrato::whereIn('CC_OPERARIO', $cedulas)
             ->where('state', 1)
             ->whereBetween('FECHA', [$corte->fecha_inicio, $corte->fecha_fin])
             ->select(
@@ -327,7 +327,7 @@ class ProduccionController extends Controller
         //guardar colección de contratos por inspector
         $contratosPorInspector = $todosLosContratos->groupBy('CC_OPERARIO');
         //consulta para saber fechas que no cuentan doble
-        $sqlProHis = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
+        $sqlProHis = TblProduccionHistorico::where('id_corte', $corte['id'])->first();
         //decodificar JSON de festivos y Sabados
         $jsonDecode = json_decode($sqlProHis->no_dobles_festivos, true);
         $jsonDecodeSabados = json_decode($sqlProHis->dobles_sabados, true);
@@ -594,7 +594,7 @@ class ProduccionController extends Controller
 
         }
 
-        $sqlHistorico = tbl_produccion_historico::where('id_corte', $corte->id)->first();
+        $sqlHistorico = TblProduccionHistorico::where('id_corte', $corte->id)->first();
 
         $jsonNoDobles = json_decode($sqlHistorico->no_dobles, true);
         // Si json_decode devuelve null, usará un array vacío ([]) en su lugar.
@@ -632,14 +632,14 @@ class ProduccionController extends Controller
         ];
         //dd($reponse);
 
-        $exist = tbl_produccion_historico::where('id_corte', $corte->id)->exists();
+        $exist = TblProduccionHistorico::where('id_corte', $corte->id)->exists();
 
         if ($exist) {
-            $historico = tbl_produccion_historico::where('id_corte', $corte->id)->first();
+            $historico = TblProduccionHistorico::where('id_corte', $corte->id)->first();
             $historico->data = json_encode($reponse);
             $historico->save();
         } else {
-            $historico = new tbl_produccion_historico();
+            $historico = new TblProduccionHistorico();
             $historico->data = json_encode($reponse);
             $historico->id_corte = $corte->id;
             $historico->save();
@@ -691,7 +691,7 @@ class ProduccionController extends Controller
         $sabadosdobles = array();
 
         // Obtenemos solo los contratos del rango que sean sábados
-        $contratosSabado = tbl_bitacora_contrato::where('CC_OPERARIO', $inspector->cedula)
+        $contratosSabado = TblBitacoraContrato::where('CC_OPERARIO', $inspector->cedula)
             ->where('state', 1)
             ->whereBetween('FECHA', [$fechaInicio->format('Y-m-d'), $fechaFin->format('Y-m-d')])
             ->whereNotIn('TIPO_TRABAJO', [
@@ -793,14 +793,14 @@ class ProduccionController extends Controller
     {
         $corte = session('corteEnviar');
 
-        $contratosDia = tbl_bitacora_contrato::selectRaw("tbl_bitacora_contratos.id, CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP,
+        $contratosDia = TblBitacoraContrato::selectRaw("tbl_bitacora_contratos.id, CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP,
         tbl_bitacora_contratos.`4_RECINTOS`,tbl_bitacora_contratos.state,tbl_bitacora_contratos.diseno_especial,tbl_bitacora_contratos.vence")
             ->join('tbl_insp_cali', 'tbl_insp_cali.cedula', '=', 'tbl_bitacora_contratos.CC_OPERARIO')
             ->where('tbl_bitacora_contratos.CC_OPERARIO', '=', $inspector)
             ->where('tbl_bitacora_contratos.FECHA', '=', $fecha)
             ->get();
 
-        $contadores = tbl_bitacora_contrato::selectRaw("PRIORIDAD, COUNT(*) AS total")
+        $contadores = TblBitacoraContrato::selectRaw("PRIORIDAD, COUNT(*) AS total")
             ->join('tbl_insp_cali', 'tbl_insp_cali.cedula', '=', 'tbl_bitacora_contratos.CC_OPERARIO')
             ->where('tbl_bitacora_contratos.CC_OPERARIO', '=', $inspector)
             ->where('tbl_bitacora_contratos.FECHA', '=', $fecha)
@@ -808,7 +808,7 @@ class ProduccionController extends Controller
             ->get();
 
         // Consultar la tabla `tbl_produccion_historico` usando el id del corte
-        $sqlProHis = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
+        $sqlProHis = TblProduccionHistorico::where('id_corte', $corte['id'])->first();
 
         $jsonNoDobles = json_decode($sqlProHis->no_dobles, true);
         $jsonNoDoblesHoliday = json_decode($sqlProHis->no_dobles_festivos, true);
@@ -889,7 +889,7 @@ class ProduccionController extends Controller
             return response()->json(['message' => 'Campo vacio']);
         }
         try {
-            $contrato = tbl_bitacora_contrato::find($id);
+            $contrato = TblBitacoraContrato::find($id);
             $contrato->{$datos['prop']} = $datos['newValue'];
             $contrato->save();
         } catch (\Exception $e) {
@@ -901,7 +901,7 @@ class ProduccionController extends Controller
     public function eliminarDetallesDiario($id)
     {
 
-        $contrato = tbl_bitacora_contrato::find($id);
+        $contrato = TblBitacoraContrato::find($id);
         if ($contrato->state === 0) {
             $contrato->state = 1;
             $contrato->save();
@@ -916,7 +916,7 @@ class ProduccionController extends Controller
 
     public function diseñoEspecial($id)
     {
-        $contrato = tbl_bitacora_contrato::find($id);
+        $contrato = TblBitacoraContrato::find($id);
 
         if ($contrato) {
             // Alternar el valor de diseño_especial
@@ -933,8 +933,8 @@ class ProduccionController extends Controller
     {
         $fechaString = $request->data[4];
         $ccOperario = $request->data[2];
-        $contrato = new tbl_bitacora_contrato();
-        $nomInspector = tbl_insp_cali::select('apellidos', 'nombres')->where('cedula', '=', $ccOperario)->first();
+        $contrato = new TblBitacoraContrato();
+        $nomInspector = TblInspCali::select('apellidos', 'nombres')->where('cedula', '=', $ccOperario)->first();
         // Convertir la fecha a un formato adecuado (suponiendo dd-mm-yy)
         $fecha = Carbon::createFromFormat('d-m-y', $fechaString)->format('d-m-Y');
         $fechaDB = Carbon::createFromFormat('d-m-y', $fechaString)->format('Y-m-d');
@@ -976,7 +976,7 @@ class ProduccionController extends Controller
     public function consultarBitacora($fecha, $ccOperario)
     {
         // Consultar la tabla tbl_insp_cali para obtener el nombre del supervisor
-        $inspector = tbl_insp_cali::select('users.name AS supervisor')
+        $inspector = TblInspCali::select('users.name AS supervisor')
             ->join('users', 'users.id', '=', 'tbl_insp_cali.SUPERVISOR')
             ->where('tbl_insp_cali.cedula', '=', $ccOperario)
             ->first();
@@ -989,7 +989,7 @@ class ProduccionController extends Controller
         $nombreSupervisorSinEspacios = str_replace(' ', '', $nombreSupervisor);
 
         // Consultar la tabla tbl_bitacora_archivo para obtener los registros que coincidan con la fecha
-        $bitacoras = tbl_bitacora_archivo::select('id', 'nombre_archivo')->get();
+        $bitacoras = TblBitacoraArchivo::select('id', 'nombre_archivo')->get();
 
         foreach ($bitacoras as $bitacora) {
             $nombreArchivo = $bitacora->nombre_archivo;
@@ -1026,7 +1026,7 @@ class ProduccionController extends Controller
         $inspector = $request->input('ccInspector');
 
         // Consultar la tabla `tbl_produccion_historico` usando el id del corte
-        $sqlProHis = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
+        $sqlProHis = TblProduccionHistorico::where('id_corte', $corte['id'])->first();
 
         // Decodificar el campo `no_dobles` para manipularlo como un array asociativo
         $corteHisJson = json_decode($sqlProHis->no_dobles, true);
@@ -1075,7 +1075,7 @@ class ProduccionController extends Controller
         $fecha = $request->input('fecha');
         $inspector = $request->input('ccInspector');
 
-        $sqlProHis = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
+        $sqlProHis = TblProduccionHistorico::where('id_corte', $corte['id'])->first();
 
         $corteHisJson = json_decode($sqlProHis->no_dobles, true);
 
@@ -1103,10 +1103,10 @@ class ProduccionController extends Controller
         $fecha = $request->input('fecha');
 
         // Consultar la tabla `tbl_produccion_historico` usando el id del corte
-        $sqlProHis = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
+        $sqlProHis = TblProduccionHistorico::where('id_corte', $corte['id'])->first();
 
         // Obtener el total de inspecciones para la fecha y el inspector especificado
-        $contratosDomingo = tbl_bitacora_contrato::where('FECHA', $fecha)
+        $contratosDomingo = TblBitacoraContrato::where('FECHA', $fecha)
             ->where('state', '=', 1)
             ->selectRaw('DATE(FECHA) as fecha, COUNT(*) as total_contratos')
             ->groupBy('fecha')
@@ -1178,7 +1178,7 @@ class ProduccionController extends Controller
         $fecha = $request->input('fecha');
         $inspector = $request->input('ccInspector');
 
-        $sqlProHis = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
+        $sqlProHis = TblProduccionHistorico::where('id_corte', $corte['id'])->first();
 
         $corteHisJson = json_decode($sqlProHis->no_dobles_festivos, true);
 
@@ -1206,7 +1206,7 @@ class ProduccionController extends Controller
         $fecha = $request->input('fecha');
         $diasContados = $request->input('diasContados');
 
-        $sqlProHis = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
+        $sqlProHis = TblProduccionHistorico::where('id_corte', $corte['id'])->first();
 
         $inspeccionData = [
             'fecha' => $fecha,
@@ -1267,7 +1267,7 @@ class ProduccionController extends Controller
         $fecha = $request->input('fecha');
         $inspector = $request->input('ccInspector');
 
-        $sqlProHis = tbl_produccion_historico::where('id_corte', $corte['id'])->first();
+        $sqlProHis = TblProduccionHistorico::where('id_corte', $corte['id'])->first();
 
         $corteHisJson = json_decode($sqlProHis->dobles_sabados, true);
 

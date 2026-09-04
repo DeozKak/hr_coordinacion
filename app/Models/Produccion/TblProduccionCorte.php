@@ -10,7 +10,7 @@ use OwenIt\Auditing\Auditable as AuditableTrait;
 /**
  * @property mixed $fecha_inicio
  */
-class tbl_produccion_corte extends Model implements AuditableContract
+class TblProduccionCorte extends Model implements AuditableContract
 {
     public $timestamps = false;
 

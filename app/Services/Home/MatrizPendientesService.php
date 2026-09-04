@@ -2,7 +2,7 @@
 
 namespace App\Services\Home;
 
-use App\Models\Programacion\tbl_programacion_base;
+use App\Models\Programacion\TblProgramacionBase;
 use Illuminate\Support\Collection;
 
 class MatrizPendientesService
@@ -18,7 +18,7 @@ class MatrizPendientesService
      */
     public function obtener(): Collection
     {
-        $datos_matriz = tbl_programacion_base::where('ESTADO_RECEPCION', '!=', '1')
+        $datos_matriz = TblProgramacionBase::where('ESTADO_RECEPCION', '!=', '1')
             ->selectRaw('DESC_LOCALIDAD, ID_TIPO_TRABAJO as criterio, COUNT(*) as cantidad')
             ->groupBy('DESC_LOCALIDAD')
             ->groupByRaw('ID_TIPO_TRABAJO')

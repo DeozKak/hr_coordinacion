@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\tbl_insp_cali;
+use App\Models\TblInspCali;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -13,7 +13,7 @@ class InspectorController extends Controller
 {
     public function index()
     {
-        $inspectores = tbl_insp_cali::where('state', 1)->get();
+        $inspectores = TblInspCali::where('state', 1)->get();
         $supervisores = User::role('Supervisor')->get();
         return view('inspectores.index', compact('inspectores', 'supervisores'));
     }
@@ -25,7 +25,7 @@ class InspectorController extends Controller
     }
 
 
-    public function store(Request $request, tbl_insp_cali $inspector)
+    public function store(Request $request, TblInspCali $inspector)
     {
 
         // Validar los datos enviados en la solicitud
@@ -71,7 +71,7 @@ class InspectorController extends Controller
             $inspector->save();
 
             // Obtener el último inspector creado con su relación de supervisor
-            $inspectorGuardar = tbl_insp_cali::with('supervisor')
+            $inspectorGuardar = TblInspCali::with('supervisor')
                 ->where('state', 1)
                 ->orderBy('id', 'desc')
                 ->first();
@@ -124,7 +124,7 @@ class InspectorController extends Controller
             DB::beginTransaction();
 
             // Buscar el inspector por ID
-            $inspector = tbl_insp_cali::findOrFail($request->input('id'));
+            $inspector = TblInspCali::findOrFail($request->input('id'));
 
             // Actualizar los valores
             $inspector->nombres = $request->input('nombres');
@@ -156,7 +156,7 @@ class InspectorController extends Controller
     {
         try {
             // Busca el inspector por su ID junto con su supervisor
-            $inspector = tbl_insp_cali::with('supervisor')->find($id);
+            $inspector = TblInspCali::with('supervisor')->find($id);
 
             // Si no se encuentra el inspector, devuelve un error
             if (!$inspector) {
@@ -183,7 +183,7 @@ class InspectorController extends Controller
     {
         try {
             // Obtiene todos los inspectores desactivados (state = 0) incluyendo la relación con su supervisor
-            $inspectores = tbl_insp_cali::with("supervisor")->where('state', 0)->get();
+            $inspectores = TblInspCali::with("supervisor")->where('state', 0)->get();
 
             // Retorna la lista de inspectores desactivados en formato JSON
             return response()->json([
@@ -202,7 +202,7 @@ class InspectorController extends Controller
             // Obtiene el ID del inspector desde la solicitud y lo convierte a entero
             $id = intval($request->input('id'));
             // Busca el inspector por su ID junto con su supervisor
-            $inspector = tbl_insp_cali::with('supervisor')->find($id);
+            $inspector = TblInspCali::with('supervisor')->find($id);
 
             // Si no se encuentra el inspector, devuelve un error
             if (!$inspector) {

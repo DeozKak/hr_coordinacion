@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Bitacoras\tbl_bitacora_contrato;
+use App\Models\Bitacoras\TblBitacoraContrato;
 use Illuminate\Support\Facades\DB;
 
 class ProgramacionService
@@ -106,7 +106,7 @@ class ProgramacionService
 
     private function enBitacora(string $contrato, array $tipos, $orden)
     {
-        return tbl_bitacora_contrato::select('CC_OPERARIO', 'FECHA', 'RESULTADO_CIERRE', 'TIPO_TRABAJO')
+        return TblBitacoraContrato::select('CC_OPERARIO', 'FECHA', 'RESULTADO_CIERRE', 'TIPO_TRABAJO')
             ->where('CONTRATO', $contrato)
             ->where('ORDEN_TRABAJO', $orden)
             ->whereIn('TIPO_TRABAJO', $tipos)

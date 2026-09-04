@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use OwenIt\Auditing\Auditable as AuditableTrait;
-class tbl_programacion_usuario extends Model implements AuditableContract
+class TblProgramacionUsuario extends Model implements AuditableContract
 {
     use HasFactory,AuditableTrait;
 
@@ -20,7 +20,7 @@ class tbl_programacion_usuario extends Model implements AuditableContract
 
     public function programacion(): HasMany
     {
-        return $this->HasMany(tbl_programacion_contrato::class,'id','id_programacion');
+        return $this->HasMany(TblProgramacionContrato::class,'id','id_programacion');
     }
 
 }

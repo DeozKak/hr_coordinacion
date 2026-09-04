@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use OwenIt\Auditing\Auditable as AuditableTrait;
-class tbl_bitacoras_causal extends Model implements AuditableContract
+class TblBitacorasCausal extends Model implements AuditableContract
 {
     use HasFactory,auditableTrait;
 

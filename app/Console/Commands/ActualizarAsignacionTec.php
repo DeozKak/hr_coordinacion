@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Programacion\tbl_programacion_base;
-use App\Models\Programacion\tbl_programacion_contrato;
-use App\Models\tbl_insp_cali;
+use App\Models\Programacion\TblProgramacionBase;
+use App\Models\Programacion\TblProgramacionContrato;
+use App\Models\TblInspCali;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -36,7 +36,7 @@ class ActualizarAsignacionTec extends Command
         $this->jobId = DB::table('job_status')->insertGetId([
             'job_name' => 'Actualizar Asignación de Técnicos',
             'status' => 'running',
-            'total' => tbl_programacion_base::whereNotNull('ID_TECNICO')->count(), // Total de registros
+            'total' => TblProgramacionBase::whereNotNull('ID_TECNICO')->count(), // Total de registros
             'processed' => 0, // Inicialmente procesados
             'created_at' => now(),
             'updated_at' => now(),
@@ -44,14 +44,14 @@ class ActualizarAsignacionTec extends Command
 
         try {
             // Cargar inspectores en memoria
-            $inspectores = tbl_insp_cali::query()
+            $inspectores = TblInspCali::query()
                 ->select('id', 'apellidos', 'nombres')
                 ->get()
                 ->keyBy('id')
                 ->toArray();
 
             // Procesar los contratos base en lotes
-            tbl_programacion_base::query()
+            TblProgramacionBase::query()
                 ->select('NUMERO_ORDEN', 'CONTRATO', 'ID_TECNICO')
                 ->whereNotNull('ID_TECNICO')
                 ->chunk(500, function ($contratosBase) use ($fecha, $inspectores) {
@@ -71,7 +71,7 @@ class ActualizarAsignacionTec extends Command
                         $nombreCompleto = "{$base->ID_TECNICO}. {$inspector['apellidos']} {$inspector['nombres']}";
 
                         // Actualizar contratos relacionados
-                        $contratos = tbl_programacion_contrato::query()
+                        $contratos = TblProgramacionContrato::query()
                             ->where('FECHA_AGENDAMIENTO', '>=', $fecha)
                             ->where('CONTRATO', $base->CONTRATO)
                             ->get();

@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\asignadas_quejas;
+use App\Models\AsignadasQuejas;
 use App\Models\User;
 use App\Notifications\TiemposQuejas;
 use Illuminate\Console\Command;
@@ -28,7 +28,7 @@ class CronTiemposQuejas extends Command
     public function handle(): int
     {
 
-        $quejas = asignadas_quejas::where(function ($query) {
+        $quejas = AsignadasQuejas::where(function ($query) {
             // Condición original: Más de 3 días Y recepción vacía
             $query->where('DIAS_FALTANTES', '<=', 3)
                 ->whereNull('RECEPCION');

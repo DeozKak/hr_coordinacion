@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Nomina\TblNominaMultas;
 use App\Models\Nomina\TblParametroSalAux;
-use App\Models\Produccion\tbl_produccion_corte;
-use App\Models\tbl_insp_cali;
+use App\Models\Produccion\TblProduccionCorte;
+use App\Models\TblInspCali;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -25,7 +25,7 @@ class NominaController extends Controller
         $arrayInspectores = [];
         $arraySalAux = [];
 
-        $cortesProduccion = tbl_produccion_corte::with('corte')
+        $cortesProduccion = TblProduccionCorte::with('corte')
         ->where('fecha_fin', 'like', '%' . $mesAnio . '%')
         ->get();
 
@@ -34,7 +34,7 @@ class NominaController extends Controller
         ->get();
 
         // consultamos todos los inspectores
-        $inspectores = tbl_insp_cali::all();
+        $inspectores = TblInspCali::all();
 
         //consultamos el salario minimo y el auxilio de transporte
         $parametroSalMinAux = TblParametroSalAux::where('fecha_inicio', '<=', $mesAnio)

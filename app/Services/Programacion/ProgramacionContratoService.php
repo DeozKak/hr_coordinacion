@@ -2,10 +2,10 @@
 
 namespace App\Services\Programacion;
 
-use App\Models\asignadas_quejas;
-use App\Models\Programacion\tbl_programacion_base;
-use App\Models\Programacion\tbl_programacion_contrato;
-use App\Models\tbl_insp_cali;
+use App\Models\AsignadasQuejas;
+use App\Models\Programacion\TblProgramacionBase;
+use App\Models\Programacion\TblProgramacionContrato;
+use App\Models\TblInspCali;
 use App\Services\ProgramacionService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -47,7 +47,7 @@ class ProgramacionContratoService
             return null;
         }
 
-        $datos = tbl_programacion_base::where('CONTRATO', $contrato)->first();
+        $datos = TblProgramacionBase::where('CONTRATO', $contrato)->first();
 
         if ($datos === null) {
             return null;
@@ -59,7 +59,7 @@ class ProgramacionContratoService
         }
 
         // El técnico se muestra como "id. apellidos nombres".
-        $inspector = tbl_insp_cali::where('id', $datos->ID_TECNICO)->first();
+        $inspector = TblInspCali::where('id', $datos->ID_TECNICO)->first();
 
         $datos->ID_TECNICO = $inspector
             ? $datos->ID_TECNICO . '. ' . $inspector->apellidos . ' ' . $inspector->nombres
@@ -102,7 +102,7 @@ class ProgramacionContratoService
         }
 
         $programacion = DB::transaction(function () use ($data, $tabla) {
-            $programacion = new tbl_programacion_contrato();
+            $programacion = new TblProgramacionContrato();
 
             $programacion->CONTRATO           = $data[1];
             $programacion->TIPO_TRABAJO       = $data[2];
@@ -142,7 +142,7 @@ class ProgramacionContratoService
     public function crearDesdePlantilla(array $datos, $tabla): array
     {
         $programacion = DB::transaction(function () use ($datos, $tabla) {
-            $c = new tbl_programacion_contrato();
+            $c = new TblProgramacionContrato();
 
             foreach ([
                 'CONTRATO', 'TIPO_TRABAJO', 'FECHA', 'CELULAR', 'NOMBRE_USUARIO',
@@ -180,7 +180,7 @@ class ProgramacionContratoService
         }
 
         DB::transaction(function () use ($id, $campo, $valor) {
-            $programacion = tbl_programacion_contrato::find($id);
+            $programacion = TblProgramacionContrato::find($id);
 
             // Fijar la jornada arrastra el horario que se le supone.
             if ($campo === 'JORNADA') {
@@ -197,7 +197,7 @@ class ProgramacionContratoService
 
     public function eliminar($id): array
     {
-        DB::transaction(fn () => tbl_programacion_contrato::find($id)?->delete());
+        DB::transaction(fn () => TblProgramacionContrato::find($id)?->delete());
 
         return ['message' => 'Registro eliminado correctamente'];
     }
@@ -229,7 +229,7 @@ class ProgramacionContratoService
             return null;
         }
 
-        $inspector = tbl_insp_cali::where('cedula', $ejecutado->CC_OPERARIO)->first();
+        $inspector = TblInspCali::where('cedula', $ejecutado->CC_OPERARIO)->first();
 
         return [
             'movilidad'    => 'Contrato ya ejecutado',
@@ -250,7 +250,7 @@ class ProgramacionContratoService
      */
     private function avisoPorQuejaAbierta(array $data): ?array
     {
-        $queja = asignadas_quejas::where('CONTRATO', trim((string) $data[1]))
+        $queja = AsignadasQuejas::where('CONTRATO', trim((string) $data[1]))
             ->where('estado', 1)
             ->where(function ($consulta) {
                 $consulta->whereNull('FECHA_LEGALIZACION')
@@ -276,7 +276,7 @@ class ProgramacionContratoService
     /** Ya hay una programación para ese contrato. */
     private function avisoPorDuplicado(array $data): ?array
     {
-        $consulta = tbl_programacion_contrato::where('CONTRATO', $data[1]);
+        $consulta = TblProgramacionContrato::where('CONTRATO', $data[1]);
 
         /* Para revisión periódica los dos códigos son el mismo trabajo, así que
            el duplicado se busca por cualquiera de ellos y sin mirar la orden.

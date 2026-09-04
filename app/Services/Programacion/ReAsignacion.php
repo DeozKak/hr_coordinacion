@@ -2,7 +2,7 @@
 
 namespace App\Services\Programacion;
 
-use App\Models\Programacion\tbl_programacion_contrato;
+use App\Models\Programacion\TblProgramacionContrato;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;

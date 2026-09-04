@@ -6,8 +6,8 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Models\tbl_queja;
-use App\Models\asignadas_quejas;
+use App\Models\TblQueja;
+use App\Models\AsignadasQuejas;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -40,7 +40,7 @@ class TiemposQuejas extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         // Hacemos join para traer los datos del inspector
-        $quejas = asignadas_quejas::query()
+        $quejas = AsignadasQuejas::query()
             ->select([
                 'CONTRATO',
                 'DESC_LOCALIDAD',

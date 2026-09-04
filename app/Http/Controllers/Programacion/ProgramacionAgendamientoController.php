@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Programacion;
 
 use App\Http\Controllers\Controller;
 
-use App\Models\tbl_insp_cali;
+use App\Models\TblInspCali;
 use App\Services\Programacion\AgendamientoService;
 use App\Services\Programacion\PlantillaGdwService;
 use App\Services\Programacion\PlantillaInvalida;
@@ -35,7 +35,7 @@ class ProgramacionAgendamientoController extends Controller
 
     public function detalles()
     {
-        $tecnicos = tbl_insp_cali::where('state','1')->get();
+        $tecnicos = TblInspCali::where('state','1')->get();
         return view('programacion.ver',compact('tecnicos'));
     }
 

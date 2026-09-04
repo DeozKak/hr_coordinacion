@@ -2,12 +2,10 @@
 
 namespace App\Models\Bitacoras;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class tbl_temp_contrato extends Model
+class TblTempFallida extends Model
 {
-    use HasFactory;
 
     protected $fillable = [
         'NOMBRE',
@@ -21,14 +19,8 @@ class tbl_temp_contrato extends Model
         'ORDEN_EXT',
         'CATEGORIA',
         'RESULTADO_CIERRE',
-        'HORA_INICIO',
-        'HORA_FINAL',
-        'VENCE',
-        'PERIODO_GRACIA',
-        '4_RECINTOS',
         'id_bitacora',
         'id_usuario',
         'id_super',
-        'G_DEVOLUCION'
     ];
 }

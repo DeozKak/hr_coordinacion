@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\PQRS;
 
 use App\Http\Controllers\Controller;
-use App\Models\asignadas_quejas;
+use App\Models\AsignadasQuejas;
 
-use App\Models\tbl_insp_cali;
+use App\Models\TblInspCali;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
@@ -21,13 +21,13 @@ class CoordinacionEstadisticas extends Controller
         $inspectorFiltro = $request->input('inspector'); // <-- NUEVO FILTRO
 
         // --- OBTENER LISTA DE INSPECTORES PARA EL SELECT ---
-        $inspectoresBD = tbl_insp_cali::where('state', 1)->get();
+        $inspectoresBD = TblInspCali::where('state', 1)->get();
         $listaInspectores = $inspectoresBD->map(function ($i) {
             return "{$i->id}. {$i->apellidos} {$i->nombres}";
         })->toArray();
 
         // 2. CONSTRUIR LA CONSULTA BASE
-        $query = asignadas_quejas::query();
+        $query = AsignadasQuejas::query();
 
         // Filtro de Estado
         if ($estadoFiltro === '1') {

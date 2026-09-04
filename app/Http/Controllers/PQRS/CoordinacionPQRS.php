@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\PQRS;
 
 use App\Http\Controllers\Controller;
-use App\Models\tbl_insp_cali;
-use App\Models\asignadas_quejas;
+use App\Models\TblInspCali;
+use App\Models\AsignadasQuejas;
 use App\Services\PQRS\CoordinacionPQRSImportService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -30,7 +30,7 @@ class CoordinacionPQRS extends Controller
         set_time_limit(400);
 
         $permiso_editar = false;
-        $inspectores = tbl_insp_cali::where('state', 1)->get();
+        $inspectores = TblInspCali::where('state', 1)->get();
 
         if (auth()->user()->can('coordinacion_pqrs')) {
             $permiso_editar = true;
@@ -55,7 +55,7 @@ class CoordinacionPQRS extends Controller
             ->limit(1);
 
         // 3. Agregamos las subconsultas a la consulta principal
-        $query = asignadas_quejas::select("*")
+        $query = AsignadasQuejas::select("*")
             ->selectSub($tecnicoSubquery, 'TECNICO_AGENDADO')
             ->selectSub($fechaSubquery, 'FECHA_AGENDAMIENTO')
             ->where('estado', 1);
@@ -153,7 +153,7 @@ class CoordinacionPQRS extends Controller
             ->orderBy('fecha_agendamiento', 'desc') // <-- CAMBIA por tu columna real de fecha
             ->limit(1);
 
-        $completeData = asignadas_quejas::select("*")
+        $completeData = AsignadasQuejas::select("*")
             ->selectSub($tecnicoSubquery, 'TECNICO_AGENDADO')
             ->selectSub($fechaSubquery, 'FECHA_AGENDAMIENTO')
             ->where('estado', 1)
@@ -281,7 +281,7 @@ class CoordinacionPQRS extends Controller
             'GDW',
             'NO PROCEDENTE'
         ];
-        $queja = asignadas_quejas::where('NUMERO_ORDEN', $request->orden)
+        $queja = AsignadasQuejas::where('NUMERO_ORDEN', $request->orden)
             ->where('CONTRATO', $request->contrato)
             ->first();
 
@@ -322,7 +322,7 @@ class CoordinacionPQRS extends Controller
                     ], 422);
                 }
 
-                $inspector = tbl_insp_cali::with('supervisor')->where('id', $inspectorId)->first();
+                $inspector = TblInspCali::with('supervisor')->where('id', $inspectorId)->first();
 
                 if (!$inspector) {
                     return response()->json([
@@ -455,7 +455,7 @@ class CoordinacionPQRS extends Controller
     // --- NUEVO MÉTODO PARA HISTÓRICO ---
     public function getHistorico(Request $request)
     {
-        $query = asignadas_quejas::select("*")->where('estado', 0);
+        $query = AsignadasQuejas::select("*")->where('estado', 0);
 
         // Filtro por Contrato
         if ($request->filled('contrato')) {
@@ -500,7 +500,7 @@ class CoordinacionPQRS extends Controller
         ]);
 
         // Base de la consulta: Estado 1 y que tenga técnico asignado
-        $query = asignadas_quejas::where('estado', 1)
+        $query = AsignadasQuejas::where('estado', 1)
             ->whereNotNull('ASIGNADO')
             ->where('ASIGNADO', '!=', '');
 
@@ -560,7 +560,7 @@ class CoordinacionPQRS extends Controller
         $nombreSupervisor = $request->input('supervisor_name');
 
         // Consulta de datos
-        $quejas = asignadas_quejas::where('estado', 1)
+        $quejas = AsignadasQuejas::where('estado', 1)
             ->where('SUPERVISOR', $nombreSupervisor)
             ->where(function($q) {
                 $q->whereNull('RECEPCION')

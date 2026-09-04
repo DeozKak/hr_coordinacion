@@ -2,7 +2,7 @@
 
 namespace App\Services\Programacion\Importacion;
 
-use App\Models\Programacion\tbl_programacion_base;
+use App\Models\Programacion\TblProgramacionBase;
 use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
@@ -52,13 +52,13 @@ class CargaBaseService
                 $lote[] = $registro;
 
                 if (count($lote) >= self::TAMANO_LOTE) {
-                    tbl_programacion_base::insertOrIgnore($lote);
+                    TblProgramacionBase::insertOrIgnore($lote);
                     $lote = [];
                 }
             }
 
             if ($lote !== []) {
-                tbl_programacion_base::insertOrIgnore($lote);
+                TblProgramacionBase::insertOrIgnore($lote);
             }
 
             return true;

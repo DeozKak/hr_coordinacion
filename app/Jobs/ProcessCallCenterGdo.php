@@ -4,8 +4,8 @@ namespace App\Jobs;
 
 use App\Mail\ErrorProcesamientoGdoMail;
 use App\Mail\ResultadosGdoMail;
-use App\Models\Programacion\tbl_programacion_usuario;
-use App\Models\Programacion\tbl_programacion_contrato;
+use App\Models\Programacion\TblProgramacionUsuario;
+use App\Models\Programacion\TblProgramacionContrato;
 use App\Services\ExtraerFechas;
 use App\Services\ProgramacionService;
 use Carbon\Carbon;
@@ -74,7 +74,7 @@ class ProcessCallCenterGdo implements ShouldQueue
                 $contrato     = $worksheet->getCell('B' . $rowIndex)->getValue();
                 $tipoTrabajo  = $worksheet->getCell('Q' . $rowIndex)->getValue();
 
-                $exist = tbl_programacion_contrato::where('CONTRATO', $contrato)
+                $exist = TblProgramacionContrato::where('CONTRATO', $contrato)
                     ->where('ORDEN_TRABAJO', $ordenTrabajo)->exists();
                 $executed = $programacionService->findExecuted($contrato, $tipoTrabajo, $ordenTrabajo);
 
@@ -136,7 +136,7 @@ class ProcessCallCenterGdo implements ShouldQueue
             $file->disconnectWorksheets();
             unset($file);
 
-            $programacion = tbl_programacion_usuario::find($this->programacionId);
+            $programacion = TblProgramacionUsuario::find($this->programacionId);
             if ($programacion) { $programacion->finished = 1; $programacion->save(); }
 
             // Enviar Correo de Éxito
@@ -160,7 +160,7 @@ class ProcessCallCenterGdo implements ShouldQueue
                 }
             }
 
-            $programacion = tbl_programacion_usuario::find($this->programacionId);
+            $programacion = TblProgramacionUsuario::find($this->programacionId);
             if ($programacion) { $programacion->finished = 1; $programacion->save(); }
 
             throw $e;
@@ -178,14 +178,14 @@ class ProcessCallCenterGdo implements ShouldQueue
     private function insertarDatosGDO($row, $id_programacion, $scheduling, $observation, $jornada, $programacionService)
     {
         // Nota: El exist y el executed ya se validaron al principio del bucle, pero se mantienen aquí por integridad de la capa de datos.
-        $exist = tbl_programacion_contrato::where('CONTRATO', $row['B'])->where('ORDEN_TRABAJO', $row['A'])->exists();
+        $exist = TblProgramacionContrato::where('CONTRATO', $row['B'])->where('ORDEN_TRABAJO', $row['A'])->exists();
         $executed = $programacionService->findExecuted($row['B'], $row['Q'], $row['A']);
 
         if ($exist) return 0;
         if ($executed) return 3;
 
         try {
-            $registro = new tbl_programacion_contrato();
+            $registro = new TblProgramacionContrato();
             $registro->CONTRATO = $row['B'];
             $registro->TIPO_TRABAJO = $row['Q'];
             $registro->FECHA = date('Y-m-d');

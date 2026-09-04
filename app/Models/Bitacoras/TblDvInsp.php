@@ -2,14 +2,14 @@
 
 namespace App\Models\Bitacoras;
 
-use App\Models\tbl_insp_cali;
+use App\Models\TblInspCali;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use OwenIt\Auditing\Auditable as AuditableTrait;
-class tbl_dv_insp extends Model implements AuditableContract
+class TblDvInsp extends Model implements AuditableContract
 {
     use HasFactory,AuditableTrait;
 
@@ -19,7 +19,7 @@ class tbl_dv_insp extends Model implements AuditableContract
 
     public function Inspector(): BelongsTo
     {
-        return $this->belongsTo(tbl_insp_cali::class ,'INSPECTOR','id');
+        return $this->belongsTo(TblInspCali::class ,'INSPECTOR','id');
     }
 
     public function Supervisor(): BelongsTo

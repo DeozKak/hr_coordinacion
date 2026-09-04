@@ -2,14 +2,14 @@
 
 namespace App\Models\Zonificacion;
 
-use App\Models\tbl_insp_cali;
+use App\Models\TblInspCali;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\relations\BelongsTo;
 use App\Models\Zonificacion\TblGrupo;
 use App\Models\Zonificacion\TblSubgrupo;
 use App\Models\Zonificacion\TblBarrios;
-use App\Models\Zonificacion\tbl_localidades_municipio;
+use App\Models\Zonificacion\TblLocalidadesMunicipio;
 
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -49,13 +49,13 @@ class TblGruposDetalle extends Model implements AuditableContract
 
     public function tbl_localidades_municipio()
     {
-        return $this->belongsTo(tbl_localidades_municipio::class, 'id_mun');
+        return $this->belongsTo(TblLocalidadesMunicipio::class, 'id_mun');
     }
 
     public function inspectores(): BelongsToMany
     {
         return $this->belongsToMany(
-            tbl_insp_cali::class,
+            TblInspCali::class,
             'tbl_inspector_detalle',
             'detalle_id',
             'inspector_id'

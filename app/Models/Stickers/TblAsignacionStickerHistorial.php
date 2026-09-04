@@ -4,7 +4,7 @@ namespace App\Models\Stickers;
 
 use Illuminate\Database\Eloquent\Model;
 
-class tbl_asignacion_sticker_historial extends Model
+class TblAsignacionStickerHistorial extends Model
 {
     protected $table = 'tbl_asignacion_sticker_historial';
     protected $fillable =[

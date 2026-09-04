@@ -5,14 +5,14 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use App\Models\Zonificacion\TblGrupo;
-use App\Models\Zonificacion\tbl_localidades_municipio;
-use App\Models\Zonificacion\tbl_inspector_detalle;
-use App\Models\Zonificacion\tbl_localidades_sede;
+use App\Models\Zonificacion\TblLocalidadesMunicipio;
+use App\Models\Zonificacion\TblInspectorDetalle;
+use App\Models\Zonificacion\TblLocalidadesSede;
 use App\Models\Zonificacion\TblBarrios;
 use App\Models\Zonificacion\TblGruposDetalle;
 use App\Models\Zonificacion\TblSubgrupo;
-use App\Models\tbl_insp_cali;
-use App\Models\Programacion\tbl_programacion_base;
+use App\Models\TblInspCali;
+use App\Models\Programacion\TblProgramacionBase;
 
 
 class Actualizar_zonificacion extends Command
@@ -40,7 +40,7 @@ class Actualizar_zonificacion extends Command
         DB::table('tbl_grupos_detalle')->delete();
         // Usamos chunk para procesar en bloques y no saturar la memoria si son muchos registros
         // O puedes mantener el ::all() si son pocos.
-        $base = tbl_programacion_base::all();
+        $base = TblProgramacionBase::all();
 
         // ... existing code ...
         foreach ($base as $item) {
@@ -63,7 +63,7 @@ class Actualizar_zonificacion extends Command
 
                 // 2. Buscamos o creamos
                 $localidad = !empty($nombreLocalidad)
-                    ? tbl_localidades_municipio::firstOrCreate(['nombre' => $nombreLocalidad])
+                    ? TblLocalidadesMunicipio::firstOrCreate(['nombre' => $nombreLocalidad])
                     : null;
 
                 $grupo = !empty($nombreGrupo)
@@ -88,7 +88,7 @@ class Actualizar_zonificacion extends Command
 
                 // Si todo sale bien, confirmamos la transacción
 
-                tbl_inspector_detalle::firstOrCreate([
+                TblInspectorDetalle::firstOrCreate([
                     'detalle_id' => $detalle->id,
                     'inspector_id' => $item->ID_TECNICO
                 ]);

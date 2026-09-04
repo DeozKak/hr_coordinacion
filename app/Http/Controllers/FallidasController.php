@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Bitacoras\tbl_bitacora_fallida;
-use App\Models\Produccion\tbl_produccion_corte;
-use App\Models\Produccion\tbl_produccion_historico;
-use App\Models\tbl_insp_cali;
+use App\Models\Bitacoras\TblBitacoraFallida;
+use App\Models\Produccion\TblProduccionCorte;
+use App\Models\Produccion\TblProduccionHistorico;
+use App\Models\TblInspCali;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -28,13 +28,13 @@ class FallidasController extends Controller
 
         if (session('id_corte') || $request->idCorteDetalles) {
             $idCorte = session('id_corte') ?? $request->idCorteDetalles;
-            $corte = tbl_produccion_corte::find($idCorte);
+            $corte = TblProduccionCorte::find($idCorte);
 
         } else {
             $fecha_actual = date('Y-m-d'); // Obtiene la fecha actual en formato 'YYYY-MM-DD'
             $fecha_resta_un_dia = date('Y-m-d', strtotime($fecha_actual . ' -1 day'));
 
-            $corte = tbl_produccion_corte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
+            $corte = TblProduccionCorte::where('fecha_inicio', '<=', $fecha_resta_un_dia)
                 ->where('fecha_fin', '>=', $fecha_resta_un_dia)
                 ->first();
                // session()->put('corteEnviar', $corte);
@@ -60,7 +60,7 @@ class FallidasController extends Controller
             $fechasIntermedias[] = $fecha->format('Y-m-d');
         }
 
-        $inspectores = tbl_insp_cali::orderBy('apellidos', 'asc')->get();
+        $inspectores = TblInspCali::orderBy('apellidos', 'asc')->get();
         // sacar produccion de cada inspector
         $fallidas = array();
 
@@ -76,7 +76,7 @@ class FallidasController extends Controller
                 $fechas[$date->format('Y-m-d')] = ""; // Inicializa todas las fechas con 0 contratos
             }
              // Realizar la consulta
-             $contratosPorDia = tbl_bitacora_fallida::where('CC_OPERARIO', '=', $inspector->cedula)
+             $contratosPorDia = TblBitacoraFallida::where('CC_OPERARIO', '=', $inspector->cedula)
              ->where( 'FECHA', '>=', $corte->fecha_inicio)
              ->where('FECHA', '<=', $corte->fecha_fin)
              ->where('TIPO_TRABAJO', '!=', 'FI-29 revisión periódica línea matriz')
@@ -152,7 +152,7 @@ class FallidasController extends Controller
     {
         $corte = session('corteEnviar');
 
-        $contratosDia = tbl_bitacora_fallida::selectRaw("tbl_bitacora_fallidas.id, CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_fallidas.CC_OPERARIO, tbl_bitacora_fallidas.MUNICIPIO, tbl_bitacora_fallidas.FECHA,
+        $contratosDia = TblBitacoraFallida::selectRaw("tbl_bitacora_fallidas.id, CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_fallidas.CC_OPERARIO, tbl_bitacora_fallidas.MUNICIPIO, tbl_bitacora_fallidas.FECHA,
         tbl_bitacora_fallidas.No_ACTA, tbl_bitacora_fallidas.TIPO_TRABAJO, tbl_bitacora_fallidas.CONTRATO, tbl_bitacora_fallidas.ORDEN_TRABAJO, tbl_bitacora_fallidas.ORDEN_EXT, tbl_bitacora_fallidas.CATEGORIA, tbl_bitacora_fallidas.RESULTADO_CIERRE")
         ->join('tbl_insp_cali', 'tbl_insp_cali.cedula', '=', 'tbl_bitacora_fallidas.CC_OPERARIO')
         ->where('tbl_bitacora_fallidas.CC_OPERARIO', '=', $inspector)

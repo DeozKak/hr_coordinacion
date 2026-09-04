@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Programacion\tbl_programacion_contrato;
+use App\Models\Programacion\TblProgramacionContrato;
 use App\Services\ProgramacionService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -36,7 +36,7 @@ class EjecutadasProgramacion extends Command
         $limite = Carbon::now()->subYears(self::ANOS_DE_VIGENCIA)->toDateString();
         $marcadas = 0;
 
-        $pendientes = tbl_programacion_contrato::where('EJECUTADA', 0)
+        $pendientes = TblProgramacionContrato::where('EJECUTADA', 0)
             ->where('FECHA_AGENDAMIENTO', '>=', date('Y-m-d'))
             ->get();
 

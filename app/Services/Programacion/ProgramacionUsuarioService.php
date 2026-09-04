@@ -2,9 +2,9 @@
 
 namespace App\Services\Programacion;
 
-use App\Models\Programacion\tbl_programacion_contrato;
-use App\Models\Programacion\tbl_programacion_usuario;
-use App\Models\tbl_insp_cali;
+use App\Models\Programacion\TblProgramacionContrato;
+use App\Models\Programacion\TblProgramacionUsuario;
+use App\Models\TblInspCali;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -21,11 +21,11 @@ class ProgramacionUsuarioService
     /**
      * Programaciones terminadas que le tocan a este usuario, y la que tenga a medias.
      *
-     * @return array{datos: Collection, enCurso: tbl_programacion_usuario|null}
+     * @return array{datos: Collection, enCurso: TblProgramacionUsuario|null}
      */
     public function listar(User $usuario): array
     {
-        $terminadas = tbl_programacion_usuario::where('finished', 1)->with('usuario');
+        $terminadas = TblProgramacionUsuario::where('finished', 1)->with('usuario');
 
         if (! $usuario->hasPermissionTo('ver_programacion')) {
             $terminadas->where('id_usuario', $usuario->id);
@@ -38,9 +38,9 @@ class ProgramacionUsuarioService
     }
 
     /** La programación que el usuario dejó a medias, si la hay. */
-    public function enCurso(User $usuario): ?tbl_programacion_usuario
+    public function enCurso(User $usuario): ?TblProgramacionUsuario
     {
-        return tbl_programacion_usuario::where('finished', 0)
+        return TblProgramacionUsuario::where('finished', 0)
             ->where('id_usuario', $usuario->id)
             ->first();
     }
@@ -50,10 +50,10 @@ class ProgramacionUsuarioService
      *
      * Se nombra con la fecha del día, que es como las distingue quien las usa.
      */
-    public function abrir(User $usuario): tbl_programacion_usuario
+    public function abrir(User $usuario): TblProgramacionUsuario
     {
         return DB::transaction(function () use ($usuario) {
-            $programacion = new tbl_programacion_usuario();
+            $programacion = new TblProgramacionUsuario();
             $programacion->nombre = 'Programación ' . Carbon::now()->format('Y-m-d');
             $programacion->id_usuario = $usuario->id;
             $programacion->save();
@@ -63,7 +63,7 @@ class ProgramacionUsuarioService
     }
 
     /** Reabre una programación terminada para poder seguir editándola. */
-    public function reabrir(tbl_programacion_usuario $programacion): void
+    public function reabrir(TblProgramacionUsuario $programacion): void
     {
         DB::transaction(function () use ($programacion) {
             $programacion->finished = 0;
@@ -74,7 +74,7 @@ class ProgramacionUsuarioService
     /** Los contratos de una programación. */
     public function contratos($id): Collection
     {
-        return tbl_programacion_contrato::where('id_programacion', $id)->get();
+        return TblProgramacionContrato::where('id_programacion', $id)->get();
     }
 
     /**
@@ -86,8 +86,8 @@ class ProgramacionUsuarioService
     public function eliminar($id): array
     {
         DB::transaction(function () use ($id) {
-            tbl_programacion_contrato::where('id_programacion', $id)->get()->each->delete();
-            tbl_programacion_usuario::find($id)?->delete();
+            TblProgramacionContrato::where('id_programacion', $id)->get()->each->delete();
+            TblProgramacionUsuario::find($id)?->delete();
         });
 
         return ['message' => 'Programación eliminada correctamente'];
@@ -96,7 +96,7 @@ class ProgramacionUsuarioService
     /** Inspectores activos, como los espera el formulario. */
     public function tecnicosActivos(): Collection
     {
-        return tbl_insp_cali::select('id', 'apellidos', 'nombres')
+        return TblInspCali::select('id', 'apellidos', 'nombres')
             ->where('state', 1)
             ->orderBy('apellidos')
             ->get();

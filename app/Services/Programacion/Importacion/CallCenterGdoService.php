@@ -3,7 +3,7 @@
 namespace App\Services\Programacion\Importacion;
 
 use App\Jobs\ProcessCallCenterGdo;
-use App\Models\Programacion\tbl_programacion_usuario;
+use App\Models\Programacion\TblProgramacionUsuario;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
@@ -49,10 +49,10 @@ class CallCenterGdoService
      * apunta a una programación que no llegó a guardarse dejaría el proceso
      * fallando en segundo plano sin que nadie se entere.
      */
-    public function encolar(UploadedFile $archivo): tbl_programacion_usuario
+    public function encolar(UploadedFile $archivo): TblProgramacionUsuario
     {
         return DB::transaction(function () use ($archivo) {
-            $programacion = new tbl_programacion_usuario();
+            $programacion = new TblProgramacionUsuario();
             $programacion->nombre = 'Programación GDO ' . Carbon::now()->format('Y-m-d');
             $programacion->id_usuario = Auth::id();
             $programacion->finished = self::EN_PROCESO;

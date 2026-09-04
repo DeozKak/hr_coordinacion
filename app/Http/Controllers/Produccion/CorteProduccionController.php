@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Produccion;
 
 use App\Http\Controllers\Controller;
-use App\Models\Bitacoras\tbl_bitacoras_causal;
-use App\Models\Produccion\tbl_produccion_corte;
-use App\Models\Produccion\tbl_produccion_historico;
-use App\Models\Produccion\tbl_produccion_zona;
-use App\Models\Zonificacion\tbl_localidades_sede;
+use App\Models\Bitacoras\TblBitacorasCausal;
+use App\Models\Produccion\TblProduccionCorte;
+use App\Models\Produccion\TblProduccionHistorico;
+use App\Models\Produccion\TblProduccionZona;
+use App\Models\Zonificacion\TblLocalidadesSede;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -19,10 +19,10 @@ class CorteProduccionController extends Controller
 
     public function index()
     {
-        $cortes = tbl_produccion_corte::all();
-        $sedes = tbl_localidades_sede::all();
-        $zonas = tbl_produccion_zona::all();
-        $causales = tbl_bitacoras_causal::all();
+        $cortes = TblProduccionCorte::all();
+        $sedes = TblLocalidadesSede::all();
+        $zonas = TblProduccionZona::all();
+        $causales = TblBitacorasCausal::all();
 
         return view('corte.index', compact('cortes', 'sedes', 'zonas', 'causales'));
     }
@@ -68,7 +68,7 @@ class CorteProduccionController extends Controller
 
         try {
             DB::beginTransaction();
-            $corte = new tbl_produccion_corte();
+            $corte = new TblProduccionCorte();
             $corte->nombre = $request->nombre;
             $corte->fecha_inicio = $request->fecha_inicio;
             $corte->fecha_fin = $request->fecha_fin;
@@ -76,7 +76,7 @@ class CorteProduccionController extends Controller
             $corte->dobles = $request->dobles;
 
             //Validación de duplicados
-            $duplicado = tbl_produccion_corte::where(function ($query) use ($corte) {
+            $duplicado = TblProduccionCorte::where(function ($query) use ($corte) {
                 $query->whereBetween('fecha_inicio', [$corte->fecha_inicio, $corte->fecha_fin])
                     ->orWhereBetween('fecha_fin', [$corte->fecha_inicio, $corte->fecha_fin])
                     ->orWhere(function ($q) use ($corte) {
@@ -101,7 +101,7 @@ class CorteProduccionController extends Controller
 
             $corte->save();
 
-            $historicos = new tbl_produccion_historico();
+            $historicos = new TblProduccionHistorico();
             $historicos->id_corte = $corte->id;
             $historicos->save();
             DB::commit();
@@ -116,14 +116,14 @@ class CorteProduccionController extends Controller
 
     public function editCorte($id)
     {
-        $corte = tbl_produccion_corte::find($id);
+        $corte = TblProduccionCorte::find($id);
         return response()->json([$corte]);
     }
 
 
     public function updateCorte(Request $request, $id)
     {
-        $corte = tbl_produccion_corte::find($id);
+        $corte = TblProduccionCorte::find($id);
         $corte->nombre = $request->nombre;
         $corte->fecha_inicio = $request->fecha_inicio;
         $corte->fecha_fin = $request->fecha_fin;
@@ -147,7 +147,7 @@ class CorteProduccionController extends Controller
         }
 
         // 3. Validar que el rango de fechas no se solape con otro existente
-        $solapamiento = tbl_produccion_corte::where(function ($query) use ($corte) {
+        $solapamiento = TblProduccionCorte::where(function ($query) use ($corte) {
             $query->whereBetween('fecha_inicio', [$corte->fecha_inicio, $corte->fecha_fin])
                 ->orWhereBetween('fecha_fin', [$corte->fecha_inicio, $corte->fecha_fin])
                 ->orWhere(function ($q) use ($corte) {
@@ -170,7 +170,7 @@ class CorteProduccionController extends Controller
 
     // ------------------- CRUD TABLA tbl_localidades_sede ----------------------------------
 
-    public function storeSede(Request $request, tbl_localidades_sede $sede)
+    public function storeSede(Request $request, TblLocalidadesSede $sede)
     {
         // Validar los datos enviados en la solicitud
         $validator = Validator::make(
@@ -221,7 +221,7 @@ class CorteProduccionController extends Controller
     public function editSede($id)
     {
         try {
-            $sede = tbl_localidades_sede::find($id);
+            $sede = TblLocalidadesSede::find($id);
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
@@ -256,7 +256,7 @@ class CorteProduccionController extends Controller
             DB::beginTransaction();
 
             // Buscar la sede por ID
-            $sede = tbl_localidades_sede::find($id);
+            $sede = TblLocalidadesSede::find($id);
 
             // Verificar si la sede existe
             if (!$sede) {
@@ -289,7 +289,7 @@ class CorteProduccionController extends Controller
 
     // ------------------- CRUD TABLA tbl_produccion_zona ----------------------------------
 
-    public function storeZona(Request $request, tbl_produccion_zona $zona)
+    public function storeZona(Request $request, TblProduccionZona $zona)
     {
         // Validar los datos enviados en la solicitud
         $validator = Validator::make(
@@ -340,7 +340,7 @@ class CorteProduccionController extends Controller
     public function editZona($id)
     {
         try {
-            $zona = tbl_produccion_zona::find($id);
+            $zona = TblProduccionZona::find($id);
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
@@ -374,7 +374,7 @@ class CorteProduccionController extends Controller
             DB::beginTransaction();
 
             // Buscar la zona por ID
-            $zona = tbl_produccion_zona::find($id);
+            $zona = TblProduccionZona::find($id);
 
             // Verificar si la zona existe
             if (!$zona) {
@@ -407,7 +407,7 @@ class CorteProduccionController extends Controller
 
     // ------------------- CRUD TABLA tbl_bitacoras_causal ----------------------------------
 
-    public function storeCausal(Request $request, tbl_bitacoras_causal $causal)
+    public function storeCausal(Request $request, TblBitacorasCausal $causal)
     {
         // Validar los datos enviados en la solicitud
         $validator = Validator::make(
@@ -458,7 +458,7 @@ class CorteProduccionController extends Controller
     public function editCausal($id)
     {
         try {
-            $causal = tbl_bitacoras_causal::find($id);
+            $causal = TblBitacorasCausal::find($id);
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
@@ -493,7 +493,7 @@ class CorteProduccionController extends Controller
             DB::beginTransaction();
 
             // Buscar el causal por ID
-            $causal = tbl_bitacoras_causal::find($id);
+            $causal = TblBitacorasCausal::find($id);
 
             // Verificar si el causal existe
             if (!$causal) {
@@ -530,7 +530,7 @@ class CorteProduccionController extends Controller
     {
         try {
             $id = intval($request->input('id'));
-            $sede = tbl_localidades_sede::find($id);
+            $sede = TblLocalidadesSede::find($id);
 
             if (!$sede) {
                 return response()->json(['error' => 'Sede no encontrada'], 404);
@@ -553,7 +553,7 @@ class CorteProduccionController extends Controller
     {
         try {
             $id = intval($request->input('id'));
-            $zona = tbl_produccion_zona::find($id);
+            $zona = TblProduccionZona::find($id);
 
             if (!$zona) {
                 return response()->json(['error' => 'Zona no encontrada'], 404);
@@ -576,7 +576,7 @@ class CorteProduccionController extends Controller
     {
         try {
             $id = intval($request->input('id'));
-            $causal = tbl_bitacoras_causal::find($id);
+            $causal = TblBitacorasCausal::find($id);
 
             if (!$causal) {
                 return response()->json(['error' => 'Causal no encontrada'], 404);

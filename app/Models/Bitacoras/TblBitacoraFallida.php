@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Bitacoras;
 
 use Illuminate\Database\Eloquent\Model;
 
-class tbl_quejas_contrato extends Model
+class TblBitacoraFallida extends Model
 {
-
     protected $fillable = [
         'NOMBRE',
+        'id',
         'CC_OPERARIO',
         'MUNICIPIO',
         'FECHA',
@@ -19,5 +19,10 @@ class tbl_quejas_contrato extends Model
         'ORDEN_EXT',
         'CATEGORIA',
         'RESULTADO_CIERRE',
+        'created_at',
+        'updated_at',
+        'id_bitacora',
+        'id_usuario',
+        'id_super'
     ];
 }

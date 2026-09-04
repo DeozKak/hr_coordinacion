@@ -2,7 +2,7 @@
 
 namespace App\Notifications;
 
-use App\Models\Bitacoras\tbl_bitacora_archivo;
+use App\Models\Bitacoras\TblBitacoraArchivo;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -41,7 +41,7 @@ class Mod_Devolucion extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $archivo = tbl_bitacora_archivo::where('id',$this->bitacora)->first();
+        $archivo = TblBitacoraArchivo::where('id',$this->bitacora)->first();
 
         return (new MailMessage)
         ->subject("Contrato " . $this->contrato . '  Gestionado')

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\DB;
-use App\Models\asignadas_quejas;
+use App\Models\AsignadasQuejas;
 
 class CoordinacionPQRSImportService
 {
@@ -149,14 +149,14 @@ class CoordinacionPQRSImportService
             $batch[] = $mapRowFunc($cells);
 
             if (count($batch) >= $batchSize) {
-                asignadas_quejas::insertOrIgnore($batch);
+                AsignadasQuejas::insertOrIgnore($batch);
                 $batch = [];
             }
         }
 
         // Insertar los registros sobrantes
         if (count($batch) > 0) {
-            asignadas_quejas::insertOrIgnore($batch);
+            AsignadasQuejas::insertOrIgnore($batch);
         }
 
     }
@@ -187,7 +187,7 @@ class CoordinacionPQRSImportService
             if ($numeroOrden && $contrato) {
 
                 // Buscamos si existe la orden en la tabla
-                $queja = asignadas_quejas::where('NUMERO_ORDEN', $numeroOrden)
+                $queja = AsignadasQuejas::where('NUMERO_ORDEN', $numeroOrden)
                     ->where('CONTRATO', $contrato)
                     ->first();
 

@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Console\Commands;
-use App\Models\Bitacoras\tbl_dv_insp;
+use App\Models\Bitacoras\TblDvInsp;
 use DateTime;
 use Illuminate\Console\Command;
 
@@ -25,7 +25,7 @@ class dev_clean extends Command
 
     public function handle()
     {
-        $gestionadas = tbl_dv_insp::where('ACTIVADO', 1)
+        $gestionadas = TblDvInsp::where('ACTIVADO', 1)
         ->where('GESTIONADO', 1)
         ->get();
 
@@ -33,7 +33,7 @@ class dev_clean extends Command
             $gestionada->ACTIVADO = 0;
             $gestionada->save();
         }
-        $devoluciones = Tbl_dv_insp::where('ACTIVADO', 1)->get();
+        $devoluciones = TblDvInsp::where('ACTIVADO', 1)->get();
         foreach ($devoluciones as $devolucion) {
             if ($devolucion->GESTIONADO == 1) {
                 $devolucion->DIAS_SIN_GESTION = 0;

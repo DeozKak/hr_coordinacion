@@ -4,8 +4,9 @@ namespace App\Models\Produccion;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
-class TblProduccionHistorico extends Model
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+class TblProduccionHistorico extends Model implements AuditableContract
 {
-    use HasFactory;
+    use HasFactory,AuditableTrait;
 }

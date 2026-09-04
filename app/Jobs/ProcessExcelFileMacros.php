@@ -11,7 +11,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use App\Models\Programacion\tbl_programacion_base;
+use App\Models\Programacion\TblProgramacionBase;
 use App\Notifications\ProcesamientoMacro;
 
 class ProcessExcelFileMacros implements ShouldQueue
@@ -77,16 +77,16 @@ class ProcessExcelFileMacros implements ShouldQueue
                         switch ($rowDataArray[16]) {
                             case '12161':
                             case '10444':
-                                tbl_programacion_base::whereIn('ID_TIPO_TRABAJO', ['10444', '12161'])->delete();
+                                TblProgramacionBase::whereIn('ID_TIPO_TRABAJO', ['10444', '12161'])->delete();
                                 $indicador = 'RP';
                                 break;
                             case '12163':
                             case '12164':
-                                tbl_programacion_base::whereIn('ID_TIPO_TRABAJO', ['12163', '12164'])->delete();
+                                TblProgramacionBase::whereIn('ID_TIPO_TRABAJO', ['12163', '12164'])->delete();
                                 $indicador = 'SA';
                                 break;
                             default:
-                                tbl_programacion_base::whereIn('ID_TIPO_TRABAJO', ['12162'])->delete();
+                                TblProgramacionBase::whereIn('ID_TIPO_TRABAJO', ['12162'])->delete();
                                 $indicador = 'RN';
                                 break;
                         }
@@ -198,7 +198,7 @@ class ProcessExcelFileMacros implements ShouldQueue
         // En un Job, es mejor envolver cada lote en su propia transacción.
         DB::transaction(function () use ($registros) {
 
-            tbl_programacion_base::insertOrIgnore($registros);
+            TblProgramacionBase::insertOrIgnore($registros);
             // O usa upsert si es lo que necesitas
         });
     }

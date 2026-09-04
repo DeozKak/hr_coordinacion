@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class tbl_queja extends Model
+class TblQueja extends Model
 {
     //
 }

@@ -2,7 +2,7 @@
 
 namespace App\Notifications;
 
-use App\Models\Programacion\tbl_programacion_usuario;
+use App\Models\Programacion\TblProgramacionUsuario;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -39,7 +39,7 @@ class Programada extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $archivo = tbl_programacion_usuario::where('id',$this->programacion)->first();
+        $archivo = TblProgramacionUsuario::where('id',$this->programacion)->first();
 
         return (new MailMessage)
         ->subject( 'Tabla '.$archivo->nombre.' | Generada')

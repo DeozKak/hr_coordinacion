@@ -6,11 +6,11 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
-use App\Models\tbl_insp_cali;
-use App\Models\Bitacoras\tbl_bitacora_contrato;
-use App\Models\Bitacoras\tbl_bitacora_fallida;
-use App\Models\Stickers\tbl_inspector_sticker;
-use App\Models\Stickers\tbl_sticker_tipo;
+use App\Models\TblInspCali;
+use App\Models\Bitacoras\TblBitacoraContrato;
+use App\Models\Bitacoras\TblBitacoraFallida;
+use App\Models\Stickers\TblInspectorSticker;
+use App\Models\Stickers\TblStickerTipo;
 use App\Models\Stickers\TblStickerActaSerial;
 use Rmunate\Calendario\CalendarioColombia;
 
@@ -78,7 +78,7 @@ class Actualizar_Stickers extends Command
         $ACTAS = 'ACTAS';
         // Ajusta el nombre del campo si tu tabla de tipos usa otro en vez de "nombre" (por ejemplo "NOMBRE")
         $tiposNecesarios = [$AMARILLO, $ROJO, $SUSPENSION, $ISOMETRICOS, $VISITA, $ACTAS];
-        $tipos = tbl_sticker_tipo::query()
+        $tipos = TblStickerTipo::query()
             ->whereIn('nombre', $tiposNecesarios)
             ->pluck('id', 'nombre');
 
@@ -89,7 +89,7 @@ class Actualizar_Stickers extends Command
         }
 
         // Se quita ->with() porque no existen esas relaciones en el modelo compartido
-        $inspectores = tbl_insp_cali::query()
+        $inspectores = TblInspCali::query()
             ->where('state', 1)
             ->get();
 
@@ -127,7 +127,7 @@ class Actualizar_Stickers extends Command
                 continue;
             }
 
-            $rows = tbl_bitacora_contrato::query()
+            $rows = TblBitacoraContrato::query()
                 ->select('RESULTADO_CIERRE', DB::raw('COUNT(*) as total'))
                 ->whereBetween('created_at', [
                     $inicioRango->startOfDay(),
@@ -140,7 +140,7 @@ class Actualizar_Stickers extends Command
                 ->get();
 
             // <<< CAMBIO: Consulta 2: Solo para contar trabajos de Línea Matriz
-            $conteoLineaMatriz = tbl_bitacora_contrato::query()
+            $conteoLineaMatriz = TblBitacoraContrato::query()
                 ->whereBetween('created_at', [
                     $inicioRango->startOfDay(),
                     $finRango->endOfDay()
@@ -149,7 +149,7 @@ class Actualizar_Stickers extends Command
                 ->whereIn('TIPO_TRABAJO', $tipos_linea_matriz) // Se usa whereIn para buscar estos tipos
                 ->count(); // Usamos count() para obtener directamente el número total
             //Visitas Fallidas
-            $conteoFallidas = tbl_bitacora_fallida::whereBetween('created_at', [
+            $conteoFallidas = TblBitacoraFallida::whereBetween('created_at', [
                 $inicioRango->startOfDay(),
                 $finRango->endOfDay()
             ])
@@ -160,7 +160,7 @@ class Actualizar_Stickers extends Command
             $actas = TblStickerActaSerial::where('id_inspector', $inspector->id)->get();
             if (!$actas->isEmpty()) {
                 foreach ($actas as $acta) {
-                    $Bitacora = tbl_bitacora_contrato::query()
+                    $Bitacora = TblBitacoraContrato::query()
                         ->whereBetween('created_at', [
                             $inicioRango->startOfDay(),
                             $finRango->endOfDay()
@@ -233,7 +233,7 @@ class Actualizar_Stickers extends Command
                         return;
                     }
 
-                    $inv = tbl_inspector_sticker::query()->firstOrCreate(
+                    $inv = TblInspectorSticker::query()->firstOrCreate(
                         [
                             'id_inspector' => $inspector->id,
                             'id_sticker_tipo' => $tipoId,

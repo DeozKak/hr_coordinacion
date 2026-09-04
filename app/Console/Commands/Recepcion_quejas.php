@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\asignadas_quejas;
+use App\Models\AsignadasQuejas;
 use Illuminate\Console\Command;
 use App\Services\PQRS\CoordinacionUpdateRecepcion;
 class Recepcion_quejas extends Command
@@ -24,7 +24,7 @@ class Recepcion_quejas extends Command
 
     public function handle()
     {
-        $query = asignadas_quejas::select("*")->where('estado', 1);
+        $query = AsignadasQuejas::select("*")->where('estado', 1);
         $completeData = $query->get();
 
         CoordinacionUpdateRecepcion::Responsables($completeData);

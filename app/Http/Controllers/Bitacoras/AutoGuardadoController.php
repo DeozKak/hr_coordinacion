@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\Bitacoras;
 
 use App\Http\Controllers\Controller;
-use App\Models\Bitacoras\tbl_bitacora_archivo;
-use App\Models\Bitacoras\tbl_bitacoras_causal;
-use App\Models\Bitacoras\tbl_dv_insp;
-use App\Models\Bitacoras\tbl_temp_contrato;
-use App\Models\Bitacoras\tbl_temp_fallida;
-use App\Models\tbl_insp_cali;
-use App\Models\tbl_quejas_contrato;
+use App\Models\Bitacoras\TblBitacoraArchivo;
+use App\Models\Bitacoras\TblBitacorasCausal;
+use App\Models\Bitacoras\TblDvInsp;
+use App\Models\Bitacoras\TblTempContrato;
+use App\Models\Bitacoras\TblTempFallida;
+use App\Models\TblInspCali;
+use App\Models\TblQuejasContrato;
 use App\Models\User;
-use App\Models\Zonificacion\tbl_localidades_municipio;
+use App\Models\Zonificacion\TblLocalidadesMunicipio;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -21,14 +21,14 @@ class AutoGuardadoController extends Controller
     public function buscar($nombre)
     {
 
-        $archivo = tbl_bitacora_archivo::where('NOMBRE_ARCHIVO', $nombre)
+        $archivo = TblBitacoraArchivo::where('NOMBRE_ARCHIVO', $nombre)
             ->where('finished', '=', '1')->exists();
 
         if ($archivo) {
             return response()->json(['error' => 'El archivo seleccionado ya ha sido procesado']);
         }
 
-        $proceso = tbl_bitacora_archivo::where('NOMBRE_ARCHIVO', $nombre)
+        $proceso = TblBitacoraArchivo::where('NOMBRE_ARCHIVO', $nombre)
             ->where('finished', '=', '0')->exists();
 
         if ($proceso) {
@@ -45,9 +45,9 @@ class AutoGuardadoController extends Controller
 
 
         try {
-            $bitacora = tbl_bitacora_archivo::where('id_usuario', $usuario->id)->where('finished', '=', 0)->first();
+            $bitacora = TblBitacoraArchivo::where('id_usuario', $usuario->id)->where('finished', '=', 0)->first();
             if (!$bitacora) {
-                $bitacora = new tbl_bitacora_archivo();
+                $bitacora = new TblBitacoraArchivo();
                 $bitacora->id_usuario = $usuario->id;
                 $bitacora->NOMBRE_ARCHIVO = $rutaArchivoFinal;
                 $bitacora->ruta_archivo = 'storage/app/uploads/' . $nombreArchivo;
@@ -213,13 +213,13 @@ class AutoGuardadoController extends Controller
                 foreach ($DatosQuejas as $cc => $inspecciones) {
                     foreach ($inspecciones as $inspeccion) {
 
-                        $existe = tbl_quejas_contrato::where('CONTRATO', $inspeccion['H'])
+                        $existe = TblQuejasContrato::where('CONTRATO', $inspeccion['H'])
                             ->where('ORDEN_TRABAJO', $inspeccion['I'])
                             ->where('No_ACTA', $inspeccion['E'])
                             ->where('TIPO_TRABAJO', $inspeccion['G'])
                             ->exists();
                         if (!$existe) {
-                            tbl_quejas_contrato::create([
+                            TblQuejasContrato::create([
                                 'NOMBRE' => $inspeccion['A'],
                                 'CC_OPERARIO' => $inspeccion['B'],
                                 'MUNICIPIO' => $inspeccion['C'],
@@ -240,13 +240,13 @@ class AutoGuardadoController extends Controller
                 foreach ($DatosFallidas as $cc => $inspecciones) {
                     foreach ($inspecciones as $inspeccion) {
 
-                        $existe = tbl_temp_fallida::where('CONTRATO', $inspeccion['H'])
+                        $existe = TblTempFallida::where('CONTRATO', $inspeccion['H'])
                             ->where('ORDEN_TRABAJO', $inspeccion['I'])
                             ->where('No_ACTA', $inspeccion['E'])
                             ->where('TIPO_TRABAJO', $inspeccion['G'])
                             ->exists();
                         if (!$existe) {
-                            tbl_temp_fallida::create([
+                            TblTempFallida::create([
                                 'NOMBRE' => $inspeccion['A'],
                                 'CC_OPERARIO' => $inspeccion['B'],
                                 'MUNICIPIO' => $inspeccion['C'],
@@ -271,7 +271,7 @@ class AutoGuardadoController extends Controller
 
                 foreach ($inspecciones as $inspeccion) {
 
-                    $existe = tbl_temp_contrato::where('CONTRATO', $inspeccion['H'])
+                    $existe = TblTempContrato::where('CONTRATO', $inspeccion['H'])
                         ->where('ORDEN_TRABAJO', $inspeccion['I'])
                         ->where('No_ACTA', $inspeccion['E'])
                         ->where('TIPO_TRABAJO', $inspeccion['G'])
@@ -285,7 +285,7 @@ class AutoGuardadoController extends Controller
 
                         //  Definimos los valores que también deben ser considerados como 'NO'.
                         $valoresInvalidos = ['1', '2', '3'];
-                        $contrato_devolucion = tbl_dv_insp::where('CONTRATO', $inspeccion['H'])
+                        $contrato_devolucion = TblDvInsp::where('CONTRATO', $inspeccion['H'])
                             ->where('GESTIONADO','=','0')->exists();
                         $g_devolucion_val = $contrato_devolucion ? 1 : 0;
                         //  Verificamos si la clave 'S' existe y si su valor no está en la lista de inválidos.
@@ -294,7 +294,7 @@ class AutoGuardadoController extends Controller
                             $valorRecintos = $inspeccion['S'];
                         }
 
-                        tbl_temp_contrato::create([
+                        TblTempContrato::create([
                             'NOMBRE' => $inspeccion['A'],
                             'CC_OPERARIO' => $inspeccion['B'],
                             'MUNICIPIO' => $inspeccion['C'],
@@ -319,7 +319,7 @@ class AutoGuardadoController extends Controller
                     }
                 }
             }
-            $datosDB = tbl_temp_contrato::where('id_bitacora', $bitacora->id)->get();
+            $datosDB = TblTempContrato::where('id_bitacora', $bitacora->id)->get();
         } catch (\Exception $e) {
             throw $e;
         }
@@ -329,7 +329,7 @@ class AutoGuardadoController extends Controller
     public function Restaurar($id_bitacora)
     {
         try {
-            $archivo = tbl_bitacora_archivo::select('finished')->where('id', $id_bitacora)->first();
+            $archivo = TblBitacoraArchivo::select('finished')->where('id', $id_bitacora)->first();
 
             if ($archivo->finished === 1) {
                 return null;
@@ -338,9 +338,9 @@ class AutoGuardadoController extends Controller
             return redirect()->route('bitacora')->with('error', 'Error en el proceso');
         }
         try {
-            $super = tbl_temp_contrato::select('id_super')->where('id_bitacora', $id_bitacora)->first();
+            $super = TblTempContrato::select('id_super')->where('id_bitacora', $id_bitacora)->first();
             $id_super = $super->id_super;
-            $inspectores = tbl_insp_cali::where('SUPERVISOR', $id_super)
+            $inspectores = TblInspCali::where('SUPERVISOR', $id_super)
                 ->where('state', 1)
                 ->orderBy('apellidos', 'asc')
                 ->get();
@@ -356,9 +356,9 @@ class AutoGuardadoController extends Controller
 
         session(['ids_inspectores' => $ids]);
 
-        $municipios = tbl_localidades_municipio::all();
-        $response = tbl_temp_contrato::where('id_bitacora', $id_bitacora)->get();
-        $causales = tbl_bitacoras_causal::all();
+        $municipios = TblLocalidadesMunicipio::all();
+        $response = TblTempContrato::where('id_bitacora', $id_bitacora)->get();
+        $causales = TblBitacorasCausal::all();
 
         return view('bitacoras.tabla', compact('response', 'nombres', 'municipios', 'causales', 'id_super', 'inspectores', 'cedulas'));
     }
@@ -366,15 +366,15 @@ class AutoGuardadoController extends Controller
     public function Borrar($id_bitacora)
     {
         try {
-            $contratos = tbl_temp_contrato::where('id_bitacora', $id_bitacora)->get();
-            $fallidas = tbl_temp_fallida::where('id_bitacora', $id_bitacora)->get();
+            $contratos = TblTempContrato::where('id_bitacora', $id_bitacora)->get();
+            $fallidas = TblTempFallida::where('id_bitacora', $id_bitacora)->get();
             foreach ($contratos as $contrato) {
                 $contrato->delete();
             }
             foreach ($fallidas as $fallida) {
                 $fallida->delete();
             }
-            $archivo = tbl_bitacora_archivo::where('id', $id_bitacora)->first();
+            $archivo = TblBitacoraArchivo::where('id', $id_bitacora)->first();
             $archivo->delete();
         } catch (\Exception $e) {
             throw $e;
@@ -389,7 +389,7 @@ class AutoGuardadoController extends Controller
         $valor = $request->valor;
 
         try {
-            $contrato = tbl_temp_contrato::find($id);
+            $contrato = TblTempContrato::find($id);
 
             $contrato->$campo = $valor;
             $contrato->save();
@@ -409,7 +409,7 @@ class AutoGuardadoController extends Controller
                 $datos['cantidadRecintos'] = "NO";
             }
 
-            $contrato = new tbl_temp_contrato();
+            $contrato = new TblTempContrato();
             $contrato->NOMBRE = $datos['nombre'];
             $contrato->CC_OPERARIO = $datos['cedula'];
             $contrato->MUNICIPIO = $datos['municipio'];
