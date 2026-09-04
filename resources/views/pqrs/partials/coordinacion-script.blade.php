@@ -130,6 +130,19 @@ document.addEventListener('alpine:init', () => {
                 if (texto) td.style.setProperty('color', texto, 'important');
             };
 
+            /* El color del semáforo, o null si a esta fila no le toca ninguno. */
+            const colorDelSemaforo = (recepcion, dias) => {
+                if (recepcion === 'ACCEDE' || recepcion === 'NO ACCEDE') return '#90EE90';
+                if (recepcion === 'NO PROCEDENTE')                      return '#83b7f1';
+                if (dias === null || dias === '')                       return null;
+
+                const diasNum = parseInt(dias, 10);
+                if (diasNum === 0)                       return '#ff9535';
+                if (diasNum <= 0)                        return '#ff8493';
+                if (diasNum === 2 || diasNum === 1)      return '#f8f849';
+                return null;
+            };
+
             Handsontable.renderers.registerRenderer('contratoRenderer',
                 function (instance, td, row, col, prop, value, cellProperties) {
                     Handsontable.renderers.TextRenderer.apply(this, arguments);
@@ -139,29 +152,28 @@ document.addEventListener('alpine:init', () => {
                     const recepcion    = instance.getDataAtCell(row, recepcionCol);
                     const dias         = instance.getDataAtCell(row, diasCol);
 
-                    // Estado base
                     td.style.removeProperty('background-color');
-                    td.style.setProperty('color', '#1e293b', 'important');
                     td.style.fontWeight = 'normal';
                     td.title = '';
 
-                    // 1. Contratos repetidos
-                    if (value && self.conteoContratos[value] > 1) {
-                        td.style.setProperty('color', '#d32f2f', 'important');
-                        td.style.fontWeight = 'bold';
-                        td.title = `¡Atención! Este contrato está repetido ${self.conteoContratos[value]} veces.`;
+                    const fondo = colorDelSemaforo(recepcion, dias);
+
+                    /* Los cinco colores del semáforo son claros en los dos modos,
+                       así que encima el texto va oscuro siempre. Sin fondo propio
+                       manda el tema, que ya sabe de claro y oscuro: antes aquí se
+                       fijaba #1e293b a pelo, que es justo el fondo de la tabla en
+                       oscuro, y los contratos sin color desaparecían. */
+                    if (fondo) {
+                        pintar(td, fondo, '#1e293b');
+                    } else {
+                        td.style.setProperty('color', 'var(--ht-read-only-color)', 'important');
                     }
 
-                    // 2. Semáforo por recepción / días restantes
-                    if (recepcion === 'ACCEDE' || recepcion === 'NO ACCEDE') {
-                        pintar(td, '#90EE90');
-                    } else if (recepcion === 'NO PROCEDENTE') {
-                        pintar(td, '#83b7f1');
-                    } else if (dias !== null && dias !== '') {
-                        const diasNum = parseInt(dias, 10);
-                        if (diasNum === 0)              pintar(td, '#ff9535');
-                        else if (diasNum <= 0)          pintar(td, '#ff8493');
-                        else if (diasNum === 2 || diasNum === 1) pintar(td, '#f8f849');
+                    // Contratos repetidos, por encima de lo anterior.
+                    if (value && self.conteoContratos[value] > 1) {
+                        pintar(td, null, fondo ? '#d32f2f' : 'var(--ht-alerta-color)');
+                        td.style.fontWeight = 'bold';
+                        td.title = `¡Atención! Este contrato está repetido ${self.conteoContratos[value]} veces.`;
                     }
                 });
 

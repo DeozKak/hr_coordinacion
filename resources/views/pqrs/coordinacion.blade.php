@@ -86,7 +86,7 @@
                     </span>
                 @endforeach
                 <span class="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-                    <span class="font-bold text-[#d32f2f]">123456</span> Contrato repetido
+                    <span class="font-bold text-[#d32f2f] dark:text-[#f87171]">123456</span> Contrato repetido
                 </span>
             </div>
         </section>

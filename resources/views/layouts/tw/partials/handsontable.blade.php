@@ -60,6 +60,11 @@
                 --ht-read-only-color: #334155;
                 --ht-disabled-color: #94a3b8;
 
+                /* Rojo del contrato repetido en PQRS. Va como token del tema y
+                   no fijo en el renderizador porque tiene que leerse sobre el
+                   fondo de la tabla, que cambia con el modo. */
+                --ht-alerta-color: #d32f2f;
+
                 --ht-header-background-color: #f8fafc;
                 --ht-header-foreground-color: #475569;
                 --ht-header-font-weight: 600;
@@ -113,6 +118,10 @@
                 --ht-cell-read-only-background-color: #1e293b;
                 --ht-read-only-color: #e2e8f0;
                 --ht-disabled-color: #64748b;
+
+                /* Más claro que en modo claro: el #d32f2f sobre #1e293b se
+                   queda en 2,7:1 y no se lee. */
+                --ht-alerta-color: #f87171;
 
                 --ht-header-background-color: #0f172a;
                 --ht-header-foreground-color: #a8b6c8;
