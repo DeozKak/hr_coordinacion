@@ -2,9 +2,8 @@
 
 namespace App\Http\Requests\Produccion;
 
-use Illuminate\Contracts\Validation\Validator;
+use App\Http\Requests\Concerns\TraduceFallosAEstado;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
 
 /**
  * Periodo de precios para el cálculo de nómina.
@@ -23,10 +22,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
  */
 class ParametrosPreciosRequest extends FormRequest
 {
-    /** Códigos que la pantalla ya sabe interpretar. */
-    private const ESTADO_FECHAS_OBLIGATORIAS = 1;
-
-    private const ESTADO_DATOS_INVALIDOS = 3;
+    use TraduceFallosAEstado;
 
     /** Los importes del periodo, todos con las mismas reglas. */
     private const IMPORTES = [
@@ -56,21 +52,8 @@ class ParametrosPreciosRequest extends FormRequest
         return $reglas;
     }
 
-    /**
-     * El orden de la comparación con la fecha de fin se deja al controlador,
-     * que ya devuelve el código 2 para ese caso.
-     */
-    protected function failedValidation(Validator $validador): void
+    protected function camposDeFecha(): array
     {
-        $fallanFechas = array_intersect(
-            array_keys($validador->errors()->toArray()),
-            ['fechaPrecioInicio', 'fechaPrecioFin']
-        );
-
-        throw new HttpResponseException(response()->json([
-            'status' => $fallanFechas !== []
-                ? self::ESTADO_FECHAS_OBLIGATORIAS
-                : self::ESTADO_DATOS_INVALIDOS,
-        ]));
+        return ['fechaPrecioInicio', 'fechaPrecioFin'];
     }
 }

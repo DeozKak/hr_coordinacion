@@ -9,6 +9,7 @@ use App\Services\PQRS\CoordinacionPQRSImportService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\PQRS\ActualizarAsignadoRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\PQRS\CoordinacionPQRSLectorHTML;
@@ -258,7 +259,7 @@ class CoordinacionPQRS extends Controller
 
     }
 
-    public function updateAsignado(Request $request)
+    public function updateAsignado(ActualizarAsignadoRequest $request)
     {
         $movitos_PQR = [
             '',

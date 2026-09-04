@@ -6,6 +6,9 @@ use App\Models\Nomina\TblNominaMultas;
 use App\Models\Nomina\TblParametroSalAux;
 use App\Models\Produccion\TblProduccionCorte;
 use App\Models\TblInspCali;
+use App\Http\Requests\Nomina\ActualizarParametrosSalarioAuxRequest;
+use App\Http\Requests\Nomina\GuardarMultaRodamientoRequest;
+use App\Http\Requests\Nomina\ParametrosSalarioAuxRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -94,7 +97,7 @@ class NominaController extends Controller
         return response()->json($produccionFiltrada);
     }
 
-    public function guardarMultaRodamiento(Request $request){
+    public function guardarMultaRodamiento(GuardarMultaRodamientoRequest $request){
         $multa = $request->input('multa');
         $fecha = $request->input('fecha');
         $cedulaOperario = $request->input('ccOperario');
@@ -140,7 +143,7 @@ class NominaController extends Controller
         return view('nomina.parametrizarSalarioAux', compact('parametroSalarioAux'));
     }
 
-    public function guardarSalarioAux(Request $request)
+    public function guardarSalarioAux(ParametrosSalarioAuxRequest $request)
     {
         $fechaInicio = $request->input('fechaSalAuxInicio');
         $fechaFin = $request->input('fechaSalAuxFin');
@@ -213,7 +216,7 @@ class NominaController extends Controller
         }
     }
 
-    public function actualizarSalarioAux(Request $request){
+    public function actualizarSalarioAux(ActualizarParametrosSalarioAuxRequest $request){
         $id = $request->input('id');
         $fechaInicio = $request->input('fechaSalAuxInicio');
         $fechaFin = $request->input('fechaSalAuxFin');
