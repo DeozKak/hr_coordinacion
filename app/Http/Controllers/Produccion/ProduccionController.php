@@ -15,6 +15,11 @@ use Carbon\Carbon;
 use DateInterval;
 use DatePeriod;
 use DateTime;
+use App\Http\Requests\Produccion\ActualizarDetalleDiarioRequest;
+use App\Http\Requests\Produccion\ContarDoblesSabadoRequest;
+use App\Http\Requests\Produccion\DatosDetallesRequest;
+use App\Http\Requests\Produccion\DoblesInspectorRequest;
+use App\Http\Requests\Produccion\InsertarContratoRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -255,7 +260,7 @@ class ProduccionController extends Controller
         return view('produccion.detalles', compact('municipios', 'corte'));
     }
 
-    public function datosDetalles(Request $request)
+    public function datosDetalles(DatosDetallesRequest $request)
     {
         $f = [];
         if (session('id_corte') || $request->idCorteDetalles) {
@@ -881,7 +886,7 @@ class ProduccionController extends Controller
         ]);
     }
 
-    public function ActualizarDetallesDiario(Request $request, $id)
+    public function ActualizarDetallesDiario(ActualizarDetalleDiarioRequest $request, $id)
     {
         $datos = null;
         $datos = $request->payload;
@@ -929,7 +934,7 @@ class ProduccionController extends Controller
         return response()->json(['success' => false, 'message' => 'Contrato no encontrado']);
     }
 
-    public function insertarContrato(Request $request)
+    public function insertarContrato(InsertarContratoRequest $request)
     {
         $fechaString = $request->data[4];
         $ccOperario = $request->data[2];
@@ -1018,7 +1023,7 @@ class ProduccionController extends Controller
         return ['error' => 'Bitácora no encontrada.'];
     }
 
-    public function guardarNoDobles(Request $request)
+    public function guardarNoDobles(DoblesInspectorRequest $request)
     {
         // Obtener datos desde la sesión y la solicitud
         $corte = session('corteEnviar');
@@ -1069,7 +1074,7 @@ class ProduccionController extends Controller
         $sqlProHis->save();
     }
 
-    public function contarDobles(Request $request)
+    public function contarDobles(DoblesInspectorRequest $request)
     {
         $corte = session('corteEnviar');
         $fecha = $request->input('fecha');
@@ -1095,7 +1100,7 @@ class ProduccionController extends Controller
         $sqlProHis->save();
     }
 
-    public function storeNotDoublesHolidays(Request $request)
+    public function storeNotDoublesHolidays(DoblesInspectorRequest $request)
     {
         // Recibimos las variables
         $corte = session('corteEnviar');
@@ -1172,7 +1177,7 @@ class ProduccionController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function countDoublesHolidays(Request $request)
+    public function countDoublesHolidays(DoblesInspectorRequest $request)
     {
         $corte = session('corteEnviar');
         $fecha = $request->input('fecha');
@@ -1199,7 +1204,7 @@ class ProduccionController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function countDoublesSaturday(Request $request)
+    public function countDoublesSaturday(ContarDoblesSabadoRequest $request)
     {
         $corte = session('corteEnviar');
         $ccInspector = $request->input('ccInspector');
@@ -1260,7 +1265,7 @@ class ProduccionController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function noContarDoblesSaturday(Request $request)
+    public function noContarDoblesSaturday(DoblesInspectorRequest $request)
     {
 
         $corte = session('corteEnviar');
