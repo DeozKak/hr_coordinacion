@@ -6,6 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Nomina\TblNominaFechas;
 use App\Models\Nomina\TblParametroPrecios;
 use App\Models\Produccion\TblInspeccionIndustrial;
+use App\Http\Requests\Produccion\ActualizarParametrosPreciosRequest;
+use App\Http\Requests\Produccion\GuardarProduccionRequest;
+use App\Http\Requests\Produccion\InspeccionIndustrialRequest;
+use App\Http\Requests\Produccion\InsertarMetasRequest;
+use App\Http\Requests\Produccion\ParametrosPreciosRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Rmunate\Calendario\CalendarioColombia;
@@ -236,7 +241,7 @@ class ReporteProduccionController extends Controller
         return response()->json($data);
     }
 
-    public function guardarProduccion(Request $request)
+    public function guardarProduccion(GuardarProduccionRequest $request)
     {
         $nuevaCant = $request->input('nuevaCant');
         $fecha = $request->input('fechaFila');
@@ -262,7 +267,7 @@ class ReporteProduccionController extends Controller
         }
     }
 
-    public function inspeccionIndustrial(Request $request)
+    public function inspeccionIndustrial(InspeccionIndustrialRequest $request)
     {
         $total = $request->input('totalFinal');
         $cantidad = $request->input('valor');
@@ -430,7 +435,7 @@ class ReporteProduccionController extends Controller
     }
 
 
-    public function insertarMetas(Request $request)
+    public function insertarMetas(InsertarMetasRequest $request)
     {
 
         $fecha = $request->input('anioMes');
@@ -558,7 +563,7 @@ class ReporteProduccionController extends Controller
         return response()->json($result);
     }
 
-    public function guardarFechasParametros(Request $request)
+    public function guardarFechasParametros(ParametrosPreciosRequest $request)
     {
         $fechaInicio = $request->input('fechaPrecioInicio');
         $fechaFin = $request->input('fechaPrecioFin');
@@ -628,7 +633,7 @@ class ReporteProduccionController extends Controller
         }
     }
 
-    public function actualizarFechasParametros(Request $request)
+    public function actualizarFechasParametros(ActualizarParametrosPreciosRequest $request)
     {
         $id = $request->input('id');
         $fechaInicio = $request->input('fechaPrecioInicio');

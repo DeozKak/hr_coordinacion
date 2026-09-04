@@ -8,6 +8,8 @@ use App\Models\Produccion\TblProduccionCorte;
 use App\Models\Produccion\TblProduccionHistorico;
 use App\Models\Produccion\TblProduccionZona;
 use App\Models\Zonificacion\TblLocalidadesSede;
+use App\Http\Requests\Produccion\ActualizarCorteRequest;
+use App\Http\Requests\Produccion\CambiarEstadoRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -121,7 +123,7 @@ class CorteProduccionController extends Controller
     }
 
 
-    public function updateCorte(Request $request, $id)
+    public function updateCorte(ActualizarCorteRequest $request, $id)
     {
         $corte = TblProduccionCorte::find($id);
         $corte->nombre = $request->nombre;
@@ -526,7 +528,7 @@ class CorteProduccionController extends Controller
 
     // ------------------- FUNCIONES CAMBIAR ESTADO ----------------------------------
 
-    public function changeStatusSede(Request $request)
+    public function changeStatusSede(CambiarEstadoRequest $request)
     {
         try {
             $id = intval($request->input('id'));
@@ -549,7 +551,7 @@ class CorteProduccionController extends Controller
     }
 
 
-    public function changeStatusZona(Request $request)
+    public function changeStatusZona(CambiarEstadoRequest $request)
     {
         try {
             $id = intval($request->input('id'));
@@ -572,7 +574,7 @@ class CorteProduccionController extends Controller
     }
 
 
-    public function changeStatusCausal(Request $request)
+    public function changeStatusCausal(CambiarEstadoRequest $request)
     {
         try {
             $id = intval($request->input('id'));
