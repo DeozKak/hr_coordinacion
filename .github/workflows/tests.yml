@@ -1,0 +1,110 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  suite:
+    name: Pruebas y estilo
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: segoperacion
+          MYSQL_ROOT_PASSWORD: root
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # pint compara contra la base del cambio
+
+      - name: Preparar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: dom, gd, zip, pdo_mysql, bcmath
+          coverage: none
+
+      - name: Instalar dependencias
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Preparar el entorno
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      # El volcado de esquema (create_* y add_foreign_keys_*) sí puede correrse
+      # entero aquí: la base arranca vacía, que es justo el caso para el que
+      # esas migraciones se escribieron. En local y en producción no, y para eso
+      # está `migraciones:marcar-aplicadas`.
+      - name: Montar la base
+        run: php artisan migrate --force
+        env:
+          # .env.example trae DB_CONNECTION=sqlite; sin sobrescribirlo, Laravel
+          # ignoraría el MySQL del servicio.
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: segoperacion
+          DB_USERNAME: root
+          DB_PASSWORD: root
+
+      # Sin esto, cualquier ruta con CheckPermission rechaza a todo el mundo y
+      # las pruebas que se autentican fallarían por una razón equivocada.
+      - name: Sembrar roles y permisos
+        run: php artisan db:seed --class=RolesYPermisosSeeder --force
+        env:
+          # .env.example trae DB_CONNECTION=sqlite; sin sobrescribirlo, Laravel
+          # ignoraría el MySQL del servicio.
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: segoperacion
+          DB_USERNAME: root
+          DB_PASSWORD: root
+
+      # Sólo los archivos que toca el cambio. El repositorio arrastra deuda de
+      # estilo previa —170 de 326 archivos— así que un `pint --test` completo
+      # estaría en rojo siempre y dejaría de significar nada. Así la puerta
+      # aplica a lo nuevo sin exigir arreglar el pasado de golpe.
+      - name: Estilo de lo que cambia
+        run: |
+          BASE="${{ github.event_name == 'pull_request'
+                    && github.event.pull_request.base.sha
+                    || github.event.before }}"
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            echo "Sin base con la que comparar; se omite."
+            exit 0
+          fi
+          ARCHIVOS=$(git diff --name-only --diff-filter=ACMR "$BASE" HEAD -- '*.php')
+          if [ -z "$ARCHIVOS" ]; then
+            echo "Ningún archivo PHP cambió."
+            exit 0
+          fi
+          echo "$ARCHIVOS"
+          echo "$ARCHIVOS" | xargs ./vendor/bin/pint --test
+
+      # Las pruebas que necesitan datos de operación (un contrato de bitácora,
+      # un corte, una queja) se saltan solas: aquí la base está vacía. Las de
+      # seguridad y validación crean lo suyo y sí corren.
+      - name: Pruebas
+        run: php artisan test
+        env:
+          # .env.example trae DB_CONNECTION=sqlite; sin sobrescribirlo, Laravel
+          # ignoraría el MySQL del servicio.
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: segoperacion
+          DB_USERNAME: root
+          DB_PASSWORD: root

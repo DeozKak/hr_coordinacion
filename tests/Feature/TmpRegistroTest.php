@@ -1,13 +1,38 @@
 <?php
+
 namespace Tests\Feature;
+
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 class TmpRegistroTest extends TestCase
 {
     use DatabaseTransactions;
+
+    /**
+     * Antes se usaba `$this->administrador()`, que ata la prueba a los datos de una base
+     * concreta: en una instalación limpia devuelve null y actingAs revienta.
+     */
+    private function administrador(): User
+    {
+        $admin = User::create([
+            'name' => 'Admin de prueba',
+            'email' => 'admin.'.uniqid().'@eyc.com.co',
+            'password' => Hash::make('secreto123'),
+            'type_id' => 'CC',
+            'identification' => (string) random_int(100000, 999999),
+            'state' => 1,
+        ]);
+
+        $admin->assignRole('admin');
+        $admin->givePermissionTo(Permission::where('name', 'gestion_usuarios')->firstOrFail());
+
+        return $admin;
+    }
 
     public function test_el_registro_ya_no_es_publico(): void
     {
@@ -27,7 +52,7 @@ class TmpRegistroTest extends TestCase
     public function test_con_el_enlace_firmado_si_se_puede(): void
     {
         $url = URL::temporarySignedRoute('register', now()->addDays(7));
-        $correo = 'invitada+' . uniqid() . '@eyc.com.co';
+        $correo = 'invitada+'.uniqid().'@eyc.com.co';
         $cedula = (string) random_int(900000000, 999999999);
 
         $this->get($url)->assertOk()->assertSee('Crear cuenta');
@@ -55,14 +80,14 @@ class TmpRegistroTest extends TestCase
     public function test_una_firma_manipulada_tampoco(): void
     {
         $url = URL::temporarySignedRoute('register', now()->addDays(7));
-        $this->get($url . 'x')->assertRedirect(route('login'));
+        $this->get($url.'x')->assertRedirect(route('login'));
     }
 
     public function test_solo_un_administrador_genera_el_enlace(): void
     {
         $this->post(route('admin.enlaceRegistro'))->assertRedirect(route('login'));
 
-        $r = $this->actingAs(User::find(1))->postJson(route('admin.enlaceRegistro'));
+        $r = $this->actingAs($this->administrador())->postJson(route('admin.enlaceRegistro'));
         $r->assertOk();
         $datos = $r->json();
         $this->assertStringContainsString('/register?', $datos['url']);
@@ -78,8 +103,8 @@ class TmpRegistroTest extends TestCase
     public function test_la_caducidad_se_mantiene_entre_1_y_30_dias(): void
     {
         foreach ([['dias' => 0, 'esperado' => 1], ['dias' => 999, 'esperado' => 30],
-                  ['dias' => 14, 'esperado' => 14]] as $caso) {
-            $r = $this->actingAs(User::find(1))
+            ['dias' => 14, 'esperado' => 14]] as $caso) {
+            $r = $this->actingAs($this->administrador())
                 ->postJson(route('admin.enlaceRegistro'), ['dias' => $caso['dias']]);
             $this->assertEquals($caso['esperado'], $r->json('dias'));
         }
