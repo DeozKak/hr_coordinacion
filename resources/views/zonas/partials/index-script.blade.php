@@ -331,10 +331,10 @@ document.addEventListener('alpine:init', () => {
                 const datos = r.data ?? [];
 
                 this.opciones = {
-                    municipio: this.unicos(datos, 'tbl_localidades_municipio', 'nombre'),
-                    grupo:     this.unicos(datos, 'tbl_grupo', 'grupo'),
-                    subgrupo:  this.unicos(datos, 'tbl_subgrupo', 'subgrupo'),
-                    barrio:    this.unicos(datos, 'tbl_barrios', 'barrio'),
+                    municipio: this.unicos(datos, 'municipio', 'nombre'),
+                    grupo:     this.unicos(datos, 'grupo', 'grupo'),
+                    subgrupo:  this.unicos(datos, 'subgrupo', 'subgrupo'),
+                    barrio:    this.unicos(datos, 'barrio', 'barrio'),
                     inspector: this.unicosInspectores(datos),
                 };
             } catch (e) {
@@ -380,11 +380,11 @@ document.addEventListener('alpine:init', () => {
 
                 this.filas = (r.data ?? []).map(fila => ({
                     id: fila.id ?? '',
-                    municipio: fila.tbl_localidades_municipio?.nombre ?? '',
-                    grupo: fila.tbl_grupo?.grupo ?? '',
-                    subgrupo: fila.tbl_subgrupo?.subgrupo ?? '',
-                    barrio: fila.tbl_barrios
-                        ? `${fila.tbl_barrios.id}. ${fila.tbl_barrios.barrio}`
+                    municipio: fila.municipio?.nombre ?? '',
+                    grupo: fila.grupo?.grupo ?? '',
+                    subgrupo: fila.subgrupo?.subgrupo ?? '',
+                    barrio: fila.barrio
+                        ? `${fila.barrio.id}. ${fila.barrio.barrio}`
                         : '',
                     inspectores: '',
                 }));

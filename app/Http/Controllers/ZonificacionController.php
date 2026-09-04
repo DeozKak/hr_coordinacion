@@ -143,8 +143,8 @@ class ZonificacionController extends Controller
         $subgrupo = $request->input('subgrupo');
         $inspector = $request->input('inspector');
         try {
-            $busqueda = TblgruposDetalle::with(['tbl_grupo', 'tbl_subgrupo',
-                'tbl_barrios', 'tbl_localidades_municipio','inspectores']);
+            $busqueda = TblgruposDetalle::with(['grupo', 'subgrupo',
+                'barrio', 'municipio', 'inspectores']);
             //$barrio = "PARQUE DE LA CAÑA";
             if ($municipio) {
                 $busqueda->where('id_mun', $municipio); // Filtra por el nombre del municipio
@@ -730,8 +730,8 @@ class ZonificacionController extends Controller
         $subgrupo = $request->input('subgrupo');
         $inspector = $request->input('inspector');
         try {
-            $busqueda = TblgruposDetalle::with(['tbl_grupo', 'tbl_subgrupo',
-                'tbl_barrios', 'tbl_localidades_municipio','inspectores']);
+            $busqueda = TblgruposDetalle::with(['grupo', 'subgrupo',
+                'barrio', 'municipio', 'inspectores']);
             //$barrio = "PARQUE DE LA CAÑA";
             if ($municipio) {
                 $busqueda->where('id_mun', $municipio); // Filtra por el nombre del municipio
