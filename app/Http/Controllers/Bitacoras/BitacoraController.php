@@ -20,6 +20,7 @@ use App\Models\Zonificacion\TblLocalidadesMunicipio;
 use App\Notifications\devolucion;
 use DateTime;
 use DOMDocument;
+use App\Http\Requests\Bitacoras\GuardarTablaRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -201,7 +202,7 @@ class BitacoraController extends Controller
         return view('bitacoras.tabla', compact('nombres', 'id_super', 'municipios', 'inspectores', 'causales', 'response', 'cedulas'));
     }
 
-    public function guardar_tabla(Request $request, User $super = null)
+    public function guardar_tabla(GuardarTablaRequest $request, User $super = null)
     {
 
         //variables que obtienen datos del request
