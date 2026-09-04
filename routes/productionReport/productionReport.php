@@ -25,7 +25,7 @@ Route::middleware('web')->group(function () {
         Route::get('/produccion/octubre', [ReporteProduccionController::class, 'showOctubre'])->name('produccion.octubre');
         Route::get('/produccion/noviembre', [ReporteProduccionController::class, 'showNoviembre'])->name('produccion.noviembre');
         Route::get('/produccion/diciembre', [ReporteProduccionController::class, 'showDiciembre'])->name('produccion.diciembre');
-        Route::post('/produccion/guardar', [ReporteProduccionController::class, 'guardarProduccion'])->name('produccion.guardar');
+        Route::post('/produccion/guardar', [ReporteProduccionController::class, 'guardarProduccion'])->name('produccion.guardar')->middleware(CheckPermission::class . ':reporte_produccion');
         Route::post('/produccion/inspeccionIndustrial', [ReporteProduccionController::class, 'inspeccionIndustrial'])->name('produccion.guardarInspeccionIndustrial')->middleware(CheckPermission::class . ':reporte_produccion');
         Route::post('/produccion/metas', [ReporteProduccionController::class, 'insertarMetas'])->name('produccion.insertarMetas')->middleware(CheckPermission::class . ':reporte_produccion');
         Route::get('/produccion/ReporteConsolidado', [ReporteProduccionController::class, 'reporteConsolidado'])->name('produccion.reporteConsolidado')->middleware(CheckPermission::class . ':reporte_produccion');
