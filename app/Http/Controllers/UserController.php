@@ -211,17 +211,31 @@ class UserController extends Controller
         return redirect()->route('home')->with('success', 'Perfil actualizado correctamente');
     }
 
-    public function getDataPermissions(Request $request, ){
-        $id = $request->input('id');
+    /**
+     * Permisos de una cuenta, para la pantalla de administración.
+     *
+     * La ruta queda abierta a cualquiera con sesión, para que cada quien pueda
+     * consultar los suyos. Pedir los de otra persona exige administrar
+     * usuarios: el identificador viaja en el cuerpo, así que sin esa distinción
+     * cualquiera podía enumerar los permisos de cualquier cuenta —los de un
+     * administrador incluidos—, que es el reconocimiento previo a una escalada.
+     *
+     * Antes tampoco se comprobaba que el id existiera: `find()` devolvía null y
+     * leer `$user->permissions` terminaba en un 500.
+     */
+    public function getDataPermissions(Request $request)
+    {
+        $usuario = $request->user();
 
-        $user = User::find($id);
-        $permissions = Permission::all();
-        $userPermissions = $user->permissions;
-        $availablePermissions = $permissions->diff($userPermissions);
+        if ($usuario->can('gestion_usuarios')) {
+            $usuario = User::find($request->input('id')) ?? $usuario;
+        }
+
+        $asignados = $usuario->permissions;
 
         return response()->json([
-            'asignadas' => $userPermissions,
-            'disponibles' => $availablePermissions
+            'asignadas' => $asignados,
+            'disponibles' => Permission::all()->diff($asignados),
         ]);
     }
 

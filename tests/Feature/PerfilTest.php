@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 /**
@@ -126,5 +127,43 @@ class PerfilTest extends TestCase
             ]);
 
         $this->assertNotSame($claveOriginal, $usuario->fresh()->password);
+    }
+
+    public function test_sin_administrar_usuarios_solo_se_ven_los_permisos_propios(): void
+    {
+        $propia = $this->crearUsuario('propia');
+        $ajena = $this->crearUsuario('ajena');
+
+        $ajena->givePermissionTo(Permission::where('name', 'ver_residente')->firstOrFail());
+
+        /* Pide los de la otra cuenta; debe recibir los suyos, que están vacíos. */
+        $this->actingAs($propia)
+            ->postJson(route('profile.getDataPermissions'), ['id' => $ajena->id])
+            ->assertOk()
+            ->assertJsonCount(0, 'asignadas');
+    }
+
+    public function test_quien_administra_usuarios_si_ve_los_de_otra_cuenta(): void
+    {
+        $admin = $this->crearUsuario('admin');
+        $admin->givePermissionTo(Permission::where('name', 'gestion_usuarios')->firstOrFail());
+
+        $ajena = $this->crearUsuario('ajena');
+        $ajena->givePermissionTo(Permission::where('name', 'ver_residente')->firstOrFail());
+
+        $this->actingAs($admin)
+            ->postJson(route('profile.getDataPermissions'), ['id' => $ajena->id])
+            ->assertOk()
+            ->assertJsonCount(1, 'asignadas');
+    }
+
+    public function test_un_id_inexistente_ya_no_revienta(): void
+    {
+        $admin = $this->crearUsuario('admin');
+        $admin->givePermissionTo(Permission::where('name', 'gestion_usuarios')->firstOrFail());
+
+        $this->actingAs($admin)
+            ->postJson(route('profile.getDataPermissions'), ['id' => 99999999])
+            ->assertOk();
     }
 }

@@ -21,7 +21,9 @@ Route::middleware('web')->group(function () {
 
     Route::middleware('auth')->group(function () {
 
-        Route::post('/insercion_estadisticas_asignacion',[HomeController::class,'insercion_estadisticas_asignacion'])->name('insercion_estadisticas_asignacion');
+        Route::post('/insercion_estadisticas_asignacion', [HomeController::class, 'insercion_estadisticas_asignacion'])
+            ->name('insercion_estadisticas_asignacion')
+            ->middleware(CheckPermission::class . ':ver_residente');
 
         Route::get('/prueba-ia', function () {
             // 1. Instanciamos tu servicio
@@ -46,7 +48,9 @@ Route::middleware('web')->group(function () {
         Route::get('/home/reporte', [HomeController::class, 'reporte'])->name('home.reporte');
         Route::get('/home/programaciones', [HomeController::class, 'programaciones'])->name('home.programaciones');
         Route::post('/estado-asignacion/guardar-tecnicos', [HomeController::class, 'guardarAsignacion'])->name('asignacion.guardar_tecnicos');
-        Route::post('/corte-gdo', [HomeController::class, 'guardarCorte'])->name('corte.guardar');
+        Route::post('/corte-gdo', [HomeController::class, 'guardarCorte'])
+            ->name('corte.guardar')
+            ->middleware(CheckPermission::class . ':ver_residente');
 
         /* Causales que cuentan como legalización. Mismo permiso que los cortes
            de producción: es quien lleva la legalización quien las conoce. */
