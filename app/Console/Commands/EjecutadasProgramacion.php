@@ -2,91 +2,71 @@
 
 namespace App\Console\Commands;
 
-
 use App\Models\Programacion\tbl_programacion_contrato;
-use App\Models\Bitacoras\tbl_bitacora_contrato;
-use App\Models\Movilidad;
-
-use Illuminate\Support\Facades\DB;
+use App\Services\ProgramacionService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
-
 class EjecutadasProgramacion extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'app:ejecutadas-programacion';
 
+    protected $description = 'Marca como ejecutadas las programaciones que ya se cerraron en campo';
+
     /**
-     * The console command description.
+     * Una ejecución más vieja que esto no cierra la programación de hoy.
      *
-     * @var string
+     * La bitácora guarda años de historia y un contrato se revisa cada tanto,
+     * así que sin este límite una certificación antigua daría por hecha una
+     * programación recién hecha.
      */
-    protected $description = 'Consulta y Actualización programadas en Movilidad';
+    private const ANOS_DE_VIGENCIA = 2;
 
     /**
-     * Execute the console command.
+     * Recorre lo pendiente y pregunta al servicio si ya se ejecutó.
+     *
+     * La lógica de qué cuenta como ejecutado —los códigos equivalentes, los
+     * cierres que valen, la excepción del SA 12164 y de qué tablas salen— vive
+     * en findExecuted y la comparte con la programación manual y las cargas
+     * masivas. Aquí solo queda lo propio del comando: a quién preguntar, desde
+     * cuándo vale la respuesta y qué hacer con ella.
      */
-    public function handle()
+    public function handle(ProgramacionService $ejecutados)
     {
+        $limite = Carbon::now()->subYears(self::ANOS_DE_VIGENCIA)->toDateString();
+        $marcadas = 0;
 
-        $inicioDia = Carbon::now()->startOfDay()->toDateTimeString();
-        $finDia = Carbon::now()->endOfDay()->toDateTimeString();
-
-        $estadosCierre = [
-            '.CERTIFICADA',
-            'CERTIFICADA CON NOVEDADES',
-            '.INSPECCIONADA CON DEFECTO CRITICO VALLE',
-            '.INSPECCIONADA CON DEFECTO NO CRITICO VALLE'
-        ];
-
-        $programadas = tbl_programacion_contrato::where('EJECUTADA', 0)
+        $pendientes = tbl_programacion_contrato::where('EJECUTADA', 0)
             ->where('FECHA_AGENDAMIENTO', '>=', date('Y-m-d'))
             ->get();
 
+        foreach ($pendientes as $programada) {
+            $ejecutado = $ejecutados->findExecuted(
+                $programada->CONTRATO, $programada->TIPO_TRABAJO, $programada->ORDEN_TRABAJO
+            );
 
-        $tipos_trabajo_rp = array("10444", "12161");
-        $tipos_trabajo_sa = array("12163", "12164");
-        foreach ($programadas as $programada) {
-
-            if (in_array($programada->TIPO_TRABAJO, $tipos_trabajo_rp)) {
-                $tipo_trabajo = ["RP 10444", "RP 12161"];
-            } elseif (in_array($programada->TIPO_TRABAJO, $tipos_trabajo_sa)) {
-                $tipo_trabajo = ["SA " . $programada->TIPO_TRABAJO];
-            } elseif ($programada->TIPO_TRABAJO == "12162") {
-                $tipo_trabajo = ["RN " . $programada->TIPO_TRABAJO];
+            if ($ejecutado === null || $this->fecha($ejecutado->FECHA) <= $limite) {
+                continue;
             }
 
-            $contrato = ":" . $programada->CONTRATO;
-            $dosAnosAtras = Carbon::now()->subYears(2)->toDateString();
-
-            $bitacora = DB::table('reportes_diarios')->select('NroOperario', 'FechaRealFin', 'Cierre3', 'TipoTarea')
-                ->where('NroSitio', $contrato)
-                ->whereIn('TipoTarea', $tipo_trabajo)
-                ->whereIn('Cierre3', $estadosCierre)
-                ->first();
-
-            if($bitacora){
-                 if(in_array($bitacora->Cierre3, ['.INSPECCIONADA CON DEFECTO CRITICO VALLE','.INSPECCIONADA CON DEFECTO NO CRITICO VALLE']) && $bitacora->TipoTarea === 'SA 12164'){
-
-                }else{
-                    $fecha_completa = $bitacora->FechaRealFin;
-                    $partes = explode(' ', $fecha_completa);
-                    $fecha = $partes[0];
-                    if($fecha <= $dosAnosAtras){
-
-                    }else {
-                        $programada->EJECUTADA = 1;
-                        $programada->save();
-                    }
-                }
-            }
+            $programada->EJECUTADA = 1;
+            $programada->save();
+            $marcadas++;
         }
 
-        return 'OK';
+        $this->info("Revisadas {$pendientes->count()} programaciones, {$marcadas} marcadas como ejecutadas.");
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * El día de la ejecución.
+     *
+     * La bitácora la devuelve como fecha y movilidad como fecha y hora, así que
+     * se corta por el espacio y sirven las dos.
+     */
+    private function fecha($valor): string
+    {
+        return explode(' ', (string) $valor)[0];
     }
 }
