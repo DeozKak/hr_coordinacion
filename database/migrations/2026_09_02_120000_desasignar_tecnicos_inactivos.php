@@ -20,6 +20,13 @@ return new class extends Migration
             ->whereNotNull('id')
             ->pluck('id');
 
+        /* Sin activos no hay nada que conservar, pero tampoco nada que borrar:
+           `whereNotIn` contra una lista vacía genera `where 1 = 1` y se llevaría
+           por delante todas las asignaciones. */
+        if ($activos->isEmpty()) {
+            return;
+        }
+
         /* Con pluck y no con una subconsulta: en MySQL, NOT IN contra un
            conjunto que contenga NULL no devuelve ninguna fila y la limpieza
            se quedaría en nada sin avisar. */
