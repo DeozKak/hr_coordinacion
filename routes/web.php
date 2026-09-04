@@ -47,7 +47,9 @@ Route::middleware('web')->group(function () {
 
         Route::get('/home/reporte', [HomeController::class, 'reporte'])->name('home.reporte');
         Route::get('/home/programaciones', [HomeController::class, 'programaciones'])->name('home.programaciones');
-        Route::post('/estado-asignacion/guardar-tecnicos', [HomeController::class, 'guardarAsignacion'])->name('asignacion.guardar_tecnicos');
+        Route::post('/estado-asignacion/guardar-tecnicos', [HomeController::class, 'guardarAsignacion'])
+            ->name('asignacion.guardar_tecnicos')
+            ->middleware(CheckPermission::class . ':ver_coordinacion_RP,ver_residente');
         Route::post('/corte-gdo', [HomeController::class, 'guardarCorte'])
             ->name('corte.guardar')
             ->middleware(CheckPermission::class . ':ver_residente');
