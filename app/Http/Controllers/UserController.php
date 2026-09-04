@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\Usuarios\ActualizarPerfilRequest;
+use App\Http\Requests\Usuarios\ActualizarUsuarioRequest;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
@@ -21,7 +23,7 @@ class UserController extends Controller
         return view('users.index', compact('users', 'userlogin', 'roles', 'currentRole', 'user'));
     }
 
-    public function update(Request $request, User $user)
+    public function update(ActualizarUsuarioRequest $request, User $user)
     {
 
         $id = $request->input('id');
@@ -33,67 +35,61 @@ class UserController extends Controller
         $claveNueva = $request->input('claveNueva');
         $claveConfirmar = $request->input('claveConfirmar');
 
-        if($nombre == "" || $email == "") {
-            return response()->json([
-                'status'=> 'warning',
-                'message'=> 'Los campos son obligatorios'
+        /* `id` viene validado con exists:users,id, así que find() no da null. */
+        $user = User::find($id);
+
+        if($claveNueva != null){
+            $cambioClave = $this->updatePassword($request, $user, $claveNueva, $claveConfirmar);
+            if(isset($cambioClave->original)){
+               return response()->json([
+                    'status' => $cambioClave->original['status'],
+                    'message' => $cambioClave->original['message'],
+                ]);
+            }
+        }else{
+            $cambioClave = false;
+        }
+
+        if(!is_array($assignedPermissions) && !is_array( $revokedPermissions)){
+            $permissionAssigned = json_decode($assignedPermissions, true);
+            $permissionrevoked = json_decode($revokedPermissions, true);
+            $flag = true;
+        }else{
+            $permissionAssigned = $assignedPermissions;
+            $permissionrevoked = $revokedPermissions;
+            $flag = false;
+        }
+
+        $user->syncRoles($roles);
+        $user->syncPermissions($permissionAssigned);
+        $user->revokePermissionTo($permissionrevoked);
+        // Limpiar la caché de permisos
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        $user->name = $nombre;
+        $user->email = $email;
+        $guardarUsuario = $user->save();
+
+        if($flag){
+            return redirect()->route('admin.index');
+        }
+
+        if($guardarUsuario && $cambioClave){
+            return response()->json(data: [
+                'status'=> 'success',
+                'user'=> $user,
+                'message'=> 'Usuario y contraseña editado exitosamente'
+            ]);
+        }else if($guardarUsuario){
+            return response()->json(data: [
+                'status'=> 'success',
+                'user'=> $user,
+                'message'=> 'Usuario editado exitosamente'
             ]);
         }else{
-            $user = User::find($id);
-
-            if($claveNueva != null){
-                $cambioClave = $this->updatePassword($request, $user, $claveNueva, $claveConfirmar);
-                if(isset($cambioClave->original)){
-                   return response()->json([
-                        'status' => $cambioClave->original['status'],
-                        'message' => $cambioClave->original['message'],
-                    ]);
-                }
-            }else{
-                $cambioClave = false;
-            }
-
-            if(!is_array($assignedPermissions) && !is_array( $revokedPermissions)){
-                $permissionAssigned = json_decode($assignedPermissions, true);
-                $permissionrevoked = json_decode($revokedPermissions, true);
-                $flag = true;
-            }else{
-                $permissionAssigned = $assignedPermissions;
-                $permissionrevoked = $revokedPermissions;
-                $flag = false;
-            }
-
-            $user->syncRoles($roles);
-            $user->syncPermissions($permissionAssigned);
-            $user->revokePermissionTo($permissionrevoked);
-            // Limpiar la caché de permisos
-            app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
-            $user->name = $nombre;
-            $user->email = $email;
-            $guardarUsuario = $user->save();
-
-            if($flag){
-                return redirect()->route('admin.index');
-            }
-
-            if($guardarUsuario && $cambioClave){
-                return response()->json(data: [
-                    'status'=> 'success',
-                    'user'=> $user,
-                    'message'=> 'Usuario y contraseña editado exitosamente'
-                ]);
-            }else if($guardarUsuario){
-                return response()->json(data: [
-                    'status'=> 'success',
-                    'user'=> $user,
-                    'message'=> 'Usuario editado exitosamente'
-                ]);
-            }else{
-                return response()->json([
-                    'status'=> 'error',
-                    'message'=> 'Error al editar el usuario'
-                ]);
-            }
+            return response()->json([
+                'status'=> 'error',
+                'message'=> 'Error al editar el usuario'
+            ]);
         }
     }
 
@@ -192,10 +188,10 @@ class UserController extends Controller
         return view('users.show', compact('userlogin','user', 'currentRole'));
     }
 
-    public function updateProfile(Request $request, User $user)
+    public function updateProfile(ActualizarPerfilRequest $request, User $user)
     {
-        $user->name = $request->name;
-        $user->email = $request->email;
+        /* Sólo `name` y `email`: el resto del perfil no se edita desde aquí. */
+        $user->fill($request->safe()->only(['name', 'email']));
         $user->save();
 
         return redirect()->route('home')->with('success', 'Perfil actualizado correctamente');
@@ -224,7 +220,10 @@ class UserController extends Controller
      */
     public function enlaceRegistro(Request $request)
     {
-        $dias = (int) $request->input('dias', 0);
+        /* Una semana por omisión: el enlace se manda por fuera (correo, WhatsApp)
+           y la persona no siempre lo abre el mismo día. El rango se limita
+           igualmente, porque el valor puede venir del formulario. */
+        $dias = (int) $request->input('dias', 7);
         $dias = max(1, min($dias, 30));
 
         return response()->json([
