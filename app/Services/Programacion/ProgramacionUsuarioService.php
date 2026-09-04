@@ -7,178 +7,98 @@ use App\Models\Programacion\tbl_programacion_usuario;
 use App\Models\tbl_insp_cali;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
+/**
+ * La programación como contenedor: la tabla de trabajo de cada usuario.
+ *
+ * Quien tiene permiso de ver todas las ve todas; el resto, sólo las suyas.
+ * Una programación sin terminar es la que se retoma al volver a entrar.
+ */
 class ProgramacionUsuarioService
 {
-
     /**
-     * Obtiene las programaciones para el usuario actual.
+     * Programaciones terminadas que le tocan a este usuario, y la que tenga a medias.
      *
-     * @param User $user Usuario autenticado
-     * @return array Retorna un arreglo con las programaciones terminadas y en curso.
+     * @return array{datos: Collection, enCurso: tbl_programacion_usuario|null}
      */
-    public function obtenerProgramacionesUsuario(User $user): array
+    public function listar(User $usuario): array
     {
-        // Si el usuario tiene el permiso 'ver_programacion'
-        if ($user->hasPermissionTo('ver_programacion')) {
-            // Trae todas las programaciones terminadas
-            $programacionesTerminadas = tbl_programacion_usuario::where('finished', 1)->with('usuario')->get();
-            // Trae la primera programación no terminada
-            $programacionEnCurso = tbl_programacion_usuario::where('finished', 0)->where('id_usuario', $user->id)->first();
-        }else {
-            // Solo trae sus propias programaciones terminadas
-            $programacionesTerminadas = tbl_programacion_usuario::where('finished', 1)->where('id_usuario', $user->id)->with('usuario')->get();
+        $terminadas = tbl_programacion_usuario::where('finished', 1)->with('usuario');
 
-            // Trae la primera programación no terminada asociada al usuario
-            $programacionEnCurso = tbl_programacion_usuario::where('finished', 0)->where('id_usuario', $user->id)->first();
+        if (! $usuario->hasPermissionTo('ver_programacion')) {
+            $terminadas->where('id_usuario', $usuario->id);
         }
-        // Retorna ambas consultas en un arreglo
-        return [
-            'terminadas' => $programacionesTerminadas,
-            'enCurso' => $programacionEnCurso,
-        ];
 
+        return [
+            'datos'   => $terminadas->get(),
+            'enCurso' => $this->enCurso($usuario),
+        ];
     }
-    /**
-     * Crear o recuperar una programación para el usuario actual
-     *
-     * @param User $user
-     * @return array
-     */
-    public function crearNuevaProgramacion(User $user): array
+
+    /** La programación que el usuario dejó a medias, si la hay. */
+    public function enCurso(User $usuario): ?tbl_programacion_usuario
     {
-        // Verifica si ya existe una programación activa para el usuario
-        $programacion = tbl_programacion_usuario::where('finished', 0)
-            ->where('id_usuario', $user->id)
+        return tbl_programacion_usuario::where('finished', 0)
+            ->where('id_usuario', $usuario->id)
             ->first();
-
-        if (is_null($programacion)) {
-            try {
-                // Inicia una transacción para la creación de una nueva programación
-                DB::beginTransaction();
-
-                $fechaActual = Carbon::now();
-                $soloFecha = $fechaActual->format('Y-m-d');
-
-                $programacion = new tbl_programacion_usuario;
-                $programacion->nombre = "Programación " . $soloFecha;
-                $programacion->id_usuario = $user->id;
-                $programacion->save();
-
-                // Consulta los técnicos activos ordenados por apellido
-                $tecnicos = tbl_insp_cali::select('id', 'apellidos', 'nombres')
-                    ->where('state', 1)
-                    ->orderBy('apellidos') // Ordenar por apellidos
-                    ->get();
-
-                DB::commit();
-
-                // Retorna los datos necesarios para la vista
-                return [
-                    'tecnicos' => $tecnicos,
-                    'user' => $user,
-                    'programacion' => $programacion,
-                ];
-            } catch (\Exception $e) {
-                // En caso de error, realiza rollback y registra el error
-                Log::error($e);
-                DB::rollback();
-
-                // Retorna un mensaje de error
-                return [
-                    'error' => 'Ocurrió un error al crear la tabla: ' . $e->getMessage(),
-                ];
-            }
-        }
-
-        // Si ya existe una programación activa, también se retorna
-        return [
-            'programacion' => $programacion,
-            'redirect' => true, // Indica que debe redirigirse al index
-        ];
     }
 
     /**
-     * Maneja la lógica del método show en el servicio
+     * Abre una programación nueva para el usuario.
      *
-     * @param int $id ID de la programación
-     * @param string|null $action Acción que se quiere realizar (edit, view)
-     * @return array Datos necesarios para la vista
+     * Se nombra con la fecha del día, que es como las distingue quien las usa.
      */
-    public function obtenerDetalleProgramacion(int $id, ?string $action): array
+    public function abrir(User $usuario): tbl_programacion_usuario
     {
-        $programacion = tbl_programacion_usuario::findOrFail($id); // Encuentra o lanza excepción
-        $tabla = tbl_programacion_contrato::where('id_programacion', $id)->get();
+        return DB::transaction(function () use ($usuario) {
+            $programacion = new tbl_programacion_usuario();
+            $programacion->nombre = 'Programación ' . Carbon::now()->format('Y-m-d');
+            $programacion->id_usuario = $usuario->id;
+            $programacion->save();
 
-        // Si la acción es editar, verifica permisos y actualiza el estado
-        if ($action === 'edit') {
-            if (Auth::user()->hasPermissionTo('generar_programacion')) {
-                try {
-                    DB::beginTransaction();
-                    $programacion->finished = 0;
-                    $programacion->save();
-                    DB::commit();
-                } catch (\Exception $e) {
-                    Log::error($e);
-                    DB::rollBack();
-                    return ['error' => 'Ocurrió un error al cargar la tabla: ' . $e->getMessage()];
-                }
-            } else {
-                return ['error' => 'Acción no autorizada.'];
-            }
-        }
+            return $programacion;
+        });
+    }
 
-        // Usuarios relacionados con la programación
-        $user = User::find($programacion->id_usuario);
-        $tecnicos = tbl_insp_cali::select('id', 'apellidos', 'nombres')
+    /** Reabre una programación terminada para poder seguir editándola. */
+    public function reabrir(tbl_programacion_usuario $programacion): void
+    {
+        DB::transaction(function () use ($programacion) {
+            $programacion->finished = 0;
+            $programacion->save();
+        });
+    }
+
+    /** Los contratos de una programación. */
+    public function contratos($id): Collection
+    {
+        return tbl_programacion_contrato::where('id_programacion', $id)->get();
+    }
+
+    /**
+     * Borra la programación y todo lo que cuelga de ella.
+     *
+     * Va en una sola transacción: media programación borrada es peor que
+     * ninguna.
+     */
+    public function eliminar($id): array
+    {
+        DB::transaction(function () use ($id) {
+            tbl_programacion_contrato::where('id_programacion', $id)->get()->each->delete();
+            tbl_programacion_usuario::find($id)?->delete();
+        });
+
+        return ['message' => 'Programación eliminada correctamente'];
+    }
+
+    /** Inspectores activos, como los espera el formulario. */
+    public function tecnicosActivos(): Collection
+    {
+        return tbl_insp_cali::select('id', 'apellidos', 'nombres')
             ->where('state', 1)
-            ->orderBy('apellidos') // Ordenar por apellidos ascendente
+            ->orderBy('apellidos')
             ->get();
-
-        return [
-            'tecnicos' => $tecnicos,
-            'user' => $user,
-            'programacion' => $programacion,
-            'tabla' => $tabla,
-            'action' => $action,
-        ];
-    }
-
-    /**
-     * Elimina una programación y sus contratos relacionados.
-     *
-     * @param int $id ID de la programación a eliminar.
-     * @return array Respuesta indicando éxito o error.
-     */
-    public function eliminarProgramacion(int $id): array
-    {
-        try {
-            DB::beginTransaction();
-
-            // Obtiene la programación por ID
-            $programacion = tbl_programacion_usuario::find($id);
-
-            if (!$programacion) {
-                return ['error' => 'La programación no existe.'];
-            }
-
-            // Elimina los contratos relacionados con la programación
-            $contratos = tbl_programacion_contrato::where('id_programacion', $id)->get();
-            $contratos->each->delete();
-
-            // Elimina la programación
-            $programacion->delete();
-
-            DB::commit();
-
-            return ['message' => 'Programación eliminada correctamente.'];
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error($e);
-            return ['error' => 'Error al eliminar Programación: ' . $e->getMessage()];
-        }
     }
 }

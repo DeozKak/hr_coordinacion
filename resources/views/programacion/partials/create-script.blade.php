@@ -416,17 +416,29 @@ document.addEventListener('alpine:init', () => {
         /* ------------------------- Guardado de la fila ------------------------ */
         /* `datosFila` se lee de la rejilla DESPUÉS de esperar a que aplique las
            escrituras; leerla antes devolvería los valores previos. */
-        async guardarFila(fila, datosFila) {
+        async guardarFila(fila, datosFila, quejaConfirmada = false) {
             if (datosFila[0] !== null && datosFila[0] !== '' && datosFila[0] !== undefined) return;
 
             let r;
             try {
                 r = await window.api(this.urls.store, {
-                    method: 'POST', body: { data: datosFila, tabla: this.tablaId },
+                    method: 'POST', body: { data: datosFila, tabla: this.tablaId, quejaConfirmada },
                 });
             } catch (e) {
                 window.Swal.fire({ icon: 'error', title: 'Error',
                                    text: 'No se pudo guardar el registro.' });
+                return;
+            }
+
+            /* Hay una PQRS sin cerrar. El servidor lo comprueba antes que nada
+               porque no impide programar: se avisa y, si el usuario confirma, se
+               reintenta el guardado, que ya sigue con el resto de comprobaciones. */
+            if (r.queja) {
+                if (await this.confirmarQuejaAbierta(r.queja)) {
+                    await this.guardarFila(fila, datosFila, true);
+                } else {
+                    this.limpiarFila(fila);
+                }
                 return;
             }
 
@@ -453,6 +465,32 @@ document.addEventListener('alpine:init', () => {
                 hotProgramacion.setDataAtCell(fila, 0, r.id, 'programmatic');
                 this.anadirFila();
             }
+        },
+
+        /* El contrato tiene una queja abierta en PQRS. Muchas veces la visita es
+           justo la respuesta a la queja, así que se informa y decide el usuario. */
+        async confirmarQuejaAbierta(queja) {
+            const esc = (v) => String(v ?? '').replace(/[&<>"]/g,
+                (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+            let plazo = '';
+            if (queja.dias !== null && queja.dias !== undefined) {
+                plazo = queja.dias < 0
+                    ? `<br>Vencida hace ${Math.abs(queja.dias)} día(s).`
+                    : `<br>Quedan ${queja.dias} día(s) de plazo.`;
+            }
+
+            const respuesta = await window.Swal.fire({
+                icon: 'warning', title: 'Advertencia', allowOutsideClick: false,
+                html: 'Este contrato tiene una <b>queja abierta</b>:<br><br>'
+                    + `«${esc(queja.motivo)}», solicitud ${esc(queja.solicitud)},<br>`
+                    + `responsable ${esc(queja.responsable)}.${plazo}`
+                    + '<br><br>¿Desea programarlo de todas formas?',
+                showDenyButton: true, showCancelButton: false,
+                confirmButtonText: 'Sí', denyButtonText: 'No',
+            });
+
+            return respuesta.isConfirmed === true;
         },
 
         /* El contrato ya estaba programado: se ofrece reprogramar, que borra la

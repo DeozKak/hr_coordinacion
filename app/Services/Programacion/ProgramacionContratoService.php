@@ -2,376 +2,302 @@
 
 namespace App\Services\Programacion;
 
-use App\Jobs\CorreoProgramacion;
+use App\Models\asignadas_quejas;
 use App\Models\Programacion\tbl_programacion_base;
 use App\Models\Programacion\tbl_programacion_contrato;
-use App\Models\Programacion\tbl_programacion_usuario;
 use App\Models\tbl_insp_cali;
-use App\Models\User;
+use App\Services\ProgramacionService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
+/**
+ * Contratos dentro de una programación: alta, edición y baja.
+ *
+ * Las transacciones se abren con DB::transaction() y no a mano. No es un
+ * capricho de estilo: el controlador tenía salidas tempranas dentro de un
+ * beginTransaction() sin cerrar, y una fecha mal escrita dejaba la fila
+ * bloqueada hasta que la conexión moría por timeout. Con el cierre no hay
+ * forma de salir sin cerrar.
+ */
 class ProgramacionContratoService
 {
-    private ExecutionVerifier $executionVerifier;
+    /** Tipos de trabajo que son la misma cosa a efectos de duplicados. */
+    private const RP_EQUIVALENTES = ['10444', '12161'];
 
-    public function __construct(ExecutionVerifier $executionVerifier)
-    {
+    /** Horario que se asume al fijar una jornada. */
+    private const HORA_INICIO = '06:59:00 a.m.';
+    private const HORA_FINAL  = '04:59:00 p.m.';
 
-        $this->executionVerifier = $executionVerifier;
-    }
+    public function __construct(
+        private ProgramacionService $ejecutados
+    ) {}
 
     /**
-     * Busca un contrato y devuelve los datos relacionados
-     * Para generar el registro de programacion
+     * Busca un contrato en la base de programación para precargar el formulario.
      *
-     * @param string $contrato
-     * @return array|null
+     * @return array|null null cuando no hay nada que devolver —contrato no
+     *                    numérico, vacío o inexistente—, que es como la vista
+     *                    distingue "sin resultados".
      */
-    public function buscarContratoBase(string $contrato): ?array
+    public function buscarEnBase($contrato): ?array
     {
-        // Validar si el contrato es numérico
-        if (!is_numeric($contrato) || $contrato === '') {
-            return null; // Retorna null si no pasa la validación.
+        $contrato = trim((string) $contrato);
+
+        if ($contrato === '' || ! is_numeric($contrato)) {
+            return null;
         }
 
-        // Buscar el contrato en la base de datos
         $datos = tbl_programacion_base::where('CONTRATO', $contrato)->first();
 
         if ($datos === null) {
-            return null; // Si no se encuentra el contrato, retorna null.
+            return null;
         }
 
-        // Validar el estado de recepción del contrato
-        if ($datos?->ESTADO_RECEPCION !== null) {
-            if ($datos->ESTADO_RECEPCION == '1' || $datos->ESTADO_RECEPCION == '2') {
-                return ['error' => 'El contrato ya ha sido ejecutado'];
-            }
+        // 1 y 2 son recepciones ya ejecutadas: no se vuelve a programar.
+        if (in_array((string) $datos->ESTADO_RECEPCION, ['1', '2'], true)) {
+            return ['errors' => 'El contrato ya ha sido ejecutado'];
         }
 
-        // Obtener información del inspector relacionado (ID_TECNICO)
-        if ($datos->ID_TECNICO) {
-            $inspector = tbl_insp_cali::where('id', $datos->ID_TECNICO)->first();
+        // El técnico se muestra como "id. apellidos nombres".
+        $inspector = tbl_insp_cali::where('id', $datos->ID_TECNICO)->first();
 
-            if ($inspector !== null) {
-                // Concatenar el ID del inspector con nombre y apellido
-                $datos->ID_TECNICO = $datos->ID_TECNICO . '. ' . $inspector->apellidos . ' ' . $inspector->nombres;
-            } else {
-                $datos->ID_TECNICO = null; // Si no hay resultado de inspector, dejar null.
-            }
-        }
+        $datos->ID_TECNICO = $inspector
+            ? $datos->ID_TECNICO . '. ' . $inspector->apellidos . ' ' . $inspector->nombres
+            : null;
 
-        // Retornar los datos del contrato
         return $datos->toArray();
     }
 
     /**
-     * Crea una nueva programacion para un contrato.
+     * Da de alta un contrato en una programación.
      *
-     * @param array $data Datos enviados en la solicitud.
-     * @return array Retorna éxito o error con la respuesta.
+     * Antes de guardar comprueba dos cosas: que el contrato no esté ya
+     * ejecutado —según las bitácoras— y que no exista ya programado. Las dos
+     * devuelven un aviso en vez de un error: la vista los enseña y deja al
+     * usuario decidir.
+     *
+     * @param array $data Fila del formulario, indexada de 1 a 17.
+     * @param mixed $tabla Id de la programación a la que pertenece.
+     * @param bool  $quejaConfirmada El usuario ya vio el aviso de PQRS y quiso
+     *                               programar igual, así que no se repregunta.
      */
-    public function crearProgramacionContrato(array $data): array
+    public function crear(array $data, $tabla, bool $quejaConfirmada = false): array
     {
-
-        try {
-            // Validar si el contrato ya fue ejecutado.
-            $executed = $this->executionVerifier->findExecuted($data['data'][1], $data['data'][2]);
-
-            if ($executed) {
-                if ($executed->TIPO_TRABAJO !== 'SA 12164') {
-                    $fechaCompleta = $executed->FECHA;
-                    $partes = explode(' ', $fechaCompleta);
-                    $fecha = $partes[0];
-
-                    $inspector = tbl_insp_cali::where('cedula', $executed->CC_OPERARIO)->first();
-
-                    return [
-                        'error' => true,
-                        'movilidad' => 'Contrato ya ejecutado',
-                        'usuario' => $inspector->apellidos . ' ' . $inspector->nombres,
-                        'agendamiento' => $fecha,
-                    ];
-                }
+        /* La queja va primero: es la que cambia lo que hay que hacer con el
+           contrato, y conviene verla aunque después resulte que ya se ejecutó
+           o que ya estaba programado. Los otros dos avisos son un no rotundo;
+           este solo pregunta, así que confirmarlo no se salta lo que sigue. */
+        if (! $quejaConfirmada) {
+            if ($aviso = $this->avisoPorQuejaAbierta($data)) {
+                return $aviso;
             }
+        }
 
-            if(in_array($data['data'][2],['10444','12161'])){
-                // Validar si ya existe el contrato con los mismos datos.
-                $exist = tbl_programacion_contrato::where('CONTRATO', $data['data'][1])
-                    ->whereIn('TIPO_TRABAJO', ['10444','12161'])
-                    ->first();
-            }else{
-                $exist = tbl_programacion_contrato::where('CONTRATO', $request->data[1])
-                    ->where('ORDEN_TRABAJO', $request->data[6])
-                    ->first();
-            }
+        if ($aviso = $this->avisoPorEjecutado($data)) {
+            return $aviso;
+        }
 
+        if ($aviso = $this->avisoPorDuplicado($data)) {
+            return $aviso;
+        }
 
-
-            if ($exist) {
-                return [
-                    'error' => true,
-                    'exist' => 'Ya existe una programación con estos datos',
-                    'id' => $exist->id,
-                    'usuario' => $exist->PORQUE_PROGRAMO,
-                    'agendamiento' => $exist->FECHA_AGENDAMIENTO,
-                ];
-            }
-
-            // Crear el nuevo contrato de programación.
-            DB::beginTransaction();
-
+        $programacion = DB::transaction(function () use ($data, $tabla) {
             $programacion = new tbl_programacion_contrato();
-            $programacion->CONTRATO = $data['data'][1];
-            $programacion->TIPO_TRABAJO = $data['data'][2];
-            $programacion->FECHA = $data['data'][3];
-            $programacion->CELULAR = $data['data'][4];
-            $programacion->NOMBRE_USUARIO = $data['data'][5];
-            $programacion->ORDEN_TRABAJO = $data['data'][6];
-            $programacion->DIRECCION = $data['data'][7];
-            $programacion->BARRIO = $data['data'][8];
-            $programacion->CIUDAD = $data['data'][9];
-            $programacion->ACTIVA = $data['data'][10];
-            $programacion->SUSPENDIDO = $data['data'][11];
-            $programacion->CATEGORIA = $data['data'][12];
-            $programacion->FECHA_AGENDAMIENTO = $data['data'][13];
-            $programacion->OBSERVACIONES = $data['data'][14];
-            $programacion->PORQUE_PROGRAMO = $data['data'][15];
-            $programacion->TECNICO = $data['data'][16];
-            $programacion->HORA_INICIO = $data['data'][17];
-            $programacion->HORA_FINAL = $data['data'][18];
-            $programacion->id_programacion = $data['tabla'];
+
+            $programacion->CONTRATO           = $data[1];
+            $programacion->TIPO_TRABAJO       = $data[2];
+            $programacion->FECHA              = $data[3];
+            $programacion->CELULAR            = $data[4];
+            $programacion->NOMBRE_USUARIO     = $data[5];
+            $programacion->ORDEN_TRABAJO      = $data[6];
+            $programacion->DIRECCION          = $data[7];
+            $programacion->BARRIO             = $data[8];
+            $programacion->CIUDAD             = $data[9];
+            $programacion->ACTIVA             = $data[10];
+            $programacion->SUSPENDIDO         = $data[11];
+            $programacion->CATEGORIA          = $data[12];
+            $programacion->FECHA_AGENDAMIENTO = $data[13];
+            $programacion->OBSERVACIONES      = $data[14];
+            $programacion->PORQUE_PROGRAMO    = $data[15];
+            $programacion->TECNICO            = $data[16];
+            $programacion->JORNADA            = $data[17];
+            $programacion->id_programacion    = $tabla;
+
             $programacion->save();
 
-            DB::commit();
+            return $programacion;
+        });
 
-            return [
-                'error' => false,
-                'message' => 'Registro guardado correctamente',
-                'id' => $programacion->id,
-            ];
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error($e->getMessage());
+        return ['message' => 'Registro guardado correctamente', 'id' => $programacion->id];
+    }
 
+    /**
+     * Alta manual desde la pantalla de creación.
+     *
+     * Va aparte de crear(): aquí los datos llegan con nombre de campo y no por
+     * posición, no se comprueba duplicado ni ejecutado —quien la da de alta ya
+     * sabe lo que hace— y la fila queda marcada como `plantilla`, que es lo que
+     * la hace aparecer en el agendamiento aunque no cruce con la base.
+     */
+    public function crearDesdePlantilla(array $datos, $tabla): array
+    {
+        $programacion = DB::transaction(function () use ($datos, $tabla) {
+            $c = new tbl_programacion_contrato();
+
+            foreach ([
+                'CONTRATO', 'TIPO_TRABAJO', 'FECHA', 'CELULAR', 'NOMBRE_USUARIO',
+                'ORDEN_TRABAJO', 'DIRECCION', 'BARRIO', 'CIUDAD', 'ACTIVA',
+                'SUSPENDIDO', 'CATEGORIA', 'FECHA_AGENDAMIENTO', 'OBSERVACIONES',
+                'PORQUE_PROGRAMO', 'TECNICO', 'JORNADA',
+            ] as $campo) {
+                $c->$campo = $datos[$campo] ?? null;
+            }
+
+            $c->HORA_INICIO = self::HORA_INICIO;
+            $c->HORA_FINAL = self::HORA_FINAL;
+            $c->id_programacion = $tabla;
+            $c->plantilla = 1;
+            $c->save();
+
+            return $c;
+        });
+
+        return ['message' => 'Registro guardado correctamente', 'id' => $programacion->id];
+    }
+
+    /**
+     * Cambia un solo campo de un contrato programado.
+     *
+     * @return array Con `error` y `estado` cuando no se pudo, si no el mensaje.
+     */
+    public function actualizarCampo($id, ?string $campo, $valor): array
+    {
+        if ($campo === 'FECHA_AGENDAMIENTO' && ! $this->fechaValida($valor)) {
             return [
-                'error' => true,
-                'message' => 'Error al guardar en base de datos: ' . $e->getMessage(),
+                'error'  => 'La fecha debe tener el formato correcto (Y-m-d).',
+                'estado' => 422,
             ];
         }
-    }
-    
-    /**
-     * Actualiza una propiedad específica de un contrato de programación.
-     *
-     * @param int $id ID del contrato a actualizar.
-     * @param string $campo Nombre de la propiedad a actualizar.
-     * @param mixed $valor Nuevo valor para la propiedad.
-     * @return array Respuesta indicando éxito o mensaje de error.
-     */
-    public function actualizarProgramacionContrato(int $id, string $campo, $valor): array
-    {
-        try {
-            DB::beginTransaction();
 
-            // Buscar el contrato por ID
+        DB::transaction(function () use ($id, $campo, $valor) {
             $programacion = tbl_programacion_contrato::find($id);
 
-            if (!$programacion) {
-                return [
-                    'error' => true,
-                    'message' => 'El contrato no existe.',
-                ];
+            // Fijar la jornada arrastra el horario que se le supone.
+            if ($campo === 'JORNADA') {
+                $programacion->HORA_INICIO = self::HORA_INICIO;
+                $programacion->HORA_FINAL  = self::HORA_FINAL;
             }
 
-            // Validar si la propiedad a actualizar es `FECHA_AGENDAMIENTO`
-            if ($campo === 'FECHA_AGENDAMIENTO') {
-                try {
-                    $fecha = Carbon::createFromFormat('Y-m-d', $valor);
-
-                    // Validación extra para rechazar fechas mal formateadas
-                    if ($fecha->format('Y-m-d') !== $valor) {
-                        return [
-                            'error' => true,
-                            'message' => 'La fecha debe tener el formato correcto (Y-m-d).',
-                        ];
-                    }
-                } catch (\Exception $e) {
-                    return [
-                        'error' => true,
-                        'message' => 'La fecha debe tener el formato correcto (Y-m-d).',
-                    ];
-                }
-            }
-
-            // Actualizar el campo
             $programacion->$campo = $valor;
             $programacion->save();
+        });
 
-            DB::commit();
-
-            return [
-                'error' => false,
-                'message' => 'Registro actualizado correctamente.',
-            ];
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error($e->getMessage());
-
-            return [
-                'error' => true,
-                'message' => 'Error al actualizar registro: ' . $e->getMessage(),
-            ];
-        }
-
+        return ['message' => 'Registro actualizado correctamente'];
     }
 
+    public function eliminar($id): array
+    {
+        DB::transaction(fn () => tbl_programacion_contrato::find($id)?->delete());
+
+        return ['message' => 'Registro eliminado correctamente'];
+    }
 
     /**
-     * Elimina una programacion con un contrato especifico.
+     * Fecha exacta en formato Y-m-d.
      *
-     * @param int $id ID del contrato a eliminar.
-     * @return array Respuesta indicando éxito o error.
+     * Carbon acepta '2024-1-9' y lo normaliza, así que no basta con que parsee:
+     * se compara el resultado con lo que llegó.
      */
-    public function eliminarProgramacionContrato(int $id): array
+    private function fechaValida($valor): bool
     {
         try {
-            DB::beginTransaction();
-
-            // Buscar el contrato en la base de datos
-            $programacion = tbl_programacion_contrato::find($id);
-
-            // Verificar si el contrato existe
-            if (!$programacion) {
-                return [
-                    'error' => true,
-                    'message' => 'El contrato no existe.',
-                ];
-            }
-
-            // Eliminar el contrato
-            $programacion->delete();
-
-            DB::commit();
-
-            return [
-                'error' => false,
-                'message' => 'Registro eliminado correctamente.',
-            ];
+            return Carbon::createFromFormat('Y-m-d', (string) $valor)->format('Y-m-d') === $valor;
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error al eliminar registro. ' . $e->getMessage());
-
-            return [
-                'error' => true,
-                'message' => 'Error al eliminar registro. ' . $e->getMessage(),
-            ];
+            return false;
         }
     }
 
-    public function finalizarProgramacion(int $id): array
+    /** El contrato ya se ejecutó según las bitácoras. */
+    private function avisoPorEjecutado(array $data): ?array
     {
-        try {
-            DB::beginTransaction();
+        $ejecutado = $this->ejecutados->findExecuted($data[1], $data[2], $data[6]);
 
-            // Buscar la programación por ID
-            $programacion = tbl_programacion_usuario::find($id);
-
-            if (!$programacion) {
-                return [
-                    'error' => true,
-                    'message' => 'La programación no existe.',
-                ];
-            }
-
-            // Marcar la programación como terminada
-            $programacion->finished = 1;
-            $programacion->save();
-
-            $user = User::find($programacion->id_usuario);
-
-            // Obtener todos los contratos asociados a la programación
-            $programadas = tbl_programacion_contrato::where('id_programacion', $id)->get();
-
-            // Verificar si la programación requiere un mensaje de correo programado
-            if ($programacion->mensaje == 0) {
-                $programacion->mensaje = 1;
-                $programacion->save();
-
-                // Despachar el correo
-                CorreoProgramacion::dispatch($user, $id);
-            }
-
-            // Procesar cada contrato asociado
-            foreach ($programadas as $programada) {
-                if (empty($programada->CELULAR) || $programada->mensaje == 1) {
-                    continue; // Ignorar contratos que ya tienen mensaje o no tienen celular.
-                }
-
-                // Calcular el saludo basado en la hora actual
-                date_default_timezone_set('America/Bogota');
-                $horaActual = date('H');
-                if ($horaActual >= 5 && $horaActual < 12) {
-                    $saludo = "Buenos días";
-                } elseif ($horaActual >= 12 && $horaActual < 19) {
-                    $saludo = "Buenas tardes";
-                } else {
-                    $saludo = "Buenas noches";
-                }
-
-                try {
-                    // Validar y formatear la fecha
-                    $fecha_carbon = Carbon::createFromFormat('Y-m-d', $programada->FECHA_AGENDAMIENTO);
-                    if ($fecha_carbon->format('Y-m-d') !== $programada->FECHA_AGENDAMIENTO) {
-                        return [
-                            'error' => true,
-                            'message' => 'La fecha debe tener el formato correcto (Y-m-d).',
-                        ];
-                    }
-
-                    // Formatear fecha al formato deseado (en español)
-                    $fecha_formateada = $fecha_carbon->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
-
-                    // Construir el mensaje (descoméntalo si necesitas enviar peticiones HTTP aquí)
-                    /*
-                    $tecnico_sin_numero = substr($programada->TECNICO, strpos($programada->TECNICO, ". ") + 2);
-                    $bodyData = [
-                        'typing_time' => 0,
-                        'to' => '57' . $programada->CELULAR,
-                        'body' => $saludo . ', Sr./Sra. ' . $programada->NOMBRE_USUARIO . '. 👋' .
-                            'Le informamos que la inspección de la red de gas en su predio está programada para el día ' . $fecha_formateada . ' entre las ' .
-                            $programada->HORA_INICIO . ' y ' . $programada->HORA_FINAL . '. La persona encargada será ' .
-                            $tecnico_sin_numero . '. 👷‍♂️ Agradecemos su atención y colaboración. 🙏',
-                    ];
-                    */
-
-                } catch (\Exception $e) {
-                    return [
-                        'error' => true,
-                        'message' => 'La fecha debe tener el formato correcto (Y-m-d).',
-                    ];
-                }
-
-                // Marcar el contrato como notificado
-                $programada->mensaje = 1;
-                $programada->save();
-            }
-
-            DB::commit();
-            session()->flash('success', 'Programación finalizada correctamente');
-            return [
-                'error' => false,
-                'message' => 'Programación finalizada correctamente.',
-            ];
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error al finalizar programación: ' . $e->getMessage());
-
-            return [
-                'error' => true,
-                'message' => 'Error al finalizar programación: ' . $e->getMessage(),
-            ];
+        /* La excepción del SA 12164 —cerrado con defecto se vuelve a
+           inspeccionar— vive ahora en findExecuted, para que valga igual aquí
+           que en las cargas masivas y en el call center. */
+        if (! $ejecutado) {
+            return null;
         }
+
+        $inspector = tbl_insp_cali::where('cedula', $ejecutado->CC_OPERARIO)->first();
+
+        return [
+            'movilidad'    => 'Contrato ya ejecutado',
+            'usuario'      => $inspector->apellidos . ' ' . $inspector->nombres,
+            'agendamiento' => explode(' ', $ejecutado->FECHA)[0],
+        ];
+    }
+
+    /**
+     * El contrato tiene una PQRS sin resolver.
+     *
+     * Abierta es lo que dice coordinación: sigue en estado 1 y todavía no tiene
+     * fecha de legalización. Las dos condiciones van juntas porque la queja se
+     * cierra en dos pasos y una sola no basta para darla por terminada.
+     *
+     * No impide programar —muchas veces la visita es justo la respuesta a la
+     * queja—, solo devuelve con qué avisar para que quien programa decida.
+     */
+    private function avisoPorQuejaAbierta(array $data): ?array
+    {
+        $queja = asignadas_quejas::where('CONTRATO', trim((string) $data[1]))
+            ->where('estado', 1)
+            ->where(function ($consulta) {
+                $consulta->whereNull('FECHA_LEGALIZACION')
+                    ->orWhere('FECHA_LEGALIZACION', '');
+            })
+            ->orderByDesc('id')
+            ->first();
+
+        if ($queja === null) {
+            return null;
+        }
+
+        return ['queja' => [
+            'motivo'      => $queja->MOTIVO_DE_PQR ?: 'sin motivo registrado',
+            'solicitud'   => $queja->NUMERO_SOLICITUD,
+            'responsable' => $queja->RESPONSABLE ?: 'sin responsable asignado',
+            'limite'      => $queja->FECHA_LIMITE,
+            // Negativo es queja vencida; la vista lo redacta.
+            'dias'        => is_numeric($queja->DIAS_FALTANTES) ? (int) $queja->DIAS_FALTANTES : null,
+        ]];
+    }
+
+    /** Ya hay una programación para ese contrato. */
+    private function avisoPorDuplicado(array $data): ?array
+    {
+        $consulta = tbl_programacion_contrato::where('CONTRATO', $data[1]);
+
+        /* Para revisión periódica los dos códigos son el mismo trabajo, así que
+           el duplicado se busca por cualquiera de ellos y sin mirar la orden.
+           Para el resto, el par contrato + orden es lo que identifica. */
+        if (in_array($data[2], self::RP_EQUIVALENTES, true)) {
+            $consulta->whereIn('TIPO_TRABAJO', self::RP_EQUIVALENTES);
+        } else {
+            $consulta->where('ORDEN_TRABAJO', $data[6]);
+        }
+
+        $existente = $consulta->first();
+
+        if (! $existente) {
+            return null;
+        }
+
+        return [
+            'exist'        => 'Ya existe una programación con estos datos',
+            'id'           => $existente->id,
+            'usuario'      => $existente->PORQUE_PROGRAMO,
+            'agendamiento' => $existente->FECHA_AGENDAMIENTO,
+        ];
     }
 }
