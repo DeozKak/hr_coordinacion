@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\Usuarios\ActualizarPerfilRequest;
 use App\Http\Requests\Usuarios\ActualizarUsuarioRequest;
@@ -137,6 +138,16 @@ class UserController extends Controller
 
         if ($vieneDeLaRuta && ! $request->user()?->is($user)) {
             abort(403);
+        }
+
+        /* Y saber la actual. Sin esto, una sesión ajena —un equipo que se queda
+           abierto, una cookie robada— basta para dejar a su dueño fuera de su
+           propia cuenta. No se pide en la vía del administrador: ahí el sentido
+           es justamente restablecer la de alguien que ya no la recuerda. */
+        if ($vieneDeLaRuta && ! Hash::check((string) $request->input('current_password'), $user->password)) {
+            return redirect()->back()
+                ->with('error', 'La contraseña actual no es correcta')
+                ->withInput();
         }
 
         if($claveNueva != null){

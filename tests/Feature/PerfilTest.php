@@ -122,11 +122,43 @@ class PerfilTest extends TestCase
 
         $this->actingAs($usuario)
             ->put(route('updatePassword', $usuario), [
+                'current_password' => 'secreto123',
                 'new_password' => 'nuevaclave123',
                 'conf_password' => 'nuevaclave123',
             ]);
 
         $this->assertNotSame($claveOriginal, $usuario->fresh()->password);
+    }
+
+    public function test_sin_la_clave_actual_no_se_cambia(): void
+    {
+        /* Una sesión ajena —un equipo abierto, una cookie robada— no debe
+           bastar para dejar al dueño fuera de su cuenta. */
+        $usuario = $this->crearUsuario('propia');
+        $claveOriginal = $usuario->password;
+
+        $this->actingAs($usuario)
+            ->put(route('updatePassword', $usuario), [
+                'new_password' => 'nuevaclave123',
+                'conf_password' => 'nuevaclave123',
+            ]);
+
+        $this->assertSame($claveOriginal, $usuario->fresh()->password);
+    }
+
+    public function test_con_la_clave_actual_equivocada_tampoco(): void
+    {
+        $usuario = $this->crearUsuario('propia');
+        $claveOriginal = $usuario->password;
+
+        $this->actingAs($usuario)
+            ->put(route('updatePassword', $usuario), [
+                'current_password' => 'no-es-la-mia',
+                'new_password' => 'nuevaclave123',
+                'conf_password' => 'nuevaclave123',
+            ]);
+
+        $this->assertSame($claveOriginal, $usuario->fresh()->password);
     }
 
     public function test_sin_administrar_usuarios_solo_se_ven_los_permisos_propios(): void
@@ -165,5 +197,40 @@ class PerfilTest extends TestCase
         $this->actingAs($admin)
             ->postJson(route('profile.getDataPermissions'), ['id' => 99999999])
             ->assertOk();
+    }
+
+    public function test_el_administrador_sigue_pudiendo_restablecer_una_clave(): void
+    {
+        /* Por admin/users la clave llega en los argumentos, no por la ruta, y
+           ahí no se pide la actual: el sentido de esa vía es justamente
+           restablecer la de alguien que ya no la recuerda. */
+        $admin = $this->crearUsuario('admin');
+        $admin->assignRole('admin');
+        $admin->givePermissionTo(Permission::where('name', 'gestion_usuarios')->firstOrFail());
+
+        $ajena = $this->crearUsuario('ajena');
+        $ajena->assignRole('user');
+        $claveOriginal = $ajena->password;
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.update'), [
+                'id' => $ajena->id,
+                'nombres' => $ajena->name,
+                'email' => $ajena->email,
+                'roles' => 'user',
+                /* Como los manda la pantalla: en arreglo. Con cadenas, update()
+                   toma la rama antigua y responde con una redirección. */
+                'assignedPermissions' => [],
+                'revokedPermissions' => [],
+                'claveNueva' => 'restablecida123',
+                'claveConfirmar' => 'restablecida123',
+            ])
+            ->assertOk();
+
+        $this->assertNotSame(
+            $claveOriginal,
+            $ajena->fresh()->password,
+            'el administrador debe poder restablecerla sin conocer la anterior'
+        );
     }
 }

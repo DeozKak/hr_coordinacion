@@ -26,8 +26,9 @@
 
             <div class="space-y-4 p-4 2xl:p-5">
                 @foreach ([
-                    ['campo' => 'nueva',     'name' => 'new_password',  'etiqueta' => 'Nueva contraseña'],
-                    ['campo' => 'confirmar', 'name' => 'conf_password', 'etiqueta' => 'Confirmar contraseña'],
+                    ['campo' => 'actual',    'name' => 'current_password', 'etiqueta' => 'Contraseña actual'],
+                    ['campo' => 'nueva',     'name' => 'new_password',     'etiqueta' => 'Nueva contraseña'],
+                    ['campo' => 'confirmar', 'name' => 'conf_password',    'etiqueta' => 'Confirmar contraseña'],
                 ] as $c)
                     <div>
                         <label class="tw-label" for="clave-{{ $c['campo'] }}">{{ $c['etiqueta'] }}</label>
@@ -51,7 +52,8 @@
                 @endforeach
 
                 <p class="tw-hint">
-                    <i class="fas fa-circle-info"></i> Mínimo 8 caracteres.
+                    <i class="fas fa-circle-info"></i> Mínimo 8 caracteres. Se pide la actual
+                    para que una sesión abierta no baste para cambiarla.
                 </p>
 
                 <p x-show="error" x-cloak
@@ -75,8 +77,8 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('cambioClave', () => ({
-                form: { nueva: '', confirmar: '' },
-                ver: { nueva: false, confirmar: false },
+                form: { actual: '', nueva: '', confirmar: '' },
+                ver: { actual: false, nueva: false, confirmar: false },
                 error: '',
                 invalidos: [],
 
@@ -93,8 +95,13 @@
                     this.invalidos = [];
                     this.error = '';
 
-                    const { nueva, confirmar } = this.form;
+                    const { actual, nueva, confirmar } = this.form;
 
+                    if (!actual.trim()) {
+                        this.invalidos = ['actual'];
+                        this.error = 'Escribe tu contraseña actual.';
+                        return false;
+                    }
                     if (!nueva.trim() || !confirmar.trim()) {
                         this.invalidos = [!nueva.trim() ? 'nueva' : null,
                                           !confirmar.trim() ? 'confirmar' : null].filter(Boolean);
