@@ -125,6 +125,20 @@ class UserController extends Controller
 
     public function updatePassword(Request $request, User $user, $claveNueva = false, $claveConfirmar = false)
     {
+        /* Este método tiene dos entradas. Desde update() llega con la clave ya
+           en los argumentos, y esa vía está tras CheckRole: un administrador
+           puede cambiar la de cualquiera. Por la ruta `uptadePassword/{user}`
+           llega sin ellos, y esa ruta sólo lleva `auth`: el usuario sale de la
+           URL y nada comprobaba de quién era, así que cualquiera con sesión
+           podía apoderarse de otra cuenta, la de un administrador incluida.
+           La pantalla sólo la usa para la cuenta propia (el enlace del navbar
+           va con auth()->id()), así que se exige exactamente eso. */
+        $vieneDeLaRuta = $claveNueva === false;
+
+        if ($vieneDeLaRuta && ! $request->user()?->is($user)) {
+            abort(403);
+        }
+
         if($claveNueva != null){
             $newPassword = $claveNueva;
         }else{

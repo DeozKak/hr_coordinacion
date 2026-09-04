@@ -93,4 +93,38 @@ class PerfilTest extends TestCase
             ->put(route('update', $usuario), ['name' => '', 'email' => $usuario->email])
             ->assertSessionHasErrors('name');
     }
+
+    public function test_nadie_puede_cambiar_la_clave_de_otra_persona(): void
+    {
+        $propia = $this->crearUsuario('propia');
+        $ajena = $this->crearUsuario('ajena');
+        $claveOriginal = $ajena->password;
+
+        $this->actingAs($propia)
+            ->put(route('updatePassword', $ajena), [
+                'new_password' => 'meapodero123',
+                'conf_password' => 'meapodero123',
+            ])
+            ->assertForbidden();
+
+        $this->assertSame(
+            $claveOriginal,
+            $ajena->fresh()->password,
+            'la contraseña de la otra cuenta no debe cambiar'
+        );
+    }
+
+    public function test_cada_quien_cambia_su_propia_clave(): void
+    {
+        $usuario = $this->crearUsuario('propia');
+        $claveOriginal = $usuario->password;
+
+        $this->actingAs($usuario)
+            ->put(route('updatePassword', $usuario), [
+                'new_password' => 'nuevaclave123',
+                'conf_password' => 'nuevaclave123',
+            ]);
+
+        $this->assertNotSame($claveOriginal, $usuario->fresh()->password);
+    }
 }
