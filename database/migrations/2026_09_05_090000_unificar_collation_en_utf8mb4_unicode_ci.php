@@ -116,14 +116,42 @@ return new class extends Migration
 
         $sql .= $c->IS_NULLABLE === 'YES' ? ' NULL' : ' NOT NULL';
 
-        if ($c->COLUMN_DEFAULT !== null) {
-            /* Ninguna de estas columnas tiene una expresión por defecto
-               (`EXTRA` sin DEFAULT_GENERATED), así que el valor es literal. */
-            $sql .= str_contains((string) $c->EXTRA, 'DEFAULT_GENERATED')
-                ? ' DEFAULT '.$c->COLUMN_DEFAULT
-                : ' DEFAULT '.DB::getPdo()->quote($c->COLUMN_DEFAULT);
+        return $sql.$this->clausulaPorOmision($c);
+    }
+
+    /**
+     * El `DEFAULT` de la columna, tal y como lo devuelve cada motor.
+     *
+     * Aquí estaba el fallo que hubo que reparar después con la migración
+     * `2026_09_07_120000_reparar_defaults_rotos_por_la_conversion_de_collation`:
+     * `COLUMN_DEFAULT` no significa lo mismo en los dos motores.
+     *
+     *                      DEFAULT NULL      DEFAULT 'OK'
+     *     MySQL 8          SQL NULL          OK
+     *     MariaDB 11       'NULL'            '''OK'''
+     *
+     * MariaDB devuelve la expresión SQL ya entrecomillada; volver a
+     * entrecomillarla convertía `DEFAULT NULL` en la cadena «NULL» y
+     * `DEFAULT 'OK'` en «'OK'», apóstrofos incluidos. Como en local es MySQL y
+     * en producción MariaDB, no había forma de verlo antes de desplegar.
+     */
+    private function clausulaPorOmision(object $c): string
+    {
+        if ($c->COLUMN_DEFAULT === null) {
+            return '';
         }
 
-        return $sql;
+        if ($this->esMariaDB()) {
+            return ' DEFAULT '.$c->COLUMN_DEFAULT;
+        }
+
+        return str_contains((string) $c->EXTRA, 'DEFAULT_GENERATED')
+            ? ' DEFAULT '.$c->COLUMN_DEFAULT
+            : ' DEFAULT '.DB::getPdo()->quote($c->COLUMN_DEFAULT);
+    }
+
+    private function esMariaDB(): bool
+    {
+        return str_contains(strtolower((string) DB::scalar('SELECT VERSION()')), 'mariadb');
     }
 };
