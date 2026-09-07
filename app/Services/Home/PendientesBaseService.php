@@ -2,7 +2,6 @@
 
 namespace App\Services\Home;
 
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class PendientesBaseService
@@ -16,11 +15,9 @@ class PendientesBaseService
     /** Órdenes sin fecha de última certificación con la que calcular los meses */
     private const RANGO_SIN_MESES = 'Sin meses';
 
-    /** Marca de "sin fecha" que arrastra la fuente. */
-    private const FECHA_VACIA = '1970-01-01';
-
     public function __construct(
-        private TiposTrabajoService $tipos
+        private TiposTrabajoService $tipos,
+        private MesesDeVencimientoService $meses
     ) {}
 
     /**
@@ -35,7 +32,7 @@ class PendientesBaseService
     public function generar(): array
     {
         $filas = DB::table(self::TABLA)
-            ->select('ID_TIPO_TRABAJO', 'FECHA_ULTCERTI')
+            ->select('ID_TIPO_TRABAJO', 'PLAZO_MAXIMO')
             ->get();
 
         $tipos = $this->porTipoDeTrabajo($filas);
@@ -73,8 +70,8 @@ class PendientesBaseService
      * Cantidad de órdenes por rango de meses de vencimiento.
      *
      * Los rangos son fijos: siempre se devuelven todos, incluso los que quedan
-     * en cero. Las órdenes sin fecha de certificación se agrupan aparte para
-     * que el total coincida con el de tipo de trabajo.
+     * en cero. Las órdenes sin plazo se agrupan aparte para que el total
+     * coincida con el de tipo de trabajo.
      *
      * @return array<int, array{rango: string, cantidad: int}>
      */
@@ -83,7 +80,7 @@ class PendientesBaseService
         $conteos = [];
 
         foreach ($filas as $fila) {
-            $meses = $this->mesesDesdeCertificacion($fila->FECHA_ULTCERTI);
+            $meses = $this->mesesSegunPlazo($fila->PLAZO_MAXIMO);
             $rango = $meses === null ? self::RANGO_SIN_MESES : $this->rangoDe($meses);
             $conteos[$rango] = ($conteos[$rango] ?? 0) + 1;
         }
@@ -97,40 +94,14 @@ class PendientesBaseService
     }
 
     /**
-     * Meses transcurridos desde la última certificación.
+     * Meses de vencimiento de una orden, a partir de su plazo máximo.
      *
-     * Se cuenta la diferencia de meses de calendario y nada más, que es lo que
-     * hace la hoja con la que coordinación contrasta el tablero:
-     *
-     *     (AÑO(HOY()) - AÑO(ULTCERTI)) * 12 + MES(HOY()) - MES(ULTCERTI)
-     *
-     * El día no entra. Antes se sumaba un mes cuando sobraban días, y eso
-     * inflaba en uno el 16,7% de las órdenes —3.939 de 23.632—, siempre hacia
-     * arriba y nunca hacia abajo, así que varias se veían vencidas antes de
-     * tiempo. Todo agosto de 2021 son 61 meses, caiga el día que caiga.
-     *
-     * Una fecha futura da negativo, como en la hoja; cae en el rango de "-55".
-     *
-     * @return int|null null cuando no hay fecha con la que calcular.
+     * La cuenta vive en MesesDeVencimientoService porque el volcado diario de
+     * movilidad tiene que dar el mismo número que este tablero.
      */
-    public function mesesDesdeCertificacion($fechaUltimaCertificacion): ?int
+    public function mesesSegunPlazo($plazoMaximo): ?int
     {
-        $valor = trim((string) $fechaUltimaCertificacion);
-
-        if ($valor === '' || str_starts_with($valor, self::FECHA_VACIA)) {
-            return null;
-        }
-
-        try {
-            // La columna es varchar y llega como "2021-11-18 00:00:00".
-            $certificacion = Carbon::parse(explode(' ', $valor)[0]);
-        } catch (\Exception $e) {
-            return null;
-        }
-
-        $hoy = Carbon::today();
-
-        return ($hoy->year - $certificacion->year) * 12 + ($hoy->month - $certificacion->month);
+        return $this->meses->desdePlazo($plazoMaximo);
     }
 
     /**

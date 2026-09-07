@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Movilidad;
+use App\Services\Home\MesesDeVencimientoService;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -15,7 +16,7 @@ class SyncReporteTareas extends Command
     // Descripción para la consola
     protected $description = 'Extrae Tasks priorizando efectividad y fecha (agrupando por Contrato, Tipo y Dirección)';
 
-    public function handle()
+    public function handle(MesesDeVencimientoService $meses)
     {
         $this->info('Iniciando sincronización de tareas...');
 
@@ -42,7 +43,7 @@ class SyncReporteTareas extends Command
             ->where('Grupo', 'INSP-VALLE')
             ->where('Cierre3', '<>', 'CIERRE ADMINISTRATIVO')
             ->whereBetween('FechaRealFin', [$inicio, $fin])
-            ->chunk(500, function ($tareas) use ($estadosCierre) {
+            ->chunk(500, function ($tareas) use ($estadosCierre, $meses) {
 
                 // =========================================================================
                 // 1. FILTRAR DUPLICADOS DENTRO DEL BLOQUE (NroSitio + TipoTarea + Direccion)
@@ -81,16 +82,13 @@ class SyncReporteTareas extends Command
                     return ltrim($sitio, ':');
                 })->filter()->unique()->toArray();
 
-                $mesesPorContrato = DB::table('tbl_programacion_base')
-                    ->whereIn('CONTRATO', $contratosLimpios)
-                    ->pluck('MESES', 'CONTRATO');
-
-                $asignacionesRespaldo = DB::table('tbl_asignaciones')
-                    ->whereIn('CONTRATO', $contratosLimpios)
-                    ->get(['CONTRATO', 'ID_TIPO_TRABAJO', 'FECHA_ULTCERTI'])
-                    ->groupBy('CONTRATO');
-
-                $fechaCalculo = Carbon::now();
+                /* Los meses salen del plazo máximo de la orden abierta, la misma
+                   cuenta que usa el tablero del inicio. Antes se copiaban de
+                   tbl_programacion_base.MESES y, cuando faltaba, se calculaban
+                   desde FECHA_ULTCERTI: esa columna traía valores sin recalcular
+                   —hasta 1.580 meses, ciento treinta años— y ninguno de los dos
+                   caminos coincidía con la hoja de coordinación. */
+                $mesesPorContrato = $meses->porContrato($contratosLimpios);
 
                 $datosInsertar = [];
                 $idTareasParaBorrar = []; // Almacenaremos el 'id' principal de la tabla para borrar
@@ -146,28 +144,9 @@ class SyncReporteTareas extends Command
                     // Si la nueva tarea superó los filtros, calculamos meses y guardamos
                     if ($procesar) {
                         $contratoLimpio = ltrim($array['NroSitio'], ':');
-                        $mesesCalculados = $mesesPorContrato[$contratoLimpio] ?? null;
 
-                        if ($mesesCalculados === null && isset($asignacionesRespaldo[$contratoLimpio])) {
-                            $tareaLimpia = trim(substr($array['TipoTarea'], 2));
-                            // 10444 y 12161 son equivalentes en ambos sentidos
-                            $equivalentes = ['10444', '12161'];
-                            $match = $asignacionesRespaldo[$contratoLimpio]->first(function ($item) use ($tareaLimpia, $equivalentes) {
-                                return $item->ID_TIPO_TRABAJO == $tareaLimpia ||
-                                    (in_array($tareaLimpia, $equivalentes, true)
-                                        && in_array((string) $item->ID_TIPO_TRABAJO, $equivalentes, true));
-                            });
-
-                            if ($match && !empty($match->FECHA_ULTCERTI)) {
-                                try {
-                                    $strFecha = str_replace('/', '-', trim($match->FECHA_ULTCERTI));
-                                    $fechaUlt = Carbon::parse($strFecha);
-                                    $mesesCalculados = (int) floor($fechaUlt->diffInMonths($fechaCalculo));
-                                } catch (\Exception $e) { }
-                            }
-                        }
-
-                        $array['Meses'] = $mesesCalculados;
+                        // Sin orden abierta que lo respalde se queda sin meses.
+                        $array['Meses'] = $mesesPorContrato[$contratoLimpio] ?? null;
                         $array['created_at'] = now();
                         $array['updated_at'] = now();
                         $datosInsertar[] = $array;
