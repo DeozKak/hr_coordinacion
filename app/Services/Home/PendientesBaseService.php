@@ -2,7 +2,7 @@
 
 namespace App\Services\Home;
 
-use DateTime;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class PendientesBaseService
@@ -99,12 +99,17 @@ class PendientesBaseService
     /**
      * Meses transcurridos desde la última certificación.
      *
-     * Misma fórmula que ya se usa en coordinación: años por doce más los meses
-     * completos, y un mes más si sobran días. No es un redondeo caprichoso —
-     * se comprobó contra las 17.891 órdenes que cruzan con la MESES que traía
-     * tbl_programacion_base y reproduce el 87,8% de sus valores, frente al 4,6%
-     * que da truncar. El resto son valores que la fuente antigua tenía sin
-     * recalcular; calculándolo aquí siempre está al día.
+     * Se cuenta la diferencia de meses de calendario y nada más, que es lo que
+     * hace la hoja con la que coordinación contrasta el tablero:
+     *
+     *     (AÑO(HOY()) - AÑO(ULTCERTI)) * 12 + MES(HOY()) - MES(ULTCERTI)
+     *
+     * El día no entra. Antes se sumaba un mes cuando sobraban días, y eso
+     * inflaba en uno el 16,7% de las órdenes —3.939 de 23.632—, siempre hacia
+     * arriba y nunca hacia abajo, así que varias se veían vencidas antes de
+     * tiempo. Todo agosto de 2021 son 61 meses, caiga el día que caiga.
+     *
+     * Una fecha futura da negativo, como en la hoja; cae en el rango de "-55".
      *
      * @return int|null null cuando no hay fecha con la que calcular.
      */
@@ -118,20 +123,14 @@ class PendientesBaseService
 
         try {
             // La columna es varchar y llega como "2021-11-18 00:00:00".
-            $certificacion = new DateTime(explode(' ', $valor)[0]);
+            $certificacion = Carbon::parse(explode(' ', $valor)[0]);
         } catch (\Exception $e) {
             return null;
         }
 
-        $diferencia = $certificacion->diff(new DateTime(date('Y-m-d')));
-        $meses = ($diferencia->y * 12) + $diferencia->m;
+        $hoy = Carbon::today();
 
-        if ($diferencia->d > 0) {
-            $meses++;
-        }
-
-        // Una fecha futura no son meses negativos de vencimiento.
-        return $diferencia->invert === 1 ? 0 : $meses;
+        return ($hoy->year - $certificacion->year) * 12 + ($hoy->month - $certificacion->month);
     }
 
     /**

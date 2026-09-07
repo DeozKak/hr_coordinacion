@@ -26,6 +26,27 @@ class ActualizarAsignadoRequest extends FormRequest
         return true;
     }
 
+    /**
+     * La tabla manda CÓDIGO AUTORIZACIÓN como número, no como texto.
+     *
+     * Esa columna está declarada `type: 'numeric'` en el Handsontable de la
+     * pantalla, así que Handsontable convierte lo tecleado a `Number` y
+     * `window.api` lo serializa como número JSON. La regla `string` lo
+     * rechazaba y la celda se revertía con «El valor de la celda no es
+     * válido», sin que se pudiera guardar ningún código.
+     *
+     * Lo que hay que impedir en `valor` no es un número sino un arreglo: con
+     * ASIGNADO o RESPONSABLE el controlador hace `explode('.', $valor)`, y eso
+     * con un arreglo es un error de tipo. Por eso se normaliza el escalar en
+     * lugar de aflojar la regla.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (is_int($this->valor) || is_float($this->valor)) {
+            $this->merge(['valor' => (string) $this->valor]);
+        }
+    }
+
     public function rules(): array
     {
         return [

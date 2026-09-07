@@ -62,6 +62,38 @@ class CoordinacionPqrsTest extends TestCase
             ->assertStatus(422);
     }
 
+    public function test_el_codigo_de_autorizacion_llega_como_numero_y_se_guarda(): void
+    {
+        /* CÓDIGO AUTORIZACIÓN está declarada `type: 'numeric'` en el
+           Handsontable de la pantalla, así que lo tecleado se convierte a
+           `Number` y sale como número JSON, no como texto. Validar `valor` con
+           `string` lo rechazaba: la celda se revertía con «El valor de la
+           celda no es válido» y no se podía guardar ningún código.
+
+           Las demás pruebas de este archivo mandan cadenas, que es justo lo que
+           la pantalla no manda en esta columna, y por eso el fallo llegó a
+           producción. */
+        $queja = $this->queja();
+
+        $this->actingAs($this->coordinador())
+            ->postJson(route('pqrs.coordinacion.updateAsignado'), [
+                'orden' => $queja->NUMERO_ORDEN,
+                'contrato' => $queja->CONTRATO,
+                'campo' => 'CODIGO_AUTORIZACION',
+                'valor' => 123456,
+            ])
+            ->assertOk()
+            ->assertJson(['success' => true, 'fecha_extra' => date('Y-m-d')]);
+
+        $fresca = $queja->fresh();
+
+        $this->assertSame('123456', $fresca->CODIGO_AUTORIZACION);
+
+        /* Guardar el código sella la fecha de respuesta, que es lo que la
+           pantalla repinta en la columna de al lado. */
+        $this->assertSame(date('Y-m-d'), $fresca->FECHA_RESPUESTA);
+    }
+
     public function test_sin_orden_no_se_intenta_nada(): void
     {
         $queja = $this->queja();
