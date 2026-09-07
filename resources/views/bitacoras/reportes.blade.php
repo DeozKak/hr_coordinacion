@@ -13,7 +13,7 @@
         'usuario' => $b->Usuario->name ?? '—',
         'fecha'   => (string) $b->fecha_creacion,
         'urlVer'  => route('bitacoras.ver_reporte', ['id_bitacora' => $b->id]),
-        'urlXlsx' => route('bitacoras.download', ['file' => $b->nombre_archivo.'.xlsx']),
+        'urlXlsx' => route('bitacoras.download', ['idBitacora' => $b->id]),
     ])->values();
 @endphp
 

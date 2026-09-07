@@ -2,34 +2,24 @@
 
 namespace App\Http\Controllers\Bitacoras;
 
-use App\Notifications\Mod_Devolucion;
 use App\Http\Controllers\Controller;
-use App\Jobs\CorreoBitacora;
+use App\Http\Requests\Bitacoras\GuardarTablaRequest;
 use App\Models\Bitacoras\TblBitacoraArchivo;
 use App\Models\Bitacoras\TblBitacoraContrato;
-use App\Models\Bitacoras\TblBitacoraFallida;
 use App\Models\Bitacoras\TblBitacorasCausal;
 use App\Models\Bitacoras\TblDvInsp;
-use App\Models\Bitacoras\TblTempContrato;
-use App\Models\Bitacoras\TblTempFallida;
-use App\Models\Movilidad;
-use App\Models\Programacion\TblProgramacionBase;
-use App\Models\TblInspCali;
 use App\Models\User;
 use App\Models\Zonificacion\TblLocalidadesMunicipio;
 use App\Notifications\devolucion;
-use DateTime;
-use DOMDocument;
-use App\Http\Requests\Bitacoras\GuardarTablaRequest;
+use App\Services\Bitacoras\CargaBitacoraService;
+use App\Services\Bitacoras\DevolucionesService;
+use App\Services\Bitacoras\ExcelBitacoraService;
+use App\Services\Bitacoras\GuardadoBitacoraService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use Illuminate\Support\Facades\DB;
 
 class BitacoraController extends Controller
 {
@@ -41,12 +31,10 @@ class BitacoraController extends Controller
 
             $temp = TblBitacoraArchivo::where('id_usuario', '=', $id_user)->where('finished', '=', 0)->first();
 
-
-            if (!$temp) {
+            if (! $temp) {
 
                 return view('bitacoras.generar', compact('supervisores'));
             }
-
 
             session()->flash('warning', 'Ya tienes una bitácora en proceso. ¿Deseas continuar?');
 
@@ -58,720 +46,99 @@ class BitacoraController extends Controller
 
         $temp = TblBitacoraArchivo::where('id_usuario', '=', $id_user)->where('finished', '=', 0)->first();
 
-        if (!$temp) {
+        if (! $temp) {
 
             return view('bitacoras.generar', compact('supervisores'));
         }
 
-
         session()->flash('warning', 'Ya tienes una bitácora en proceso. ¿Deseas continuar?');
+
         return view('bitacoras.generar', compact('supervisores', 'temp'));
     }
 
-    public function generar_bitacora(Request $request)
+    /**
+     * Carga el Excel de inspecciones y abre el borrador.
+     *
+     * El trabajo vive en {@see CargaBitacoraService}: aquí sólo se comprueba lo
+     * que llega y se decide si la carga es de un supervisor o de todos.
+     */
+    public function generar_bitacora(Request $request, CargaBitacoraService $carga)
     {
-
         $validator = Validator::make($request->all(), [
             'supervisor' => 'required',
-            'archivo' => 'required'
-
+            'archivo' => 'required|file',
         ], [
             'supervisor.required' => 'Por favor seleccione un supervisor',
             'archivo.required' => 'Por favor seleccione un archivo',
-            'archivo.mimes' => 'El archivo seleccionado no es válido'
+            'archivo.file' => 'El archivo seleccionado no es válido',
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route('bitacora')->withErrors($validator)->withInput()->with('error', $validator->errors()->first());
+            return redirect()->route('bitacora')
+                ->withErrors($validator)->withInput()
+                ->with('error', $validator->errors()->first());
         }
 
-        $nombreOriginal = $this->sinSufijoDeDescarga($request->archivo->getClientOriginalName());
-
-        if ($request->supervisor === "0") {
-
-            $nombreArchivo = $nombreOriginal . "Todos" . ".xls";
-
-            $request->archivo->storeAs('uploads', $nombreArchivo);
-
-            $rutaDestino = storage_path('app/uploads/') . $nombreArchivo;
-
-            $excelFilePath = $rutaDestino;
-
-            return $this->procesarArchivoExcel($excelFilePath, new AutoGuardadoController(), null, null, $request->supervisor);
-        }
-
-        $supervisor = User::find($request->supervisor);
-
-        $nombreArchivo = $nombreOriginal . $supervisor->name . ".xls";
-
-        $request->archivo->storeAs('uploads', $nombreArchivo);
-
-        $rutaDestino = storage_path('app/uploads/') . $nombreArchivo;
-
-        $excelFilePath = $rutaDestino;
-
-        return $this->procesarArchivoExcel($excelFilePath, new AutoGuardadoController(), $supervisor->name, $supervisor->id);
-    }
-
-    /**
-     * Quita el "(1)" que el navegador añade al descargar un archivo repetido.
-     *
-     * El nombre del archivo subido acaba dentro de tbl_bitacora_archivos, y de
-     * ahí lo lee producción con esta expresión:
-     *
-     *     /Bitacora Valle_(dd-mm-aaaa)____(dd-mm-aaaa) (.+)$/
-     *
-     * ...tomando el último grupo como nombre del supervisor. Con el sufijo por
-     * medio, ese grupo pasa a ser "(1) Orlando Montaño" y deja de coincidir con
-     * el supervisor real, así que la bitácora no se encuentra.
-     *
-     * Se recorta sólo el paréntesis con dígitos pegado a la extensión —o al
-     * final del nombre—, que es donde lo pone el navegador. Un paréntesis en
-     * cualquier otra parte del nombre se respeta.
-     */
-    private function sinSufijoDeDescarga(string $nombre): string
-    {
-        return preg_replace('/\s*\(\d+\)(?=\.[^.]*$|$)/', '', $nombre) ?? $nombre;
-    }
-
-    public function procesarArchivoExcel($excelFilePath, AutoGuardadoController $Guardado, $nom_super = null, $id_super = null, $cierre = null)
-    {
-
-        session(['nom_archivo' => basename($excelFilePath)]);
-
-        $validacionArchivo1 = str_replace(".xls", " ", basename($excelFilePath));
-        $validacionArchivo2 = str_replace("4.08", "", $validacionArchivo1);
-        $validacionArchivo3 = str_replace(" V10", "", $validacionArchivo2);
-
-        $exist = $Guardado->buscar($validacionArchivo3);
-
-        if ($exist) {
-            $data = $exist->getData(true); // Obtener datos como array asociativo
-            $mensaje = $data['error'];
-            return redirect()->route('bitacora')->with('error', $mensaje);
-        }
-
-        session(['super' => $nom_super]);
-        //consultas a la base de datos
-        if ($nom_super === null || $id_super === null) {
-            $inspectores = TblInspCali::where('state', 1)
-                ->orderBy('apellidos', 'asc')
-                ->get();
-        } else {
-            $inspectores = TblInspCali::where('SUPERVISOR', $id_super)
-                ->where('state', 1)
-                ->orderBy('apellidos', 'asc')
-                ->get();
-        }
-
-        $municipios = TblLocalidadesMunicipio::all();
-
-        $nombres = array();
-        $ids = array();
-
-
-        foreach ($inspectores as $inspector) {
-            $nombres[] = $inspector->apellidos . ' ' . $inspector->nombres;
-            $cedulas[] = $inspector->cedula;
-            $ids[$inspector->cedula] = $inspector->id;
-        }
-
-        session(['ids_inspectores' => $ids]);
-        $id_inspector = 1118285465;
+        /* El cero no es un supervisor: significa cargar la bitácora de todos. */
+        $supervisor = $request->input('supervisor') === CargaBitacoraService::TODOS
+            ? null
+            : User::find($request->input('supervisor'));
 
         try {
-            $spreadsheet = IOFactory::load($excelFilePath);
-        } catch (\Exception $e) {
-            return redirect()->route('bitacora')->with('error', 'El archivo seleccionado no es válido o no se ha seleccionado un supervisor');
-        }
-        if (!$spreadsheet->sheetNameExists('4.08 Bitacora Valle V10')) {
-            return redirect()->route('bitacora')->with('error', 'El archivo seleccionado no es válido o no se ha seleccionado un supervisor');
+            $datos = $carga->procesar($request->file('archivo'), $supervisor);
+        } catch (\RuntimeException $e) {
+            return redirect()->route('bitacora')->with('error', $e->getMessage());
         }
 
-        unlink($excelFilePath);
-        $causales = TblBitacorasCausal::all();
-
-        $response = $Guardado->guardar($spreadsheet, $nombres, $id_super, $cedulas, $cierre);
-
-
-        if ($response->isEmpty()) {
-
-            return redirect()->route('bitacora')->with('error', 'Error al generar la bitacora');
-        }
-
-        return view('bitacoras.tabla', compact('nombres', 'id_super', 'municipios', 'inspectores', 'causales', 'response', 'cedulas'));
+        return view('bitacoras.tabla', $datos);
     }
 
-    public function guardar_tabla(GuardarTablaRequest $request, User $super = null)
+
+    public function guardar_tabla(GuardarTablaRequest $request, GuardadoBitacoraService $guardado, ?User $super = null)
     {
+        $usuario = Auth::user();
+        $bitacora = TblBitacoraArchivo::where('id_usuario', $usuario->id)
+            ->where('finished', 0)
+            ->first();
 
-        //variables que obtienen datos del request
-        $encabezados = $request->encabezado;
-        $dataTable = $request->datos;
-        $indicadores = $request->indicadores;
-        $valoresSeleccionados = $request->valoresSeleccionados;
-
-        $datos_array = array();
-
-        // Crear una instancia de la clase Spreadsheet
-        $spreadsheet = new Spreadsheet();
-        $hoja_OK = $spreadsheet->getSheetByName('Worksheet');
-        $indiceFila_ok = 2;
-        foreach ($dataTable as $indice => $tabla) {
-
-            $idTabla = "$indice";
-
-            $nombre_tabla = $tabla[0][1] ?? "Tabla $indice";
-
-            $nombre_tabla = strlen($nombre_tabla) > 31 ? substr($nombre_tabla, 0, 31) : $nombre_tabla;
-
-            // Crear una nueva hoja de cálculo para esta tabla
-            $hoja = $spreadsheet->createSheet($indice);
-            $hoja->setTitle($nombre_tabla);
-            // setear la tabla de indicadores
-            if ($indicadores !== null) {
-                $tablaIndicadores = $indicadores[$indice];
-
-                $hoja->setCellValue([1, 1], ".CERTIFICADA");
-                $hoja->setCellValue([1, 2], "CERTIFICADA CON NOVEDADES");
-                $hoja->setCellValue([1, 3], ".INSPECCIONADA CON DEFECTO CRITICO");
-                $hoja->setCellValue([1, 4], ".INSPECCIONADA CON DEFECTO NO CRITICO");
-                $hoja->setCellValue([1, 5], "TOTAL CONTRATOS OK");
-
-                $hoja->setCellValue([2, 1], $tablaIndicadores["certificadaCount"]);
-                $hoja->setCellValue([2, 2], $tablaIndicadores["certificadaConNovedadesCount"]);
-                $hoja->setCellValue([2, 3], $tablaIndicadores["inspeccionadaConDefectoCriticoCount"]);
-                $hoja->setCellValue([2, 4], $tablaIndicadores["inspeccionadaConDefectoNoCriticoCount"]);
-                $hoja->setCellValue([2, 5], $tablaIndicadores["totalCount"]);
-            }
-
-
-            $indiceFila = 8;
-            $indicador_checkbox = 0;
-            $indicador_combobox1 = 1;
-            $indicador_combobox2 = 2;
-            // Iterar sobre cada fila de la tabla
-            foreach ($tabla as $fila) {
-
-                // Si hay celdas de encabezado, procesarlas
-                if (!empty($encabezados)) {
-                    $indiceColumna = 1;
-                    foreach ($encabezados as $encabezado) {
-                        // Obtener el contenido del encabezado
-                        $contenidoEncabezado = $encabezado;
-
-                        // Pegar el contenido del encabezado en la hoja de cálculo
-                        $hoja->setCellValue([$indiceColumna, 7], $contenidoEncabezado);
-
-                        // Incrementar el índice de columna
-                        $indiceColumna++;
-                    }
-                }
-
-                // Si hay celdas de datos, procesarlas
-                if (!empty($fila)) {
-                    // Inicializar el índice de columna en 1
-                    $indiceColumna = 1;
-
-                    foreach ($fila as $celda) {
-                        $contenidoCelda = $celda;
-                        // obtener datos complementarios 60 meses y rechazos
-                        $vence = $fila[18] ?? null;
-                        $rechazo = $fila[19] ?? null;
-                        $periodo_gracia = $fila[20] ?? null;
-
-                        // Obtener el identificador único del combobox y checkbox
-                        $idCheckbox = $indicador_checkbox;
-                        $idCombobox1 = $indicador_combobox1;
-                        $idCombobox2 = $indicador_combobox2;
-
-                        // Obtener la clave para buscar en los valores seleccionados
-                        $claveCheckbox = "select_$idTabla" . "_$idCheckbox";
-                        $clave = "select_$idTabla" . "_$idCombobox1";
-                        $clave2 = "select_$idTabla" . "_$idCombobox2";
-                        if ($indiceColumna === 16 && isset($valoresSeleccionados[$claveCheckbox])) {
-                            $contenidoCelda = $valoresSeleccionados[$claveCheckbox];
-                            if ($contenidoCelda === "false") {
-                                $contenidoCelda = "NO";
-                            } else {
-                                $celda_color = $hoja->getCell([$indiceColumna, $indiceFila]);
-                                $celda_color->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('FF8000');
-                            }
-                            $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoCelda);
-                        }
-                        if (array_key_exists($clave, $valoresSeleccionados) && $valoresSeleccionados[$clave] === "OK") {
-                            $validacion = 0;
-                            // copiado del campo 60 meses a la hoja OK
-                            if ($indiceColumna === 19) {
-                                $hoja_OK->setCellValue([16, $indiceFila_ok], $contenidoCelda);
-
-                                $celda_color = $hoja_OK->getCell([7, $indiceFila_ok]);
-
-                                $celda_color->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('92D050');
-                            }
-
-                            if ($indiceColumna === 21) {
-                                $hoja_OK->setCellValue([17, $indiceFila_ok], $contenidoCelda);
-                                $celda_color = $hoja_OK->getCell([7, $indiceFila_ok]);
-
-                                $celda_color->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('92D050');
-
-                            }
-
-                            if ($indiceColumna < 16) {
-
-                                $hoja_OK->setCellValue([$indiceColumna, $indiceFila_ok], $contenidoCelda);
-
-                                $celda_color = $hoja_OK->getCell([7, $indiceFila_ok]);
-
-                                $celda_color->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('92D050');
-                            }
-                            $validacion = $validacion + 1;
-                        } else {
-                            $validacion = 0;
-                        }
-                        // Verificar si existe un valor seleccionado para este combobox y esta tabla
-                        if ($indiceColumna === 17 && isset($valoresSeleccionados[$clave])) {
-                            // Usar el valor seleccionado en lugar del contenido de la celda
-                            $contenidoCelda = $valoresSeleccionados[$clave];
-                            $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoCelda);
-                            if ($valoresSeleccionados[$clave] === "OK") {
-                                $celda_color = $hoja->getCell([8, $indiceFila]);
-                                $celda_color->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('92D050');
-                                $cedula_insp = $hoja->getCell([3, $indiceFila])->getValue();
-
-                                // guardar un array con todos los contratos en ok
-                                $ids_inspectores = session('ids_inspectores');
-                                $id_cedula = $ids_inspectores[$cedula_insp];
-                                $fecha = $hoja->getCell([5, $indiceFila])->getValue();
-                                if ($hoja->getCell([16, $indiceFila])->getValue() === null) {
-                                    $hoja->setCellValue([16, $indiceFila], "NO");
-                                }
-
-                                $datos_array_OK[] = array(
-                                    'cc_operario' => $hoja->getCell([3, $indiceFila])->getValue(),
-                                    'municipio' => $hoja->getCell([4, $indiceFila])->getValue(),
-                                    'fecha_inspeccion' => $fecha,
-                                    'no_acta' => $hoja->getCell([6, $indiceFila])->getValue(),
-                                    'tipo_de_trabajo' => $hoja->getCell([7, $indiceFila])->getValue(),
-                                    'contrato' => $hoja->getCell([8, $indiceFila])->getValue(),
-                                    'orden_de_trabajo' => $hoja->getCell([9, $indiceFila])->getValue(),
-                                    'orden_externa' => $hoja->getCell([10, $indiceFila])->getValue(),
-                                    'categoria' => $hoja->getCell([11, $indiceFila])->getValue(),
-                                    'resultado' => $hoja->getCell([12, $indiceFila])->getValue(),
-                                    'hora_inicio' => $hoja->getCell([13, $indiceFila])->getValue(),
-                                    'hora_fin' => $hoja->getCell([14, $indiceFila])->getValue(),
-                                    '4_recintos' => $hoja->getCell([16, $indiceFila])->getValue(),
-                                    'vence' => $vence,
-                                    'rechazo' => $rechazo,
-                                    'periodo_gracia' => $periodo_gracia
-                                );
-                            } else {
-
-                                $celda_color = $hoja->getCell([8, $indiceFila]);
-                                $celda_color->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('FF0000');
-                            }
-                        } elseif (array_key_exists($clave, $valoresSeleccionados) && $valoresSeleccionados[$clave] === "DV" && $indiceColumna === 18 && isset($valoresSeleccionados[$clave2])) {
-                            if ($valoresSeleccionados[$clave2] === '--SELECCIONE CAUSAL--') {
-                                header('Content-Type: application/json');
-                                echo json_encode(['error' => 'Por favor, seleccione una causal para los contratos en estado de devolucion']);
-                                exit;
-                            }
-                            $contenidoCelda = $valoresSeleccionados[$clave2];
-                            $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoCelda);
-
-                            $cedula_insp = $hoja->getCell([3, $indiceFila])->getValue();
-                            $ids_inspectores = session('ids_inspectores');
-                            $id_cedula = $ids_inspectores[$cedula_insp];
-                            $fecha = $hoja->getCell([5, $indiceFila])->getValue();
-                            if ($hoja->getCell([16, $indiceFila])->getValue() === null) {
-                                $hoja->setCellValue([16, $indiceFila], "NO");
-                            }
-
-                            $datos_array[] = array(
-                                "supervisor" => $super->id,
-                                'inspector' => $id_cedula,
-                                'cc_operario' => $hoja->getCell([3, $indiceFila])->getValue(),
-                                'municipio' => $hoja->getCell([4, $indiceFila])->getValue(),
-                                'fecha_inspeccion' => $fecha,
-                                'No_ACTA' => $hoja->getCell([6, $indiceFila])->getValue(),
-                                'tipo_de_trabajo' => $hoja->getCell([7, $indiceFila])->getValue(),
-                                'contrato' => $hoja->getCell([8, $indiceFila])->getValue(),
-                                'orden_de_trabajo' => $hoja->getCell([9, $indiceFila])->getValue(),
-                                'orden_externa' => $hoja->getCell([10, $indiceFila])->getValue(),
-                                'categoria' => $hoja->getCell([11, $indiceFila])->getValue(),
-                                'resultado' => $hoja->getCell([12, $indiceFila])->getValue(),
-                                'Hora_inicio' => $hoja->getCell([13, $indiceFila])->getValue(),
-                                'Hora_fin' => $hoja->getCell([14, $indiceFila])->getValue(),
-                                '4_recintos' => $hoja->getCell([16, $indiceFila])->getValue(),
-                                'causal' => $contenidoCelda,
-                                'fecha_devolucion' => date('Y-m-d'),
-                                'vence' => $vence,
-                                'gestionado' => 0,
-                                'dias_sin_gestion' => 0
-                            );
-                        } elseif ($indiceColumna === 18) {
-                            $hoja->setCellValue([$indiceColumna, $indiceFila], "");
-                        } elseif ($indiceColumna === 15) {
-                            if ($contenidoCelda < '00:20') {
-                                $celda = $hoja->getCell([$indiceColumna, $indiceFila]);
-                                $celdaExcel_OK = $hoja_OK->getCell([$indiceColumna, $indiceFila_ok]);
-                                $celda->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('FF8000');
-                                $celdaExcel_OK->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('FF8000');
-                            }
-                        } else {
-
-                            $hoja->setCellValue([$indiceColumna, $indiceFila], "");
-                            $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoCelda);
-
-                            $celda = $hoja->getCell([$indiceColumna, $indiceFila]);
-
-                            $celdaExcel_OK = $hoja_OK->getCell([$indiceColumna, $indiceFila_ok]);
-                            switch ($contenidoCelda) {
-                                case 'COMERCIAL':
-                                    $celda->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('FF8000');
-                                    $celdaExcel_OK->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('FF8000');
-                                    break;
-                                case 'SI':
-                                    $celda->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('92D050');
-                                    $celdaExcel_OK->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('92D050');
-                                    break;
-                            }
-                        }
-
-                        // Incrementar el índice de columna
-                        $indiceColumna++;
-                    }
-
-                    // Incrementar el índice de fila
-                    if ($validacion === 1) {
-                        $indiceFila_ok++;
-                    }
-
-                    $indiceFila++;
-
-                    $indicador_checkbox = $indicador_checkbox + 3;
-                    $indicador_combobox1 = $indicador_combobox1 + 3;
-                    $indicador_combobox2 = $indicador_combobox2 + 3;
-                }
-            }
-
-            $hoja_OK->setCellValue([19, 2], "Comerciales");
-            $hoja_OK->setCellValue([19, 3], "Residenciales");
-            $hoja_OK->setCellValue([19, 4], "Vacias");
-            $hoja_OK->setCellValue([19, 5], "4 recintos o mas");
-
-            $this->contadoresHojaOK($hoja_OK);
-
-            // Obtener las dimensiones máximas de la hoja
-            $lastColumn = $hoja->getHighestColumn();
-            $lastRow = $hoja->getHighestRow();
-
-            // Construir el rango de celdas
-            $range = 'A1:' . $lastColumn . $lastRow;
-
-            // Establecer el rango de impresión de la hoja
-            $hoja->getPageSetup()->setPrintArea($range);
-
-
-            // Habilitar el filtro en la fila 7 hasta la columna N
-            $hoja->setAutoFilter('A7:N7');
-            $protection = $hoja->getProtection();
-            $protection->setSheet(true); // Proteger la hoja
-            $protection->setSort(true); // Permitir ordenar
-            $protection->setInsertRows(true); // Permitir insertar filas
-            $protection->setFormatCells(true); // Permitir formato de celdas
-
-            $hoja->getProtection()->setAutoFilter(true); // Permitir uso de autofiltro
-
-            // Aplicar bordes a la tabla
-            $hoja->getStyle('A7:' . $hoja->getHighestColumn() . $hoja->getHighestRow())
-                ->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-
-            // Ajustar automáticamente el ancho de las columnas al contenido
-            foreach (range('A', $hoja->getHighestDataColumn()) as $columnID) {
-                $hoja->getColumnDimension($columnID)->setAutoSize(true);
-            }
-
-            // Aplicar bordes a la tabla
-            $hoja_OK->getStyle('A2:' . $hoja_OK->getHighestColumn() . $hoja_OK->getHighestRow())
-                ->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-
-            // Ajustar automáticamente el ancho de las columnas al contenido
-            foreach (range('A', $hoja_OK->getHighestDataColumn()) as $columnID) {
-                $hoja_OK->getColumnDimension($columnID)->setAutoSize(true);
-            }
-
-
-            $hoja->getStyle('A1:B5')->applyFromArray([
-                'borders' => [
-                    'outline' => [
-                        'borderStyle' => Border::BORDER_THIN,
-                        'color' => ['rgb' => '000000'],
-                    ],
-                    'inside' => [
-                        'borderStyle' => Border::BORDER_THIN,
-                        'color' => ['rgb' => '000000'],
-                    ]
-                ],
-            ]);
-            $hoja->getStyle('A7:O7')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('0096ff');
-        }
-        if ($super !== null) {
-            //comienzo de transaccion
-            DB::beginTransaction();
-            if (!empty($datos_array_OK)) {
-
-                foreach ($datos_array_OK as $datos_ok) {
-
-                    try {
-
-
-                        $resultado_ok = TblDvInsp::where('contrato', $datos_ok['contrato'])
-                            ->where('orden_trabajo', $datos_ok['orden_de_trabajo'])
-                            ->get();
-
-                        //  $resultado_ok = $validacion->getValidación_existentes();
-                    } catch (\Exception $e) {
-                        log::error($e);
-                        DB::rollBack();
-                        return response()->json(['error' => 'Error al consultar los datos en la base de datos ' . $e->getMessage()], 400);
-                    }
-
-                    // BitacoraController::dd($resultado_ok[0]['FECHA_GESTION']);
-                    if (!$resultado_ok->isEmpty()) {
-                        foreach ($resultado_ok as $resultado) {
-                            if ($resultado->fecha_gestion == null) {
-                                $resultado->gestionado = 1;
-                                $resultado->fecha_gestion = date('Y-m-d');
-                                $resultado->save();
-                            }
-                        }
-                    }
-                }
-            }
+        if (! $bitacora) {
+            return response()->json(['error' => 'No hay ninguna bitácora en curso.'], 404);
         }
 
-        $hoja_OK->setTitle('OK');
-        $totalHojas = $spreadsheet->getSheetCount();
-        // Mover la hoja "OK" a la última posición
-        $spreadsheet->setIndexByName('OK', $totalHojas);
-        // Crear un objeto Writer para guardar la hoja de cálculo como un archivo Excel
-        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        /* Sin supervisor la bitácora se descarta: es la vía por la que la
+           pantalla cancela lo que se llevaba diligenciado. */
+        if ($super === null) {
+            $guardado->descartar($bitacora);
 
-        //quitar nombres que no sirven
-        $rutaArchivoFinal = str_replace(['.xls', '4.08', ' V10'], [' ', '', ''], session('nom_archivo'));
-        // Guardar el archivo Excel
-        $rutaArchivoFinal = ltrim($rutaArchivoFinal);
-        $writer->save(storage_path('app/uploads/') . $rutaArchivoFinal . ".xlsx");
-
-
-        $nombreArchivo = $rutaArchivoFinal . ".xlsx";
-        if ($super !== null) {
-            try {
-                $usuario = Auth::user();
-                $bitacora = TblBitacoraArchivo::where('id_usuario', $usuario->id)->where('finished', '=', 0)->first();
-
-                $bitacora->finished = 1;
-                $bitacora->save();
-                $bitacoraFallidas = TblTempFallida::where('id_bitacora', $bitacora->id);
-
-                TblBitacoraFallida::insertUsing([
-                    'NOMBRE',
-                    'id',
-                    'CC_OPERARIO',
-                    'MUNICIPIO',
-                    'FECHA',
-                    'No_ACTA',
-                    'TIPO_TRABAJO',
-                    'CONTRATO',
-                    'ORDEN_TRABAJO',
-                    'ORDEN_EXT',
-                    'CATEGORIA',
-                    'RESULTADO_CIERRE',
-                    'created_at',
-                    'updated_at',
-                    'id_bitacora',
-                    'id_usuario',
-                    'id_super'
-                ], $bitacoraFallidas);
-                // Opcional: Eliminar los registros de la tabla temporal
-                $bitacoraFallidas->delete();
-                TblTempContrato::where('id_bitacora', $bitacora->id)->delete();
-            } catch (\Exception $e) {
-                log::error($e);
-            }
-
-            foreach ($datos_array_OK as $datos) {
-                try {
-
-                    $horaInicio = new DateTime($datos['hora_inicio']);
-                    $horaFinal = new DateTime($datos['hora_fin']);
-
-                    if ($horaFinal < $horaInicio) {
-                        $horaFinal->modify('+1 day'); // Añadir un día si la hora final es menor que la hora de inicio
-                    }
-
-                    $duracion = $horaInicio->diff($horaFinal);
-
-                    if ($datos['categoria'] === null) {
-                        $contrato = str_replace(':', '', $datos['contrato']);
-                        $consultaCategoria = TblProgramacionBase::select('NOM_CATE')->where('CONTRATO', $contrato)->first();
-
-                        if (!is_null($consultaCategoria) && $consultaCategoria->NOM_CATE !== null) {
-                            $datos['categoria'] = $consultaCategoria->NOM_CATE;
-                        }
-                        // Si $consultaMovilidad es null, no se ejecutará el bloque if y $datos['categoria'] seguirá siendo null
-                    }
-
-                    if ($datos['tipo_de_trabajo'] === 'SA 12164' || $datos['tipo_de_trabajo'] === 'SA 12163') {
-                        $exist = TblBitacoraContrato::where('CONTRATO', $datos['contrato'])->where('ORDEN_TRABAJO', $datos['orden_de_trabajo'])->where('No_ACTA', $datos['no_acta'])->exists();
-                        if ($exist) {
-                            continue;
-                        }
-                    } else {
-
-                        $exist = TblBitacoraContrato::where('CONTRATO', $datos['contrato'])->where('ORDEN_TRABAJO', $datos['orden_de_trabajo'])->where('TIPO_TRABAJO', $datos['tipo_de_trabajo'])->exists();
-                        if ($exist) {
-                            continue;
-                        }
-                    }
-                    /*   $consultaPrioridad = Movilidad::select('Prioridad')->where('NroSitio', $datos['contrato'])->where('IdTarea', $datos['no_acta'])->first();*/
-                    // $datos['prioridad'] = $consultaPrioridad->Prioridad ?? 'Sin prioridad';
-                    $contrato = new TblBitacoraContrato();
-                    $contrato->CC_OPERARIO = $datos['cc_operario'];
-                    $contrato->MUNICIPIO = $datos['municipio'];
-                    $contrato->FECHA = $datos['fecha_inspeccion'];
-                    $contrato->No_ACTA = $datos['no_acta'];
-                    $contrato->TIPO_TRABAJO = $datos['tipo_de_trabajo'];
-                    $contrato->CONTRATO = $datos['contrato'];
-                    $contrato->ORDEN_TRABAJO = $datos['orden_de_trabajo'];
-                    $contrato->ORDEN_EXT = $datos['orden_externa'];
-                    $contrato->CATEGORIA = $datos['categoria'];
-                    $contrato->RESULTADO_CIERRE = $datos['resultado'];
-                    $contrato->HORA_INICIO = $datos['hora_inicio'];
-                    $contrato->HORA_FINAL = $datos['hora_fin'];
-                    $contrato->DURACION_INSP = $duracion->format('%H:%I');
-                    $contrato->PRIORIDAD = 'Sin prioridad';
-                    $contrato->setAttribute('4_RECINTOS', $datos['4_recintos']);
-                    $contrato->vence = $datos['vence'];
-                    $contrato->PERIODO_GRACIA = $datos['periodo_gracia'];
-                    $contrato->CAUSAL_RECHAZO = $datos['rechazo'];
-                    $contrato->id_bitacora = $bitacora->id;
-                    $contrato->state = 1;
-                    $contrato->save();
-                } catch (\Exception $e) {
-                    Log::error($e);
-                    DB::rollBack();
-                    return response()->json(['error' => 'Error al guardar los datos en la base de datos ' . $e]);
-                }
-            }
-
-
-            if (!empty($datos_array)) {
-
-                foreach ($datos_array as $dato) {
-                    try {
-
-                        $resultado = TblDvInsp::where('contrato', $dato['contrato'])
-                            ->where('orden_trabajo', $dato['orden_de_trabajo'])
-                            ->get();
-
-                        // $resultado = $validacion->getValidación_existentes();
-                    } catch (\Exception $e) {
-                        DB::rollBack();
-                        Log::error($e);
-                        return response()->json(['error' => 'Error al consultar los datos en la base de datos' . $e->getMessage()]);;
-                    }
-
-                    if ($resultado->isEmpty()) {
-                        $horaInicio = new DateTime($dato['Hora_inicio']);
-                        $horaFinal = new DateTime($dato['Hora_fin']);
-
-                        if ($horaFinal < $horaInicio) {
-                            $horaFinal->modify('+1 day'); // Añadir un día si la hora final es menor que la hora de inicio
-                        }
-
-                        /* if ($dato['categoria'] === null) {
-                              $consultaMovilidad = Movilidad::select('AttrCategoria')->where('NroSitio', $dato['contrato'])->where('IdTarea', $dato['No_ACTA'])->first();
-                              $dato['categoria'] = $consultaMovilidad->AttrCategoria;
-                          }*/
-
-                        $duracion = $horaInicio->diff($horaFinal);
-
-                        $guardar_dv = new TblDvInsp();
-                        $guardar_dv->supervisor = $dato['supervisor'];
-                        $guardar_dv->inspector = $dato['inspector'];
-                        $guardar_dv->CC_OPERARIO = $dato['cc_operario'];
-                        $guardar_dv->municipio = $dato['municipio'];
-                        $guardar_dv->fecha_insp = $dato['fecha_inspeccion'];
-                        $guardar_dv->No_ACTA = $dato['No_ACTA'];
-                        $guardar_dv->tipo_trabajo = $dato['tipo_de_trabajo'];
-                        $guardar_dv->contrato = $dato['contrato'];
-                        $guardar_dv->orden_trabajo = $dato['orden_de_trabajo'];
-                        $guardar_dv->orden_ext = $dato['orden_externa'];
-                        $guardar_dv->categoria = $dato['categoria'];
-                        $guardar_dv->resultado_cierre = $dato['resultado'];
-                        $guardar_dv->HORA_INICIO = $dato['Hora_inicio'];
-                        $guardar_dv->HORA_FINAL = $dato['Hora_fin'];
-                        $guardar_dv->DURACION_INSP = $duracion->format('%H:%I');
-                        $guardar_dv->setAttribute('4_RECINTOS', $dato['4_recintos']);
-                        $guardar_dv->causal = $dato['causal'];
-                        $guardar_dv->vence = $dato['vence'];
-                        $guardar_dv->fecha_dv = $dato['fecha_devolucion'];
-                        $guardar_dv->gestionado = $dato['gestionado'];
-                        $guardar_dv->dias_sin_gestion = $dato['dias_sin_gestion'];
-                        $guardar_dv->id_bitacora = $bitacora->id;
-                        $guardar_dv->activado = 1;
-
-                        $guardar_dv->save();
-                    }
-                }
-            }
-            try {
-                $userLogged = Auth::user();
-                CorreoBitacora::dispatch($bitacora->id, $userLogged);
-
-            } catch (\Exception $e) {
-                Log::error($e);
-            }
-            DB::commit();
-        } else {
-
-            $user = Auth::user();
-            $bitacora = TblBitacoraArchivo::where('id_usuario', $user->id)->where('finished', '=', 0)->first();
-
-            TblTempContrato::where('id_bitacora', $bitacora->id)->delete();
-
-            $bitacora->delete();
+            return response()->json(['ruta' => route('bitacora')]);
         }
+
+        try {
+            $resumen = $guardado->guardar($bitacora, $super);
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        } catch (\Exception $e) {
+            Log::error($e);
+
+            return response()->json(['error' => 'No se pudo guardar la bitácora.'], 500);
+        }
+
+        $guardado->avisar($resumen['bitacora'], $usuario);
+
         session()->flash('success', 'Bitacora generada correctamente');
+
         return response()->json([
             'ruta' => route('bitacora'),
-            'nombre' => '../storage/app/uploads/' . $nombreArchivo
+            'resumen' => $resumen,
+            'descarga' => route('bitacoras.download', ['idBitacora' => $resumen['bitacora']]),
         ]);
-    }
-
-    public function getColorFromStyle($style)
-    {
-
-        $pattern = '/background-color:\s*rgb\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})\)/';
-        preg_match($pattern, $style, $matches);
-
-        if (!empty($matches)) {
-
-
-            return sprintf('%02X%02X%02X', $matches[1], $matches[2], $matches[3]);
-        } else {
-            return 'FFFFFF'; // Color blanco predeterminado si no se encuentra ningún color
-        }
     }
 
     public function borrar_archivos()
     {
         $directorio = storage_path('app/uploads/');
 
-        $archivos = array_diff(scandir($directorio), array('.', '..'));
+        $archivos = array_diff(scandir($directorio), ['.', '..']);
 
         if (count($archivos) > 4) {
 
@@ -792,214 +159,49 @@ class BitacoraController extends Controller
                     unlink($archivoABorrar);
                 }
             }
-            return "Archivos depurados";
+
+            return 'Archivos depurados';
         } else {
-            return "No es necesario Depurar";
+            return 'No es necesario Depurar';
         }
     }
 
-
-    public function conversion_fecha($fecha_sin_formato)
+    public function devoluciones(DevolucionesService $devoluciones)
     {
-
-        $fecha_objeto = DateTime::createFromFormat('d-m-y', $fecha_sin_formato);
-
-        if ($fecha_objeto) {
-            $año = $fecha_objeto->format('y');
-            $año_completo = ($año >= 50) ? "19$año" : "20$año";
-
-            $fecha_objeto->setDate($año_completo, $fecha_objeto->format('m'), $fecha_objeto->format('d'));
-
-            $fecha_formateada = $fecha_objeto->format('Y-m-d');
-            return $fecha_formateada;
-        } else {
-            return null;
-        }
-    }
-
-    private function contadoresHojaOK($hoja_OK)
-    {
-
-        $highestRow = $hoja_OK->getHighestDataRow();
-        $contadorComerciales = 0;
-        $contadorResidenciales = 0;
-        $contadorVacias = 0;
-        $contador4Recintos = 0;
-        for ($i = 2; $i <= $highestRow; $i++) {
-            $categoria = $hoja_OK->getCell([11, $i])->getValue();
-            if ($categoria === "COMERCIAL") {
-                $contadorComerciales++;
-            } elseif ($categoria === "RESIDENCIAL") {
-                $contadorResidenciales++;
-            } elseif ($categoria === "") {
-                $contadorVacias++;
-            }
-        }
-        for ($i = 2; $i <= $highestRow; $i++) {
-            $recintos = $hoja_OK->getCell([16, $i])->getValue();
-            if ($recintos === "SI") {
-                $contador4Recintos++;
-            }
-        }
-
-        $hoja_OK->setCellValue([20, 2], $contadorComerciales);
-        $hoja_OK->setCellValue([20, 3], $contadorResidenciales);
-        $hoja_OK->setCellValue([20, 4], $contadorVacias);
-        $hoja_OK->setCellValue([20, 5], $contador4Recintos);
-    }
-
-    public function devoluciones()
-    {
-        $devoluciones = TblDvInsp::where('ACTIVADO', 1)->get();
-        $gestionados = TblDvInsp::where('ACTIVADO', 0)->get();
-        /*
-                foreach ($devoluciones as $devolucion) {
-                    if ($devolucion->GESTIONADO == 1) {
-                        $devolucion->DIAS_SIN_GESTION = 0;
-                        $devolucion->save();
-                        continue;
-                    }
-                    $fecha_devolucion = new DateTime($devolucion->FECHA_DV);
-                    $fecha_actual = new DateTime(date('Y-m-d'));
-                    $diferencia = $fecha_devolucion->diff($fecha_actual);
-                    $devolucion->DIAS_SIN_GESTION = $diferencia->days;
-                    $devolucion->save();
-                }*/
-        return view('bitacoras.devoluciones', compact('devoluciones', 'gestionados'));
-    }
-
-    public function exportar_tabla_devoluciones(Request $request)
-    {
-        // Validación de los datos de entrada
-        $validator = Validator::make($request->all(), [
-            'codigoHTMLdev' => 'required',
-            'codigoHTMLges' => 'required'
-        ], [
-            'codigoHTMLdev.required' => 'Informacion de devoluciones requerida',
-            'codigoHTMLges.required' => 'Informacion de gestionados requerida'
+        return view('bitacoras.devoluciones', [
+            'devoluciones' => $devoluciones->pendientes(),
+            'gestionados' => $devoluciones->gestionadas(),
         ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errores' => $validator->errors()], 400);
-        }
-
-        try {
-            // 1. Juntar ambos HTML y decodificarlos en un solo paso
-            $codigoHTML = $request->codigoHTMLdev . $request->codigoHTMLges;
-            $codigoHTMLDecodificado = html_entity_decode($codigoHTML);
-
-            // 2. Cargar todo el HTML en DOMDocument de forma segura
-            $dom = new DOMDocument();
-            // Usamos el truco de UTF-8 para proteger tildes y caracteres especiales
-            @$dom->loadHTML('<?xml encoding="UTF-8">' . $codigoHTMLDecodificado);
-
-            // 3. Extraer todas las tablas (encontrará la de dev y la de ges)
-            $tablas = $dom->getElementsByTagName('table');
-
-            // Inicializar el objeto de Excel
-            $spreadsheet = new Spreadsheet();
-
-            // 4. Recorrer cada tabla encontrada
-            foreach ($tablas as $indice => $tablaNode) {
-
-                // Configurar las hojas del Excel
-                if ($indice == 0) {
-                    // Para la primera tabla (Devoluciones), usamos la hoja por defecto
-                    $hoja = $spreadsheet->getActiveSheet();
-                    $hoja->setTitle('Devoluciones');
-                } else {
-                    // Para la segunda tabla (Gestionados/Historicos), creamos una nueva hoja
-                    $hoja = $spreadsheet->createSheet($indice);
-                    $hoja->setTitle('Historicos');
-                }
-
-                // Obtener las filas solo de la tabla actual
-                $filas = $tablaNode->getElementsByTagName('tr');
-                $indiceFila = 1;
-
-                foreach ($filas as $fila) {
-                    $celdas = $fila->getElementsByTagName('td');
-                    $encabezados = $fila->getElementsByTagName('th');
-
-                    // Si hay celdas de encabezado (<th>), procesarlas
-                    if ($encabezados->length > 0) {
-                        $indiceColumna = 1;
-                        foreach ($encabezados as $encabezado) {
-                            $contenidoEncabezado = trim($encabezado->nodeValue);
-                            $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoEncabezado);
-                            $indiceColumna++;
-                        }
-                        $indiceFila++;
-                    }
-
-                    // Si hay celdas de datos (<td>), procesarlas
-                    if ($celdas->length > 0) {
-                        $indiceColumna = 1;
-
-                        foreach ($celdas as $celda) {
-                            $estiloCelda = $celda->getAttribute('style');
-                            $contenidoCelda = trim($celda->nodeValue);
-
-                            $hoja->setCellValue([$indiceColumna, $indiceFila], $contenidoCelda);
-                            $celdaExcel = $hoja->getCell([$indiceColumna, $indiceFila]);
-
-                            if (!empty($estiloCelda)) {
-                                $celdaExcel->getStyle()->applyFromArray([
-                                    'fill' => [
-                                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                                        'startColor' => ['rgb' => $this->getColorFromStyle($estiloCelda)],
-                                    ],
-                                ]);
-                            }
-                            $indiceColumna++;
-                        }
-                        $indiceFila++;
-                    }
-                }
-
-                // Aplicar bordes a la tabla actual
-                $hoja->getStyle('A1:' . $hoja->getHighestColumn() . $hoja->getHighestRow())
-                    ->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-
-                // Ajustar automáticamente el ancho de las columnas al contenido
-                foreach (range('A', $hoja->getHighestDataColumn()) as $columnID) {
-                    $hoja->getColumnDimension($columnID)->setAutoSize(true);
-                }
-
-                // Colorear los encabezados principales de azul
-                $hoja->getStyle('A1:M1')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('0096ff');
-            }
-
-            // Guardar el archivo Excel
-            $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
-            $fecha_actual = date('Y-m-d');
-            $nombreArchivo = "Devoluciones " . $fecha_actual . ".xlsx";
-
-            $writer->save(storage_path('app/uploads/') . $nombreArchivo);
-
-            // Generar URL firmada temporal
-            $urlFirmada = url()->temporarySignedRoute(
-                'descargar.archivo',
-                now()->addMinutes(10),
-                ['file' => $nombreArchivo]
-            );
-
-            header('Content-Type: application/json');
-            return response()->json([
-                'ruta' => $urlFirmada
-            ]);
-
-        } catch (\Exception $e) {
-            // Te devuelvo el mensaje real de error por si algo falla, así sabrás qué pasó
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
     }
+
+
+    /**
+     * Excel de seguimiento de devoluciones.
+     *
+     * Se arma desde la base y se entrega en la respuesta. Antes lo construía a
+     * partir del HTML que enviaba el navegador y lo dejaba escrito en
+     * `storage/app/uploads` para servirlo con un enlace firmado.
+     */
+    public function exportar_tabla_devoluciones(DevolucionesService $devoluciones)
+    {
+        $libro = $devoluciones->exportar();
+
+        return response()->streamDownload(function () use ($libro) {
+            IOFactory::createWriter($libro, 'Xlsx')->save('php://output');
+        }, $devoluciones->nombreDelExcel(), [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+
     public function reportes()
     {
         $bitacoras = TblBitacoraArchivo::where('finished', '=', '1')->get()->map(function ($bitacora) {
             $bitacora->fecha_creacion = $bitacora->created_at->format('Y-m-d');
+
             return $bitacora;
         });
+
         return view('bitacoras.reportes', compact('bitacoras'));
     }
 
@@ -1011,12 +213,13 @@ class BitacoraController extends Controller
         if ($bitacora == null) {
             return redirect()->route('bitacoras.reportes')->with('error', 'Bitacora no encontrada');
         }
+
         return view('bitacoras.verReporte', compact('bitacora', 'causales_dv'));
     }
 
     public function consultaReporte($id_bitacora)
     {
-        //contratos asignados a la bitacora
+        // contratos asignados a la bitacora
         $contratos = TblBitacoraContrato::selectRaw("CONCAT(tbl_insp_cali.apellidos, ' ', tbl_insp_cali.nombres) AS nombre_completo, tbl_bitacora_contratos.id,tbl_bitacora_contratos.CC_OPERARIO, tbl_bitacora_contratos.MUNICIPIO, tbl_bitacora_contratos.FECHA, tbl_bitacora_contratos.No_ACTA, tbl_bitacora_contratos.TIPO_TRABAJO, tbl_bitacora_contratos.CONTRATO, tbl_bitacora_contratos.ORDEN_TRABAJO, tbl_bitacora_contratos.ORDEN_EXT, tbl_bitacora_contratos.CATEGORIA, tbl_bitacora_contratos.RESULTADO_CIERRE, tbl_bitacora_contratos.HORA_INICIO, tbl_bitacora_contratos.HORA_FINAL, tbl_bitacora_contratos.DURACION_INSP,
                         CASE
                         WHEN tbl_bitacora_contratos.vence IS NOT NULL THEN tbl_bitacora_contratos.vence
@@ -1031,78 +234,46 @@ class BitacoraController extends Controller
         return response()->json(['contratos' => $contratos]);
     }
 
-    public function consultaIndicadores($id_bitacora)
+    public function ConsultaIndicadores($id_bitacora)
     {
-        //contadores de cierres
+        // contadores de cierres
         $certificadas = TblBitacoraContrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', 'CERTIFICADA')->count();
         $certificadasConNovedades = TblBitacoraContrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', 'CERTIFICADA CON NOVEDADES')->count();
         $inspeccionadasConDefectoCritico = TblBitacoraContrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', 'INSPECCIONADA CON DEFECTO CRITICO VALLE')->count();
         $inspeccionadasConDefectoNoCritico = TblBitacoraContrato::where('id_bitacora', $id_bitacora)->where('RESULTADO_CIERRE', 'INSPECCIONADA CON DEFECTO NO CRITICO VALLE')->count();
         $totalContratosOK = TblBitacoraContrato::where('id_bitacora', $id_bitacora)->count();
+
         return response()->json([
             'certificadas' => $certificadas,
             'certificadasConNovedades' => $certificadasConNovedades,
             'inspeccionadasConDefectoCritico' => $inspeccionadasConDefectoCritico,
             'inspeccionadasConDefectoNoCritico' => $inspeccionadasConDefectoNoCritico,
-            'totalContratosOK' => $totalContratosOK
+            'totalContratosOK' => $totalContratosOK,
         ]);
     }
 
-    public function actualizar_devolucion(Request $request, $id)
+    /**
+     * Resuelve una devolución y, si se pide, la devuelve a producción.
+     */
+    public function actualizar_devolucion(Request $request, $id, DevolucionesService $devoluciones)
     {
-
         $devolucion = TblDvInsp::find($id);
-        $devolucion->GESTIONADO = 1;
-        $devolucion->FECHA_GESTION = date('Y-m-d');
-        $devolucion->OBSERVACION_GESTION = $request->observacion;
-        $devolucion->save();
-        if ($request->agregar_produccion === "1") {
 
-            $exist = TblBitacoraContrato::where('CONTRATO', $devolucion->CONTRATO)->where('ORDEN_TRABAJO', $devolucion->ORDEN_TRABAJO)->exists();
-            if ($exist) {
-                // Obtener los usuarios que deben recibir la notificación
-               // $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN'])
-               //     ->where('state',1)
-                //    ->get();
-              //  $usuarioLog = Auth::user();
-                // Enviar la notificación a cada usuario
-              //  foreach ($usuarios as $usuario) {
-                //    $usuario->notify(new Mod_Devolucion($usuarioLog->name, $devolucion->CONTRATO, $devolucion->id_bitacora));
-              //  }
-                return redirect()->route('bitacora.devoluciones');
-            }
-
-            $contrato = new TblBitacoraContrato();
-            $contrato->CC_OPERARIO = $devolucion->CC_OPERARIO;
-            $contrato->MUNICIPIO = $devolucion->MUNICIPIO;
-            $contrato->FECHA = $devolucion->FECHA_INSP;
-            $contrato->No_ACTA = $devolucion->No_ACTA;
-            $contrato->TIPO_TRABAJO = $devolucion->TIPO_TRABAJO;
-            $contrato->CONTRATO = $devolucion->CONTRATO;
-            $contrato->ORDEN_TRABAJO = $devolucion->ORDEN_TRABAJO;
-            $contrato->ORDEN_EXT = $devolucion->ORDEN_EXT;
-            $contrato->CATEGORIA = $devolucion->CATEGORIA;
-            $contrato->RESULTADO_CIERRE = $devolucion->RESULTADO_CIERRE;
-            $contrato->HORA_INICIO = $devolucion->HORA_INICIO;
-            $contrato->HORA_FINAL = $devolucion->HORA_FINAL;
-            $contrato->DURACION_INSP = $devolucion->DURACION_INSP;
-            $contrato->setAttribute('4_RECINTOS', $devolucion->getAttribute('4_RECINTOS'));
-            $contrato->id_bitacora = $devolucion->id_bitacora;
-            $contrato->vence = $devolucion->vence;
-            $contrato->state = 1;
-            $contrato->save();
-
-            // Obtener los usuarios que deben recibir la notificación
-           // $usuarios = User::role(['admin', 'Residente', 'Coordinador_RP', 'Coordinador_RN', 'Auxiliar_coordinacion'])->get();
-           // $usuarioLog = Auth::user();
-
-            // Enviar la notificación a cada usuario
-            //foreach ($usuarios as $usuario) {
-             //   $usuario->notify(new Mod_Devolucion($usuarioLog->name, $devolucion->CONTRATO, $devolucion->id_bitacora));
-            //}
+        /* Sin esto, un identificador que ya no existe —una devolución borrada,
+           un enlace viejo— terminaba escribiendo sobre null. */
+        if (! $devolucion) {
+            abort(404, 'La devolución no existe.');
         }
+
+        $devoluciones->gestionar(
+            $devolucion,
+            $request->input('observacion'),
+            $request->input('agregar_produccion') === '1'
+        );
+
         return redirect()->route('bitacora.devoluciones');
     }
+
 
     public function buscarPorContrato(Request $request)
     {
@@ -1112,9 +283,8 @@ class BitacoraController extends Controller
         $bitacoras = TblBitacoraArchivo::whereIn(
             'id',
             TblBitacoraContrato::select('id_bitacora')
-                ->where('CONTRATO', 'LIKE', '%' . $contrato . '%')
+                ->where('CONTRATO', 'LIKE', '%'.$contrato.'%')
         )->get();
-
 
         // Devolver resultados en formato JSON
         return response()->json($bitacoras);
@@ -1130,69 +300,49 @@ class BitacoraController extends Controller
         return response()->json($municipios);
     }
 
-    public function download($nombreArchivo)
+    /**
+     * Arma el Excel de una bitácora en el momento en que alguien lo pide.
+     *
+     * Antes el archivo se escribía al guardar y esta acción sólo lo servía del
+     * disco, con lo que el servidor acumulaba un `.xlsx` por bitácora aunque
+     * nadie lo abriera. Ahora se construye desde la base y se entrega en la
+     * respuesta: no queda nada guardado y el contenido está al día.
+     */
+    public function download($idBitacora, ExcelBitacoraService $excel)
     {
+        $bitacora = TblBitacoraArchivo::find($idBitacora);
 
-        // Generar la URL firmada con expiración
-        $urlFirmada = url()->temporarySignedRoute(
-            'descargar.archivo', // Nombre de la ruta que procesa la descarga
-            now()->addMinutes(10), // Tiempo de expiración de la URL
-            ['file' => $nombreArchivo] // Parámetro con el nombre del archivo
-        );
+        if (! $bitacora) {
+            return redirect()->route('bitacoras.reportes')->with('error', 'Bitácora no encontrada');
+        }
 
-        // Redirigir automáticamente a la URL firmada
-        return redirect($urlFirmada);
+        $libro = $excel->construir($bitacora);
+        $nombre = $excel->nombreArchivo($bitacora);
 
-
+        return response()->streamDownload(function () use ($libro) {
+            IOFactory::createWriter($libro, 'Xlsx')->save('php://output');
+        }, $nombre, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
-    public function devolver(Request $request, $ids, $bitacora)
+    /**
+     * Devuelve contratos de una bitácora a sus inspectores.
+     */
+    public function devolver(Request $request, $ids, $bitacora, DevolucionesService $devoluciones)
     {
-        $idsArray = explode(',', $ids);
-        $archivo = TblBitacoraArchivo::find($bitacora);
-
-        // Validar y sanitizar los IDs (como en el ejemplo anterior)
         try {
-            $contratos = TblBitacoraContrato::findMany($idsArray);
-
-            foreach ($contratos as $contrato) {
-                $inspector = TblInspCali::where('cedula', $contrato->CC_OPERARIO)->first();
-                $devolucion = new TblDvInsp();
-                $devolucion->supervisor = $archivo->id_usuario;
-                $devolucion->inspector = $inspector->id;
-                $devolucion->CC_OPERARIO = $contrato->CC_OPERARIO;
-                $devolucion->municipio = $contrato->MUNICIPIO;
-                $devolucion->fecha_insp = $contrato->FECHA;
-                $devolucion->No_ACTA = $contrato->No_ACTA;
-                $devolucion->tipo_trabajo = $contrato->TIPO_TRABAJO;
-                $devolucion->contrato = $contrato->CONTRATO;
-                $devolucion->orden_trabajo = $contrato->ORDEN_TRABAJO;
-                $devolucion->orden_ext = $contrato->ORDEN_EXT;
-                $devolucion->categoria = $contrato->CATEGORIA;
-                $devolucion->resultado_cierre = $contrato->RESULTADO_CIERRE;
-                $devolucion->HORA_INICIO = $contrato->HORA_INICIO;
-                $devolucion->HORA_FINAL = $contrato->HORA_FINAL;
-                $devolucion->DURACION_INSP = $contrato->DURACION_INSP;
-                $devolucion->setAttribute('4_RECINTOS', $contrato->getAttribute('4_RECINTOS'));
-                $devolucion->vence = $contrato->vence;
-                $devolucion->fecha_dv = date('Y-m-d');
-                $devolucion->gestionado = 0;
-                $devolucion->dias_sin_gestion = 0;
-                $devolucion->id_bitacora = $bitacora;
-                $devolucion->activado = 1;
-                $devolucion->diseno_especial = 0;
-                $devolucion->CAUSAL = $request->input('causal');
-                $devolucion->save();
-                $contrato->delete();
-            }
-
-            $userLog = Auth::user();
-            $super = User::find($archivo->id_usuario);
-
-            $super->notify(new devolucion($userLog->name, $devolucion->contrato, $super->name, $archivo, $request->input('causal')));
+            $contratos = $devoluciones->devolver(
+                array_filter(explode(',', (string) $ids)),
+                (int) $bitacora,
+                $request->input('causal')
+            );
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Error al devolver los contratos ' . $e->getMessage()]);
+            Log::error($e);
+
+            return response()->json(['error' => 'Error al devolver los contratos'], 500);
         }
+
         return response()->json($contratos);
     }
 }

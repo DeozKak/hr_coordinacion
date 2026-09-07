@@ -83,9 +83,9 @@
                     <option :value="n" x-text="`${n} / página`"></option>
                 </template>
             </select>
-            <button type="button" @click="exportar()" :disabled="exportando" class="tw-btn-primary tw-btn-sm">
-                <i class="fas" :class="exportando ? 'fa-spinner fa-spin' : 'fa-file-excel'"></i>
-                <span x-text="exportando ? 'Exportando…' : 'Exportar'"></span>
+            <button type="button" @click="exportar()" class="tw-btn-primary tw-btn-sm">
+                <i class="fas fa-file-excel"></i>
+                <span>Exportar</span>
             </button>
         </div>
     </div>
@@ -199,7 +199,6 @@ document.addEventListener('alpine:init', () => {
         pagina: 1,
         porPagina: 25,
         orden: { key: 'dias', dir: 'desc' },
-        exportando: false,
 
         get filas() { return this.pestana === 'pendientes' ? this.pendientes : this.historico; },
 
@@ -241,51 +240,11 @@ document.addEventListener('alpine:init', () => {
             this.pagina = 1;
         },
 
-        /* El backend parsea el HTML con DOMDocument y arma una hoja por tabla,
-           así que se construyen las dos tablas completas desde los datos
-           (no desde el DOM, que sólo tiene la página visible). */
-        tablaHtml(filas) {
-            const esc = (v) => String(v ?? '')
-                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-            const claves = Object.keys(this.columnas);
-            const encabezados = claves.map(k => `<th>${esc(this.columnas[k])}</th>`).join('');
-            const cuerpo = filas.map(d => {
-                const celdas = claves.map(k => {
-                    const v = k === 'gestionado' ? (d[k] ? 'SI' : 'NO') : d[k];
-                    return `<td>${esc(v)}</td>`;
-                }).join('');
-                return `<tr>${celdas}</tr>`;
-            }).join('');
-
-            return `<table><thead><tr>${encabezados}</tr></thead><tbody>${cuerpo}</tbody></table>`;
-        },
-
-        async exportar() {
-            this.exportando = true;
-            try {
-                const res = await window.api(urlExportar, {
-                    method: 'POST',
-                    body: {
-                        codigoHTMLdev: this.tablaHtml(this.pendientes),
-                        codigoHTMLges: this.tablaHtml(this.historico),
-                    },
-                });
-
-                if (res.ruta) {
-                    window.location.href = res.ruta;
-                } else {
-                    throw new Error('sin ruta');
-                }
-            } catch (e) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Error al exportar archivo, intente de nuevo o contacte al administrador del sistema',
-                });
-            } finally {
-                this.exportando = false;
-            }
+        /* El servidor arma el Excel desde la base: ya no hay que mandarle la
+           tabla serializada, basta con pedir la descarga. */
+        exportar() {
+            window.location.href = urlExportar;
         },
 
         cambiarEstado(d) {

@@ -20,6 +20,7 @@ document.addEventListener('alpine:init', () => {
             for (const t of this.tablas) {
                 for (const f of t.filas) {
                     if (f.estado === 'OK') f.causal = '--SELECCIONE CAUSAL--';
+                    this.sembrarConfirmado(f);
                 }
             }
             this.resetPapel();
@@ -44,17 +45,82 @@ document.addEventListener('alpine:init', () => {
 
         // ---------------------------------------------------------------
         // AUTOGUARDADO (POST bitacora/actualizar/{id})
+        //
+        // La bitácora definitiva se arma con lo que hay en la tabla de
+        // borrador, no con lo que la pantalla lleve en memoria. Un cambio que
+        // no llegue al servidor no existe, así que no se da por bueno hasta
+        // que responda: si falla, la celda vuelve a su último valor confirmado
+        // y se avisa. Antes se pintaba al instante y sólo se registraba el
+        // fallo, con lo que quedaba a la vista un dato que no se guardó.
         // ---------------------------------------------------------------
+
+        /**
+         * Fija el estado que el servidor da por bueno para una fila.
+         *
+         * Se llama al cargar la tabla y al añadir una inspección, nunca desde
+         * `guardarCampo`: para entonces `x-model` ya mutó la fila, así que
+         * sembrarla ahí guardaba como «confirmado» el valor que acababa de
+         * cambiar y el primer fallo no revertía nada.
+         */
+        sembrarConfirmado(fila) {
+            fila._confirmado = {
+                '4_RECINTOS': fila.tieneRecintos ? fila.recintos : 'NO',
+                'ESTADO': fila.estado,
+                'CAUSAL': fila.causal,
+            };
+        },
+
+        /** Último valor que el servidor confirmó para cada campo de la fila. */
+        confirmado(fila) {
+            if (!fila._confirmado) this.sembrarConfirmado(fila);
+            return fila._confirmado;
+        },
+
+        /** Devuelve la celda a lo último que el servidor dio por guardado. */
+        revertir(fila, campo) {
+            const previo = this.confirmado(fila)[campo];
+
+            if (campo === '4_RECINTOS') {
+                fila.tieneRecintos = previo !== 'NO' && previo !== '';
+                fila.recintos = fila.tieneRecintos ? previo : '';
+            } else if (campo === 'ESTADO') {
+                fila.estado = previo;
+                if (previo === 'OK') fila.causal = '--SELECCIONE CAUSAL--';
+            } else if (campo === 'CAUSAL') {
+                fila.causal = previo;
+            }
+        },
+
         async guardarCampo(fila, campo, valor) {
+            const anterior = this.confirmado(fila);
+
             try {
-                await window.api(this.urls.actualizar.replace(':id', fila.id), {
+                const r = await window.api(this.urls.actualizar.replace(':id', fila.id), {
                     method: 'POST',
                     body: { campo, valor },
                 });
+
+                // Se pinta lo que el servidor dice que quedó, no lo que se envió.
+                anterior[campo] = r?.valor ?? valor;
+                if (campo === 'ESTADO' && r?.valor === 'OK') {
+                    fila.causal = '--SELECCIONE CAUSAL--';
+                    anterior.CAUSAL = r?.causal ?? null;
+                }
+                return true;
             } catch (e) {
-                console.error(e);
-                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo guardar el cambio' });
+                this.revertir(fila, campo);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'El cambio no se guardó',
+                    text: this.motivoError(e) || 'No se pudo guardar el cambio; la celda volvió a su valor anterior.',
+                });
+                return false;
             }
+        },
+
+        motivoError(e) {
+            const d = e?.data ?? e?.response ?? null;
+            return d?.error ?? d?.message ?? '';
         },
 
         alternarRecintos(fila) {
@@ -229,6 +295,10 @@ document.addEventListener('alpine:init', () => {
                     nueva: true,
                 });
 
+                /* La fila recién añadida ya existe en el borrador tal cual, así
+                   que ese es su estado confirmado de partida. */
+                this.sembrarConfirmado(this.tablas[indice].filas.at(-1));
+
                 this.indiceActivo = indice;
                 this.modal = null;
                 Swal.fire({
@@ -244,82 +314,23 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        // ---------------------------------------------------------------
-        // GUARDAR TODO (POST guardar_tabla/{super?})
-        // El backend sustituye las columnas 16, 17 y 18 por
-        // valoresSeleccionados["select_{tabla}_{n}"], con n avanzando de 3 en 3
-        // por fila (recintos, estado, causal). Se reproduce ese contrato exacto.
-        // ---------------------------------------------------------------
-        construirPayload() {
-            const encabezado = ['ID','INSPECTOR','CC OPERARIO','MUNICIPIO','FECHA','N° ACTA','TIPO TRABAJO',
-                'CONTRATO','ORDEN TRABAJO','ORDEN EXT','CATEGORIA','RESULTADO  CIERRE','HORA INICIO',
-                'HORA FINAL','DURACION','4 RECINTOS O MAS'];
 
-            const valoresSeleccionados = {};
-            const datos = [];
-            const indicadores = [];
-
-            this.tablas.forEach((tabla, t) => {
-                const filas = [];
-                const c = { certificadaCount: 0, certificadaConNovedadesCount: 0,
-                            inspeccionadaConDefectoCriticoCount: 0,
-                            inspeccionadaConDefectoNoCriticoCount: 0, totalCount: 0 };
-
-                tabla.filas.forEach((f, i) => {
-                    // El backend compara con la cadena "false" (así lo serializaba jQuery),
-                    // no con el booleano: hay que mandarla como texto.
-                    valoresSeleccionados[`select_${t}_${i * 3}`]     = f.tieneRecintos ? f.recintos : 'false';
-                    valoresSeleccionados[`select_${t}_${i * 3 + 1}`] = f.estado;
-                    valoresSeleccionados[`select_${t}_${i * 3 + 2}`] = f.causal;
-
-                    filas.push([
-                        f.id, f.nombre, f.cedula, f.municipio, f.fecha, f.acta, f.tipo, f.contrato,
-                        f.orden, f.ordenExt, f.categoria, f.resultado, f.horaInicio, f.horaFinal,
-                        f.duracion,
-                        '', '', '',                      // 15-17: los reemplaza el backend
-                        f.vence,                         // 18
-                        f.rechazo,                       // 19
-                        f.periodoGracia,                 // 20
-                    ]);
-
-                    if (f.estado === 'OK') {
-                        switch (f.resultado) {
-                            case 'CERTIFICADA':                                c.certificadaCount++;                       c.totalCount++; break;
-                            case 'CERTIFICADA CON NOVEDADES':                  c.certificadaConNovedadesCount++;           c.totalCount++; break;
-                            case 'INSPECCIONADA CON DEFECTO CRITICO VALLE':    c.inspeccionadaConDefectoCriticoCount++;    c.totalCount++; break;
-                            case 'INSPECCIONADA CON DEFECTO NO CRITICO VALLE': c.inspeccionadaConDefectoNoCriticoCount++;  c.totalCount++; break;
-                        }
-                    }
-                });
-
-                datos.push(filas);
-                indicadores.push(c);
-            });
-
-            return { valoresSeleccionados, encabezado, datos, indicadores };
-        },
-
+        /* El servidor arma la bitácora con lo que hay en el borrador de
+           autoguardado, así que ya no se le manda la tabla: lo que se ve en
+           pantalla es un reflejo de esa tabla, no la fuente. */
         async guardar() {
             this.guardando = true;
             try {
-                const res = await window.api(this.urls.guardar, {
-                    method: 'POST',
-                    body: this.construirPayload(),
-                });
+                const res = await window.api(this.urls.guardar, { method: 'POST' });
 
                 if (res.error) {
                     Swal.fire({ icon: 'warning', title: 'Advertencia', text: res.error });
                     return;
                 }
-                // Mismo criterio que antes: sin supervisor se descarga el archivo,
-                // con supervisor se vuelve al listado.
-                if (res.nombre && this.idSuper === null) {
-                    window.location.href = res.nombre;
-                } else if (res.ruta) {
+                if (res.ruta) {
                     setTimeout(() => { window.location.href = res.ruta; }, 200);
                 }
             } catch (e) {
-                console.error(e);
                 Swal.fire({ icon: 'error', title: 'Error', text: e.data?.error ?? 'No se pudo guardar la bitácora' });
             } finally {
                 this.guardando = false;

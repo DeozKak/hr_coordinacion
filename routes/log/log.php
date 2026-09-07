@@ -17,9 +17,9 @@ Route::middleware('web')->group(function () {
         Route::post('/generar_bitacora', [BitacoraController::class, 'generar_bitacora'])->name('bitacoras.generar')->middleware(CheckPermission::class . ':generar_bitacoras');
         Route::post('/guardar_tabla/{super?}', [BitacoraController::class, 'guardar_tabla'])->name('bitacoras.guardar_tabla')->middleware(CheckPermission::class . ':generar_bitacoras');
         Route::post('/borrar_archivos', [BitacoraController::class, 'borrar_archivos'])->name('bitacoras.borrar_archivos')->middleware(CheckPermission::class . ':generar_bitacoras');
-        Route::get('/bitacoras/desargarReporte/{file}', [BitacoraController::class, 'download'])->name('bitacoras.download')->middleware(CheckPermission::class . ':ver_bitacoras');
+        Route::get('/bitacoras/descargarReporte/{idBitacora}', [BitacoraController::class, 'download'])->name('bitacoras.download')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('/bitacora/devoluciones', [BitacoraController::class, 'devoluciones'])->name('bitacora.devoluciones')->middleware(CheckPermission::class . ':ver_bitacoras');
-        Route::post('/bitacora/exportar_devoluciones', [BitacoraController::class, 'exportar_tabla_devoluciones'])->name('bitacora.exportar_devoluciones')->middleware(CheckPermission::class . ':ver_bitacoras');
+        Route::get('/bitacora/exportar_devoluciones', [BitacoraController::class, 'exportar_tabla_devoluciones'])->name('bitacora.exportar_devoluciones')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('/bitacora/reportes', [BitacoraController::class, 'reportes'])->name('bitacoras.reportes')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::get('/bitacora/ver_reporte/{id_bitacora}', [BitacoraController::class, 'verReporte'])->name('bitacoras.ver_reporte')->middleware(CheckPermission::class . ':ver_bitacoras');
         Route::post('/bitacora/reportes/devoluciones/{ids}/{bitacora}', [BitacoraController::class, 'devolver'])->name('bitacoras.devolver')->middleware(CheckPermission::class . ':ver_bitacoras');

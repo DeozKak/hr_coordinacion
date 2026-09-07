@@ -5,18 +5,16 @@ namespace App\Http\Requests\Bitacoras;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * Volcado de las tablas de bitácora a Excel.
+ * Cierre de la bitácora en curso.
  *
- * Este endpoint está exento de CSRF en `bootstrap/app.php`, así que conviene
- * que sea especialmente estricto con lo que acepta. El permiso
- * `generar_bitacoras` ya limita quién entra; lo que no había era comprobación
- * de forma: el método recorre `datos` con `foreach` e indexa `indicadores` y
- * `valoresSeleccionados` por clave, de modo que cualquier tipo distinto de los
- * esperados terminaba en un 500 en vez de en un mensaje.
+ * Ya no lleva cuerpo. Antes viajaba aquí la tabla entera del navegador
+ * —encabezado, filas y desplegables— y con eso se armaba tanto el Excel como
+ * los registros definitivos; ahora el servidor toma ambas cosas del borrador
+ * de autoguardado, que es la única versión que se ha ido guardando sola.
  *
- * Las reglas describen el contrato que arma `construirPayload()` en
- * `bitacoras/partials/tabla-script.blade.php`: una hoja por tabla, una fila por
- * contrato y un diccionario `select_{tabla}_{n}` con los desplegables.
+ * La clase se conserva porque la ruta está exenta de CSRF en
+ * `bootstrap/app.php` y conviene que siga habiendo un punto donde declarar qué
+ * se acepta si algún día vuelve a recibir algo.
  */
 class GuardarTablaRequest extends FormRequest
 {
@@ -28,33 +26,6 @@ class GuardarTablaRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
-            'encabezado' => ['required', 'array'],
-            'encabezado.*' => ['string'],
-
-            /* Una entrada por tabla, y cada una es la lista de sus filas. */
-            'datos' => ['required', 'array'],
-            'datos.*' => ['array'],
-            'datos.*.*' => ['array'],
-
-            /* El controlador ya contempla que no vengan: `if ($indicadores !== null)`. */
-            'indicadores' => ['nullable', 'array'],
-            'indicadores.*' => ['array'],
-
-            /* Se indexa por clave `select_{tabla}_{n}`; los valores llegan
-               siempre como texto, incluida la cadena "false". */
-            'valoresSeleccionados' => ['required', 'array'],
-            'valoresSeleccionados.*' => ['nullable', 'string'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'encabezado.required' => 'Falta el encabezado de la tabla.',
-            'datos.required' => 'No se recibió ninguna tabla que guardar.',
-            'datos.array' => 'El formato de las tablas no es válido.',
-            'valoresSeleccionados.required' => 'Faltan los valores de los desplegables.',
-        ];
+        return [];
     }
 }
