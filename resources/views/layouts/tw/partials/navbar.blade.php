@@ -9,8 +9,9 @@
         <i class="fas fa-bars"></i>
     </button>
 
-    <span class="ml-1 text-base font-bold tracking-tight text-slate-900 dark:text-white lg:hidden">
-        E&amp;C Ingeniería
+    <span class="ml-1 text-base font-bold leading-tight tracking-tight text-slate-900
+                 dark:text-white lg:hidden">
+        @include('layouts.tw.partials.marca')
     </span>
 
     <div class="flex-1"></div>
