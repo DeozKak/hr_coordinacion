@@ -33,6 +33,14 @@ document.addEventListener('alpine:init', () => {
         totalDias: 0,
         idCorteDetalles: null,
 
+        /* Vista de móvil. Las columnas congeladas de la rejilla ocupan 430px
+           (110 de CC + 320 del nombre), más que el ancho de un teléfono, y el
+           detalle del día se abría con doble clic en la esquina de arrastre de
+           la celda, un gesto que en táctil no existe. Por debajo de `lg` se
+           cambia la rejilla por una tarjeta por inspector. */
+        datos: null,               // última respuesta, para pintar sin rejilla
+        desplegadas: {},           // cédulas con su cuadrícula de días abierta
+
         /* Modal del día */
         tituloDia: '',
         cantidadDobles: '',
@@ -57,6 +65,7 @@ document.addEventListener('alpine:init', () => {
         /* ------------------------------- Init -------------------------------- */
         async init() {
             this.resetForm();
+            this.vigilarAncho();
             await this.cargarDatos();
 
             this.$watch('$store.ui.dark', () => {
@@ -165,6 +174,11 @@ document.addEventListener('alpine:init', () => {
                 // En los refrescos tras guardar se recargan los datos en sitio en
                 // vez de reconstruir la tabla: reconstruirla devolvía el scroll al
                 // principio y tiraba filtros y orden. Mismo remedio que en PQRS.
+                /* Se guarda la respuesta entera: las tarjetas se pintan de aquí,
+                   y hace falta para poder levantar la rejilla si el ancho cambia. */
+                this.datos = r;
+
+                if (!this.hayRejilla()) return;
                 if (silencioso && hotDetalles) this.refrescarEnSitio(r);
                 else this.construirTabla(r);
             } catch (e) {
@@ -339,30 +353,196 @@ document.addEventListener('alpine:init', () => {
         },
 
         exportar() {
-            hotDetalles?.getPlugin('exportFile').downloadFile('csv', { filename: 'produccion' });
+            if (hotDetalles) {
+                hotDetalles.getPlugin('exportFile').downloadFile('csv', { filename: 'produccion' });
+                return;
+            }
+            this.exportarDesdeDatos();
+        },
+
+        /* En móvil no hay rejilla de la que tirar, así que el CSV se arma con los
+           datos. Las columnas salen de `Object.values`: el orden de las claves de
+           cada fila ES el orden de las columnas —es así como la rejilla las pinta,
+           sin mapa de columnas—, de modo que si el servidor añade una, encabezado
+           y valores siguen cuadrando solos. */
+        exportarDesdeDatos() {
+            if (!this.datos) return;
+
+            const { inferior } = this.armarCabeceras(this.datos);
+            const escapar = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+
+            const csv = [inferior, ...this.tarjetas.map(f => Object.values(f))]
+                .map(fila => fila.map(escapar).join(','))
+                .join('\n');
+
+            const enlace = document.createElement('a');
+            enlace.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+            enlace.download = 'produccion.csv';
+            enlace.click();
+            URL.revokeObjectURL(enlace.href);
+        },
+
+        /* ---------------------------- Vista de móvil -------------------------- */
+        /**
+         * ¿Toca rejilla o tarjetas?
+         *
+         * Lo decide el CSS, no un número repetido aquí: se mira si el contenedor
+         * de la rejilla está visible. `offsetParent` es null cuando él o alguno
+         * de sus padres está en `display:none`, que es justo lo que le hace el
+         * `hidden lg:block` de la vista.
+         *
+         * Repetir el 1024px de `lg` en el JS habría dejado dos sitios que
+         * mantener a la vez, y el proyecto además encoge la fuente raíz por
+         * debajo de 1200px, con lo que comprobarlo a mano invita a error.
+         */
+        hayRejilla() {
+            return !!document.getElementById('detalles')?.offsetParent;
+        },
+
+        /**
+         * Rehace la vista cuando cambia el ancho.
+         *
+         * Rejilla y tarjetas no pueden convivir: Handsontable mide su contenedor
+         * al construirse, y con `display:none` nace con ancho cero y queda
+         * inservible aunque luego se muestre.
+         */
+        vigilarAncho() {
+            let temporizador;
+
+            window.addEventListener('resize', () => {
+                clearTimeout(temporizador);
+                temporizador = setTimeout(() => this.sincronizarVista(), 150);
+            });
+        },
+
+        sincronizarVista() {
+            const toca = this.hayRejilla();
+
+            if (!toca && hotDetalles) {
+                hotDetalles.destroy();
+                hotDetalles = null;
+                return;
+            }
+
+            if (toca && !hotDetalles && this.datos) this.construirTabla(this.datos);
+        },
+
+        /**
+         * Las filas de inspector, sin las de resumen.
+         *
+         * `agregarResumen` añade TOTAL y PROMEDIO al final escribiendo más allá
+         * de la última fila, y eso las mete en el mismo arreglo que le pasamos a
+         * la rejilla. Llegan sin cédula, y es lo que las distingue.
+         */
+        get tarjetas() {
+            return (this.datos?.produccionInspector ?? []).filter(f => f.cedula);
+        },
+
+        /* Los días del corte para un inspector, con su valor y su color. */
+        diasDe(fila) {
+            return this.fechas.map(f => ({
+                fecha: f.fecha,
+                etiqueta: f.dia,
+                corta: this.etiquetaCorta(f.dia),
+                valor: fila[f.fecha],
+                clave: this.claveDelDia(fila.cedula, f.dia),
+            }));
+        },
+
+        /* «Miércoles 03» no cabe en un botón de móvil; «Mié 03» sí. */
+        etiquetaCorta(etiqueta) {
+            const [dia, numero] = etiqueta.split(' ');
+            return `${dia.slice(0, 3)} ${numero}`;
+        },
+
+        /**
+         * El mismo color que pintaría la celda del día, calculado sin rejilla.
+         *
+         * Se repite el orden de `claveCelda` a propósito: el sábado doble se
+         * comprueba después del festivo porque tiene que poder pisarlo.
+         */
+        claveDelDia(cc, nombreDia) {
+            let clave = 'dia';
+
+            if (this.diasFestivos.includes(nombreDia)) clave = 'festivo';
+            if (this.sabadoDobles.some(s => s.nombreDia === nombreDia && s.ccInspector === cc)) {
+                clave = 'sabado';
+            }
+
+            return clave;
+        },
+
+        /* Los indicadores que se ven sin desplegar la tarjeta. */
+        resumenDe(fila) {
+            return [
+                { texto: 'Sub total', valor: fila.sub_total,
+                  clave: fila.sub_total < 180 ? 'malo' : 'total' },
+                { texto: 'Total', valor: fila.total, clave: 'total' },
+                { texto: 'Promedio', valor: fila.promedio,
+                  clave: Number(fila.promedio) >= 8 ? 'bueno' : 'malo' },
+                { texto: 'Meta', valor: fila.porcentaje_meta, clave: 'resumen' },
+            ];
+        },
+
+        estiloDeClave(clave) {
+            const par = this.paletaCeldas()[clave];
+            return par ? `background-color:${par[0]};color:${par[1]}` : '';
+        },
+
+        alternarTarjeta(cedula) {
+            this.desplegadas[cedula] = !this.desplegadas[cedula];
+        },
+
+        async abrirDiaMovil(fila, dia) {
+            await this.abrirDiaCon({
+                fecha: dia.fecha,
+                nombreDia: dia.etiqueta,
+                cc: fila.cedula,
+                nombreCompleto: fila.nombres,
+                cantidad: dia.valor || 0,
+                tipoCelda: dia.clave,
+            });
         },
 
         /* ---------------------------- Modal del día --------------------------- */
+        /* Lo que abre el detalle desde la rejilla: traduce la celda seleccionada
+           a datos y delega. La lógica vive en `abrirDiaCon` porque en móvil no
+           hay rejilla de la que leer. */
         async abrirDia() {
-            const sel = hotDetalles.getSelectedLast();
+            const sel = hotDetalles?.getSelectedLast();
             if (!sel) return;
             const [row, col] = sel;
             const columna = hotDetalles.getColHeader(col);
             const fecha = this.fechas.find(f => f.dia === columna);
             if (!fecha) return;      // solo las columnas de día abren el detalle
 
-            this.seleccion = {
-                row, col,
+            const valor = hotDetalles.getDataAtCell(row, col);
+
+            await this.abrirDiaCon({
                 fecha: fecha.fecha,
-                cc: hotDetalles.getDataAtCell(row, 0),
                 nombreDia: columna,
+                cc: hotDetalles.getDataAtCell(row, 0),
                 nombreCompleto: hotDetalles.getDataAtCell(row, 1),
-                tipoCelda: this.claveCelda(hotDetalles, row, col,
-                                           hotDetalles.getDataAtCell(row, col)) ?? 'dia',
-                cantInspecciones: hotDetalles.getDataAtCell(row, col) || 0,
+                cantidad: valor || 0,
+                tipoCelda: this.claveCelda(hotDetalles, row, col, valor) ?? 'dia',
+            });
+        },
+
+        /**
+         * Abre el detalle de un día a partir de datos, no de la selección.
+         *
+         * `nombreDia` llega entero («Sábado 06»): `calcularBotonesDobles` mira
+         * su primera palabra para decidir si ofrecer los dobles de sábado, así
+         * que acortarlo aquí rompería esos botones.
+         */
+        async abrirDiaCon({ fecha, nombreDia, cc, nombreCompleto, cantidad, tipoCelda }) {
+            this.seleccion = {
+                fecha, cc, nombreDia, nombreCompleto,
+                tipoCelda: tipoCelda ?? 'dia',
+                cantInspecciones: cantidad ?? 0,
             };
 
-            this.tituloDia = `Inspecciones del día ${columna} — ${this.seleccion.nombreCompleto}`;
+            this.tituloDia = `Inspecciones del día ${nombreDia} — ${nombreCompleto}`;
             this.cantidadDobles = '';
             this.botonesDobles = [];
             this.modal = 'dia';

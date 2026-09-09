@@ -49,6 +49,11 @@ document.addEventListener('alpine:init', () => {
 
         hot: null,
         hotHistorico: null,
+
+        /* Las filas, en el componente y no sólo dentro de Handsontable: en móvil
+           no hay rejilla y las tarjetas se pintan de aquí. */
+        filas: [],
+        desplegadas: {},          // números de orden con su ficha abierta
         conteoContratos: {},
         totalFilas: 0,
         refrescando: false,
@@ -71,7 +76,9 @@ document.addEventListener('alpine:init', () => {
         /* ------------------------------- Init -------------------------------- */
         init() {
             this.registrarRenderers();
-            this.construirTabla(dataFromPHP.map(mapearFila));
+            this.filas = dataFromPHP.map(mapearFila);
+            this.vigilarAncho();
+            if (this.hayRejilla()) this.construirTabla();
 
             // Un solo listener delegado para los botones "ver más" de la tabla:
             // el original añadía uno por celda en cada repintado.
@@ -115,6 +122,21 @@ document.addEventListener('alpine:init', () => {
             document.body.removeChild(a);
         },
 
+        /* El color del semáforo, o null si a esta fila no le toca ninguno.
+           Vive fuera del renderizador porque las tarjetas de móvil pintan el
+           mismo semáforo y no pasan por Handsontable. */
+        colorDelSemaforo(recepcion, dias) {
+            if (recepcion === 'ACCEDE' || recepcion === 'NO ACCEDE') return '#90EE90';
+            if (recepcion === 'NO PROCEDENTE')                       return '#83b7f1';
+            if (dias === null || dias === '')                        return null;
+
+            const diasNum = parseInt(dias, 10);
+            if (diasNum === 0)                  return '#ff9535';
+            if (diasNum <= 0)                   return '#ff8493';
+            if (diasNum === 2 || diasNum === 1) return '#f8f849';
+            return null;
+        },
+
         /* ---------------------------- Renderizadores -------------------------- */
         registrarRenderers() {
             const self = this;
@@ -130,19 +152,6 @@ document.addEventListener('alpine:init', () => {
                 if (texto) td.style.setProperty('color', texto, 'important');
             };
 
-            /* El color del semáforo, o null si a esta fila no le toca ninguno. */
-            const colorDelSemaforo = (recepcion, dias) => {
-                if (recepcion === 'ACCEDE' || recepcion === 'NO ACCEDE') return '#90EE90';
-                if (recepcion === 'NO PROCEDENTE')                      return '#83b7f1';
-                if (dias === null || dias === '')                       return null;
-
-                const diasNum = parseInt(dias, 10);
-                if (diasNum === 0)                       return '#ff9535';
-                if (diasNum <= 0)                        return '#ff8493';
-                if (diasNum === 2 || diasNum === 1)      return '#f8f849';
-                return null;
-            };
-
             Handsontable.renderers.registerRenderer('contratoRenderer',
                 function (instance, td, row, col, prop, value, cellProperties) {
                     Handsontable.renderers.TextRenderer.apply(this, arguments);
@@ -156,7 +165,7 @@ document.addEventListener('alpine:init', () => {
                     td.style.fontWeight = 'normal';
                     td.title = '';
 
-                    const fondo = colorDelSemaforo(recepcion, dias);
+                    const fondo = self.colorDelSemaforo(recepcion, dias);
 
                     /* Los cinco colores del semáforo son claros en los dos modos,
                        así que encima el texto va oscuro siempre. Sin fondo propio
@@ -221,48 +230,76 @@ document.addEventListener('alpine:init', () => {
             this.totalFilas = filas.length;
         },
 
+        /**
+         * Qué se puede editar, de qué tipo y contra qué columna de la base.
+         *
+         * Es la única definición: antes lo mismo estaba repartido en tres listas
+         * —los tipos de columna de la rejilla, la lista de cabeceras editables de
+         * `alCambiar` y el mapa `aCampoBD`—, y añadir un campo obligaba a tocar
+         * las tres. Ahora las tres salen de aquí, y también los controles de las
+         * tarjetas de móvil, que si no habrían sido una cuarta.
+         *
+         * `campo` sólo se declara cuando difiere de la cabecera: ASIGNADO y
+         * RESPONSABLE se llaman igual en pantalla y en la base.
+         */
+        camposEditables() {
+            return [
+                { header: 'MOTIVO DE PQR', campo: 'MOTIVO_DE_PQR', tipo: 'lista',
+                  opciones: ['', 'Apelacion', 'Atencion brindada', 'Cobros ocasionados',
+                             'Deja daños', 'Demora prestacion servicio', 'Error legalizacion',
+                             'Inconforme con el proceso', 'Incumplimiento cita',
+                             'Presentacion personal', 'Solicitud de dineros', 'No aplica'] },
+                { header: 'RESPONSABLE', tipo: 'lista', opciones: listaInspectores },
+                { header: 'ASIGNADO', tipo: 'lista', opciones: listaInspectores },
+                { header: 'INSTRUCCIONES CAMPO', campo: 'INSTRUCCIONES_CAMPO', tipo: 'texto' },
+                { header: 'OBSERVACION SUPERVISOR', campo: 'OBSERVACION_SUPERVISOR', tipo: 'texto' },
+                { header: 'RECEPCIÓN', campo: 'RECEPCION', tipo: 'lista',
+                  opciones: ['', 'ACCEDE', 'NO ACCEDE', 'GDW', 'NO PROCEDENTE'] },
+                { header: 'FECHA SOLICITUD CIERRE', campo: 'FECHA_SOLICITUD_CIERRE', tipo: 'fecha' },
+                { header: 'OBSERVACIÓN GESTIÓN', campo: 'OBSERVACION_GESTION', tipo: 'texto' },
+                { header: 'CÓDIGO AUTORIZACIÓN', campo: 'CODIGO_AUTORIZACION', tipo: 'numero' },
+            ].map(c => ({ ...c, campo: c.campo ?? c.header }));
+        },
+
+        /**
+         * Los que esta persona puede tocar de verdad.
+         *
+         * Sin el permiso fino sólo queda la observación del supervisor, igual que
+         * decide el controlador: la lista blanca del servidor manda, y esto sólo
+         * evita ofrecer en pantalla lo que allí se va a rechazar.
+         */
+        camposPermitidos() {
+            const todos = this.camposEditables();
+
+            return this.permisoEditar
+                ? todos
+                : todos.filter(c => c.header === 'OBSERVACION SUPERVISOR');
+        },
+
         configColumnas() {
+            const permitidos = new Map(this.camposPermitidos().map(c => [c.header, c]));
+            const tipoDeHot = { lista: 'dropdown', texto: 'text', numero: 'numeric', fecha: 'date' };
+
             return colHeaders.map((header) => {
-                if (!this.permisoEditar) {
-                    if (header === 'OBSERVACION SUPERVISOR') return { type: 'text', readOnly: false };
-                    return { readOnly: true };
-                }
-                if (header === 'FECHA SOLICITUD CIERRE') {
-                    return { type: 'date', dateFormat: 'YYYY-MM-DD', readOnly: false };
-                }
-                if (header === 'ASIGNADO' || header === 'RESPONSABLE') {
-                    return { type: 'dropdown', source: listaInspectores, readOnly: false };
-                }
-                if (header === 'SUPERVISOR') return { readOnly: true };
-                if (header === 'RECEPCIÓN') {
-                    return { type: 'dropdown',
-                             source: ['', 'ACCEDE', 'NO ACCEDE', 'GDW', 'NO PROCEDENTE'],
-                             readOnly: false };
-                }
-                if (header === 'OBSERVACIÓN GESTIÓN')  return { type: 'text', readOnly: false };
-                if (header === 'CÓDIGO AUTORIZACIÓN')  return { type: 'numeric', readOnly: false };
-                if (header === 'MOTIVO DE PQR') {
-                    return { type: 'dropdown',
-                             source: ['', 'Apelacion', 'Atencion brindada', 'Cobros ocasionados',
-                                      'Deja daños', 'Demora prestacion servicio', 'Error legalizacion',
-                                      'Inconforme con el proceso', 'Incumplimiento cita',
-                                      'Presentacion personal', 'Solicitud de dineros', 'No aplica'],
-                             readOnly: false };
-                }
-                if (header === 'INSTRUCCIONES CAMPO')   return { type: 'text', readOnly: false };
-                if (header === 'OBSERVACION SUPERVISOR') return { type: 'text', readOnly: false };
-                return { readOnly: true };
+                const campo = permitidos.get(header);
+                if (!campo) return { readOnly: true };
+
+                const columna = { type: tipoDeHot[campo.tipo], readOnly: false };
+                if (campo.tipo === 'lista') columna.source = campo.opciones;
+                if (campo.tipo === 'fecha') columna.dateFormat = 'YYYY-MM-DD';
+
+                return columna;
             });
         },
 
-        construirTabla(filas) {
+        construirTabla() {
             const contenedor = document.getElementById('tabla');
             if (!contenedor || typeof Handsontable === 'undefined') {
                 console.error('El contenedor para Handsontable no fue encontrado o la librería no está cargada.');
                 return;
             }
 
-            this.actualizarConteoContratos(filas);
+            this.actualizarConteoContratos(this.filas);
 
             const sinIcono = [
                 'CONTRATO', 'ASIGNADO', 'RESPONSABLE', 'FECHA ASIGNADO', 'SUPERVISOR',
@@ -271,7 +308,12 @@ document.addEventListener('alpine:init', () => {
             ];
 
             this.hot = new Handsontable(contenedor, {
-                data: filas,
+                /* Se le entrega el arreglo crudo: Handsontable guarda la
+                   referencia y la lee celda a celda en cada repintado, y hacerlo
+                   a través del Proxy de Alpine cuesta en una rejilla de 38
+                   columnas. Las tarjetas de móvil sí van por el Proxy, pero allí
+                   no hay rejilla con la que competir. */
+                data: Alpine.raw(this.filas),
                 colHeaders: colHeaders,
                 columns: this.configColumnas(),
                 rowHeaders: true,
@@ -338,35 +380,21 @@ document.addEventListener('alpine:init', () => {
         alCambiar(changes, source) {
             if (source === 'loadData' || source === 'programmatic' || !changes) return;
 
-            const editables = ['ASIGNADO', 'RESPONSABLE', 'RECEPCIÓN', 'OBSERVACIÓN GESTIÓN',
-                'CÓDIGO AUTORIZACIÓN', 'MOTIVO DE PQR', 'FECHA SOLICITUD CIERRE',
-                'INSTRUCCIONES CAMPO', 'OBSERVACION SUPERVISOR'];
-
-            // Nombre visible -> columna real de la base.
-            const aCampoBD = {
-                'RECEPCIÓN': 'RECEPCION',
-                'OBSERVACIÓN GESTIÓN': 'OBSERVACION_GESTION',
-                'CÓDIGO AUTORIZACIÓN': 'CODIGO_AUTORIZACION',
-                'MOTIVO DE PQR': 'MOTIVO_DE_PQR',
-                'FECHA SOLICITUD CIERRE': 'FECHA_SOLICITUD_CIERRE',
-                'INSTRUCCIONES CAMPO': 'INSTRUCCIONES_CAMPO',
-                'OBSERVACION SUPERVISOR': 'OBSERVACION_SUPERVISOR',
-            };
+            const editables = new Map(this.camposEditables().map(c => [c.header, c]));
 
             for (const [row, prop, oldValue, newValue] of changes) {
                 const colIndex = typeof prop === 'number' ? prop : this.hot.propToCol(prop);
                 const header = colHeaders[colIndex];
-                if (!editables.includes(header) || oldValue === newValue) continue;
+                const campo = editables.get(header);
+                if (!campo || oldValue === newValue) continue;
 
-                this.guardarCelda({ row, colIndex, header,
-                                    campo: aCampoBD[header] ?? header,
-                                    oldValue, newValue });
+                this.guardarCelda({ row, colIndex, header, campo: campo.campo, oldValue, newValue });
             }
         },
 
         async guardarCelda({ row, colIndex, header, campo, oldValue, newValue }) {
-            const orden    = this.hot.getDataAtCell(row, 0);
-            const contrato = this.hot.getDataAtCell(row, 1);
+            const orden    = this.leerCelda(row, 0);
+            const contrato = this.leerCelda(row, 1);
 
             try {
                 const res = await window.api(this.urls.actualizar, {
@@ -386,25 +414,25 @@ document.addEventListener('alpine:init', () => {
                 if (header === 'CÓDIGO AUTORIZACIÓN') {
                     lote.push([row, colHeaders.indexOf('FECHA RESPUESTA'), res.fecha_extra || null]);
                 }
-                if (lote.length) this.hot.setDataAtCell(lote, 'programmatic');
+                if (lote.length) this.escribirCeldas(lote);
 
             } catch (e) {
                 const mensaje = this.mensajeError(e, 'Error guardando datos.');
 
                 // Se revierte la celda y las fechas que dependían de ella.
-                this.hot.setDataAtCell(row, colIndex, oldValue, 'programmatic');
+                this.escribirCeldas([[row, colIndex, oldValue]]);
 
                 if (header === 'ASIGNADO' && !oldValue) {
-                    this.hot.setDataAtCell([
+                    this.escribirCeldas([
                         [row, colHeaders.indexOf('FECHA ASIGNADO'), null],
                         [row, colHeaders.indexOf('SUPERVISOR'), null],
-                    ], 'programmatic');
+                    ]);
                 }
                 if (header === 'RECEPCIÓN' && !oldValue) {
-                    this.hot.setDataAtCell(row, colHeaders.indexOf('FECHA RECEPCIÓN'), null, 'programmatic');
+                    this.escribirCeldas([[row, colHeaders.indexOf('FECHA RECEPCIÓN'), null]]);
                 }
                 if (header === 'CÓDIGO AUTORIZACIÓN' && !oldValue) {
-                    this.hot.setDataAtCell(row, colHeaders.indexOf('FECHA RESPUESTA'), null, 'programmatic');
+                    this.escribirCeldas([[row, colHeaders.indexOf('FECHA RESPUESTA'), null]]);
                 }
 
                 window.Swal.fire({
@@ -415,11 +443,168 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        /* ---------------------------- Vista de móvil -------------------------- */
+        /**
+         * ¿Toca rejilla o fichas?
+         *
+         * Lo decide el CSS, no un número repetido aquí: se mira si el contenedor
+         * de la rejilla está visible. `offsetParent` es null cuando él o alguno
+         * de sus padres está en `display:none`, que es lo que le hace el
+         * `hidden lg:block` de la vista.
+         */
+        hayRejilla() {
+            return !!document.getElementById('tabla')?.offsetParent;
+        },
+
+        /* Rejilla y fichas no conviven: Handsontable mide su contenedor al
+           construirse y con `display:none` nace con ancho cero. */
+        vigilarAncho() {
+            let temporizador;
+
+            window.addEventListener('resize', () => {
+                clearTimeout(temporizador);
+                temporizador = setTimeout(() => this.sincronizarVista(), 150);
+            });
+        },
+
+        sincronizarVista() {
+            const toca = this.hayRejilla();
+
+            if (!toca && this.hot) {
+                this.hot.destroy();
+                this.hot = null;
+                return;
+            }
+
+            if (toca && !this.hot) this.construirTabla();
+        },
+
+        /**
+         * ¿Hay una edición a medias que no se debe pisar?
+         *
+         * En la rejilla se le pregunta al editor de celda. En móvil no hay editor:
+         * el equivalente es que el foco esté dentro de una ficha, porque el
+         * refresco automático llega cada minuto y borraría lo que se esté
+         * escribiendo.
+         */
+        editando() {
+            if (this.hot) return !!(this.hot.getActiveEditor() && this.hot.getActiveEditor().isOpened());
+
+            return !!document.activeElement?.closest('[data-ficha-pqrs]');
+        },
+
+        /* Lectura y escritura de celdas que sirven con rejilla y sin ella. */
+        leerCelda(fila, columna) {
+            return this.hot ? this.hot.getDataAtCell(fila, columna) : this.filas[fila]?.[columna];
+        },
+
+        escribirCeldas(lote) {
+            if (this.hot) {
+                this.hot.setDataAtCell(lote, 'programmatic');
+                return;
+            }
+
+            for (const [fila, columna, valor] of lote) {
+                if (this.filas[fila]) this.filas[fila][columna] = valor;
+            }
+        },
+
+        /* Índice de una cabecera; se memoriza porque las fichas lo piden por
+           cada campo y por cada fila. */
+        columnaDe(header) {
+            this._columnas ??= {};
+            this._columnas[header] ??= colHeaders.indexOf(header);
+
+            return this._columnas[header];
+        },
+
+        valorDe(fila, header) {
+            return fila[this.columnaDe(header)];
+        },
+
+        /**
+         * Las fichas de móvil, en el mismo orden que la rejilla: por días
+         * restantes ascendente, que es lo más urgente arriba.
+         */
+        get fichas() {
+            const dias = this.columnaDe('DÍAS RESTANTES');
+
+            return this.filas
+                .map((fila, indice) => ({ fila, indice }))
+                .sort((a, b) => (Number(a.fila[dias]) || 0) - (Number(b.fila[dias]) || 0));
+        },
+
+        /* Los datos de sólo lectura que identifican la queja. */
+        fichaDatos(fila) {
+            return [
+                ['Nombre', this.valorDe(fila, 'NOMBRE')],
+                ['Dirección', this.valorDe(fila, 'DIRECCIÓN')],
+                ['Barrio', this.valorDe(fila, 'BARRIO')],
+                ['Localidad', this.valorDe(fila, 'LOCALIDAD')],
+                ['Tipo de trabajo', this.valorDe(fila, 'TIPO TRABAJO')],
+                ['Fecha límite', this.valorDe(fila, 'FECHA LÍMITE')],
+                ['Supervisor', this.valorDe(fila, 'SUPERVISOR')],
+                ['Fecha asignado', this.valorDe(fila, 'FECHA ASIGNADO')],
+                ['Fecha recepción', this.valorDe(fila, 'FECHA RECEPCIÓN')],
+                ['Fecha respuesta', this.valorDe(fila, 'FECHA RESPUESTA')],
+                ['Observación solicitud', this.valorDe(fila, 'OBSERVACIÓN SOLICITUD')],
+            ].filter(([, valor]) => valor !== null && valor !== '' && valor !== undefined);
+        },
+
+        /* El mismo semáforo que pinta la columna CONTRATO en la rejilla. */
+        estiloContrato(fila) {
+            const fondo = this.colorDelSemaforo(
+                this.valorDe(fila, 'RECEPCIÓN'),
+                this.valorDe(fila, 'DÍAS RESTANTES')
+            );
+
+            const repetido = this.contratoRepetido(fila);
+
+            if (!fondo) return repetido ? 'color:var(--ht-alerta-color);font-weight:700' : '';
+
+            return `background-color:${fondo};color:${repetido ? '#d32f2f' : '#1e293b'}`
+                 + (repetido ? ';font-weight:700' : '');
+        },
+
+        contratoRepetido(fila) {
+            const contrato = this.valorDe(fila, 'CONTRATO');
+
+            return !!contrato && this.conteoContratos[contrato] > 1;
+        },
+
+        alternarFicha(orden) {
+            this.desplegadas[orden] = !this.desplegadas[orden];
+        },
+
+        /**
+         * Guarda un campo editado desde una ficha.
+         *
+         * Se escribe primero y se guarda después, igual que hace la rejilla: si
+         * el servidor rechaza, `guardarCelda` revierte la celda —y las fechas que
+         * dependían de ella— y avisa. Por eso los controles se enlazan con
+         * `:value` y no con `x-model`: la reversión tiene que poder devolver el
+         * control a su valor anterior.
+         */
+        async editarCampo(indice, campo, evento) {
+            const columna = this.columnaDe(campo.header);
+            const anterior = this.filas[indice][columna];
+            const nuevo = evento.target.value;
+
+            if (String(anterior ?? '') === String(nuevo ?? '')) return;
+
+            this.filas[indice][columna] = nuevo;
+
+            await this.guardarCelda({
+                row: indice, colIndex: columna, header: campo.header,
+                campo: campo.campo, oldValue: anterior, newValue: nuevo,
+            });
+        },
+
         /* ------------------------ Refresco cada minuto ------------------------ */
         iniciarActualizacionAutomatica() {
             this.temporizador = setInterval(async () => {
-                // No interrumpe al usuario si está editando una celda.
-                if (!this.hot || (this.hot.getActiveEditor() && this.hot.getActiveEditor().isOpened())) return;
+                // No interrumpe al usuario si está editando.
+                if (this.editando()) return;
 
                 this.refrescando = true;
                 try {
@@ -435,6 +620,15 @@ document.addEventListener('alpine:init', () => {
                     this.firmaDatos = res.firma ?? '';
                     const nuevas = res.data.map(mapearFila);
 
+                    this.actualizarConteoContratos(nuevas);
+                    this.filas = nuevas;
+
+                    /* En móvil las tarjetas se repintan solas al cambiar `filas`.
+                       Todo lo que sigue es preservar orden, filtros, scroll y
+                       selección de la rejilla, y sin rejilla no hay nada de eso:
+                       la comprobación va antes de tocar `this.hot`, no después. */
+                    if (!this.hot) { this.marcarActualizacion(); return; }
+
                     const plugSort    = this.hot.getPlugin('columnSorting');
                     const plugFiltros = this.hot.getPlugin('filters');
 
@@ -445,8 +639,7 @@ document.addEventListener('alpine:init', () => {
                     const scrollTop     = scroller ? scroller.scrollTop : 0;
                     const scrollLeft    = scroller ? scroller.scrollLeft : 0;
 
-                    this.actualizarConteoContratos(nuevas);
-                    this.hot.loadData(nuevas);
+                    this.hot.loadData(Alpine.raw(this.filas));
 
                     if (filtrosActual && filtrosActual.length > 0) {
                         plugFiltros.conditionCollection.importAllConditions(filtrosActual);

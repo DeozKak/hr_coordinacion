@@ -14,6 +14,13 @@ document.addEventListener('alpine:init', () => {
         fechas: [],            // [{dia, fecha}]
         totalDias: 0,
 
+        /* Vista de móvil: tarjeta por inspector en vez de rejilla. Las dos
+           columnas congeladas suman 430px —más que la pantalla de un teléfono—
+           y el detalle del día se abría con doble clic en la esquina de arrastre
+           de la celda, un gesto que en táctil no existe. */
+        datos: null,           // última respuesta, para pintar sin rejilla
+        desplegadas: {},       // cédulas con su cuadrícula de días abierta
+
         tituloDia: '',
         sinDatosDia: false,
         filasDia: [],
@@ -21,6 +28,7 @@ document.addEventListener('alpine:init', () => {
 
         /* ------------------------------- Init -------------------------------- */
         async init() {
+            this.vigilarAncho();
             await this.cargarDatos();
 
             this.$watch('$store.ui.dark', () => {
@@ -101,7 +109,12 @@ document.addEventListener('alpine:init', () => {
                 }));
 
                 this.registrarRenderers();
-                this.construirTabla(r);
+
+                /* Se guarda la respuesta entera: las tarjetas se pintan de aquí,
+                   y hace falta para levantar la rejilla si cambia el ancho. */
+                this.datos = r;
+
+                if (this.hayRejilla()) this.construirTabla(r);
             } catch (e) {
                 console.error('Error fetching data:', e);
                 window.Swal.fire({ icon: 'error', title: 'Error',
@@ -183,25 +196,133 @@ document.addEventListener('alpine:init', () => {
         },
 
         exportar() {
-            hotFallidas?.getPlugin('exportFile').downloadFile('csv', { filename: 'fallidas' });
+            if (hotFallidas) {
+                hotFallidas.getPlugin('exportFile').downloadFile('csv', { filename: 'fallidas' });
+                return;
+            }
+            this.exportarDesdeDatos();
+        },
+
+        /* En móvil no hay rejilla de la que tirar. Las columnas salen de
+           `Object.values`: el orden de las claves de cada fila ES el orden de las
+           columnas —así las pinta la rejilla, sin mapa de columnas—, de modo que
+           si el servidor añade una, encabezado y valores siguen cuadrando. */
+        exportarDesdeDatos() {
+            if (!this.datos) return;
+
+            const { inferior } = this.armarCabeceras(this.datos);
+            const escapar = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+
+            const csv = [inferior, ...this.tarjetas.map(f => Object.values(f))]
+                .map(fila => fila.map(escapar).join(','))
+                .join('\n');
+
+            const enlace = document.createElement('a');
+            enlace.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+            enlace.download = 'fallidas.csv';
+            enlace.click();
+            URL.revokeObjectURL(enlace.href);
+        },
+
+        /* ---------------------------- Vista de móvil -------------------------- */
+        /**
+         * ¿Toca rejilla o tarjetas?
+         *
+         * Lo decide el CSS, no un número repetido aquí: se mira si el contenedor
+         * de la rejilla está visible. `offsetParent` es null cuando él o alguno
+         * de sus padres está en `display:none`, que es lo que le hace el
+         * `hidden lg:block` de la vista.
+         */
+        hayRejilla() {
+            return !!document.getElementById('detalles')?.offsetParent;
+        },
+
+        /* Rejilla y tarjetas no conviven: Handsontable mide su contenedor al
+           construirse y con `display:none` nace con ancho cero. */
+        vigilarAncho() {
+            let temporizador;
+
+            window.addEventListener('resize', () => {
+                clearTimeout(temporizador);
+                temporizador = setTimeout(() => this.sincronizarVista(), 150);
+            });
+        },
+
+        sincronizarVista() {
+            const toca = this.hayRejilla();
+
+            if (!toca && hotFallidas) {
+                hotFallidas.destroy();
+                hotFallidas = null;
+                return;
+            }
+
+            if (toca && !hotFallidas && this.datos) this.construirTabla(this.datos);
+        },
+
+        /* `agregarTotales` añade la fila TOTAL escribiendo más allá de la última,
+           y eso la mete en el mismo arreglo que recibe la rejilla. Llega sin
+           cédula, y es lo que la distingue de un inspector. */
+        get tarjetas() {
+            return (this.datos?.produccionInspector ?? []).filter(f => f.cedula);
+        },
+
+        diasDe(fila) {
+            return this.fechas.map(f => ({
+                fecha: f.fecha,
+                etiqueta: f.dia,
+                corta: this.etiquetaCorta(f.dia),
+                valor: fila[f.fecha],
+            }));
+        },
+
+        /* «Miércoles 03» no cabe en un botón de móvil; «Mié 03» sí. */
+        etiquetaCorta(etiqueta) {
+            const [dia, numero] = etiqueta.split(' ');
+            return `${dia.slice(0, 3)} ${numero}`;
+        },
+
+        estiloDeClave(clave) {
+            const par = this.paletaCeldas()[clave];
+            return par ? `background-color:${par[0]};color:${par[1]}` : '';
+        },
+
+        alternarTarjeta(cedula) {
+            this.desplegadas[cedula] = !this.desplegadas[cedula];
+        },
+
+        async abrirDiaMovil(fila, dia) {
+            await this.abrirDiaCon({
+                fecha: dia.fecha,
+                nombreDia: dia.etiqueta,
+                cc: fila.cedula,
+                nombreCompleto: fila.nombres,
+            });
         },
 
         /* ---------------------------- Modal del día --------------------------- */
+        /* Traduce la celda seleccionada a datos y delega: la lógica vive en
+           `abrirDiaCon` porque en móvil no hay rejilla de la que leer. */
         async abrirDia() {
-            const sel = hotFallidas.getSelectedLast();
+            const sel = hotFallidas?.getSelectedLast();
             if (!sel) return;
             const [row, col] = sel;
             const columna = hotFallidas.getColHeader(col);
             const fecha = this.fechas.find(f => f.dia === columna);
             if (!fecha) return;                       // solo las columnas de día abren detalle
 
-            this.seleccion = {
+            await this.abrirDiaCon({
                 fecha: fecha.fecha,
-                cc: hotFallidas.getDataAtCell(row, 0),
                 nombreDia: columna,
+                cc: hotFallidas.getDataAtCell(row, 0),
                 nombreCompleto: hotFallidas.getDataAtCell(row, 1),
-            };
-            this.tituloDia = `Fallidas del día ${columna} — ${this.seleccion.nombreCompleto}`;
+            });
+        },
+
+        /* Abre el detalle a partir de datos, no de la selección de la rejilla. */
+        async abrirDiaCon({ fecha, nombreDia, cc, nombreCompleto }) {
+            this.seleccion = { fecha, cc, nombreDia, nombreCompleto };
+            this.tituloDia = `Fallidas del día ${nombreDia} — ${nombreCompleto}`;
             this.modal = 'dia';
 
             await this.$nextTick();

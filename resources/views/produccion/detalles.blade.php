@@ -47,7 +47,12 @@
                     <div>
                         <h2 class="tw-card-title">Producción por inspector</h2>
                         <p class="tw-card-subtitle">
-                            Doble clic en la esquina de una celda de día para ver sus inspecciones
+                            <span class="hidden lg:inline">
+                                Doble clic en la esquina de una celda de día para ver sus inspecciones
+                            </span>
+                            <span class="lg:hidden">
+                                Toca un inspector para ver sus días; toca un día para ver sus inspecciones
+                            </span>
                         </p>
                     </div>
                 </div>
@@ -76,8 +81,73 @@
                 @endforeach
             </div>
 
-            <div class="border-t border-slate-200/80 dark:border-slate-700/60">
+            {{-- Rejilla: sólo de `lg` para arriba. La construye el JS únicamente
+                 cuando se ve, porque Handsontable mide el contenedor al nacer y
+                 con display:none saldría con ancho cero. --}}
+            <div class="hidden border-t border-slate-200/80 lg:block dark:border-slate-700/60">
                 <div id="detalles" class="ht-theme-main ht-compacta"></div>
+            </div>
+
+            {{-- ===================== VARIANTE MÓVIL ====================== --}}
+            {{-- Una tarjeta por inspector. Sustituye a la rejilla porque sus dos
+                 columnas congeladas suman 430px —más que la pantalla— y porque el
+                 detalle del día se abría con doble clic en la esquina de arrastre
+                 de la celda, un gesto que en táctil no existe. --}}
+            <div class="border-t border-slate-200/80 lg:hidden dark:border-slate-700/60">
+                <div x-show="!cargando && tarjetas.length === 0" x-cloak
+                     class="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                    No hay producción registrada en este corte.
+                </div>
+
+                <div class="divide-y divide-slate-200/80 dark:divide-slate-700/60">
+                    <template x-for="fila in tarjetas" :key="fila.cedula">
+                        <article>
+                            <button type="button" class="flex w-full items-center gap-3 px-4 py-3 text-left"
+                                    :aria-expanded="!!desplegadas[fila.cedula]"
+                                    @click="alternarTarjeta(fila.cedula)">
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm font-semibold text-slate-800 dark:text-slate-100"
+                                       x-text="fila.nombres"></p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                                        CC <span x-text="fila.cedula"></span> ·
+                                        <span x-text="fila.dias_laborados"></span> días laborados
+                                    </p>
+                                </div>
+                                <i class="fas fa-chevron-down text-xs text-slate-400 transition-transform"
+                                   :class="desplegadas[fila.cedula] && 'rotate-180'"></i>
+                            </button>
+
+                            {{-- Los totales, visibles sin desplegar: son lo que en la
+                                 rejilla obligaba a desplazarse hasta el final. --}}
+                            <div class="flex flex-wrap gap-1.5 px-4 pb-3">
+                                <template x-for="r in resumenDe(fila)" :key="r.texto">
+                                    <span class="inline-flex items-center gap-1 rounded-md border border-black/5
+                                                 px-2 py-1 text-[11px] font-medium"
+                                          :style="estiloDeClave(r.clave)">
+                                        <span class="opacity-70" x-text="r.texto"></span>
+                                        <span x-text="r.valor"></span>
+                                    </span>
+                                </template>
+                            </div>
+
+                            <div x-show="desplegadas[fila.cedula]" x-collapse x-cloak>
+                                <div class="grid grid-cols-3 gap-2 px-4 pb-4 sm:grid-cols-4">
+                                    <template x-for="dia in diasDe(fila)" :key="dia.fecha">
+                                        <button type="button"
+                                                class="flex flex-col items-center gap-0.5 rounded-lg border
+                                                       border-black/5 px-2 py-2 text-center active:scale-95"
+                                                :style="estiloDeClave(dia.clave)"
+                                                @click="abrirDiaMovil(fila, dia)">
+                                            <span class="text-[10px] uppercase opacity-70" x-text="dia.corta"></span>
+                                            <span class="text-base font-semibold leading-none"
+                                                  x-text="dia.valor || '—'"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </article>
+                    </template>
+                </div>
             </div>
         </section>
 
