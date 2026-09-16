@@ -121,6 +121,12 @@ class UserController extends Controller
 
     public function changePassword(User $user)
     {
+        /* El formulario es para la cuenta propia —el navbar y el perfil siempre
+           pasan la tuya— y lo recibe `updatePassword`, que ya exige que lo sea.
+           Sin esto, cambiando el id de la URL se veían el nombre y el correo de
+           cualquier usuario. */
+        abort_unless($user->is(auth()->user()), 403);
+
         return view('users.changePassword', compact('user'));
     }
 

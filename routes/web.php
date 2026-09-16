@@ -88,7 +88,7 @@ Route::middleware('web')->group(function () {
             ]);
 
 
-        })->name('jobs.pnd');
+        })->name('jobs.pnd')->middleware(CheckPermission::class . ':ver_programacion');
 
 
         Route::get('/descargar-archivo', [DescargasController::class, 'descargarArchivo'])
@@ -96,18 +96,17 @@ Route::middleware('web')->group(function () {
             ->middleware('signed'); // Validar que la URL está firmada
 
 
-        // Si quieres una ruta para listar usuarios y desde ahí acceder a su actividad
-        Route::get('/admin/users-activity', [UserActivityController::class, 'listUsers'])->name('admin.users.activity.list');
-
-        // Ruta para ver la actividad de un usuario específico
-        Route::get('/admin/user/{user}/activity', [UserActivityController::class, 'showUserActivity'])->name('admin.user.activity.show');
-
-
-        // Ruta para la actividad de Spatie de un usuario
-        Route::get('/admin/user/{user}/http-activity', [UserActivityController::class, 'showUserSpatieActivity'])
-            ->name('admin.user.http_activity.show'); // Nombre de ruta diferente
-
-        Route::get('/admin/fetch-global-audits', [UserActivityController::class, 'fetchGlobalAudits'])->name('admin.global_audit.fetch');
+        /* Auditoría: quién cambió qué, con los valores antes y después, sus IP
+           y su navegación. Sólo pedían sesión, así que cualquier usuario —un
+           inspector sin un solo permiso— podía leer la de todos. Se exige el
+           mismo permiso con el que el menú de configuración enseña el enlace. */
+        Route::middleware(CheckPermission::class . ':gestion_usuarios')->group(function () {
+            Route::get('/admin/users-activity', [UserActivityController::class, 'listUsers'])->name('admin.users.activity.list');
+            Route::get('/admin/user/{user}/activity', [UserActivityController::class, 'showUserActivity'])->name('admin.user.activity.show');
+            Route::get('/admin/user/{user}/http-activity', [UserActivityController::class, 'showUserSpatieActivity'])
+                ->name('admin.user.http_activity.show');
+            Route::get('/admin/fetch-global-audits', [UserActivityController::class, 'fetchGlobalAudits'])->name('admin.global_audit.fetch');
+        });
 
 
     });

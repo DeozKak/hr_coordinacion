@@ -28,9 +28,9 @@ Route::middleware('web')->group(function () {
             ->name('bitacora.stickers.desasignar')->middleware(CheckPermission::class . ':control_stickers');
 
         Route::get('stickers/get-seriales-actas', [StickersController::class, 'getSerialesInventarioActas'])
-            ->name('bitacora.stickers.getSerialesActas');
+            ->name('bitacora.stickers.getSerialesActas')->middleware(CheckPermission::class . ':generar_bitacoras');
         Route::get('/stickers/get-seriales-asignados/{idInspector}', [StickersController::class, 'getSerialesAsignadosInspector'])
-            ->name('bitacora.stickers.getSerialesAsignados');
+            ->name('bitacora.stickers.getSerialesAsignados')->middleware(CheckPermission::class . ':generar_bitacoras');
 
     });
 

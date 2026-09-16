@@ -39,10 +39,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->group('public', []);
         $middleware->group('auth', [CheckUserStatus::class]);
         $middleware->web([LogUserHttpActivity::class]);
-        $middleware->validateCsrfTokens(except: [
-            'guardar_tabla*',
-            'webhook/whatsapp*',
-        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         /* Un enlace de registro caducado o manipulado lanza esta excepción, que
