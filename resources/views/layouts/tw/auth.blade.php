@@ -90,8 +90,13 @@
             <p class="mt-2 text-[0.9375rem] text-slate-500">@yield('auth_intro')</p>
         @endif
 
+        {{-- Sin el resumen de errores: aquí cada campo ya pinta el suyo debajo
+             con `x-auth-input`, y con el resumen el mismo mensaje salía dos
+             veces. Todas las claves de error de estas pantallas tienen su campo
+             (email, password, name, type_id, identification). Los mensajes de
+             sesión —cuenta inactiva, enlace caducado— sí se siguen mostrando. --}}
         <div class="mt-7">
-            @include('layouts.tw.partials.flash')
+            @include('layouts.tw.partials.flash', ['resumenDeErrores' => false])
             @yield('auth_body')
         </div>
 

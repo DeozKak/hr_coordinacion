@@ -1,3 +1,12 @@
+# Contexto y Reglas del Proyecto (Laravel + Graphify)
+
+## 1. Uso de Contexto y Grafo de Conocimiento (Graphify)
+- **Instrucción Principal:** ANTES de realizar búsquedas exhaustivas en el código (`grep`, lecturas masivas de archivos o exploraciones de directorios), consulta el grafo de arquitectura local.
+- **Ubicación del Grafo:** La estructura y dependencias están en la carpeta `.graphify/` y `graphify-out/`.
+- **Modo de Consulta:** Si necesitas entender la relación entre modelos, controladores, jobs o servicios, ejecuta el comando de consulta de Graphify:
+  ```bash
+  graphify query "<pregunta sobre la arquitectura o clases>"
+
 # hr_coordinacion
 
 ERP interno de operaciones de campo para una contratista de servicios públicos

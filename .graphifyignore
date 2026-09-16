@@ -1,0 +1,7 @@
+vendor/
+node_modules/
+storage/
+bootstrap/cache/
+.phpunit.result.cache
+.env
+public/build/

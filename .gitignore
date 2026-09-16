@@ -17,3 +17,7 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+.graphify/
+graphify-out/
+*.graphify.sqlite
+graphify.json

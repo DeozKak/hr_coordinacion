@@ -24,7 +24,9 @@
     @endif
 @endforeach
 
-@if (isset($errors) && $errors->any())
+{{-- `resumenDeErrores` a false lo apaga donde cada campo ya muestra su propio
+     error, como en las pantallas de acceso; sin eso el mensaje sale repetido. --}}
+@if (($resumenDeErrores ?? true) && isset($errors) && $errors->any())
     <div class="mb-4 rounded-lg border px-4 py-3 text-sm {{ $styles['error'] }}" role="alert">
         <ul class="list-inside list-disc space-y-1">
             @foreach ($errors->all() as $error)
