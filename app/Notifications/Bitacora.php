@@ -2,12 +2,13 @@
 
 namespace App\Notifications;
 
+use Illuminate\Contracts\Queue\ShouldQueue;
 use App\Models\Bitacoras\TblBitacoraArchivo;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class Bitacora extends Notification
+class Bitacora extends Notification implements ShouldQueue
 {
     use Queueable;
 

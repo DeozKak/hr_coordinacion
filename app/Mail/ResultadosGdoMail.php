@@ -2,11 +2,12 @@
 
 namespace App\Mail;
 
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class ResultadosGdoMail extends Mailable
+class ResultadosGdoMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

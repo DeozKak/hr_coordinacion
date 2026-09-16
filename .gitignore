@@ -21,3 +21,4 @@ yarn-error.log
 graphify-out/
 *.graphify.sqlite
 graphify.json
+

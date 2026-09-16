@@ -11,7 +11,7 @@ use App\Models\AsignadasQuejas;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class TiemposQuejas extends Notification
+class TiemposQuejas extends Notification implements ShouldQueue
 {
     use Queueable;
 

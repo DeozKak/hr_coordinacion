@@ -51,6 +51,7 @@ class ProcessExcelFileMacros implements ShouldQueue
             'actualizados' => 0, // Lo mantenemos por si en el futuro usas upsert
             'duracion' => 0
         ];
+        $fallo = null;
 
         try {
             $reader = ReaderEntityFactory::createXLSXReader();
@@ -164,32 +165,50 @@ class ProcessExcelFileMacros implements ShouldQueue
             }
 
             $reader->close();
-            // --- 3. FINALIZACIÓN Y NOTIFICACIÓN DE ÉXITO ---
+            // --- 3. FINALIZACIÓN ---
             $stats['duracion'] = round(microtime(true) - $startTime); // Calcula la duración total
             Log::info("Archivo {$this->filePath} procesado exitosamente.");
-            $notification = new ProcesamientoMacro($this->user, $this->originalName, $stats);
-            // Envía la notificación de éxito con las estadísticas
-            $this->user->notify($notification->delay(now()->addSeconds(10)));
 
         } catch (\Exception $e) {
-            // --- 4. MANEJO DE ERRORES Y NOTIFICACIÓN DE FALLO ---
+            // --- 4. MANEJO DE ERRORES ---
+            $fallo = $e;
             Log::error("Fallo el Job en la fila {$filaError} para el archivo {$this->filePath}: " . $e->getMessage());
-
-            // Prepara los detalles del error para la notificación
-            $errorDetails = [
-                'mensaje' => $e->getMessage(),
-                'fila' => $filaError
-            ];
-
-
-            $errorNotification = new ProcesamientoMacro($this->user, $this->originalName, [], $errorDetails);
-
-            // Envía la notificación de error también con un retraso para ser consistente
-            $this->user->notify($errorNotification->delay(now()->addSeconds(10)));
-
-            $this->fail($e);
         } finally {
             Storage::delete($this->filePath);
+        }
+
+        /* El aviso va fuera del try a propósito. Dentro, un fallo al enviar el
+           correo —el 421 de Hostinger, por ejemplo— caía en el catch de la
+           importación: se registraba «Fallo el Job en la fila N» con N la última
+           fila del archivo, se intentaba un segundo correo por la misma conexión
+           rota y el job quedaba como fallido aunque todas las filas ya estuvieran
+           insertadas. */
+        $this->avisar($fallo === null
+            ? new ProcesamientoMacro($this->user, $this->originalName, $stats)
+            : new ProcesamientoMacro($this->user, $this->originalName, [], [
+                'mensaje' => $fallo->getMessage(),
+                'fila' => $filaError,
+            ]));
+
+        if ($fallo !== null) {
+            $this->fail($fallo);
+        }
+    }
+
+    /**
+     * Encola el aviso por correo sin dejar que un fallo al hacerlo tumbe el job.
+     *
+     * La notificación ya va en cola (`ProcesamientoMacro` implementa
+     * ShouldQueue), así que aquí sólo se inserta en `jobs`; el envío lo hace
+     * otro job, con sus propios reintentos. Aun así se protege: que no se pueda
+     * avisar no cambia el resultado de la importación.
+     */
+    private function avisar(ProcesamientoMacro $notificacion): void
+    {
+        try {
+            $this->user->notify($notificacion->delay(now()->addSeconds(10)));
+        } catch (\Throwable $e) {
+            Log::error("No se pudo encolar el aviso de {$this->filePath}: " . $e->getMessage());
         }
     }
 

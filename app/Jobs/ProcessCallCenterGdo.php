@@ -139,31 +139,48 @@ class ProcessCallCenterGdo implements ShouldQueue
             $programacion = TblProgramacionUsuario::find($this->programacionId);
             if ($programacion) { $programacion->finished = 1; $programacion->save(); }
 
-            // Enviar Correo de Éxito
-            $user = \App\Models\User::find($this->userId);
-            if ($user && !empty($user->email)) {
-                Mail::to($user->email)->send(new ResultadosGdoMail($user->name, $rutaFinal));
-            }
-
             Storage::delete($this->filePath);
 
         } catch (\Exception $e) {
             Log::error("Error fatal en ProcessCallCenterGdo: " . $e->getMessage() . " | Registro: " . $registroActual);
 
-            $userIds = [2, 26];
-
-            foreach ($userIds as $id) {
-                $user = \App\Models\User::find($id);
-
-                if ($user && !empty($user->email)) {
-                    Mail::to($user->email)->send(new ResultadosGdoMail($user->name, $rutaFinal));
-                }
+            /* Antes se avisaba con ResultadosGdoMail, el correo de éxito, que
+               adjunta $rutaFinal: si el fallo llegaba antes de guardar el Excel
+               esa variable no existía, el aviso reventaba y tapaba el error
+               original. Éste es el correo pensado para el caso. */
+            foreach ([2, 26] as $id) {
+                $this->enviarCorreo($id, fn ($user) => new ErrorProcesamientoGdoMail(
+                    $user->name, $e->getMessage(), $registroActual
+                ));
             }
 
             $programacion = TblProgramacionUsuario::find($this->programacionId);
             if ($programacion) { $programacion->finished = 1; $programacion->save(); }
 
             throw $e;
+        }
+
+        /* Fuera del try: dentro, un fallo al enviar —el 421 de Hostinger— se
+           trataba como fallo del procesamiento, que para entonces ya había
+           terminado y guardado su resultado. */
+        $this->enviarCorreo($this->userId, fn ($user) => new ResultadosGdoMail($user->name, $rutaFinal));
+    }
+
+    /**
+     * Encola un correo para un usuario sin dejar que un fallo al hacerlo tumbe
+     * el job. Los dos Mailables implementan ShouldQueue, así que aquí sólo se
+     * inserta en `jobs`: el envío por SMTP ocurre después, en otro job.
+     */
+    private function enviarCorreo(int $idUsuario, \Closure $crearCorreo): void
+    {
+        try {
+            $user = \App\Models\User::find($idUsuario);
+
+            if ($user && !empty($user->email)) {
+                Mail::to($user->email)->send($crearCorreo($user));
+            }
+        } catch (\Throwable $e) {
+            Log::error("No se pudo encolar el correo de ProcessCallCenterGdo para el usuario {$idUsuario}: " . $e->getMessage());
         }
     }
 

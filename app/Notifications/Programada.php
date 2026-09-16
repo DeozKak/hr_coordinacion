@@ -2,12 +2,13 @@
 
 namespace App\Notifications;
 
+use Illuminate\Contracts\Queue\ShouldQueue;
 use App\Models\Programacion\TblProgramacionUsuario;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class Programada extends Notification
+class Programada extends Notification implements ShouldQueue
 {
     use Queueable;
 
