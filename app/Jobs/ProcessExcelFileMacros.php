@@ -4,7 +4,8 @@ namespace App\Jobs;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
+use App\Support\ValoresDeFila;
+use OpenSpout\Reader\XLSX\Reader;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -54,7 +55,7 @@ class ProcessExcelFileMacros implements ShouldQueue
         $fallo = null;
 
         try {
-            $reader = ReaderEntityFactory::createXLSXReader();
+            $reader = new Reader();
             $reader->open($fullPath);
 
             $registros = [];
@@ -67,7 +68,7 @@ class ProcessExcelFileMacros implements ShouldQueue
                         continue; // Saltamos los encabezados, ya fueron validados
                     }
 
-                    $rowDataArray = $row->toArray();
+                    $rowDataArray = ValoresDeFila::de($row);
 
                     if (empty(array_filter($rowDataArray))) {
                         continue;
@@ -224,7 +225,11 @@ class ProcessExcelFileMacros implements ShouldQueue
 
     private function formatDate($excelDate): ?string
     {
-        if ($excelDate instanceof \DateTime) {
+        /* `DateTimeInterface` y no `DateTime`: openspout entrega las fechas como
+           DateTimeImmutable, que no hereda de DateTime. Con la comprobación
+           anterior toda fecha caía al `return null` del final y la macro se
+           cargaba sin fechas de asignación ni de recepción, sin ningún error. */
+        if ($excelDate instanceof \DateTimeInterface) {
             return $excelDate->format('Y-m-d');
         }
         if (is_numeric($excelDate)) {

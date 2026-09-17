@@ -10,7 +10,8 @@ use App\Services\Programacion\Importacion\CargaBaseService;
 use App\Services\Programacion\Importacion\Formatos;
 use App\Services\Programacion\Importacion\LectorDeCabeceras;
 use App\Services\Programacion\Importacion\ProgramacionMasivaService;
-use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
+use App\Support\ValoresDeFila;
+use OpenSpout\Reader\XLSX\Reader as LectorXlsx;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -99,13 +100,13 @@ class ProgramacionImportacionController extends Controller
         $ruta = $archivo->store('excel-imports');
         $formato = Formatos::macros();
 
-        $lector = ReaderEntityFactory::createXLSXReader();
+        $lector = new LectorXlsx();
         $lector->open(storage_path('app/' . $ruta));
 
         $primeraFila = [];
         foreach ($lector->getSheetIterator() as $hoja) {
             foreach ($hoja->getRowIterator() as $fila) {
-                $primeraFila = $this->cabeceras->deLaFila($fila->toArray());
+                $primeraFila = $this->cabeceras->deLaFila(ValoresDeFila::de($fila));
                 break;
             }
             break;

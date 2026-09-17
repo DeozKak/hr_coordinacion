@@ -3,8 +3,11 @@
 namespace App\Services\Home;
 
 use App\Support\FiltroDeFilas;
-use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
-use Box\Spout\Reader\ReaderAbstract;
+use App\Support\ValoresDeFila;
+use OpenSpout\Reader\CSV\Reader as LectorCsv;
+use OpenSpout\Reader\ReaderInterface;
+use OpenSpout\Reader\XLSX\Options as OpcionesXlsx;
+use OpenSpout\Reader\XLSX\Reader as LectorXlsx;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -149,21 +152,33 @@ class CargueEstadisticasAsignacionService
 
         return match ($extension) {
             // Spout lee en streaming; es el camino normal para los archivos del día
-            'csv'  => $this->filasEnStreaming(ReaderEntityFactory::createCSVReader(), $ruta),
+            'csv'  => $this->filasEnStreaming(new LectorCsv(), $ruta),
             // Spout no soporta el formato viejo .xls, ahí toca PhpSpreadsheet
             'xls'  => $this->filasConPhpSpreadsheet($ruta),
-            default => $this->filasEnStreaming(ReaderEntityFactory::createXLSXReader(), $ruta),
+            default => $this->filasEnStreaming($this->lectorXlsx(), $ruta),
         };
+    }
+
+    /**
+     * Pedimos las fechas como objetos, no como texto: el formato de la celda
+     * varía entre archivos y aquí las normalizamos todas a un mismo patrón.
+     *
+     * Con openspout la opción va en el constructor; ya es el valor por
+     * omisión, pero se deja explícita porque de ella depende la normalización.
+     */
+    private function lectorXlsx(): LectorXlsx
+    {
+        $opciones = new OpcionesXlsx();
+        $opciones->SHOULD_FORMAT_DATES = false;
+
+        return new LectorXlsx($opciones);
     }
 
     /**
      * @return \Generator<int, array<string, mixed>>
      */
-    private function filasEnStreaming(ReaderAbstract $reader, string $ruta): \Generator
+    private function filasEnStreaming(ReaderInterface $reader, string $ruta): \Generator
     {
-        // Pedimos las fechas como objetos, no como texto: el formato de la celda varía
-        // entre archivos y aquí las normalizamos todas a un mismo patrón.
-        $reader->setShouldFormatDates(false);
         $reader->open($ruta);
 
         try {
@@ -171,7 +186,7 @@ class CargueEstadisticasAsignacionService
                 $headers = null;
 
                 foreach ($hoja->getRowIterator() as $fila) {
-                    $valores = $fila->toArray();
+                    $valores = ValoresDeFila::de($fila);
 
                     if ($headers === null) {
                         $headers = $this->normalizarEncabezados($valores);
