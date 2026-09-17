@@ -39,6 +39,10 @@ return [
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
+            /* Cuánto dura «Recordarme», en minutos: 300 días. Sin esta clave
+               Laravel usa 400. La sesión recordada se corta igualmente al cerrar
+               sesión, al cambiar la contraseña o al desactivar la cuenta. */
+            'remember' => 60 * 24 * 300,
         ],
     ],
 

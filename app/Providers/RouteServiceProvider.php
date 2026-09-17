@@ -16,9 +16,14 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        /* `auth` además de `web`: es el grupo que lleva CheckUserStatus. Sin él,
+           un administrador desactivado seguía usando el panel con su sesión
+           abierta hasta que alguna petición tocara otra ruta —en la práctica,
+           el sondeo de notificaciones, cada 60 s—, y una petición directa a
+           estas rutas no pasaba nunca por esa comprobación. */
         Route::group([
             'namespace' => 'admin',
-            'middleware' => 'web',
+            'middleware' => ['web', 'auth'],
             'as' => 'admin.',
             'prefix' => 'admin',
         ], function ($router) {
