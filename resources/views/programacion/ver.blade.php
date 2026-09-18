@@ -83,6 +83,103 @@
             </div>
         </section>
 
+        {{-- ========================= CARGA POR TÉCNICO ========================= --}}
+        {{-- Sale de las mismas filas que la tabla (el servidor la calcula en
+             AgendamientoService), así que listado y tabla nunca cuentan distinto.
+             Límite: 7 por jornada; las de «todo el día» rellenan el hueco y sólo
+             alertan cuando no caben ni repartiéndolas (más de 14 en el día). --}}
+        <section class="tw-card" x-show="hayResultados" x-cloak>
+            <div class="tw-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="tw-chip" :class="conAlerta > 0 ? 'chip-rose' : 'chip-emerald'">
+                        <i class="fas" :class="conAlerta > 0 ? 'fa-triangle-exclamation' : 'fa-user-check'"></i>
+                    </span>
+                    <div>
+                        <h2 class="tw-card-title">Carga por técnico</h2>
+                        <p class="tw-card-subtitle">
+                            <span x-text="tecnicosConCarga"></span>
+                            <span x-text="tecnicosConCarga === 1 ? 'técnico' : 'técnicos'"></span> ·
+                            <span x-show="conAlerta === 0">ninguno pasa del límite de 7 por jornada</span>
+                            <span x-show="conAlerta > 0" class="font-semibold text-rose-600 dark:text-rose-400">
+                                <span x-text="conAlerta"></span> con sobrecarga
+                            </span>
+                        </p>
+                    </div>
+                </div>
+
+                <label class="flex items-center gap-2.5 text-sm text-slate-700 dark:text-slate-300"
+                       x-show="conAlerta > 0">
+                    <input type="checkbox" x-model="soloAlertas"
+                           class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500
+                                  dark:border-slate-600 dark:bg-slate-700">
+                    Sólo con sobrecarga
+                </label>
+            </div>
+
+            <ol class="max-h-[26rem] divide-y divide-slate-200/80 overflow-y-auto border-t border-slate-200/80
+                       dark:divide-slate-700/60 dark:border-slate-700/60">
+                <template x-for="(t, i) in cargaVisible" :key="t.tecnico ?? '__sin_tecnico__'">
+                    <li class="flex flex-col gap-2 px-5 py-3 sm:flex-row sm:items-start sm:gap-4"
+                        :class="t.alertas.length && 'border-l-4 border-l-rose-500 bg-rose-50/60 dark:bg-rose-950/20'">
+                        <div class="flex min-w-0 flex-1 items-start gap-3">
+                            <span class="mt-0.5 w-7 shrink-0 text-right text-xs font-semibold tabular-nums
+                                         text-slate-400 dark:text-slate-500"
+                                  x-text="t.tecnico && !t.esComodin ? (i + 1) + '.' : '—'"></span>
+                            <div class="min-w-0">
+                                <p class="flex flex-wrap items-center gap-2 truncate text-sm font-semibold"
+                                   :class="t.tecnico && !t.esComodin
+                                           ? 'text-slate-800 dark:text-slate-100' : 'italic text-slate-500'">
+                                    <span x-text="t.tecnico ?? 'Sin técnico asignado'"></span>
+                                    {{-- El comodín aparta programaciones de un técnico real, así que
+                                         no es carga de nadie: ni alerta ni entra en el orden. --}}
+                                    <span x-show="t.esComodin" class="tw-badge chip-slate not-italic">
+                                        no se ejecuta
+                                    </span>
+                                </p>
+
+                                {{-- Las alertas, una por línea; en un rango llevan el día. --}}
+                                <template x-for="a in t.alertas" :key="a.fecha + a.tipo">
+                                    <p class="mt-1 flex items-center gap-1.5 text-xs font-medium
+                                              text-rose-700 dark:text-rose-300">
+                                        <i class="fas fa-triangle-exclamation"></i>
+                                        <span x-show="rango" x-text="fechaCorta(a.fecha) + ' ·'"></span>
+                                        <span x-text="a.mensaje"></span>
+                                    </p>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-1.5 pl-10 sm:pl-0">
+                            <span class="tw-badge chip-sky" title="Mañana" x-show="t.manana">
+                                <i class="fas fa-sun"></i> <span x-text="t.manana"></span>
+                            </span>
+                            <span class="tw-badge chip-violet" title="Tarde" x-show="t.tarde">
+                                <i class="fas fa-cloud-sun"></i> <span x-text="t.tarde"></span>
+                            </span>
+                            <span class="tw-badge chip-amber" title="Todo el día" x-show="t.todoElDia">
+                                <i class="fas fa-clock"></i> <span x-text="t.todoElDia"></span>
+                            </span>
+                            <span class="tw-badge chip-slate" title="Sin jornada" x-show="t.sinJornada">
+                                <i class="fas fa-question"></i> <span x-text="t.sinJornada"></span>
+                            </span>
+                            <span class="tw-badge min-w-[3.5rem] justify-center"
+                                  :class="t.alertas.length ? 'chip-rose' : 'chip-slate'"
+                                  title="Total de programaciones">
+                                <span class="tabular-nums" x-text="t.total"></span>
+                            </span>
+                        </div>
+                    </li>
+                </template>
+            </ol>
+
+            <p class="tw-hint border-t border-slate-200/80 px-5 py-3 dark:border-slate-700/60">
+                <i class="fas fa-sun"></i> mañana ·
+                <i class="fas fa-cloud-sun"></i> tarde ·
+                <i class="fas fa-clock"></i> todo el día, que ocupa el hueco libre ·
+                límite de 7 por jornada y 14 en el día
+            </p>
+        </section>
+
         {{-- ============================= RESULTADOS =========================== --}}
         <section class="tw-card">
             <div class="tw-card-header">

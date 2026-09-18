@@ -24,20 +24,30 @@ class AgendamientoService
         'TECNICO', 'JORNADA',
     ];
 
+    public function __construct(private CargaDeTecnicosService $carga) {}
+
     /**
-     * Filas agendadas y los nombres de columna que espera la rejilla.
+     * Filas agendadas, los nombres de columna que espera la rejilla y la carga
+     * de cada técnico.
      *
-     * @return array{data: Collection, columnas: array}
+     * La carga se calcula aquí, sobre estas mismas filas, y no con una consulta
+     * aparte: así el listado nunca cuenta algo distinto de lo que enseña la
+     * tabla —la plantilla incluida—.
+     *
+     * @return array{data: Collection, columnas: array, carga: array}
      */
     public function consultar(string $fechaInicio, ?string $fechaFin = null): array
     {
         $plantilla = $this->deLaPlantilla($fechaInicio, $fechaFin)->orderBy('TECNICO')->get();
         $programado = $this->programado($fechaInicio, $fechaFin)->orderBy('TECNICO')->get();
 
+        // unique() conserva el primero, y la plantilla va delante.
+        $filas = $plantilla->concat($programado)->unique('id')->values();
+
         return [
-            // unique() conserva el primero, y la plantilla va delante.
-            'data'     => $plantilla->concat($programado)->unique('id')->values(),
+            'data'     => $filas,
             'columnas' => $this->columnasDeLaTabla(),
+            'carga'    => $this->carga->resumir($filas),
         ];
     }
 

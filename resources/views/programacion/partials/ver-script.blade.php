@@ -23,6 +23,14 @@ document.addEventListener('alpine:init', () => {
         total: 0,
         buscado: false,
 
+        /* Carga por técnico, tal como la calcula el servidor. Se guardan las
+           fechas de la búsqueda que la produjo: al cambiar un técnico desde la
+           tabla hay que recalcularla para esas fechas, no para lo que haya
+           escrito en los campos, que puede haber cambiado sin volver a buscar. */
+        carga: [],
+        soloAlertas: false,
+        ultimaBusqueda: null,
+
         sincronizando: false,
         porcentaje: 0,
         temporizador: null,
@@ -49,6 +57,31 @@ document.addEventListener('alpine:init', () => {
         get descripcionRango() {
             if (!this.rango || !this.fechaFin) return `del ${this.fechaInicio}`;
             return `entre ${this.fechaInicio} y ${this.fechaFin}`;
+        },
+
+        get conAlerta() {
+            return this.carga.filter(t => t.alertas.length).length;
+        },
+
+        get tecnicosConCarga() {
+            return this.carga.filter(t => t.tecnico !== null && !t.esComodin).length;
+        },
+
+        /* Sin alertas, el filtro no se aplica aunque siga marcado. Si no, al
+           resolver la última sobrecarga reasignando un técnico, el listado se
+           quedaba vacío y la casilla —que sólo aparece cuando hay alertas— ya no
+           estaba para desmarcarla. */
+        get cargaVisible() {
+            return this.soloAlertas && this.conAlerta > 0
+                ? this.carga.filter(t => t.alertas.length)
+                : this.carga;
+        },
+
+        /* «2026-09-17» → «mié, 17 de sep». La T00:00 evita que la zona horaria
+           mueva la fecha al día anterior. */
+        fechaCorta(fecha) {
+            return new Date(fecha + 'T00:00:00')
+                .toLocaleDateString('es-CO', { weekday: 'short', day: '2-digit', month: 'short' });
         },
 
         get mensajeVacio() {
@@ -109,17 +142,18 @@ document.addEventListener('alpine:init', () => {
 
             this.buscando = true;
             try {
-                const r = await window.api(this.urls.buscar, {
-                    method: 'POST',
-                    body: {
-                        fechaInicio: this.fechaInicio,
-                        fechaFin: this.rango ? this.fechaFin : null,
-                    },
-                });
+                const busqueda = {
+                    fechaInicio: this.fechaInicio,
+                    fechaFin: this.rango ? this.fechaFin : null,
+                };
+                const r = await window.api(this.urls.buscar, { method: 'POST', body: busqueda });
 
                 this.buscado = true;
                 this.total = r.data?.length ?? 0;
                 this.hayResultados = this.total > 0;
+                this.ultimaBusqueda = busqueda;
+                this.carga = r.carga ?? [];
+                this.soloAlertas = false;
 
                 if (!this.hayResultados) {
                     this.destruirTabla();
@@ -251,9 +285,24 @@ document.addEventListener('alpine:init', () => {
                 window.Swal.fire({ toast: true, position: 'top-end', icon: 'success',
                                    title: r?.message ?? 'Técnico actualizado',
                                    timer: 2000, showConfirmButton: false });
+                this.refrescarCarga();
             } catch (e) {
                 window.Swal.fire({ icon: 'error', title: 'Error',
                                    text: e?.data?.error ?? 'No se pudo cambiar el técnico.' });
+            }
+        },
+
+        /* Reasignar un técnico desde la tabla es justo la forma de resolver una
+           sobrecarga, así que el listado tiene que reflejarlo. Se vuelve a pedir
+           la búsqueda pero sólo se usa la carga: la tabla ya tiene el cambio y
+           reconstruirla perdería el scroll y los filtros. */
+        async refrescarCarga() {
+            if (!this.ultimaBusqueda) return;
+            try {
+                const r = await window.api(this.urls.buscar, { method: 'POST', body: this.ultimaBusqueda });
+                this.carga = r.carga ?? [];
+            } catch (e) {
+                // Si falla, se queda el listado anterior: la tabla sigue siendo la referencia.
             }
         },
 
