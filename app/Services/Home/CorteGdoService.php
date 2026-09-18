@@ -25,11 +25,15 @@ class CorteGdoService
      * lo usa para enseñar el aviso de que hay que crear el primero.
      *
      * @param string $localidadSeleccionada Municipio madre a filtrar, o 'TODAS'.
+     * @param int|null $corteId Corte a mirar; sin él, el vigente.
      * @return array corte, metricas, detalles.
      */
-    public function generar(string $localidadSeleccionada): array
+    public function generar(string $localidadSeleccionada, ?int $corteId = null): array
     {
-        $corte = CorteGdo::vigente();
+        /* Se puede pedir un corte cerrado: al terminar uno hay que poder mirar
+           lo legalizado en los anteriores. Si el id no existe se cae al
+           vigente, que es lo que la pantalla espera por omisión. */
+        $corte = ($corteId !== null ? CorteGdo::find($corteId) : null) ?? CorteGdo::vigente();
 
         if (! $corte) {
             return [
@@ -46,6 +50,27 @@ class CorteGdoService
             'metricas' => ['legalizado_corte' => count($legalizadas)],
             'detalles' => ['legalizado_corte' => $legalizadas],
         ];
+    }
+
+    /**
+     * Todos los cortes, del más reciente al más antiguo, para el selector.
+     *
+     * Lleva marcado cuál es el vigente: es el que la pantalla abre por omisión
+     * y el que conviene distinguir de los ya cerrados.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function listado(): array
+    {
+        $vigente = CorteGdo::vigente();
+
+        return CorteGdo::query()
+            ->orderByDesc('fecha_inicio')
+            ->get()
+            ->map(fn (CorteGdo $corte) => $this->resumen($corte) + [
+                'vigente' => $vigente !== null && $vigente->is($corte),
+            ])
+            ->all();
     }
 
     /**

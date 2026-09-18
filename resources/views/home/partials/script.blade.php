@@ -16,10 +16,11 @@ document.addEventListener('alpine:init', () => {
        aparecer en las dos líneas. */
     Alpine.data('dashboard', ({ detalles, programaciones, meses, tecnicos,
                                 progInicial, urlProgramaciones, metricas, urlReporte,
-                                fuerzaInicial, urlAsignacion, corteInicial, urlCorte }) => ({
+                                fuerzaInicial, urlAsignacion, corteInicial, cortesIniciales,
+                                urlCorte }) => ({
         // Fuentes de datos (inyectadas desde Blade)
         detalles, programaciones, meses, tecnicos, progInicial, urlProgramaciones,
-        metricas, urlReporte, fuerzaInicial, urlAsignacion, corteInicial, urlCorte,
+        metricas, urlReporte, fuerzaInicial, urlAsignacion, corteInicial, cortesIniciales, urlCorte,
 
         modal: null,
 
@@ -61,6 +62,10 @@ document.addEventListener('alpine:init', () => {
 
         // --- Corte de GDO ---
         corte: null,
+        /* Todos los cortes y el que se está mirando. Por omisión el vigente,
+           pero se puede elegir uno cerrado para ver lo que se legalizó en él. */
+        cortes: [],
+        corteId: null,
         corteForm: { id: null, inicio: '', fin: '' },
         corteGuardando: false,
         corteError: '',
@@ -97,6 +102,8 @@ document.addEventListener('alpine:init', () => {
 
             // El corte vigente; null mientras no se haya definido ninguno.
             this.corte = this.corteInicial ?? null;
+            this.cortes = this.cortesIniciales ?? [];
+            this.corteId = this.corte?.id ?? null;
         },
 
         get filasFiltradas() {
@@ -182,12 +189,17 @@ document.addEventListener('alpine:init', () => {
             store.cargando = true;
             try {
                 const p = new URLSearchParams({ fecha: store.fecha, localidad: store.localidad });
+                // Sin corte elegido manda el vigente, que es lo que decide el servidor.
+                if (this.corteId) p.set('corte', this.corteId);
                 const r = await window.api(`${this.urlReporte}?${p.toString()}`);
 
                 this.metricas = r.metricas ?? {};
-                // El corte no cambia con el filtro, pero lo legalizado dentro
-                // de él sí: se filtra por municipio como todo lo demás.
+                /* El corte sólo cambia si se eligió otro en el selector, pero lo
+                   legalizado dentro de él sí se filtra por municipio, como todo
+                   lo demás. */
                 this.corte = r.corte ?? null;
+                this.cortes = r.cortes ?? this.cortes;
+                this.corteId = this.corte?.id ?? null;
                 /* Las ventanas de detalle leen de aquí: si no se reemplazaran,
                    al pulsar un indicador saldrían las filas del filtro anterior. */
                 this.detalles = r.detalles ?? {};
@@ -382,6 +394,8 @@ document.addEventListener('alpine:init', () => {
                 });
 
                 this.corte = r.corte ?? null;
+                this.cortes = r.cortes ?? this.cortes;
+                this.corteId = this.corte?.id ?? null;
                 this.metricas = r.metricas ?? this.metricas;
                 this.detalles = r.detalles ?? this.detalles;
                 this.modal = null;

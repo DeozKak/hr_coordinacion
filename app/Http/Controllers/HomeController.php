@@ -42,10 +42,12 @@ class HomeController extends Controller
         $validador = Validator::make($request->all(), [
             'fecha_reporte'     => ['sometimes', 'required', 'date_format:Y-m-d'],
             'localidad_reporte' => ['nullable', 'string', 'max:120'],
+            'corte_gdo'         => ['nullable', 'integer', 'exists:tbl_cortes_gdo,id'],
         ], [
             'fecha_reporte.required'    => 'Selecciona una fecha para filtrar el reporte.',
             'fecha_reporte.date_format' => 'La fecha del filtro no tiene un formato válido.',
             'localidad_reporte.max'     => 'El municipio del filtro no es válido.',
+            'corte_gdo.exists'          => 'El corte que intentas mirar ya no existe.',
         ]);
 
         if ($validador->fails()) {
@@ -62,7 +64,14 @@ class HomeController extends Controller
             ? (string) $request->input('localidad_reporte')
             : 'TODAS';
 
-        $reporte = $this->reporteOperativo->generar($fechaReporte, $localidadSeleccionada);
+        /* Sin corte en la URL manda el vigente. Con él se puede mirar uno ya
+           cerrado: cambia lo legalizado del periodo y los dos acumulados, que
+           arrancan en su fecha de inicio. */
+        $reporte = $this->reporteOperativo->generar(
+            $fechaReporte,
+            $localidadSeleccionada,
+            $request->filled('corte_gdo') ? (int) $request->input('corte_gdo') : null
+        );
         $base    = $this->pendientesBase->generar();
 
         /* La tarjeta de programaciones tiene filtro propio, así que no arranca
@@ -86,6 +95,7 @@ class HomeController extends Controller
             'detallesProgramaciones'  => $programadas['detalles'],
             'ciudadesProgramaciones'  => $programadas['ciudades'],
             'corteGdo'                => $reporte['corte'],
+            'cortesGdo'               => $reporte['cortes'],
             'baseTipos'               => $base['tipos'],
             'baseMeses'               => $base['meses'],
             'baseTotalTipos'          => $base['totalTipos'],
@@ -109,15 +119,17 @@ class HomeController extends Controller
         $datos = $request->validate([
             'fecha'     => ['required', 'date_format:Y-m-d'],
             'localidad' => ['nullable', 'string', 'max:120'],
+            'corte'     => ['nullable', 'integer', 'exists:tbl_cortes_gdo,id'],
         ], [
             'fecha.required'    => 'Selecciona una fecha para filtrar el reporte.',
             'fecha.date_format' => 'La fecha del filtro no tiene un formato válido.',
             'localidad.max'     => 'El municipio del filtro no es válido.',
+            'corte.exists'      => 'El corte que intentas mirar ya no existe.',
         ]);
 
         $localidad = ($datos['localidad'] ?? '') !== '' ? $datos['localidad'] : 'TODAS';
 
-        $reporte = $this->reporteOperativo->generar($datos['fecha'], $localidad);
+        $reporte = $this->reporteOperativo->generar($datos['fecha'], $localidad, $datos['corte'] ?? null);
 
         return response()->json([
             'metricas'               => $reporte['metricas'],
@@ -126,6 +138,7 @@ class HomeController extends Controller
             'localidadesDisponibles' => $reporte['localidadesDisponibles'],
             'acumuladoDesde'         => $reporte['acumuladoDesde'],
             'corte'                  => $reporte['corte'],
+            'cortes'                 => $reporte['cortes'],
             'fecha'                  => $datos['fecha'],
             'localidad'              => $localidad,
         ]);
@@ -264,6 +277,8 @@ class HomeController extends Controller
         return response()->json([
             'mensaje'  => empty($datos['id']) ? 'Corte de GDO creado.' : 'Corte de GDO actualizado.',
             'corte'    => $reporte['corte'],
+            // Con el corte recién creado dentro, para que el selector lo tenga.
+            'cortes'   => $reporte['cortes'],
             'metricas' => $reporte['metricas'],
             'detalles' => $reporte['detalles'],
         ]);

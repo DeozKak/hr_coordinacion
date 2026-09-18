@@ -22,13 +22,13 @@ class ReporteOperativoService
      * @param string $localidadSeleccionada Municipio madre a filtrar, o 'TODAS'.
      * @return array localidadesDisponibles, metricas, detalles, mesesData, corte y acumuladoDesde.
      */
-    public function generar(string $fechaReporte, string $localidadSeleccionada): array
+    public function generar(string $fechaReporte, string $localidadSeleccionada, ?int $corteId = null): array
     {
         $diarias = $this->metricasDiarias->generar($fechaReporte, $localidadSeleccionada);
 
         $legalizacion = $this->pendientesLegalizar->calcular($diarias['ejecutadas']);
 
-        $corte = $this->corteGdo->generar($localidadSeleccionada);
+        $corte = $this->corteGdo->generar($localidadSeleccionada, $corteId);
         $inicioCorte = $corte['corte']['inicio'] ?? null;
 
         $ejecutadasPrevias = $this->metricasDiarias->ejecutadasAnteriores(
@@ -50,6 +50,8 @@ class ReporteOperativoService
             ]),
             'mesesData'              => $diarias['mesesData'],
             'corte'                  => $corte['corte'],
+            // Para el selector: mirar lo legalizado de cortes ya cerrados.
+            'cortes'                 => $this->corteGdo->listado(),
             // Desde cuándo se está acumulando: el corte si lo hay, y si no el
             // registro más antiguo que exista.
             'acumuladoDesde'         => $inicioCorte ?? $this->metricasDiarias->fechaMasAntigua(),

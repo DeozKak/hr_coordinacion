@@ -115,6 +115,7 @@
         fuerzaInicial: @js($fuerzaLocalidades),
         urlAsignacion: '{{ route('asignacion.guardar_tecnicos') }}',
         corteInicial: @js($corteGdo),
+        cortesIniciales: @js($cortesGdo),
         urlCorte: '{{ route('corte.guardar') }}',
      })"
      @filtrar-reporte.window="filtrarReporte()"
@@ -168,10 +169,23 @@
 
             <span class="tw-chip chip-violet shrink-0"><i class="fas fa-scissors"></i></span>
 
-            {{-- Periodo --}}
+            {{-- Periodo. Con más de un corte es un selector: al cerrarse uno
+                 hay que poder mirar lo legalizado en los anteriores. Con uno
+                 solo se queda como estaba, sin un desplegable de una opción. --}}
             <div class="min-w-[12rem] flex-1">
                 <p class="tw-eyebrow">Corte de GDO</p>
-                <template x-if="corte">
+                <template x-if="corte && cortes.length > 1">
+                    <select class="tw-select mt-1 w-full max-w-xs text-sm font-semibold"
+                            x-model.number="corteId" @change="filtrarReporte()"
+                            aria-label="Corte de GDO que se está mirando">
+                        <template x-for="c in cortes" :key="c.id">
+                            <option :value="c.id"
+                                    x-text="`${c.inicio_mostrado} → ${c.fin_mostrado}`
+                                            + (c.vigente ? ' (vigente)' : '')"></option>
+                        </template>
+                    </select>
+                </template>
+                <template x-if="corte && cortes.length <= 1">
                     <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
                         <span x-text="corte.inicio_mostrado"></span>
                         <span class="mx-1 text-slate-400">&rarr;</span>
